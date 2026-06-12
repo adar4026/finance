@@ -203,6 +203,33 @@
   .btn-del{width:100%;padding:13px;border:1px solid var(--expense);border-radius:13px;background:none;color:var(--expense);
     font-size:14px;font-weight:600;cursor:pointer;margin-top:9px}
 
+  /* ===== Шапка: аватар + уведомления ===== */
+  .brand{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .subtitle{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;padding-left:1px}
+  .subtitle .live{width:6px;height:6px;border-radius:50%;background:var(--income);flex-shrink:0}
+  .iconbtn.bell{position:relative}
+  .iconbtn.bell .dot{position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--accent);border:2px solid var(--card)}
+  .avatar{width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));
+    background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;
+    font-size:17px;color:#fff;transition:.15s;overflow:hidden}
+  .avatar:active{transform:scale(.93)}
+  .avatar.lg{width:64px;height:64px;font-size:26px;flex-shrink:0}
+  /* notifications */
+  .notif{display:flex;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line);align-items:flex-start}
+  .notif:last-child{border-bottom:none}
+  .notif .ni{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+  .notif .nt1{font-size:14px;font-weight:600}
+  .notif .nt2{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+  .notif-empty{text-align:center;color:var(--muted2);padding:40px 16px}
+  .notif-empty .big{font-size:40px;margin-bottom:10px}
+  /* profile */
+  .prof-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+  .prof-head input{flex:1;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:15px;font-family:inherit;outline:none}
+  .prof-row{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 15px;border:1px solid var(--line);
+    border-radius:13px;background:var(--card);color:var(--text);font-size:14.5px;cursor:pointer;margin-bottom:9px;font-family:inherit;text-align:left}
+  .prof-row:active{background:var(--card2)}
+  .prof-row .chev{color:var(--muted2);font-size:18px}
+
   /* ===== Главная: дашборд ===== */
   .capital{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:22px;padding:18px 18px 16px;
     color:#fff;box-shadow:0 12px 30px rgba(124,92,255,.4);margin-bottom:14px}
@@ -276,10 +303,14 @@
   <!-- Top bar -->
   <div class="topbar">
     <div class="row1">
-      <h1><span class="lg">💰</span><span id="screenTitle">Записи</span></h1>
+      <div class="brand">
+        <h1><span class="lg">💰</span><span id="screenTitle">Главная</span></h1>
+        <div class="subtitle" id="updSub"></div>
+      </div>
       <div class="acts">
         <button class="iconbtn" id="exportTop" title="Экспорт данных (JSON)">⬇️</button>
-        <button class="iconbtn" id="themeBtn">🌙</button>
+        <button class="iconbtn bell" id="bellBtn" title="Уведомления">🔔<span class="dot" id="bellDot" style="display:none"></span></button>
+        <button class="avatar" id="avatarBtn" title="Профиль"></button>
       </div>
     </div>
     <div class="periods" id="periods">
@@ -459,6 +490,30 @@
   </div>
 </div>
 
+<!-- Уведомления -->
+<div class="overlay" id="notifOverlay">
+  <div class="modal">
+    <h2>Уведомления<span class="x" id="notifClose">×</span></h2>
+    <div id="notifList"></div>
+  </div>
+</div>
+
+<!-- Профиль -->
+<div class="overlay" id="profOverlay">
+  <div class="modal">
+    <h2>Профиль<span class="x" id="profClose">×</span></h2>
+    <div class="prof-head">
+      <div class="avatar lg" id="profAvatar"></div>
+      <input type="text" id="profName" placeholder="Ваше имя" maxlength="24">
+    </div>
+    <button class="prof-row" id="changePhoto"><span>📷 Сменить фото</span><span class="chev">›</span></button>
+    <input type="file" id="photoInput" accept="image/*" hidden>
+    <button class="prof-row" id="profTheme"><span id="profThemeLbl">🌙 Тёмная тема</span><span class="chev">›</span></button>
+    <button class="prof-row" id="profExport"><span>⬇️ Экспорт данных (JSON)</span><span class="chev">›</span></button>
+    <button class="prof-row" id="profMore"><span>⚙️ Все настройки</span><span class="chev">›</span></button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -538,10 +593,58 @@ function load(){
     }
   }catch(e){}
   document.documentElement.setAttribute('data-theme',state.theme);
-  $('#themeBtn').textContent=state.theme==='dark'?'🌙':'☀️';
   $('#curSelect').value=state.currency;
+  renderHeader();
 }
-function save(){localStorage.setItem('finance_app',JSON.stringify(state));}
+function save(){state.updatedAt=Date.now();localStorage.setItem('finance_app',JSON.stringify(state));renderHeader();}
+
+/* ============ Шапка: аватар, уведомления, профиль ============ */
+function relTime(ts){
+  if(!ts)return 'только что';
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<60)return 'только что';
+  const m=Math.floor(s/60);if(m<60)return m+' мин. назад';
+  const h=Math.floor(m/60);if(h<24)return h+' ч. назад';
+  const d=Math.floor(h/24);return d+' дн. назад';
+}
+function avatarStyle(){return state.avatar?`background-image:url('${state.avatar}')`:'';}
+function avatarInner(){return state.avatar?'':(state.profileName?esc(state.profileName.trim()[0].toUpperCase()):'🙂');}
+function notifications(){
+  const list=[];
+  // превышение бюджетов в текущем месяце
+  const now=new Date();const from=new Date(now.getFullYear(),now.getMonth(),1),to=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59);
+  const spent={};state.tx.forEach(t=>{const d=new Date(t.date);if(t.type==='expense'&&d>=from&&d<=to)spent[t.cat]=(spent[t.cat]||0)+t.amount;});
+  Object.keys(state.budgets||{}).forEach(cid=>{const lim=state.budgets[cid],sp=spent[cid]||0;
+    if(lim&&sp>lim){const c=catById(cid);list.push({ic:'⚠️',bg:'var(--expense-soft)',t1:'Превышен бюджет: '+c.name,t2:`Потрачено ${num(sp)} из ${num(lim)} (+${num(sp-lim)})`});}
+    else if(lim&&sp>=lim*0.85){const c=catById(cid);list.push({ic:'🟠',bg:'#ffa94d22',t1:'Бюджет почти исчерпан: '+c.name,t2:`${num(sp)} из ${num(lim)} — осталось ${num(lim-sp)}`});}
+  });
+  // счета в минусе
+  state.accounts.forEach(a=>{const b=accBalance(a.id);if(b<0)list.push({ic:'📉',bg:'var(--expense-soft)',t1:'Минус на счёте: '+a.name,t2:'Баланс '+(b<0?'−':'')+fmtCur(Math.abs(b),a.currency||state.currency)});});
+  return list;
+}
+function renderHeader(){
+  const av=$('#avatarBtn');if(!av)return;
+  av.style.cssText=avatarStyle();av.textContent=avatarInner();
+  const n=notifications().length;
+  $('#bellDot').style.display=n?'block':'none';
+  const sub=$('#updSub');
+  if(curScreen==='scrRecords'){sub.innerHTML=`<span class="live"></span>Обновлено ${relTime(state.updatedAt)}`;sub.style.display='flex';}
+  else sub.style.display='none';
+}
+function openNotif(){
+  const list=notifications();
+  $('#notifList').innerHTML=list.length?list.map(n=>
+    `<div class="notif"><div class="ni" style="background:${n.bg}">${n.ic}</div>
+      <div><div class="nt1">${n.t1}</div><div class="nt2">${n.t2}</div></div></div>`).join('')
+    :`<div class="notif-empty"><div class="big">🔔</div><p>Уведомлений нет.<br>Здесь появятся превышения бюджетов и минусы по счетам.</p></div>`;
+  $('#notifOverlay').classList.add('show');
+}
+function openProfile(){
+  $('#profAvatar').style.cssText=avatarStyle();$('#profAvatar').textContent=avatarInner();
+  $('#profName').value=state.profileName||'';
+  $('#profThemeLbl').textContent=state.theme==='dark'?'🌙 Тёмная тема':'☀️ Светлая тема';
+  $('#profOverlay').classList.add('show');
+}
 
 /* ============ Период ============ */
 function periodRange(){
@@ -590,6 +693,7 @@ function render(){
   renderCharts(list);
   renderBudgets();
   renderAccounts();
+  renderHeader();
 }
 
 /* ============ Главная: капитал, динамика, счета, последние ============ */
@@ -1099,9 +1203,32 @@ $('#periods').querySelectorAll('button').forEach(b=>b.onclick=()=>{period=b.data
 $('#prevP').onclick=()=>shiftPeriod(-1);
 $('#nextP').onclick=()=>shiftPeriod(1);
 
-$('#themeBtn').onclick=()=>{state.theme=state.theme==='dark'?'light':'dark';
-  document.documentElement.setAttribute('data-theme',state.theme);
-  $('#themeBtn').textContent=state.theme==='dark'?'🌙':'☀️';save();render();};
+function toggleTheme(){state.theme=state.theme==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',state.theme);save();render();}
+// Шапка: колокольчик + аватар + профиль
+$('#bellBtn').onclick=openNotif;
+$('#notifClose').onclick=()=>$('#notifOverlay').classList.remove('show');
+$('#notifOverlay').onclick=e=>{if(e.target.id==='notifOverlay')$('#notifOverlay').classList.remove('show');};
+$('#avatarBtn').onclick=openProfile;
+$('#profClose').onclick=()=>$('#profOverlay').classList.remove('show');
+$('#profOverlay').onclick=e=>{if(e.target.id==='profOverlay')$('#profOverlay').classList.remove('show');};
+$('#profName').oninput=e=>{state.profileName=e.target.value;};
+$('#profName').onchange=()=>{save();renderHeader();$('#profAvatar').textContent=avatarInner();};
+$('#profTheme').onclick=()=>{toggleTheme();$('#profThemeLbl').textContent=state.theme==='dark'?'🌙 Тёмная тема':'☀️ Светлая тема';};
+$('#profExport').onclick=()=>{$('#profOverlay').classList.remove('show');exportData();};
+$('#profMore').onclick=()=>{$('#profOverlay').classList.remove('show');showScreen('scrMore');};
+$('#changePhoto').onclick=()=>$('#photoInput').click();
+$('#photoInput').onchange=e=>{const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{
+    // ужимаем фото до 256px чтобы не раздувать localStorage
+    const img=new Image();img.onload=()=>{
+      const sz=256,cv=document.createElement('canvas');cv.width=sz;cv.height=sz;
+      const s=Math.min(img.width,img.height),sx=(img.width-s)/2,sy=(img.height-s)/2;
+      cv.getContext('2d').drawImage(img,sx,sy,s,s,0,0,sz,sz);
+      state.avatar=cv.toDataURL('image/jpeg',0.85);save();renderHeader();
+      $('#profAvatar').style.cssText=avatarStyle();$('#profAvatar').textContent='';toast('Фото обновлено ✓');
+    };img.src=r.result;};
+  r.readAsDataURL(f);e.target.value='';};
 
 $('#curSelect').onchange=e=>{state.currency=e.target.value;save();render();};
 $('#addAccBtn').onclick=()=>openAcc(null);
@@ -1272,7 +1399,7 @@ function importCSV(text){
 }
 $('#demoBtn').onclick=loadDemo;
 $('#clearBtn').onclick=()=>{if(confirm('Удалить все операции?')){state.tx=[];state.budgets={};save();render();toast('Данные удалены');}};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();$('#accOverlay').classList.remove('show');$('#detailOverlay').classList.remove('show');$('#allTxOverlay').classList.remove('show');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Старт ============ */
 load();
