@@ -238,6 +238,7 @@
     <div class="row1">
       <h1><span class="lg">💰</span><span id="screenTitle">Записи</span></h1>
       <div class="acts">
+        <button class="iconbtn" id="exportTop" title="Экспорт данных (JSON)">⬇️</button>
         <button class="iconbtn" id="themeBtn">🌙</button>
       </div>
     </div>
@@ -875,8 +876,15 @@ $('#dNext').onclick=()=>{detailAnchor=new Date(detailAnchor.getFullYear(),detail
 $$('#dSeg button').forEach(b=>b.onclick=()=>{detailType=b.dataset.t;
   $$('#dSeg button').forEach(x=>x.classList.toggle('on',x===b));renderDetail();});
 
-$('#exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='finance-'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('Файл сохранён');};
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='finance-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  toast('Файл сохранён ✓');
+}
+$('#exportBtn').onclick=exportData;
+$('#exportTop').onclick=exportData;
 $('#importBtn').onclick=()=>$('#importFile').click();
 $('#importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d.tx)){state=Object.assign(state,d);save();load();render();toast('Данные загружены');}else toast('Неверный формат');}catch(_){toast('Ошибка чтения');}};
