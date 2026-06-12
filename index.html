@@ -218,6 +218,35 @@
   .btn-del{width:100%;padding:13px;border:1px solid var(--expense);border-radius:13px;background:none;color:var(--expense);
     font-size:14px;font-weight:600;cursor:pointer;margin-top:9px}
 
+  /* ===== Экран Accounts (Screen 3) ===== */
+  .cap-card-lg{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:24px;padding:26px 22px 24px;
+    color:#fff;box-shadow:0 14px 34px rgba(109,93,246,.38);margin-bottom:16px;text-align:center}
+  .cap-card-lg .ccl-label{font-size:14px;opacity:.92;margin-bottom:9px}
+  .cap-card-lg .ccl-value{font-size:46px;font-weight:800;letter-spacing:-1px;line-height:1.05}
+  .cap-card-lg .ccl-sub{font-size:13px;opacity:.85;margin-top:11px}
+  .dist-wrap{display:flex;flex-direction:column;align-items:center;gap:16px}
+  .dist-chart{position:relative;width:200px;height:200px;flex:none}
+  .dist-legend{width:100%;display:flex;flex-direction:column;gap:13px}
+  .dist-leg{display:flex;align-items:center;gap:11px;font-size:14.5px}
+  .dist-leg .d{width:12px;height:12px;border-radius:4px;flex-shrink:0}
+  .dist-leg .n{flex:1;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dist-leg .p{font-weight:800;font-size:15px}
+  .acc2{display:flex;align-items:center;gap:15px;padding:18px 17px;background:var(--card);border:1px solid var(--line);
+    border-radius:18px;margin-bottom:12px;cursor:pointer;box-shadow:var(--shadow);transition:.12s}
+  .acc2:active{transform:scale(.985)}
+  .acc2-ic{width:54px;height:54px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:25px;flex-shrink:0}
+  .acc2-mid{flex:1;min-width:0}
+  .acc2-nm{font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acc2-sub{font-size:13px;color:var(--muted);margin-top:4px}
+  .acc2-right{text-align:right;flex-shrink:0}
+  .acc2-bal{font-size:21px;font-weight:800;white-space:nowrap;letter-spacing:-.3px}
+  .acc2-cur{font-size:12px;color:var(--muted2);margin-top:3px;font-weight:600}
+  .fab-account{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 18px);
+    width:62px;height:62px;border-radius:20px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#fff;font-size:32px;cursor:pointer;box-shadow:0 10px 28px rgba(109,93,246,.5);z-index:25;
+    display:flex;align-items:center;justify-content:center;transition:.15s}
+  .fab-account:active{transform:scale(.92)}
+
   /* ===== Шапка: аватар + уведомления ===== */
   .brand{display:flex;flex-direction:column;gap:1px;min-width:0}
   .subtitle{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;padding-left:1px}
@@ -380,10 +409,23 @@
     <div id="budList"></div>
   </div>
 
-  <!-- Screen: Accounts (вкладка) -->
+  <!-- Screen: Accounts (Product Book Screen 3) -->
   <div class="screen" id="scrAccounts">
+    <div class="cap-card-lg">
+      <div class="ccl-label">Общий капитал</div>
+      <div class="ccl-value" id="accTotalCapital">€0</div>
+      <div class="ccl-sub" id="accCapitalSub">—</div>
+    </div>
+    <div class="panel">
+      <h3 style="margin-bottom:14px">Распределение капитала</h3>
+      <div class="dist-wrap">
+        <div class="dist-chart"><canvas id="distChart"></canvas></div>
+        <div class="dist-legend" id="distLegend"></div>
+      </div>
+    </div>
+    <div class="sec-head"><span>Мои счета</span></div>
     <div id="accList"></div>
-    <button class="addline" id="addAccBtn">＋ Добавить счёт</button>
+    <button class="fab-account" id="addAccBtn" title="Добавить счёт">＋</button>
   </div>
 
   <!-- Screen: Settings (через меню аватара) -->
@@ -687,7 +729,7 @@ function render(){
   updateHome(list,inc,exp);
   renderCharts(list);
   renderBudgets();
-  renderAccounts();
+  renderAccountsScreen();
   renderHeader();
 }
 
@@ -930,17 +972,48 @@ function renderBudgets(){
 
 // UI-обёртки над AF.Services.Account (логика — в services/account_service.js)
 function accBalance(accId,endDate){return AF.Services.Account.balance(state,accId,endDate);}
+const ACC_TYPE_LABEL={bank:'Банковский счёт',cash:'Наличные',savings:'Сбережения',investment:'Инвестиции',crypto:'Криптокошелёк'};
+function curCode(cur){return ({'€':'EUR','$':'USD','₽':'RUB','£':'GBP','₸':'KZT','₴':'UAH'})[cur]||cur;}
+function plural(n,one,few,many){const a=n%10,b=n%100;if(a===1&&b!==11)return one;if(a>=2&&a<=4&&(b<10||b>=20))return few;return many;}
+
+// Экран Accounts (Screen 3): капитал + распределение + список
+function renderAccountsScreen(){
+  $('#accTotalCapital').textContent=num(totalCapital());
+  const active=AF.Services.Account.active(state);
+  $('#accCapitalSub').textContent=active.length+' '+plural(active.length,'счёт','счёта','счетов');
+  renderDistChart();
+  renderAccounts();
+}
+let distChart;
+function renderDistChart(){
+  const dist=AF.Services.Account.distribution(state).filter(d=>d.balance>0).sort((a,b)=>b.balance-a.balance);
+  if(distChart)distChart.destroy();
+  distChart=new Chart($('#distChart'),{type:'doughnut',
+    data:{labels:dist.map(d=>d.account.name),datasets:[{data:dist.length?dist.map(d=>d.balance):[1],
+      backgroundColor:dist.length?dist.map(d=>d.account.color||'#6d5df6'):['#eceef4'],borderWidth:0}]},
+    options:{cutout:'62%',maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{enabled:dist.length>0,callbacks:{label:c=>' '+num(c.raw)}}}}});
+  $('#distLegend').innerHTML=dist.length?dist.map(d=>
+    `<div class="dist-leg"><span class="d" style="background:${d.account.color||'#6d5df6'}"></span>
+      <span class="n">${esc(d.account.name)}</span><span class="p">${Math.round(d.share)}%</span></div>`).join('')
+    :`<div style="color:var(--muted2);font-size:13px">Нет положительных балансов</div>`;
+}
 function renderAccounts(){
   const el=$('#accList');
-  el.innerHTML=state.accounts.map(a=>{
-    const bal=accBalance(a.id);const cur=a.currency||state.currency;
-    return `<div class="acc" data-acc="${a.id}">
-      <div class="em" style="background:var(--accent-soft)">${a.emoji}</div>
-      <div class="nm">${esc(a.name)}</div>
-      <div class="bal" style="color:${bal>=0?'var(--text)':'var(--expense)'}">${(bal<0?'−':'')+fmtCur(Math.abs(bal),cur)}</div>
+  const list=AF.Services.Account.active(state);
+  el.innerHTML=list.map(a=>{
+    const bal=accBalance(a.id),cur=a.currency||state.currency,share=AF.Services.Account.share(state,a.id);
+    const sub=(ACC_TYPE_LABEL[a.type]||'Счёт')+(share>0?' · '+Math.round(share)+'% капитала':'');
+    return `<div class="acc2" data-acc="${a.id}">
+      <div class="acc2-ic" style="background:${(a.color||'#6d5df6')}1f">${a.emoji}</div>
+      <div class="acc2-mid"><div class="acc2-nm">${esc(a.name)}</div><div class="acc2-sub">${sub}</div></div>
+      <div class="acc2-right">
+        <div class="acc2-bal" style="color:${bal<0?'var(--expense)':'var(--text)'}">${(bal<0?'−':'')+fmtCur(Math.abs(bal),cur)}</div>
+        <div class="acc2-cur">${curCode(cur)}</div>
+      </div>
     </div>`;
   }).join('');
-  $$('#accList .acc').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
+  $$('#accList .acc2').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
 }
 
 /* ============ Asset Graph: детали счёта ============ */
