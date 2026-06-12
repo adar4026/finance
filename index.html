@@ -168,6 +168,7 @@
   .seg button{flex:1;border:none;background:none;padding:11px;border-radius:10px;color:var(--muted);font-size:14.5px;font-weight:600;cursor:pointer;transition:.15s}
   .seg button.on-exp{background:var(--expense);color:#fff}
   .seg button.on-inc{background:var(--income);color:#fff}
+  .seg button.on-trans{background:var(--accent);color:#fff}
   .display{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;
     display:flex;align-items:center;justify-content:space-between;min-height:60px}
   .display .cur{font-size:20px;color:var(--muted);font-weight:700}
@@ -331,11 +332,16 @@
     <div class="seg">
       <button id="segExp" class="on-exp">Расход</button>
       <button id="segInc">Доход</button>
+      <button id="segTrans">Перевод</button>
     </div>
     <div class="display"><span class="cur" id="dispCur">€</span><span class="num" id="dispNum">0</span></div>
     <div class="cat-strip" id="catStrip"></div>
+    <div class="metarow" id="transRow" style="display:none">
+      <div class="m"><label>Со счёта</label><select id="fFrom"></select></div>
+      <div class="m"><label>На счёт</label><select id="fTo"></select></div>
+    </div>
     <div class="metarow">
-      <div class="m"><label>Счёт</label><select id="fAccount"></select></div>
+      <div class="m" id="accField"><label>Счёт</label><select id="fAccount"></select></div>
       <div class="m"><label>Дата</label><input type="date" id="fDate"></div>
     </div>
     <div class="field" style="margin-bottom:12px">
@@ -448,6 +454,9 @@ let detailAcc=null, detailAnchor=new Date(), detailType='expense', lineChart;
 const $=s=>document.querySelector(s);
 const $$=s=>document.querySelectorAll(s);
 const num=n=>state.currency+Number(n).toLocaleString('ru-RU',{maximumFractionDigits:2});
+const CUR_SYM={EUR:'€',USD:'$',RUB:'₽',GBP:'£',KZT:'₸',UAH:'₴',PLN:'zł'};
+const fmtCur=(n,cur)=>{cur=cur||state.currency;const v=Number(n).toLocaleString('ru-RU',{maximumFractionDigits:2});
+  const sym=CUR_SYM[cur];return sym?sym+v:(CUR_SYM[cur]===undefined&&cur.length<=2?cur+v:v+' '+cur);};
 const signed=(n,t)=>(t==='income'?'+':'−')+state.currency+Math.abs(n).toLocaleString('ru-RU',{maximumFractionDigits:2});
 
 /* ============ Хранилище + миграция ============ */
@@ -531,7 +540,7 @@ function renderTx(list){
   const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
   el.innerHTML=days.map(day=>{
     const items=byDay[day].sort((a,b)=>b.id-a.id);
-    const net=items.reduce((s,t)=>s+(t.type==='income'?t.amount:-t.amount),0);
+    const net=items.reduce((s,t)=>s+(t.type==='transfer'?0:(t.type==='income'?t.amount:-t.amount)),0);
     const dd=new Date(day);
     const dl=dd.toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'});
     return `<div class="daygroup">
@@ -543,6 +552,20 @@ function renderTx(list){
   $$('#txList .tx').forEach(r=>r.onclick=()=>openSheet(r.dataset.id));
 }
 function txRow(t){
+  if(t.type==='transfer'){
+    const from=state.accounts.find(a=>a.id===t.from), to=state.accounts.find(a=>a.id===t.to);
+    const fc=(from&&from.currency)||state.currency, tc=(to&&to.currency)||state.currency;
+    const cross=(t.toAmount!=null&&Math.abs(t.toAmount-t.amount)>0.001)||fc!==tc;
+    const amtTxt=cross
+      ? fmtCur(t.amount,fc)+' → '+fmtCur(t.toAmount!=null?t.toAmount:t.amount,tc)
+      : fmtCur(t.amount,fc);
+    return `<div class="tx" data-id="${t.id}">
+      <div class="em" style="background:var(--accent-soft)">🔄</div>
+      <div class="info"><div class="t1">Перевод</div>
+        <div class="t2">${from?esc(from.name):'?'} → ${to?esc(to.name):'?'}${t.note?' · '+esc(t.note):''}</div></div>
+      <div class="amt" style="color:var(--muted)">${amtTxt}</div>
+    </div>`;
+  }
   const c=catById(t.cat);
   const acc=state.accounts.find(a=>a.id===t.account);
   return `<div class="tx" data-id="${t.id}">
@@ -627,14 +650,24 @@ function renderBudgets(){
   });
 }
 
+// баланс счёта (с учётом доходов, расходов и переводов) на дату endDate (или на текущий момент)
+function accBalance(accId,endDate){
+  const a=state.accounts.find(x=>x.id===accId);let b=a?(a.start||0):0;
+  state.tx.forEach(t=>{
+    if(endDate&&new Date(t.date)>endDate)return;
+    if(t.type==='transfer'){ if(t.from===accId)b-=t.amount; if(t.to===accId)b+=(t.toAmount!=null?t.toAmount:t.amount); }
+    else if(t.account===accId){ b+=(t.type==='income'?t.amount:-t.amount); }
+  });
+  return b;
+}
 function renderAccounts(){
   const el=$('#accList');
   el.innerHTML=state.accounts.map(a=>{
-    const bal=a.start+state.tx.filter(t=>t.account===a.id).reduce((s,t)=>s+(t.type==='income'?t.amount:-t.amount),0);
+    const bal=accBalance(a.id);const cur=a.currency||state.currency;
     return `<div class="acc" data-acc="${a.id}">
       <div class="em" style="background:var(--accent-soft)">${a.emoji}</div>
       <div class="nm">${esc(a.name)}</div>
-      <div class="bal" style="color:${bal>=0?'var(--text)':'var(--expense)'}">${(bal<0?'−':'')+num(Math.abs(bal))}</div>
+      <div class="bal" style="color:${bal>=0?'var(--text)':'var(--expense)'}">${(bal<0?'−':'')+fmtCur(Math.abs(bal),cur)}</div>
     </div>`;
   }).join('');
   $$('#accList .acc').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
@@ -656,11 +689,7 @@ const vLabels={id:'vlabels',afterDatasetsDraw(chart){
     ctx.fillText(Math.round(v).toLocaleString('ru-RU'),pt.x,pt.y-9);});
   ctx.restore();
 }};
-function accBalanceAt(accId,endDate){
-  const a=state.accounts.find(x=>x.id===accId);
-  return (a?a.start:0)+state.tx.filter(t=>t.account===accId&&new Date(t.date)<=endDate)
-    .reduce((s,t)=>s+(t.type==='income'?t.amount:-t.amount),0);
-}
+function accBalanceAt(accId,endDate){ return accBalance(accId,endDate); }
 function openAccountGraph(id){
   detailAcc=id; detailAnchor=new Date(anchor); detailType='expense';
   $$('#dSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t==='expense'));
@@ -678,7 +707,8 @@ function renderDetail(){
     labels.push(d.toLocaleDateString('ru-RU',{month:'short'}));
     data.push(Math.round(accBalanceAt(detailAcc,d)*100)/100);
   }
-  $('#dBal').textContent=(data[5]<0?'−':'')+num(Math.abs(data[5]));
+  const aCur=a.currency||state.currency;
+  $('#dBal').textContent=(data[5]<0?'−':'')+fmtCur(Math.abs(data[5]),aCur);
   const css=getComputedStyle(document.documentElement);
   const txc=css.getPropertyValue('--text').trim(),muted=css.getPropertyValue('--muted').trim(),grid=css.getPropertyValue('--line').trim();
   if(lineChart)lineChart.destroy();
@@ -698,14 +728,14 @@ function renderDetail(){
   const entries=Object.entries(byCat).sort((x,y)=>y[1]-x[1]);
   const total=entries.reduce((s,e)=>s+e[1],0);
   const lbl=detailType==='expense'?'Расходы':'Доходы';
-  let html=`<div class="brkhead"><span>${lbl}</span><span class="tt" style="color:${detailType==='expense'?'var(--expense)':'var(--income)'}">${num(total)}</span></div>`;
+  let html=`<div class="brkhead"><span>${lbl}</span><span class="tt" style="color:${detailType==='expense'?'var(--expense)':'var(--income)'}">${fmtCur(total,aCur)}</span></div>`;
   if(!entries.length)html+=`<div style="text-align:center;color:var(--muted2);font-size:13px;padding:24px">Нет операций за месяц</div>`;
   else html+=entries.map(e=>{const c=catById(e[0]);const p=Math.round(e[1]/total*100);
     return `<div class="brk">
       <span class="pct-badge" style="background:${pctColor(p)}">${p}%</span>
       <span class="be" style="background:${c.color}22">${c.emoji}</span>
       <span class="bn">${c.name}</span>
-      <span class="bv ${detailType==='expense'?'exp':'inc'}">${num(e[1])}</span></div>`;}).join('');
+      <span class="bv ${detailType==='expense'?'exp':'inc'}">${fmtCur(e[1],aCur)}</span></div>`;}).join('');
   $('#dBreakdown').innerHTML=html;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
@@ -727,31 +757,39 @@ function showScreen(id){
 /* ============ Калькулятор / лист добавления ============ */
 function openSheet(id){
   editId=id||null;
+  buildAccountSelect();
   if(id){
     const t=state.tx.find(x=>x.id==id);
-    aType=t.type;aExpr=String(t.amount);aCat=t.cat;
+    aType=t.type;aExpr=String(t.amount);aCat=t.cat||CATS.expense[0].id;
     $('#fDate').value=t.date.slice(0,10);$('#fNote').value=t.note||'';
-    $('#fAccount').value=t.account;
+    if(t.type==='transfer'){$('#fFrom').value=t.from;$('#fTo').value=t.to;}
+    else $('#fAccount').value=t.account;
     $('#delBtn').style.display='block';
   }else{
     aType='expense';aExpr='0';aCat=CATS.expense[0].id;
     $('#fDate').value=new Date().toISOString().slice(0,10);$('#fNote').value='';
     $('#delBtn').style.display='none';
   }
-  buildAccountSelect();
-  if(id)$('#fAccount').value=state.tx.find(x=>x.id==id).account;
   setType(aType,true);
   updateDisplay();
   $('#overlay').classList.add('show');
 }
 function closeSheet(){$('#overlay').classList.remove('show');}
 function buildAccountSelect(){
-  $('#fAccount').innerHTML=state.accounts.map(a=>`<option value="${a.id}">${a.emoji} ${esc(a.name)}</option>`).join('');
+  const opts=state.accounts.map(a=>`<option value="${a.id}">${a.emoji} ${esc(a.name)}</option>`).join('');
+  $('#fAccount').innerHTML=opts;$('#fFrom').innerHTML=opts;$('#fTo').innerHTML=opts;
+  if(state.accounts[1])$('#fTo').value=state.accounts[1].id;
 }
 function setType(t,keepCat){
   aType=t;
   $('#segExp').className=t==='expense'?'on-exp':'';
   $('#segInc').className=t==='income'?'on-inc':'';
+  $('#segTrans').className=t==='transfer'?'on-trans':'';
+  const isT=t==='transfer';
+  $('#transRow').style.display=isT?'flex':'none';
+  $('#catStrip').style.display=isT?'none':'flex';
+  $('#accField').style.display=isT?'none':'block';
+  if(isT)return;
   const cats=catsFor(t);
   if(!keepCat)aCat=cats[0].id;
   else if(!cats.find(c=>c.id===aCat))aCat=cats[0].id;
@@ -788,16 +826,25 @@ function key(k){
 function saveTx(){
   const val=evalExpr(aExpr);
   if(!val||val<=0){toast('Введите сумму');return;}
-  if(editId){
+  const date=$('#fDate').value||new Date().toISOString().slice(0,10);
+  const note=$('#fNote').value.trim();
+  if(aType==='transfer'){
+    const from=$('#fFrom').value, to=$('#fTo').value;
+    if(from===to){toast('Выберите разные счета');return;}
+    if(editId){const t=state.tx.find(x=>x.id==editId);
+      delete t.cat;delete t.account;
+      Object.assign(t,{type:'transfer',from,to,amount:val,toAmount:val,date,note});}
+    else state.tx.push({id:Date.now(),type:'transfer',from,to,amount:val,toAmount:val,date,note});
+  }else if(editId){
     const t=state.tx.find(x=>x.id==editId);
-    Object.assign(t,{type:aType,amount:val,cat:aCat,account:$('#fAccount').value,date:$('#fDate').value,note:$('#fNote').value.trim()});
+    delete t.from;delete t.to;delete t.toAmount;
+    Object.assign(t,{type:aType,amount:val,cat:aCat,account:$('#fAccount').value,date,note});
   }else{
-    state.tx.push({id:Date.now(),type:aType,amount:val,cat:aCat,account:$('#fAccount').value,
-      date:$('#fDate').value||new Date().toISOString().slice(0,10),note:$('#fNote').value.trim()});
+    state.tx.push({id:Date.now(),type:aType,amount:val,cat:aCat,account:$('#fAccount').value,date,note});
   }
   save();closeSheet();
-  anchor=new Date($('#fDate').value);render();
-  toast(editId?'Сохранено ✓':(aType==='income'?'Доход добавлен ✓':'Расход добавлен ✓'));
+  anchor=new Date(date);render();buildAccountSelect();
+  toast(editId?'Сохранено ✓':(aType==='transfer'?'Перевод добавлен ✓':aType==='income'?'Доход добавлен ✓':'Расход добавлен ✓'));
 }
 function delTx(){
   if(!editId)return;
@@ -856,6 +903,7 @@ $('#closeSheet').onclick=closeSheet;
 $('#overlay').onclick=e=>{if(e.target.id==='overlay')closeSheet();};
 $('#segExp').onclick=()=>setType('expense');
 $('#segInc').onclick=()=>setType('income');
+$('#segTrans').onclick=()=>setType('transfer');
 $('#saveBtn').onclick=saveTx;
 $('#delBtn').onclick=delTx;
 $$('.keypad button[data-k]').forEach(b=>{const k=b.dataset.k;if(k&&k!=='back-hold')b.onclick=()=>key(k);});
@@ -947,13 +995,13 @@ function ensureCat(name,type){
      emoji:EMOJI_POOL[n%EMOJI_POOL.length], color:COLOR_POOL[n%COLOR_POOL.length]};
   state.cats.push(c);return c.id;
 }
-function ensureAcc(name){
+function ensureAcc(name,currency){
   name=(name||'').trim();
   if(!name)return state.accounts[0].id;
   const norm=name.toLowerCase();
   let a=state.accounts.find(x=>x.name.trim().toLowerCase()===norm);
-  if(a)return a.id;
-  a={id:'a'+Date.now().toString(36)+state.accounts.length, name, emoji:'💳', start:0};
+  if(a){if(currency&&!a.currency)a.currency=currency;return a.id;}
+  a={id:'a'+Date.now().toString(36)+state.accounts.length, name, emoji:'💳', start:0, currency:currency||state.currency};
   state.accounts.push(a);return a.id;
 }
 function importCSV(text){
@@ -961,48 +1009,71 @@ function importCSV(text){
   if(rows.length<2){toast('Файл пустой или не распознан');return;}
   const H=rows[0].map(h=>h.trim().toLowerCase().replace(/^"|"$/g,''));
   const find=cands=>H.findIndex(h=>cands.some(c=>h===c||h.includes(c)));
+  const isTrans=h=>/перевод|transfer|трансфер/.test(h);
+  const findMain=cands=>H.findIndex(h=>!isTrans(h)&&cands.some(c=>h===c||h.includes(c)));
   const iDate=find(['date','fecha','дата','data','день','time']);
-  const iCat =find(['category','categor','категор','rubric']);
-  const iAcc =find(['account','cuenta','счет','счёт','wallet','cartera']);
-  const iNote=find(['note','nota','descrip','comment','коммент','примеч','memo','title','payee']);
-  const iType=find(['type','tipo','тип','income/expense','flow','kind']);
-  const iCur =find(['currency','moneda','валюта']);
-  const iAmt =find(['amount','importe','cantidad','monto','sum','сумма','value','price']);
-  const iIncome=find(['income','ingreso','доход','deposit','credit']);
-  const iExpense=find(['expense','gasto','расход','withdraw','debit']);
+  const iCat =findMain(['category','categor','категор','rubric']);
+  const iNote=findMain(['note','nota','descrip','comment','коммент','примеч','memo']);
+  const iPayee=find(['контрагент','payee','counterparty','beneficiary']);
+  const iPlace=find(['место','place','location','locat']);
+  const iType=findMain(['type','tipo','тип','income/expense','flow','kind']);
+  const iAcc =findMain(['account','cuenta','счет','счёт','wallet','cartera','konto']);
+  const iCur =findMain(['currency','moneda','валюта','divisa']);
+  const iAmt =findMain(['amount','importe','cantidad','monto','sum','сумма','value','price']);
+  const iIncome=findMain(['income','ingreso','доход','deposit','credit']);
+  const iExpense=findMain(['expense','gasto','расход','withdraw','debit']);
+  // колонки перевода между счетами
+  const iTAcc=H.findIndex(h=>isTrans(h)&&/счёт|счет|account|cuenta|wallet/.test(h));
+  const iTAmt=H.findIndex(h=>isTrans(h)&&/сумма|amount|importe|monto/.test(h));
+  const iTCur=H.findIndex(h=>isTrans(h)&&/валюта|currency|moneda/.test(h));
   if(iDate<0||(iAmt<0&&iIncome<0&&iExpense<0)){
     toast('Не нашёл колонки даты/суммы. Пришли файл — настрою.');
     console.warn('CSV header:',H);return;
   }
   const get=(r,i)=>i>=0&&i<r.length?r[i].trim():'';
+  const noteOf=r=>[get(r,iPayee),get(r,iPlace),get(r,iNote)].filter(Boolean).join(' · ');
   const added=[];let skipped=0;
   for(let k=1;k<rows.length;k++){
-    const r=rows[k];
+    const r=rows[k];if(!r.some(x=>x.trim()))continue;
     const date=parseDate(get(r,iDate));
     if(!date){skipped++;continue;}
+    const note=noteOf(r);
+    const mainAmt=iAmt>=0?parseAmount(get(r,iAmt)):NaN;
+    const tAccName=get(r,iTAcc), tAmtRaw=get(r,iTAmt);
+    // ===== ПЕРЕВОД между счетами =====
+    if(tAccName&&tAmtRaw!==''){
+      const tAmt=parseAmount(tAmtRaw);
+      const mainCur=get(r,iCur)||state.currency, tCur=get(r,iTCur)||mainCur, mainName=get(r,iAcc);
+      let from,fromAmt,fromCur,to,toAmt,toCur;
+      if(!isNaN(mainAmt)&&mainAmt<0){from=mainName;fromAmt=-mainAmt;fromCur=mainCur;to=tAccName;toAmt=Math.abs(tAmt);toCur=tCur;}
+      else{from=tAccName;fromAmt=Math.abs(tAmt);fromCur=tCur;to=mainName;toAmt=Math.abs(mainAmt);toCur=mainCur;}
+      if(!(fromAmt>0)&&!(toAmt>0)){skipped++;continue;}
+      added.push({id:Date.now()+Math.random()+k,type:'transfer',
+        from:ensureAcc(from,fromCur),to:ensureAcc(to,toCur),
+        amount:Math.round(fromAmt*100)/100,toAmount:Math.round(toAmt*100)/100,date,note});
+      continue;
+    }
+    // ===== ДОХОД / РАСХОД =====
     let amount,type;
     if(iAmt>=0){
-      amount=parseAmount(get(r,iAmt));
-      if(isNaN(amount)){skipped++;continue;}
+      if(isNaN(mainAmt)){skipped++;continue;}
       if(iType>=0){const tv=get(r,iType).toLowerCase();
-        type=/ingres|income|доход|deposit|credit|\+/.test(tv)?'income':'expense';}
-      else type=amount<0?'expense':'income';
-      amount=Math.abs(amount);
+        type=/ingres|income|доход|deposit|credit/.test(tv)?'income':/gasto|expense|расход|debit|withdraw/.test(tv)?'expense':(mainAmt<0?'expense':'income');}
+      else type=mainAmt<0?'expense':'income';
+      amount=Math.abs(mainAmt);
     }else{
-      const inc=iIncome>=0?parseAmount(get(r,iIncome)):NaN;
-      const exp=iExpense>=0?parseAmount(get(r,iExpense)):NaN;
+      const inc=iIncome>=0?parseAmount(get(r,iIncome)):NaN, exp=iExpense>=0?parseAmount(get(r,iExpense)):NaN;
       if(!isNaN(exp)&&Math.abs(exp)>0){type='expense';amount=Math.abs(exp);}
       else if(!isNaN(inc)&&Math.abs(inc)>0){type='income';amount=Math.abs(inc);}
       else{skipped++;continue;}
     }
     if(!amount||amount<=0){skipped++;continue;}
-    added.push({id:Date.now()+Math.random()+k, type, amount:Math.round(amount*100)/100,
-      cat:ensureCat(get(r,iCat),type), account:ensureAcc(get(r,iAcc)),
-      date, note:get(r,iNote)});
+    added.push({id:Date.now()+Math.random()+k,type,amount:Math.round(amount*100)/100,
+      cat:ensureCat(get(r,iCat),type),account:ensureAcc(get(r,iAcc),get(r,iCur)),date,note});
   }
   if(!added.length){toast('Не удалось распознать операции');return;}
-  const cur=iCur>=0?get(rows[1],iCur):'';
-  let msg=`Распознано операций: ${added.length}`+(skipped?` (пропущено ${skipped})`:'')+`.\nДобавить к текущим данным?`;
+  const nT=added.filter(t=>t.type==='transfer').length, nIE=added.length-nT;
+  let msg=`Распознано операций: ${added.length}\n• переводов: ${nT}\n• доходов/расходов: ${nIE}`+(skipped?`\n• пропущено: ${skipped}`:'')+`\n\nДобавить к текущим данным?`;
   if(!confirm(msg))return;
   added.forEach(t=>state.tx.push(t));
   save();
