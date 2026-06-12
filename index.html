@@ -340,15 +340,6 @@
       </div>
     </div>
 
-    <div class="panel">
-      <h3 style="margin-bottom:10px">Динамика капитала</h3>
-      <div class="ranges" id="capRanges">
-        <button data-r="7d">7Д</button><button data-r="1m" class="on">1М</button><button data-r="3m">3М</button>
-        <button data-r="6m">6М</button><button data-r="1y">1Г</button><button data-r="all">Всё</button>
-      </div>
-      <div class="chart-box tall"><canvas id="capChart"></canvas></div>
-    </div>
-
     <div class="sec-head"><span>Счета</span><a id="toAccounts">Все счета ›</a></div>
     <div class="acc-strip" id="accStrip"></div>
 
@@ -714,7 +705,6 @@ function updateHome(list,inc,exp){
   $('#capIncN').textContent=list.filter(t=>t.type==='income').length+' опер.';
   $('#capExpN').textContent=list.filter(t=>t.type==='expense').length+' опер.';
   $('#capCur').textContent=({'€':'EUR','$':'USD','₽':'RUB','£':'GBP'}[state.currency])||state.currency;
-  renderCapChart();
   renderAccStrip();
   renderRecent(list);
 }
