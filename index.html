@@ -64,8 +64,8 @@
   .topbar h1 .lg{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));
     display:flex;align-items:center;justify-content:center;font-size:15px}
   .topbar .acts{display:flex;gap:7px}
-  .iconbtn{width:36px;height:36px;border:none;border-radius:10px;background:var(--card);color:var(--text);
-    cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);transition:.15s}
+  .iconbtn{width:42px;height:42px;border:none;border-radius:12px;background:var(--card);color:var(--text);
+    cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);transition:.15s}
   .iconbtn:active{transform:scale(.92)}
 
   /* period segmented */
@@ -380,12 +380,14 @@
     <div id="budList"></div>
   </div>
 
-  <!-- Screen: More (accounts + settings) -->
-  <div class="screen" id="scrMore">
-    <h3 style="font-size:14px;color:var(--muted);margin:4px 4px 12px">Счета</h3>
+  <!-- Screen: Accounts (вкладка) -->
+  <div class="screen" id="scrAccounts">
     <div id="accList"></div>
-    <button class="addline" id="addAccBtn" style="margin-bottom:22px">＋ Добавить счёт</button>
+    <button class="addline" id="addAccBtn">＋ Добавить счёт</button>
+  </div>
 
+  <!-- Screen: Settings (через меню аватара) -->
+  <div class="screen" id="scrMore">
     <h3 style="font-size:14px;color:var(--muted);margin:4px 4px 12px">Настройки</h3>
     <div class="setrow">
       <span>Валюта</span>
@@ -408,9 +410,9 @@
 <div class="nav">
   <button class="on" data-s="scrRecords"><span class="ic">🏠</span>Главная</button>
   <button data-s="scrCharts"><span class="ic">📊</span>Аналитика</button>
-  <button class="addbtn" id="addBtn"><span class="plus">+</span></button>
+  <button class="addbtn" id="addBtn" title="Добавить операцию"><span class="plus">+</span></button>
+  <button data-s="scrAccounts"><span class="ic">💳</span>Счета</button>
   <button data-s="scrBudgets"><span class="ic">🎯</span>Бюджет</button>
-  <button data-s="scrMore"><span class="ic">⚙️</span>Ещё</button>
 </div>
 
 <!-- Add / edit sheet -->
@@ -1013,12 +1015,12 @@ function showScreen(id){
   curScreen=id;
   $$('.screen').forEach(s=>s.classList.toggle('active',s.id===id));
   $$('.nav button[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
-  const titles={scrRecords:'Главная',scrCharts:'Аналитика',scrBudgets:'Бюджет',scrMore:'Ещё'};
+  const titles={scrRecords:'Главная',scrCharts:'Аналитика',scrAccounts:'Счета',scrBudgets:'Бюджет',scrMore:'Настройки'};
   $('#screenTitle').textContent=titles[id];
-  // период скрываем на «Ещё»
-  $('.periods').style.display=id==='scrMore'?'none':'flex';
-  $('#navrow').style.display=(id==='scrMore'||period==='all')?(id==='scrMore'?'none':'flex'):'flex';
-  if(id==='scrMore')$('#navrow').style.display='none';
+  // период не нужен на «Счета» и «Настройки»
+  const noPeriod=(id==='scrMore'||id==='scrAccounts');
+  $('.periods').style.display=noPeriod?'none':'flex';
+  $('#navrow').style.display=(noPeriod||period==='all')?'none':'flex';
   render();
 }
 
@@ -1169,7 +1171,7 @@ $$('.nav button[data-s]').forEach(b=>b.onclick=()=>showScreen(b.dataset.s));
 // Главная: диапазоны динамики капитала + ссылки
 $$('#capRanges button').forEach(b=>b.onclick=()=>{homeRange=b.dataset.r;
   $$('#capRanges button').forEach(x=>x.classList.toggle('on',x===b));renderCapChart();});
-$('#toAccounts').onclick=()=>showScreen('scrMore');
+$('#toAccounts').onclick=()=>showScreen('scrAccounts');
 $('#toAllTx').onclick=openAllTx;
 $('#allTxClose').onclick=()=>$('#allTxOverlay').classList.remove('show');
 $('#allTxOverlay').onclick=e=>{if(e.target.id==='allTxOverlay')$('#allTxOverlay').classList.remove('show');};
