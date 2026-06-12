@@ -202,6 +202,29 @@
   .btn-del{width:100%;padding:13px;border:1px solid var(--expense);border-radius:13px;background:none;color:var(--expense);
     font-size:14px;font-weight:600;cursor:pointer;margin-top:9px}
 
+  /* ===== Asset Graph (детали счёта) ===== */
+  .detail-sheet{background:var(--bg);width:100%;max-width:560px;height:100%;max-height:100vh;border-radius:0;
+    padding:max(14px,env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));overflow-y:auto;animation:fade .2s}
+  .detail-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .detail-top .nm{font-size:18px;font-weight:700;display:flex;align-items:center;gap:9px}
+  .detail-top .nm .em{width:32px;height:32px;border-radius:10px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:16px}
+  .detail-top .r{display:flex;gap:7px}
+  .detail-bal{text-align:center;margin:8px 0 4px}
+  .detail-bal .l{font-size:12px;color:var(--muted)}
+  .detail-bal .v{font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:2px}
+  .brkhead{display:flex;justify-content:space-between;align-items:center;padding:14px 4px 12px;font-size:13.5px;color:var(--muted);border-bottom:1px solid var(--line);margin-top:6px}
+  .brkhead .tt{color:var(--expense);font-weight:700;font-size:15px}
+  .brk{display:flex;align-items:center;gap:11px;padding:13px 4px;border-bottom:1px solid var(--line)}
+  .brk:last-child{border-bottom:none}
+  .pct-badge{min-width:44px;text-align:center;padding:4px 6px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+  .brk .be{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px}
+  .brk .bn{flex:1;font-size:14.5px;font-weight:600}
+  .brk .bv{font-weight:700;font-size:14.5px}
+  .brk .bv.exp{color:var(--expense)} .brk .bv.inc{color:var(--income)}
+  .seg-ie{display:flex;gap:7px;margin:14px 0 4px}
+  .seg-ie button{flex:1;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer}
+  .seg-ie button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
   .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);
     color:var(--bg);padding:12px 20px;border-radius:12px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;
     transition:.25s;z-index:90}
@@ -342,6 +365,31 @@
   </div>
 </div>
 
+<!-- Asset Graph: детали счёта -->
+<div class="overlay" id="detailOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top">
+      <div class="nm"><span class="em" id="dEm">💳</span><span id="dName">Счёт</span></div>
+      <div class="r">
+        <button class="iconbtn" id="dEdit">✏️</button>
+        <button class="iconbtn" id="dClose">×</button>
+      </div>
+    </div>
+    <div class="navrow" style="margin-top:6px">
+      <button id="dPrev">‹</button>
+      <div class="lbl" id="dPeriod">—</div>
+      <button id="dNext">›</button>
+    </div>
+    <div class="detail-bal"><div class="l">Баланс счёта на конец месяца</div><div class="v" id="dBal">€0</div></div>
+    <div class="panel" style="margin-top:10px"><div class="chart-box tall"><canvas id="lineChart"></canvas></div></div>
+    <div class="seg-ie" id="dSeg">
+      <button class="on" data-t="expense">Расходы</button>
+      <button data-t="income">Доходы</button>
+    </div>
+    <div id="dBreakdown"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -388,6 +436,8 @@ let curScreen='scrRecords';
 let aType='expense', aCat='food', aExpr='0', editId=null;
 // account editor
 let accEdit=null, accEmoji='💳';
+// asset graph detail
+let detailAcc=null, detailAnchor=new Date(), detailType='expense', lineChart;
 
 const $=s=>document.querySelector(s);
 const $$=s=>document.querySelectorAll(s);
@@ -580,7 +630,76 @@ function renderAccounts(){
       <div class="bal" style="color:${bal>=0?'var(--text)':'var(--expense)'}">${(bal<0?'−':'')+num(Math.abs(bal))}</div>
     </div>`;
   }).join('');
-  $$('#accList .acc').forEach(r=>r.onclick=()=>openAcc(r.dataset.acc));
+  $$('#accList .acc').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
+}
+
+/* ============ Asset Graph: детали счёта ============ */
+function pctColor(p){
+  if(p>=50)return '#e8503a'; if(p>=25)return '#ff922b'; if(p>=10)return '#fcc419';
+  if(p>=1)return '#a9e34b'; return '#51cf66';
+}
+// плагин: подписи значений над точками линии
+const vLabels={id:'vlabels',afterDatasetsDraw(chart){
+  const m=chart.getDatasetMeta(0);if(!m||!m.data)return;
+  const ctx=chart.ctx;const css=getComputedStyle(document.documentElement);
+  ctx.save();ctx.font='600 10px -apple-system,system-ui,sans-serif';
+  ctx.fillStyle=css.getPropertyValue('--muted').trim();ctx.textAlign='center';
+  m.data.forEach((pt,i)=>{const v=chart.data.datasets[0].data[i];
+    if(v===null||v===undefined)return;
+    ctx.fillText(Math.round(v).toLocaleString('ru-RU'),pt.x,pt.y-9);});
+  ctx.restore();
+}};
+function accBalanceAt(accId,endDate){
+  const a=state.accounts.find(x=>x.id===accId);
+  return (a?a.start:0)+state.tx.filter(t=>t.account===accId&&new Date(t.date)<=endDate)
+    .reduce((s,t)=>s+(t.type==='income'?t.amount:-t.amount),0);
+}
+function openAccountGraph(id){
+  detailAcc=id; detailAnchor=new Date(anchor); detailType='expense';
+  $$('#dSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t==='expense'));
+  $('#detailOverlay').classList.add('show');
+  renderDetail();
+}
+function renderDetail(){
+  const a=state.accounts.find(x=>x.id===detailAcc);if(!a)return;
+  $('#dEm').textContent=a.emoji;$('#dName').textContent=a.name;
+  $('#dPeriod').textContent=detailAnchor.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+  // линия: баланс на конец каждого из 6 месяцев
+  const labels=[],data=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(detailAnchor.getFullYear(),detailAnchor.getMonth()-i+1,0,23,59,59);
+    labels.push(d.toLocaleDateString('ru-RU',{month:'short'}));
+    data.push(Math.round(accBalanceAt(detailAcc,d)*100)/100);
+  }
+  $('#dBal').textContent=(data[5]<0?'−':'')+num(Math.abs(data[5]));
+  const css=getComputedStyle(document.documentElement);
+  const txc=css.getPropertyValue('--text').trim(),muted=css.getPropertyValue('--muted').trim(),grid=css.getPropertyValue('--line').trim();
+  if(lineChart)lineChart.destroy();
+  lineChart=new Chart($('#lineChart'),{type:'line',
+    data:{labels,datasets:[{data,borderColor:txc,backgroundColor:txc,tension:0,
+      pointRadius:4,pointBackgroundColor:css.getPropertyValue('--bg').trim(),pointBorderColor:txc,pointBorderWidth:2,borderWidth:2}]},
+    options:{maintainAspectRatio:false,layout:{padding:{top:18,right:8,left:4}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>num(c.raw)}}},
+      scales:{x:{grid:{display:false},ticks:{color:muted}},
+        y:{grid:{color:grid},ticks:{color:muted,callback:v=>v>=1000||v<=-1000?(v/1000)+'k':v}}}},
+    plugins:[vLabels]});
+  // разбивка по категориям за месяц
+  const from=new Date(detailAnchor.getFullYear(),detailAnchor.getMonth(),1);
+  const to=new Date(detailAnchor.getFullYear(),detailAnchor.getMonth()+1,0,23,59,59);
+  const items=state.tx.filter(t=>t.account===detailAcc&&t.type===detailType&&new Date(t.date)>=from&&new Date(t.date)<=to);
+  const byCat={};items.forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+t.amount);
+  const entries=Object.entries(byCat).sort((x,y)=>y[1]-x[1]);
+  const total=entries.reduce((s,e)=>s+e[1],0);
+  const lbl=detailType==='expense'?'Расходы':'Доходы';
+  let html=`<div class="brkhead"><span>${lbl}</span><span class="tt" style="color:${detailType==='expense'?'var(--expense)':'var(--income)'}">${num(total)}</span></div>`;
+  if(!entries.length)html+=`<div style="text-align:center;color:var(--muted2);font-size:13px;padding:24px">Нет операций за месяц</div>`;
+  else html+=entries.map(e=>{const c=catById(e[0]);const p=Math.round(e[1]/total*100);
+    return `<div class="brk">
+      <span class="pct-badge" style="background:${pctColor(p)}">${p}%</span>
+      <span class="be" style="background:${c.color}22">${c.emoji}</span>
+      <span class="bn">${c.name}</span>
+      <span class="bv ${detailType==='expense'?'exp':'inc'}">${num(e[1])}</span></div>`;}).join('');
+  $('#dBreakdown').innerHTML=html;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
@@ -748,6 +867,14 @@ $('#accOverlay').onclick=e=>{if(e.target.id==='accOverlay')$('#accOverlay').clas
 $('#saveAcc').onclick=saveAcc;
 $('#delAcc').onclick=delAcc;
 
+// Asset Graph detail
+$('#dClose').onclick=()=>$('#detailOverlay').classList.remove('show');
+$('#dEdit').onclick=()=>{$('#detailOverlay').classList.remove('show');openAcc(detailAcc);};
+$('#dPrev').onclick=()=>{detailAnchor=new Date(detailAnchor.getFullYear(),detailAnchor.getMonth()-1,1);renderDetail();};
+$('#dNext').onclick=()=>{detailAnchor=new Date(detailAnchor.getFullYear(),detailAnchor.getMonth()+1,1);renderDetail();};
+$$('#dSeg button').forEach(b=>b.onclick=()=>{detailType=b.dataset.t;
+  $$('#dSeg button').forEach(x=>x.classList.toggle('on',x===b));renderDetail();});
+
 $('#exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='finance-'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('Файл сохранён');};
 $('#importBtn').onclick=()=>$('#importFile').click();
@@ -756,7 +883,7 @@ $('#importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new
   r.readAsText(f);};
 $('#demoBtn').onclick=loadDemo;
 $('#clearBtn').onclick=()=>{if(confirm('Удалить все операции?')){state.tx=[];state.budgets={};save();render();toast('Данные удалены');}};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();$('#accOverlay').classList.remove('show');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();$('#accOverlay').classList.remove('show');$('#detailOverlay').classList.remove('show');}});
 
 /* ============ Старт ============ */
 load();
