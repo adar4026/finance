@@ -307,6 +307,31 @@
   .prof-row:active{background:var(--card2)}
   .prof-row .chev{color:var(--muted2);font-size:18px}
 
+  /* ===== Home Screen 1 (Cash Flow / Summary / Budget / Quick Actions) ===== */
+  .cashflow-card{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:24px;padding:24px 22px;
+    color:#fff;box-shadow:0 14px 34px rgba(109,93,246,.38);margin-bottom:14px;text-align:center}
+  .cashflow-card .cf-label{font-size:13px;opacity:.92}
+  .cashflow-card .cf-value{font-size:42px;font-weight:800;letter-spacing:-1px;line-height:1.05;margin-top:6px}
+  .summary-stats{display:flex;align-items:center;padding:18px 8px;margin-bottom:14px}
+  .summary-stats .stat-col{flex:1;text-align:center;min-width:0}
+  .summary-stats .sc-l{font-size:12.5px;color:var(--muted)}
+  .summary-stats .sc-v{font-size:21px;font-weight:800;margin-top:6px;letter-spacing:-.3px;white-space:nowrap}
+  .summary-stats .sc-v.inc{color:var(--income)} .summary-stats .sc-v.exp{color:var(--expense)}
+  .summary-stats .stat-div{width:1px;align-self:stretch;background:var(--line);margin:6px 0}
+  .budget-home{margin-bottom:14px;cursor:pointer}
+  .bh-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .bh-title{font-size:16px;font-weight:700;color:var(--text)}
+  .bh-sub{font-size:13.5px;color:var(--muted);font-weight:600}
+  .bh-bar{height:14px;border-radius:8px;background:var(--bg2);overflow:hidden;margin-bottom:9px}
+  .bh-fill{height:100%;border-radius:8px;transition:width .4s}
+  .bh-foot{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted2)}
+  .bh-empty{font-size:13.5px;color:var(--muted2);text-align:center;padding:4px 0}
+  .quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
+  .qa{display:flex;flex-direction:column;align-items:center;gap:8px;border:none;background:none;cursor:pointer;padding:4px 0;font-family:inherit}
+  .qa-ic{width:62px;height:62px;border-radius:19px;display:flex;align-items:center;justify-content:center;font-size:26px;transition:.12s}
+  .qa:active .qa-ic{transform:scale(.92)}
+  .qa-l{font-size:12px;color:var(--muted);font-weight:600}
+
   /* ===== Главная: дашборд ===== */
   .capital{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:22px;padding:18px 18px 16px;
     color:#fff;box-shadow:0 12px 30px rgba(124,92,255,.4);margin-bottom:14px}
@@ -404,21 +429,29 @@
     </div>
   </div>
 
-  <!-- Screen: Home dashboard -->
+  <!-- Screen: Home dashboard (Product Book Screen 1) -->
   <div class="screen active" id="scrRecords">
-    <div class="capital">
-      <div class="cap-head"><span class="cap-l">Общий капитал 👁</span><span class="cap-cur" id="capCur">EUR</span></div>
-      <div class="cap-val" id="capVal">€0</div>
-      <div class="cap-chg" id="capChg">+€0 · 0% за месяц</div>
-      <div class="cap-ie">
-        <div class="cib"><div class="ci-ic inc">↘</div><div class="ci-l">Доходы</div><div class="ci-v" id="capInc">+€0</div><div class="ci-s" id="capIncN">0 опер.</div></div>
-        <div class="cib"><div class="ci-ic exp">↗</div><div class="ci-l">Расходы</div><div class="ci-v" id="capExp">−€0</div><div class="ci-s" id="capExpN">0 опер.</div></div>
-        <div class="cib"><div class="ci-ic flow">📈</div><div class="ci-l">Ден. поток</div><div class="ci-v" id="capFlow">+€0</div><div class="ci-s">за период</div></div>
-      </div>
+    <div class="cashflow-card">
+      <div class="cf-label">Денежный поток за <span id="cfPeriod">месяц</span></div>
+      <div class="cf-value" id="cfValue">+€0</div>
     </div>
 
-    <div class="sec-head"><span>Счета</span><a id="toAccounts">Все счета ›</a></div>
-    <div class="acc-strip" id="accStrip"></div>
+    <div class="panel summary-stats">
+      <div class="stat-col"><div class="sc-l">Доходы</div><div class="sc-v inc" id="sumIncome">+€0</div></div>
+      <div class="stat-div"></div>
+      <div class="stat-col"><div class="sc-l">Расходы</div><div class="sc-v exp" id="sumExpense">−€0</div></div>
+      <div class="stat-div"></div>
+      <div class="stat-col"><div class="sc-l">Операций</div><div class="sc-v" id="sumOps">0</div></div>
+    </div>
+
+    <div class="panel budget-home" id="budgetHome"></div>
+
+    <div class="quick-actions">
+      <button class="qa" data-qa="expense"><span class="qa-ic" style="background:var(--expense-soft)">💸</span><span class="qa-l">Расход</span></button>
+      <button class="qa" data-qa="income"><span class="qa-ic" style="background:var(--income-soft)">💰</span><span class="qa-l">Доход</span></button>
+      <button class="qa" data-qa="transfer"><span class="qa-ic" style="background:var(--accent-soft)">🔄</span><span class="qa-l">Перевод</span></button>
+      <button class="qa" data-qa="receipt"><span class="qa-ic" style="background:#4dabf71f">🧾</span><span class="qa-l">Чек</span></button>
+    </div>
 
     <div class="sec-head"><span>Последние операции</span><a id="toAllTx">Все операции ›</a></div>
     <div class="daycard" id="recentList" style="overflow:hidden"></div>
@@ -824,25 +857,35 @@ function render(){
 function totalCapital(endDate){return AF.Services.Account.totalCapital(state,endDate);}
 function signedCur(n,t,cur){return (t==='income'?'+':'−')+fmtCur(Math.abs(n),cur);}
 function updateHome(list,inc,exp){
-  const capNow=totalCapital(null);
-  const {from}=periodRange();
-  const capStart=totalCapital(new Date(from.getTime()-1));
-  const delta=capNow-capStart, pct=capStart?delta/Math.abs(capStart)*100:0;
-  $('#capVal').textContent=num(capNow);
+  const flow=inc-exp;
   const pw={day:'день',week:'неделю',month:'месяц',year:'год',all:'всё время'}[period];
-  $('#capChg').textContent=(delta>=0?'+':'−')+num(Math.abs(delta))+' · '+(delta>=0?'+':'−')+Math.abs(pct).toFixed(2)+'% за '+pw;
-  $('#capChg').style.color=delta>=0?'#d6f5e6':'#ffd6d6';
-  $('#capInc').textContent='+'+num(inc);
-  $('#capExp').textContent='−'+num(exp);
-  $('#capFlow').textContent=(inc-exp>=0?'+':'−')+num(Math.abs(inc-exp));
-  $('#capIncN').textContent=list.filter(t=>t.type==='income').length+' опер.';
-  $('#capExpN').textContent=list.filter(t=>t.type==='expense').length+' опер.';
-  $('#capCur').textContent=({'€':'EUR','$':'USD','₽':'RUB','£':'GBP'}[state.currency])||state.currency;
-  renderAccStrip();
+  $('#cfPeriod').textContent=pw;
+  $('#cfValue').textContent=(flow>=0?'+':'−')+num(Math.abs(flow));
+  $('#sumIncome').textContent='+'+num(inc);
+  $('#sumExpense').textContent='−'+num(exp);
+  $('#sumOps').textContent=list.length;
+  renderBudgetHome();
   renderRecent(list);
 }
+// Budget Card (общий месячный бюджет = сумма лимитов категорий)
+function renderBudgetHome(){
+  const el=$('#budgetHome');
+  const limit=Object.values(state.budgets||{}).reduce((s,v)=>s+(+v||0),0);
+  const a=new Date(anchor), from=new Date(a.getFullYear(),a.getMonth(),1), to=new Date(a.getFullYear(),a.getMonth()+1,0,23,59,59);
+  const spent=state.tx.filter(t=>{const d=new Date(t.date);return t.type==='expense'&&d>=from&&d<=to;}).reduce((s,t)=>s+t.amount,0);
+  if(!limit){
+    el.innerHTML=`<div class="bh-head"><span class="bh-title">Бюджет месяца</span></div><div class="bh-empty">Лимиты не заданы — нажмите, чтобы настроить</div>`;
+    el.onclick=()=>showScreen('scrBudgets');return;
+  }
+  const rawPct=spent/limit*100, pct=Math.min(100,rawPct), over=spent>limit;
+  const col=over?'var(--expense)':rawPct>=80?'var(--warn)':'var(--income)';
+  el.innerHTML=`<div class="bh-head"><span class="bh-title">Бюджет месяца</span><span class="bh-sub">${num(spent)} / ${num(limit)}</span></div>
+    <div class="bh-bar"><div class="bh-fill" style="width:${pct}%;background:${col}"></div></div>
+    <div class="bh-foot"><span>Потрачено ${Math.round(rawPct)}%</span><span>${over?'Превышен на '+num(spent-limit):'Осталось '+num(limit-spent)}</span></div>`;
+  el.onclick=()=>showScreen('scrBudgets');
+}
 function renderRecent(list){
-  const items=[...list].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id).slice(0,6);
+  const items=[...list].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id).slice(0,10);
   const el=$('#recentList');
   if(!items.length){el.innerHTML=`<div class="empty"><div class="big">🗒️</div><p>Нет операций за период.<br>Нажмите «+», чтобы добавить.</p></div>`;return;}
   el.innerHTML=items.map(recentRow).join('');
@@ -1382,10 +1425,11 @@ function dstr(b,d){return new Date(b.getFullYear(),b.getMonth(),d).toISOString()
 
 /* ============ События ============ */
 $$('.nav button[data-s]').forEach(b=>b.onclick=()=>showScreen(b.dataset.s));
-// Главная: диапазоны динамики капитала + ссылки
-$$('#capRanges button').forEach(b=>b.onclick=()=>{homeRange=b.dataset.r;
-  $$('#capRanges button').forEach(x=>x.classList.toggle('on',x===b));renderCapChart();});
-$('#toAccounts').onclick=()=>showScreen('scrAccounts');
+// Главная: Quick Actions
+$$('.qa').forEach(b=>b.onclick=()=>{
+  const t=b.dataset.qa==='receipt'?'expense':b.dataset.qa;
+  openSheet(null); setType(t);
+});
 $('#toAllTx').onclick=openAllTx;
 $('#allTxClose').onclick=()=>$('#allTxOverlay').classList.remove('show');
 $('#allTxOverlay').onclick=e=>{if(e.target.id==='allTxOverlay')$('#allTxOverlay').classList.remove('show');};
