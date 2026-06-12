@@ -203,6 +203,45 @@
   .btn-del{width:100%;padding:13px;border:1px solid var(--expense);border-radius:13px;background:none;color:var(--expense);
     font-size:14px;font-weight:600;cursor:pointer;margin-top:9px}
 
+  /* ===== Главная: дашборд ===== */
+  .capital{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:22px;padding:18px 18px 16px;
+    color:#fff;box-shadow:0 12px 30px rgba(124,92,255,.4);margin-bottom:14px}
+  .cap-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .cap-l{font-size:13px;opacity:.92}
+  .cap-cur{font-size:12px;background:rgba(255,255,255,.2);padding:4px 11px;border-radius:8px;font-weight:600}
+  .cap-val{font-size:34px;font-weight:800;letter-spacing:-.6px;line-height:1.1}
+  .cap-chg{display:inline-block;font-size:12.5px;background:rgba(255,255,255,.18);padding:4px 11px;border-radius:8px;margin:9px 0 14px;font-weight:600}
+  .cap-ie{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .cap-ie .cib{background:rgba(255,255,255,.15);border-radius:14px;padding:11px 11px}
+  .cap-ie .ci-ic{width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:13px;margin-bottom:8px;font-weight:700}
+  .cap-ie .ci-l{font-size:10.5px;opacity:.9}
+  .cap-ie .ci-v{font-size:14.5px;font-weight:700;margin-top:2px;white-space:nowrap}
+  .cap-ie .ci-s{font-size:9.5px;opacity:.78;margin-top:1px;white-space:nowrap}
+  .ranges{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap}
+  .ranges button{border:1px solid var(--line);background:var(--card2);color:var(--muted);font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:9px;cursor:pointer;transition:.15s}
+  .ranges button.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+  .sec-head{display:flex;justify-content:space-between;align-items:center;margin:20px 2px 11px}
+  .sec-head span{font-size:15.5px;font-weight:700}
+  .sec-head a{font-size:12.5px;color:var(--accent);cursor:pointer;font-weight:500}
+  .acc-strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+  .acc-strip::-webkit-scrollbar{display:none}
+  .acc-card{flex:0 0 auto;width:142px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;cursor:pointer;transition:.12s}
+  .acc-card:active{transform:scale(.97)}
+  .acc-card .ac-ic{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:20px}
+  .acc-card .ac-nm{font-size:12.5px;color:var(--muted);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acc-card .ac-bal{font-size:16px;font-weight:700;white-space:nowrap}
+  .rec{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer;transition:.12s}
+  .rec:last-child{border-bottom:none}
+  .rec:active{background:var(--card2)}
+  .rec .em{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .rec .info{flex:1;min-width:0}
+  .rec .t1{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rec .t2{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rec .right{text-align:right;white-space:nowrap;flex-shrink:0}
+  .rec .amt{font-weight:700;font-size:14.5px}
+  .rec .amt.inc{color:var(--income)} .rec .amt.exp{color:var(--text)} .rec .amt.tr{color:var(--muted)}
+  .rec .dt{font-size:11px;color:var(--muted2);margin-top:2px}
+
   /* ===== Asset Graph (детали счёта) ===== */
   .detail-sheet{background:var(--bg);width:100%;max-width:560px;height:100%;max-height:100vh;border-radius:0;
     padding:max(14px,env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));overflow-y:auto;animation:fade .2s}
@@ -257,21 +296,33 @@
     </div>
   </div>
 
-  <!-- Screen: Records -->
+  <!-- Screen: Home dashboard -->
   <div class="screen active" id="scrRecords">
-    <div class="summary">
-      <div class="top">
-        <div>
-          <div class="bal-l">Баланс за период</div>
-          <div class="bal" id="sumBal">€0</div>
-        </div>
-      </div>
-      <div class="ie">
-        <div class="b"><div class="l"><span class="ar">↓</span> Доходы</div><div class="v" id="sumInc">€0</div></div>
-        <div class="b"><div class="l"><span class="ar">↑</span> Расходы</div><div class="v" id="sumExp">€0</div></div>
+    <div class="capital">
+      <div class="cap-head"><span class="cap-l">Общий капитал 👁</span><span class="cap-cur" id="capCur">EUR</span></div>
+      <div class="cap-val" id="capVal">€0</div>
+      <div class="cap-chg" id="capChg">+€0 · 0% за месяц</div>
+      <div class="cap-ie">
+        <div class="cib"><div class="ci-ic inc">↘</div><div class="ci-l">Доходы</div><div class="ci-v" id="capInc">+€0</div><div class="ci-s" id="capIncN">0 опер.</div></div>
+        <div class="cib"><div class="ci-ic exp">↗</div><div class="ci-l">Расходы</div><div class="ci-v" id="capExp">−€0</div><div class="ci-s" id="capExpN">0 опер.</div></div>
+        <div class="cib"><div class="ci-ic flow">📈</div><div class="ci-l">Ден. поток</div><div class="ci-v" id="capFlow">+€0</div><div class="ci-s">за период</div></div>
       </div>
     </div>
-    <div id="txList"></div>
+
+    <div class="panel">
+      <h3 style="margin-bottom:10px">Динамика капитала</h3>
+      <div class="ranges" id="capRanges">
+        <button data-r="7d">7Д</button><button data-r="1m" class="on">1М</button><button data-r="3m">3М</button>
+        <button data-r="6m">6М</button><button data-r="1y">1Г</button><button data-r="all">Всё</button>
+      </div>
+      <div class="chart-box tall"><canvas id="capChart"></canvas></div>
+    </div>
+
+    <div class="sec-head"><span>Счета</span><a id="toAccounts">Все счета ›</a></div>
+    <div class="acc-strip" id="accStrip"></div>
+
+    <div class="sec-head"><span>Последние операции</span><a id="toAllTx">Все операции ›</a></div>
+    <div class="daycard" id="recentList" style="overflow:hidden"></div>
   </div>
 
   <!-- Screen: Charts -->
@@ -318,10 +369,10 @@
 
 <!-- Bottom nav -->
 <div class="nav">
-  <button class="on" data-s="scrRecords"><span class="ic">📋</span>Записи</button>
-  <button data-s="scrCharts"><span class="ic">📊</span>Графики</button>
+  <button class="on" data-s="scrRecords"><span class="ic">🏠</span>Главная</button>
+  <button data-s="scrCharts"><span class="ic">📊</span>Аналитика</button>
   <button class="addbtn" id="addBtn"><span class="plus">+</span></button>
-  <button data-s="scrBudgets"><span class="ic">🎯</span>Бюджеты</button>
+  <button data-s="scrBudgets"><span class="ic">🎯</span>Бюджет</button>
   <button data-s="scrMore"><span class="ic">⚙️</span>Ещё</button>
 </div>
 
@@ -397,6 +448,17 @@
   </div>
 </div>
 
+<!-- Все операции -->
+<div class="overlay" id="allTxOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top">
+      <div class="nm">Все операции <span id="allTxLabel" style="font-size:13px;color:var(--muted);font-weight:500"></span></div>
+      <button class="iconbtn" id="allTxClose">×</button>
+    </div>
+    <div id="allTxList" style="margin-top:8px"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -443,6 +505,7 @@ let state={
 };
 let anchor=new Date();
 let period='month';
+let homeRange='1m';
 let curScreen='scrRecords';
 // add-sheet state
 let aType='expense', aCat='food', aExpr='0', editId=null;
@@ -522,14 +585,131 @@ function render(){
   const list=state.tx.filter(inPeriod);
   const inc=list.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const exp=list.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  $('#sumInc').textContent=num(inc);
-  $('#sumExp').textContent=num(exp);
-  $('#sumBal').textContent=(inc-exp<0?'−':'')+num(Math.abs(inc-exp));
 
-  renderTx(list);
+  updateHome(list,inc,exp);
   renderCharts(list);
   renderBudgets();
   renderAccounts();
+}
+
+/* ============ Главная: капитал, динамика, счета, последние ============ */
+function totalCapital(endDate){return state.accounts.reduce((s,a)=>s+accBalance(a.id,endDate),0);}
+function signedCur(n,t,cur){return (t==='income'?'+':'−')+fmtCur(Math.abs(n),cur);}
+function updateHome(list,inc,exp){
+  const capNow=totalCapital(null);
+  const {from}=periodRange();
+  const capStart=totalCapital(new Date(from.getTime()-1));
+  const delta=capNow-capStart, pct=capStart?delta/Math.abs(capStart)*100:0;
+  $('#capVal').textContent=num(capNow);
+  const pw={day:'день',week:'неделю',month:'месяц',year:'год',all:'всё время'}[period];
+  $('#capChg').textContent=(delta>=0?'+':'−')+num(Math.abs(delta))+' · '+(delta>=0?'+':'−')+Math.abs(pct).toFixed(2)+'% за '+pw;
+  $('#capChg').style.color=delta>=0?'#d6f5e6':'#ffd6d6';
+  $('#capInc').textContent='+'+num(inc);
+  $('#capExp').textContent='−'+num(exp);
+  $('#capFlow').textContent=(inc-exp>=0?'+':'−')+num(Math.abs(inc-exp));
+  $('#capIncN').textContent=list.filter(t=>t.type==='income').length+' опер.';
+  $('#capExpN').textContent=list.filter(t=>t.type==='expense').length+' опер.';
+  $('#capCur').textContent=({'€':'EUR','$':'USD','₽':'RUB','£':'GBP'}[state.currency])||state.currency;
+  renderCapChart();
+  renderAccStrip();
+  renderRecent(list);
+}
+function renderRecent(list){
+  const items=[...list].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id).slice(0,6);
+  const el=$('#recentList');
+  if(!items.length){el.innerHTML=`<div class="empty"><div class="big">🗒️</div><p>Нет операций за период.<br>Нажмите «+», чтобы добавить.</p></div>`;return;}
+  el.innerHTML=items.map(recentRow).join('');
+  $$('#recentList .rec').forEach(r=>r.onclick=()=>openSheet(r.dataset.id));
+}
+function recentRow(t){
+  const dt=new Date(t.date).toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+  if(t.type==='transfer'){
+    const from=state.accounts.find(a=>a.id===t.from),to=state.accounts.find(a=>a.id===t.to);
+    const fc=(from&&from.currency)||state.currency;
+    return `<div class="rec" data-id="${t.id}"><div class="em" style="background:var(--accent-soft)">🔄</div>
+      <div class="info"><div class="t1">Перевод</div><div class="t2">${from?esc(from.name):'?'} → ${to?esc(to.name):'?'}</div></div>
+      <div class="right"><div class="amt tr">${fmtCur(t.amount,fc)}</div><div class="dt">${dt}</div></div></div>`;
+  }
+  const c=catById(t.cat),acc=state.accounts.find(a=>a.id===t.account),cur=(acc&&acc.currency)||state.currency;
+  return `<div class="rec" data-id="${t.id}"><div class="em" style="background:${c.color}22">${c.emoji}</div>
+    <div class="info"><div class="t1">${esc(c.name)}${t.note?' · '+esc(t.note):''}</div><div class="t2">${acc?acc.emoji+' '+esc(acc.name):''}</div></div>
+    <div class="right"><div class="amt ${t.type==='income'?'inc':'exp'}">${signedCur(t.amount,t.type,cur)}</div><div class="dt">${dt}</div></div></div>`;
+}
+function renderAccStrip(){
+  $('#accStrip').innerHTML=state.accounts.map((a,i)=>{
+    const bal=accBalance(a.id),cur=a.currency||state.currency,col=COLOR_POOL[i%COLOR_POOL.length];
+    return `<div class="acc-card" data-acc="${a.id}">
+      <div class="ac-ic" style="background:${col}22">${a.emoji}</div>
+      <div class="ac-nm">${esc(a.name)}</div>
+      <div class="ac-bal" style="color:${bal<0?'var(--expense)':'var(--text)'}">${(bal<0?'−':'')+fmtCur(Math.abs(bal),cur)}</div>
+    </div>`;}).join('');
+  $$('#accStrip .acc-card').forEach(c=>c.onclick=()=>openAccountGraph(c.dataset.acc));
+}
+function capPoints(range){
+  // конец графика = позже из (сегодня, последняя операция) — чтобы пузырёк совпадал с капиталом
+  const ds=state.tx.map(t=>+new Date(t.date.slice(0,10)+'T23:59:59'));
+  const now=new Date(Math.max(Date.now(),...ds,0));now.setHours(23,59,59,999);
+  const out=[];const push=(d,label)=>out.push({label,value:Math.round(totalCapital(new Date(d))*100)/100});
+  const dayLbl=d=>d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+  if(range==='7d')for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);push(d,dayLbl(d));}
+  else if(range==='1m')for(let i=29;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);push(d,dayLbl(d));}
+  else if(range==='3m')for(let i=12;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i*7);push(d,dayLbl(d));}
+  else if(range==='6m')for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i+1,0,23,59,59);push(d,d.toLocaleDateString('ru-RU',{month:'short'}));}
+  else if(range==='1y')for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i+1,0,23,59,59);push(d,d.toLocaleDateString('ru-RU',{month:'short'}));}
+  else{
+    const ds=state.tx.map(t=>new Date(t.date));const first=ds.length?new Date(Math.min(...ds)):new Date();
+    const months=Math.max(1,(now.getFullYear()-first.getFullYear())*12+now.getMonth()-first.getMonth());
+    const step=Math.ceil(months/11)||1;
+    for(let i=months;i>=0;i-=step){const d=new Date(now.getFullYear(),now.getMonth()-i+1,0,23,59,59);push(d,d.toLocaleDateString('ru-RU',{month:'short',year:'2-digit'}));}
+  }
+  return out;
+}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+const capBubble={id:'capbubble',afterDatasetsDraw(chart){
+  const m=chart.getDatasetMeta(0);if(!m||!m.data.length)return;
+  const last=m.data[m.data.length-1],v=chart.data.datasets[0].data.slice(-1)[0];
+  const ctx=chart.ctx,css=getComputedStyle(document.documentElement),acc=css.getPropertyValue('--accent').trim();
+  const txt=num(v);ctx.save();ctx.font='700 11px -apple-system,system-ui,sans-serif';
+  const w=ctx.measureText(txt).width+16,h=22;let x=last.x-w/2,y=last.y-h-9;
+  x=Math.max(2,Math.min(x,chart.width-w-2));if(y<2)y=last.y+9;
+  ctx.fillStyle=acc;roundRect(ctx,x,y,w,h,8);ctx.fill();
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,x+w/2,y+h/2);
+  ctx.beginPath();ctx.arc(last.x,last.y,4.5,0,7);ctx.fillStyle=acc;ctx.fill();
+  ctx.strokeStyle=css.getPropertyValue('--card').trim();ctx.lineWidth=2;ctx.stroke();ctx.restore();
+}};
+let capChart;
+function renderCapChart(){
+  const pts=capPoints(homeRange);
+  const css=getComputedStyle(document.documentElement),acc=css.getPropertyValue('--accent').trim(),muted=css.getPropertyValue('--muted').trim(),grid=css.getPropertyValue('--line').trim();
+  if(capChart)capChart.destroy();
+  const cv=$('#capChart');
+  capChart=new Chart(cv,{type:'line',
+    data:{labels:pts.map(p=>p.label),datasets:[{data:pts.map(p=>p.value),borderColor:acc,borderWidth:2.5,
+      tension:.38,fill:true,backgroundColor:acc+'1f',pointRadius:0,pointHoverRadius:4}]},
+    options:{maintainAspectRatio:false,layout:{padding:{top:24,right:14,left:2}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>num(c.raw)}}},
+      scales:{x:{grid:{display:false},ticks:{color:muted,maxTicksLimit:5,maxRotation:0,autoSkip:true}},
+        y:{position:'right',grid:{color:grid},ticks:{color:muted,maxTicksLimit:5,callback:v=>v>=1000||v<=-1000?(Math.round(v/100)/10)+'k':v}}}},
+    plugins:[capBubble]});
+}
+function groupedTxHtml(list){
+  if(!list.length)return `<div class="empty"><div class="big">🗒️</div><p>Нет операций за период.</p></div>`;
+  const byDay={};list.forEach(t=>{(byDay[t.date.slice(0,10)]=byDay[t.date.slice(0,10)]||[]).push(t);});
+  const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
+  return days.map(day=>{
+    const items=byDay[day].sort((a,b)=>b.id-a.id);
+    const net=items.reduce((s,t)=>s+(t.type==='transfer'?0:(t.type==='income'?t.amount:-t.amount)),0);
+    const dl=new Date(day).toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'});
+    return `<div class="daygroup"><div class="dayhead"><span class="dl">${dl}</span>
+      <span class="dr" style="color:${net>=0?'var(--income)':'var(--text)'}">${(net>=0?'+':'−')+num(Math.abs(net))}</span></div>
+      <div class="daycard">${items.map(txRow).join('')}</div></div>`;
+  }).join('');
+}
+function openAllTx(){
+  $('#allTxLabel').textContent=periodLabel();
+  $('#allTxList').innerHTML=groupedTxHtml(state.tx.filter(inPeriod));
+  $$('#allTxList .tx').forEach(r=>r.onclick=()=>openSheet(r.dataset.id));
+  $('#allTxOverlay').classList.add('show');
 }
 
 function renderTx(list){
@@ -745,7 +925,7 @@ function showScreen(id){
   curScreen=id;
   $$('.screen').forEach(s=>s.classList.toggle('active',s.id===id));
   $$('.nav button[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
-  const titles={scrRecords:'Записи',scrCharts:'Графики',scrBudgets:'Бюджеты',scrMore:'Ещё'};
+  const titles={scrRecords:'Главная',scrCharts:'Аналитика',scrBudgets:'Бюджет',scrMore:'Ещё'};
   $('#screenTitle').textContent=titles[id];
   // период скрываем на «Ещё»
   $('.periods').style.display=id==='scrMore'?'none':'flex';
@@ -898,6 +1078,13 @@ function dstr(b,d){return new Date(b.getFullYear(),b.getMonth(),d).toISOString()
 
 /* ============ События ============ */
 $$('.nav button[data-s]').forEach(b=>b.onclick=()=>showScreen(b.dataset.s));
+// Главная: диапазоны динамики капитала + ссылки
+$$('#capRanges button').forEach(b=>b.onclick=()=>{homeRange=b.dataset.r;
+  $$('#capRanges button').forEach(x=>x.classList.toggle('on',x===b));renderCapChart();});
+$('#toAccounts').onclick=()=>showScreen('scrMore');
+$('#toAllTx').onclick=openAllTx;
+$('#allTxClose').onclick=()=>$('#allTxOverlay').classList.remove('show');
+$('#allTxOverlay').onclick=e=>{if(e.target.id==='allTxOverlay')$('#allTxOverlay').classList.remove('show');};
 $('#addBtn').onclick=()=>openSheet(null);
 $('#closeSheet').onclick=closeSheet;
 $('#overlay').onclick=e=>{if(e.target.id==='overlay')closeSheet();};
@@ -1085,7 +1272,7 @@ function importCSV(text){
 }
 $('#demoBtn').onclick=loadDemo;
 $('#clearBtn').onclick=()=>{if(confirm('Удалить все операции?')){state.tx=[];state.budgets={};save();render();toast('Данные удалены');}};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();$('#accOverlay').classList.remove('show');$('#detailOverlay').classList.remove('show');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();$('#accOverlay').classList.remove('show');$('#detailOverlay').classList.remove('show');$('#allTxOverlay').classList.remove('show');}});
 
 /* ============ Старт ============ */
 load();
