@@ -247,6 +247,16 @@
     display:flex;align-items:center;justify-content:center;transition:.15s}
   .fab-account:active{transform:scale(.92)}
 
+  /* ===== Account Details: настройки + архив (Story 1.4) ===== */
+  .set-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:16px 16px;border:1px solid var(--line);
+    border-radius:15px;background:var(--card);color:var(--text);font-size:15.5px;cursor:pointer;margin-bottom:10px;font-family:inherit;text-align:left;min-height:54px}
+  .set-btn:active{background:var(--card2)}
+  .set-btn i{font-style:normal;margin-right:6px}
+  .set-btn .chev{color:var(--muted2);font-size:18px}
+  .set-btn.danger{color:var(--expense);border-color:var(--expense-soft)}
+  .acc2.archived{opacity:.6}
+  .arch-head{font-size:13px;font-weight:600;color:var(--muted2);margin:8px 2px 12px}
+
   /* ===== Редактор счёта (Story 1.3) ===== */
   .acc-editor{max-width:440px}
   .acc-editor .field{margin-bottom:16px}
@@ -584,6 +594,15 @@
       <button data-t="income">Доходы</button>
     </div>
     <div id="dBreakdown"></div>
+
+    <div class="sec-head" style="margin-top:22px"><span>Операции счёта</span></div>
+    <div id="dTxList"></div>
+
+    <div class="sec-head" style="margin-top:22px"><span>Настройки счёта</span></div>
+    <button class="set-btn" id="dEditBtn"><span><i>✏️</i> Редактировать</span><span class="chev">›</span></button>
+    <button class="set-btn" id="dArchiveBtn"><span id="dArchiveLbl"><i>📦</i> Архивировать</span><span class="chev">›</span></button>
+    <button class="set-btn danger" id="dDeleteBtn"><span><i>🗑</i> Удалить счёт</span><span class="chev">›</span></button>
+    <div style="height:24px"></div>
   </div>
 </div>
 
@@ -1066,21 +1085,25 @@ function renderDistChart(){
       <span class="n">${esc(d.account.name)}</span><span class="p">${Math.round(d.share)}%</span></div>`).join('')
     :`<div style="color:var(--muted2);font-size:13px">Нет положительных балансов</div>`;
 }
+function accountCardHtml(a,archived){
+  const bal=accBalance(a.id),cur=a.currency||state.currency,share=AF.Services.Account.share(state,a.id);
+  const sub=archived?'В архиве':((ACC_TYPE_LABEL[a.type]||'Счёт')+(share>0?' · '+Math.round(share)+'% капитала':''));
+  return `<div class="acc2${archived?' archived':''}" data-acc="${a.id}">
+    <div class="acc2-ic" style="background:${(a.color||'#6d5df6')}1f">${a.emoji}</div>
+    <div class="acc2-mid"><div class="acc2-nm">${esc(a.name)}</div><div class="acc2-sub">${sub}</div></div>
+    <div class="acc2-right">
+      <div class="acc2-bal" style="color:${bal<0?'var(--expense)':'var(--text)'}">${(bal<0?'−':'')+fmtCur(Math.abs(bal),cur)}</div>
+      <div class="acc2-cur">${curCode(cur)}</div>
+    </div>
+  </div>`;
+}
 function renderAccounts(){
   const el=$('#accList');
-  const list=AF.Services.Account.active(state);
-  el.innerHTML=list.map(a=>{
-    const bal=accBalance(a.id),cur=a.currency||state.currency,share=AF.Services.Account.share(state,a.id);
-    const sub=(ACC_TYPE_LABEL[a.type]||'Счёт')+(share>0?' · '+Math.round(share)+'% капитала':'');
-    return `<div class="acc2" data-acc="${a.id}">
-      <div class="acc2-ic" style="background:${(a.color||'#6d5df6')}1f">${a.emoji}</div>
-      <div class="acc2-mid"><div class="acc2-nm">${esc(a.name)}</div><div class="acc2-sub">${sub}</div></div>
-      <div class="acc2-right">
-        <div class="acc2-bal" style="color:${bal<0?'var(--expense)':'var(--text)'}">${(bal<0?'−':'')+fmtCur(Math.abs(bal),cur)}</div>
-        <div class="acc2-cur">${curCode(cur)}</div>
-      </div>
-    </div>`;
-  }).join('');
+  const active=AF.Services.Account.active(state);
+  const archived=state.accounts.filter(a=>a.isArchived);
+  let html=active.map(a=>accountCardHtml(a,false)).join('');
+  if(archived.length)html+=`<div class="arch-head">📦 Архив (${archived.length})</div>`+archived.map(a=>accountCardHtml(a,true)).join('');
+  el.innerHTML=html;
   $$('#accList .acc2').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
 }
 
@@ -1148,6 +1171,15 @@ function renderDetail(){
       <span class="bn">${c.name}</span>
       <span class="bv ${detailType==='expense'?'exp':'inc'}">${fmtCur(e[1],aCur)}</span></div>`;}).join('');
   $('#dBreakdown').innerHTML=html;
+
+  // Операции счёта за месяц (включая переводы с участием счёта)
+  const accTx=state.tx.filter(t=>{const d=new Date(t.date);
+    return (t.account===detailAcc||t.from===detailAcc||t.to===detailAcc)&&d>=from&&d<=to;});
+  $('#dTxList').innerHTML=groupedTxHtml(accTx);
+  $$('#dTxList .tx').forEach(r=>r.onclick=()=>openSheet(r.dataset.id));
+
+  // Настройки счёта
+  $('#dArchiveLbl').innerHTML=a.isArchived?'<i>♻️</i> Восстановить из архива':'<i>📦</i> Архивировать';
 }
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
@@ -1407,13 +1439,33 @@ $('#accOverlay').onclick=e=>{if(e.target.id==='accOverlay')$('#accOverlay').clas
 $('#saveAcc').onclick=saveAcc;
 $('#delAcc').onclick=delAcc;
 
-// Asset Graph detail
+// Account Details (Screen 4)
 $('#dClose').onclick=()=>$('#detailOverlay').classList.remove('show');
-$('#dEdit').onclick=()=>{$('#detailOverlay').classList.remove('show');openAcc(detailAcc);};
+const editFromDetail=()=>{$('#detailOverlay').classList.remove('show');openAcc(detailAcc);};
+$('#dEdit').onclick=editFromDetail;
+$('#dEditBtn').onclick=editFromDetail;
+$('#dArchiveBtn').onclick=()=>archiveAccount(detailAcc);
+$('#dDeleteBtn').onclick=()=>deleteAccount(detailAcc);
 $('#dPrev').onclick=()=>{detailAnchor=new Date(detailAnchor.getFullYear(),detailAnchor.getMonth()-1,1);renderDetail();};
 $('#dNext').onclick=()=>{detailAnchor=new Date(detailAnchor.getFullYear(),detailAnchor.getMonth()+1,1);renderDetail();};
 $$('#dSeg button').forEach(b=>b.onclick=()=>{detailType=b.dataset.t;
   $$('#dSeg button').forEach(x=>x.classList.toggle('on',x===b));renderDetail();});
+function archiveAccount(id){
+  const a=state.accounts.find(x=>x.id===id);if(!a)return;
+  a.isArchived=!a.isArchived;a.updatedAt=Date.now();
+  save();$('#detailOverlay').classList.remove('show');render();
+  toast(a.isArchived?'Счёт перемещён в архив':'Счёт восстановлен ✓');
+}
+function deleteAccount(id){
+  const others=state.accounts.filter(a=>a.id!==id);
+  if(!others.length){toast('Нельзя удалить единственный счёт');return;}
+  const has=state.tx.some(t=>t.account===id||t.from===id||t.to===id);
+  if(!confirm(has?'На счёте есть операции — они перейдут на «'+others[0].name+'». Удалить счёт?':'Удалить счёт?'))return;
+  const target=others[0].id;
+  state.tx.forEach(t=>{if(t.account===id)t.account=target;if(t.from===id)t.from=target;if(t.to===id)t.to=target;});
+  state.accounts=state.accounts.filter(a=>a.id!==id);
+  save();$('#detailOverlay').classList.remove('show');render();buildAccountSelect();toast('Счёт удалён');
+}
 
 function exportData(){
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
