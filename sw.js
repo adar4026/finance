@@ -1,5 +1,5 @@
 // Service worker — офлайн-кэш приложения
-const CACHE = 'finance-v9';
+const CACHE = 'finance-v10';
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,17 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
+  './js/core/result.js',
+  './js/database/store.js',
+  './js/services/currency_service.js',
+  './js/services/account_service.js',
+  './js/services/analytics_service.js',
+  './js/services/budget_service.js',
+  './js/services/goal_service.js',
+  './js/services/forecast_service.js',
+  './js/services/health_score_service.js',
+  './js/services/export_service.js',
+  './js/services/backup_service.js',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'
 ];
 

@@ -15,23 +15,38 @@
 <meta name="apple-mobile-web-app-title" content="Финансы">
 <meta name="mobile-web-app-capable" content="yes">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- Архитектура (feature-ready для Flutter): core → database → services. UI ниже использует только AF.Store / AF.Services -->
+<script src="js/core/result.js"></script>
+<script src="js/database/store.js"></script>
+<script src="js/services/currency_service.js"></script>
+<script src="js/services/account_service.js"></script>
+<script src="js/services/analytics_service.js"></script>
+<script src="js/services/budget_service.js"></script>
+<script src="js/services/goal_service.js"></script>
+<script src="js/services/forecast_service.js"></script>
+<script src="js/services/health_score_service.js"></script>
+<script src="js/services/export_service.js"></script>
+<script src="js/services/backup_service.js"></script>
 <style>
-  :root{
+  /* Alex Finance Design Tokens (Product Book Part 2/4) */
+  :root, [data-theme="light"]{
+    --bg:#ffffff; --bg2:#f7f8fc; --card:#ffffff; --card2:#f7f8fc;
+    --line:#eceef4; --text:#16181f; --muted:#6b7180; --muted2:#9aa0b0;
+    --accent:#6d5df6; --accent2:#8b7cf8; --accent-soft:#6d5df614;
+    --income:#22c55e; --income-soft:#22c55e14;
+    --expense:#ef4444; --expense-soft:#ef444414;
+    --warn:#f59e0b; --warn-soft:#f59e0b1f;
+    --shadow:0 8px 30px rgba(40,50,120,.08);
+    --radius:20px; --navh:64px;
+  }
+  [data-theme="dark"]{
     --bg:#0f1115; --bg2:#171a21; --card:#1c2029; --card2:#232834;
     --line:#2a2f3a; --text:#e7ebf2; --muted:#8b93a3; --muted2:#5d6573;
-    --accent:#7c5cff; --accent2:#a06bff; --accent-soft:#7c5cff22;
-    --income:#3ecf8e; --income-soft:#3ecf8e1f;
-    --expense:#ff6b6b; --expense-soft:#ff6b6b1f;
+    --accent:#6d5df6; --accent2:#8b7cf8; --accent-soft:#6d5df622;
+    --income:#22c55e; --income-soft:#22c55e1f;
+    --expense:#ef4444; --expense-soft:#ef44441f;
+    --warn:#f59e0b; --warn-soft:#f59e0b22;
     --shadow:0 8px 30px rgba(0,0,0,.35);
-    --navh:64px;
-  }
-  [data-theme="light"]{
-    --bg:#f1f3f9; --bg2:#e9edf5; --card:#ffffff; --card2:#f5f7fb;
-    --line:#e6eaf2; --text:#1a1f29; --muted:#6b7488; --muted2:#9aa3b5;
-    --accent:#7c5cff; --accent2:#a06bff; --accent-soft:#7c5cff14;
-    --income:#1aa179; --income-soft:#1aa17914;
-    --expense:#e23b48; --expense-soft:#e23b4814;
-    --shadow:0 8px 30px rgba(40,60,120,.08);
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   body{
@@ -542,13 +557,8 @@ const EMOJI_POOL=['🏷️','🧾','🍔','🚗','🏠','🛍️','💊','🎮',
 const COLOR_POOL=['#ff6b6b','#ffa94d','#ffd43b','#da77f2','#9775fa','#4dabf7','#3bc9db','#69db7c','#a9e34b','#f783ac','#ff8787','#63e6be','#fab005','#e599f7','#74c0fc','#ffc078'];
 
 /* ============ Состояние ============ */
-let state={
-  tx:[],
-  accounts:[{id:'cash',name:'Наличные',emoji:'💵',start:0},{id:'card',name:'Карта',emoji:'💳',start:0}],
-  budgets:{},
-  cats:[],            // пользовательские категории (в т.ч. из импорта CSV)
-  currency:'€', theme:'dark'
-};
+// Состояние = БД из Repository (AF.Store). Структура — в js/database/store.js
+let state=AF.Store.defaults();
 let anchor=new Date();
 let period='month';
 let homeRange='1m';
@@ -562,32 +572,24 @@ let detailAcc=null, detailAnchor=new Date(), detailType='expense', lineChart;
 
 const $=s=>document.querySelector(s);
 const $$=s=>document.querySelectorAll(s);
-const num=n=>state.currency+Number(n).toLocaleString('ru-RU',{maximumFractionDigits:2});
-const CUR_SYM={EUR:'€',USD:'$',RUB:'₽',GBP:'£',KZT:'₸',UAH:'₴',PLN:'zł'};
-const fmtCur=(n,cur)=>{cur=cur||state.currency;const v=Number(n).toLocaleString('ru-RU',{maximumFractionDigits:2});
-  const sym=CUR_SYM[cur];return sym?sym+v:(CUR_SYM[cur]===undefined&&cur.length<=2?cur+v:v+' '+cur);};
-const signed=(n,t)=>(t==='income'?'+':'−')+state.currency+Math.abs(n).toLocaleString('ru-RU',{maximumFractionDigits:2});
+// UI-обёртки над AF.Services.Currency (бизнес-логика — в services/currency_service.js)
+const fmtCur=(n,cur)=>AF.Services.Currency.format(n,cur||state.currency);
+const num=n=>AF.Services.Currency.format(n,state.currency);
+const signed=(n,t)=>(t==='income'?'+':'−')+fmtCur(Math.abs(n),state.currency);
 
-/* ============ Хранилище + миграция ============ */
+/* ============ Хранилище (Repository AF.Store → SQLite/Drift в Flutter) ============ */
 function load(){
-  try{
-    const raw=localStorage.getItem('finance_app');
-    if(raw){
-      const d=JSON.parse(raw);
-      state=Object.assign(state,d);
-      if(!state.accounts||!state.accounts.length) state.accounts=[{id:'cash',name:'Наличные',emoji:'💵',start:0}];
-      if(!state.budgets) state.budgets={};
-      if(!state.cats) state.cats=[];
-      // миграция: операции без счёта -> первый счёт
-      const def=state.accounts[0].id;
-      state.tx.forEach(t=>{if(!t.account)t.account=def;});
-    }
-  }catch(e){}
-  document.documentElement.setAttribute('data-theme',state.theme);
+  state=AF.Store.load();
+  applyTheme();
   $('#curSelect').value=state.currency;
   renderHeader();
 }
-function save(){state.updatedAt=Date.now();localStorage.setItem('finance_app',JSON.stringify(state));renderHeader();}
+function save(){ AF.Store.save(state); renderHeader(); }
+function applyTheme(){
+  const sys=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+  const resolved=state.theme==='system'?sys:(state.theme||'light');
+  document.documentElement.setAttribute('data-theme',resolved);
+}
 
 /* ============ Шапка: аватар, уведомления, профиль ============ */
 function relTime(ts){
@@ -633,7 +635,7 @@ function openNotif(){
 function openProfile(){
   $('#profAvatar').style.cssText=avatarStyle();$('#profAvatar').textContent=avatarInner();
   $('#profName').value=state.profileName||'';
-  $('#profThemeLbl').textContent=state.theme==='dark'?'🌙 Тёмная тема':'☀️ Светлая тема';
+  $('#profThemeLbl').textContent=themeLabel();
   $('#profOverlay').classList.add('show');
 }
 
@@ -688,7 +690,7 @@ function render(){
 }
 
 /* ============ Главная: капитал, динамика, счета, последние ============ */
-function totalCapital(endDate){return state.accounts.reduce((s,a)=>s+accBalance(a.id,endDate),0);}
+function totalCapital(endDate){return AF.Services.Account.totalCapital(state,endDate);}
 function signedCur(n,t,cur){return (t==='income'?'+':'−')+fmtCur(Math.abs(n),cur);}
 function updateHome(list,inc,exp){
   const capNow=totalCapital(null);
@@ -924,16 +926,8 @@ function renderBudgets(){
   });
 }
 
-// баланс счёта (с учётом доходов, расходов и переводов) на дату endDate (или на текущий момент)
-function accBalance(accId,endDate){
-  const a=state.accounts.find(x=>x.id===accId);let b=a?(a.start||0):0;
-  state.tx.forEach(t=>{
-    if(endDate&&new Date(t.date)>endDate)return;
-    if(t.type==='transfer'){ if(t.from===accId)b-=t.amount; if(t.to===accId)b+=(t.toAmount!=null?t.toAmount:t.amount); }
-    else if(t.account===accId){ b+=(t.type==='income'?t.amount:-t.amount); }
-  });
-  return b;
-}
+// UI-обёртки над AF.Services.Account (логика — в services/account_service.js)
+function accBalance(accId,endDate){return AF.Services.Account.balance(state,accId,endDate);}
 function renderAccounts(){
   const el=$('#accList');
   el.innerHTML=state.accounts.map(a=>{
@@ -1193,8 +1187,10 @@ $('#periods').querySelectorAll('button').forEach(b=>b.onclick=()=>{period=b.data
 $('#prevP').onclick=()=>shiftPeriod(-1);
 $('#nextP').onclick=()=>shiftPeriod(1);
 
-function toggleTheme(){state.theme=state.theme==='dark'?'light':'dark';
-  document.documentElement.setAttribute('data-theme',state.theme);save();render();}
+function toggleTheme(){const order=['light','dark','system'];
+  state.theme=order[(order.indexOf(state.theme)+1)%order.length];
+  applyTheme();save();render();}
+function themeLabel(){return {light:'☀️ Светлая тема',dark:'🌙 Тёмная тема',system:'🌗 Системная тема'}[state.theme]||'☀️ Светлая тема';}
 // Шапка: колокольчик + аватар + профиль
 $('#bellBtn').onclick=openNotif;
 $('#notifClose').onclick=()=>$('#notifOverlay').classList.remove('show');
@@ -1204,7 +1200,7 @@ $('#profClose').onclick=()=>$('#profOverlay').classList.remove('show');
 $('#profOverlay').onclick=e=>{if(e.target.id==='profOverlay')$('#profOverlay').classList.remove('show');};
 $('#profName').oninput=e=>{state.profileName=e.target.value;};
 $('#profName').onchange=()=>{save();renderHeader();$('#profAvatar').textContent=avatarInner();};
-$('#profTheme').onclick=()=>{toggleTheme();$('#profThemeLbl').textContent=state.theme==='dark'?'🌙 Тёмная тема':'☀️ Светлая тема';};
+$('#profTheme').onclick=()=>{toggleTheme();$('#profThemeLbl').textContent=themeLabel();};
 $('#profExport').onclick=()=>{$('#profOverlay').classList.remove('show');exportData();};
 $('#profMore').onclick=()=>{$('#profOverlay').classList.remove('show');showScreen('scrMore');};
 $('#changePhoto').onclick=()=>$('#photoInput').click();
@@ -1273,14 +1269,7 @@ function parseCSV(text){
   if(fld.length||row.length){row.push(fld);rows.push(row);}
   return rows.filter(r=>r.some(x=>x.trim()!==''));
 }
-function parseAmount(s){
-  s=String(s).replace(/[^\d,.\-]/g,'').trim();
-  if(!s||s==='-')return NaN;
-  const hasC=s.includes(','),hasD=s.includes('.');
-  if(hasC&&hasD){ s=(s.lastIndexOf(',')>s.lastIndexOf('.')) ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,''); }
-  else if(hasC){ const p=s.split(','); s=(p.length===2&&p[1].length<=2)? p[0]+'.'+p[1] : s.replace(/,/g,''); }
-  const n=parseFloat(s);return isNaN(n)?NaN:n;
-}
+function parseAmount(s){return AF.Services.Currency.parse(s);}
 function pad2(n){return String(n).padStart(2,'0');}
 function parseDate(s){
   s=String(s).trim();let m;
