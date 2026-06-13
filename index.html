@@ -535,14 +535,14 @@
   .cat-split .catrow .cval{font-size:12.5px}
   .cat-split .catrow .cpct{width:28px;font-size:11px}
   /* Категории: кольцо сверху по центру + список во всю ширину (тапабельный) */
-  .cat-donut-top{display:flex;justify-content:center;margin:2px 0 8px}
-  .cat-donut-top .cat-donut{width:150px;height:150px}
-  .cat-donut-top .donut-center .dc-v{font-size:20px}
+  .cat-donut-top{display:flex;justify-content:center;margin:2px 0 10px}
+  .cat-donut-top .cat-donut{width:210px;height:210px}
+  .cat-donut-top .donut-center .dc-v{font-size:21px}
   .catlist2{display:flex;flex-direction:column}
   .crow{display:flex;align-items:center;gap:13px;padding:13px 2px;border-top:1px solid var(--line);cursor:pointer;transition:background .12s}
   .crow:first-child{border-top:none}
   .crow:active{background:var(--accent-soft)}
-  .crow .cdot-lg{width:30px;height:30px;border-radius:50%;flex-shrink:0}
+  .crow .cic{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
   .crow-l{flex:1;min-width:0}
   .crow-nm{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .crow-chg{font-size:13px;font-weight:700;margin-top:2px}
@@ -1653,21 +1653,23 @@ function renderAnaPie(cur,pre){
   const byCatPrev={};(pre||[]).filter(t=>t.type===ty).forEach(t=>byCatPrev[t.cat]=(byCatPrev[t.cat]||0)+t.amount);
   const entries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);const total=entries.reduce((s,e)=>s+e[1],0);
   $('#pieTotal').textContent=num(total);
-  // строка категории: крупный кружок · имя + Δ% к прошлому · сумма + прошлая сумма (как в Money Flow)
-  const rowHtml=(color,name,curV,prevV,attr)=>{
+  // строка категории: иконка-эмодзи · имя + Δ% к прошлому · сумма + прошлая сумма (как в Money Flow)
+  const rowHtml=(emoji,color,name,curV,prevV,attr)=>{
     const b=catChangeBadge(curV,prevV,ty);
+    const ic=emoji?`<span class="cic" style="background:${color}22">${emoji}</span>`
+                  :`<span class="cic" style="background:var(--bg2);color:var(--muted2);font-size:15px">•••</span>`;
     return `<div class="crow" ${attr}>
-      <span class="cdot-lg" style="background:${color}"></span>
+      ${ic}
       <div class="crow-l"><div class="crow-nm">${esc(name)}</div><div class="crow-chg ${b.cls}">${b.txt}</div></div>
       <div class="crow-r"><div class="crow-amt">${num(curV)}</div><div class="crow-prev">${num(prevV)}</div></div>
     </div>`;
   };
   const TOPN=6;const head=entries.slice(0,TOPN);const tail=entries.slice(TOPN);
-  const rows=head.map(e=>{const c=catById(e[0]);return rowHtml(c.color,c.name,e[1],byCatPrev[e[0]]||0,`data-cat="${e[0]}"`);});
+  const rows=head.map(e=>{const c=catById(e[0]);return rowHtml(c.emoji,c.color,c.name,e[1],byCatPrev[e[0]]||0,`data-cat="${e[0]}"`);});
   if(tail.length){
     const restSum=tail.reduce((s,e)=>s+e[1],0);
     const restPrev=tail.reduce((s,e)=>s+(byCatPrev[e[0]]||0),0);
-    rows.push(rowHtml('var(--muted2)','Другое',restSum,restPrev,`data-cats="${tail.map(e=>e[0]).join(',')}"`));
+    rows.push(rowHtml(null,'var(--muted2)','Другое',restSum,restPrev,`data-cats="${tail.map(e=>e[0]).join(',')}"`));
   }
   $('#catLegend').innerHTML=entries.length?rows.join('')
     :`<div style="text-align:center;color:var(--muted2);font-size:13px;padding:14px">${ty==='income'?'Нет доходов':'Нет расходов'}</div>`;
@@ -1678,10 +1680,25 @@ function renderAnaPie(cur,pre){
   if(pieChart)pieChart.destroy();
   pieChart=new Chart($('#pieChart'),{type:'doughnut',
     data:{labels:entries.map(e=>catById(e[0]).name),datasets:[{data:entries.length?entries.map(e=>e[1]):[1],
-      backgroundColor:entries.length?entries.map(e=>catById(e[0]).color):['#eceef4'],borderWidth:0}]},
-    options:{cutout:'70%',maintainAspectRatio:false,plugins:{legend:{display:false},
-      tooltip:{enabled:entries.length>0,callbacks:{label:c=>' '+num(c.raw)}}}}});
+      backgroundColor:entries.length?entries.map(e=>catById(e[0]).color):['#eceef4'],borderWidth:0,_empty:!entries.length}]},
+    options:{cutout:'62%',maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{enabled:entries.length>0,callbacks:{label:c=>' '+num(c.raw)}}}},
+    plugins:[pieLabels]});
 }
+// Плагин: проценты прямо на заметных сегментах кольца (как в Money Flow)
+const pieLabels={id:'pieLabels',afterDatasetsDraw(chart){
+  const ds=chart.data.datasets[0]; if(ds._empty)return;
+  const data=ds.data, sum=data.reduce((a,b)=>a+(+b||0),0); if(sum<=0)return;
+  const ctx=chart.ctx, meta=chart.getDatasetMeta(0);
+  ctx.save(); ctx.font='700 13px -apple-system,system-ui,sans-serif'; ctx.fillStyle='#fff';
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.shadowColor='rgba(0,0,0,.30)'; ctx.shadowBlur=3;
+  meta.data.forEach((arc,i)=>{
+    const pct=data[i]/sum*100; if(pct<7)return; // подписываем только заметные доли
+    const ang=(arc.startAngle+arc.endAngle)/2, r=(arc.innerRadius+arc.outerRadius)/2;
+    ctx.fillText(pct.toFixed(pct<10?1:0).replace('.',',')+'%', arc.x+Math.cos(ang)*r, arc.y+Math.sin(ang)*r);
+  });
+  ctx.restore();
+}};
 // Операции выбранной категории за период (по умолчанию — расходы текущего периода Аналитики)
 function openCatTx(catIds,label,range,rangeLabel,type){
   const ty=type||'expense';
