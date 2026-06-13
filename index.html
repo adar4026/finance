@@ -863,28 +863,34 @@
 
 <script>
 /* ============ Категории ============ */
+// Production-таксономия (источник для сидирования; подкатегории — стартовые).
+const TAXONOMY_VERSION=2;
 const CATS = {
   expense: [
-    {id:'food',name:'Еда',emoji:'🍔',color:'#ff6b6b'},
-    {id:'transport',name:'Транспорт',emoji:'🚗',color:'#ffa94d'},
-    {id:'home',name:'Жильё',emoji:'🏠',color:'#ffd43b'},
-    {id:'shopping',name:'Покупки',emoji:'🛍️',color:'#da77f2'},
-    {id:'health',name:'Здоровье',emoji:'💊',color:'#ff8787'},
-    {id:'fun',name:'Развлечения',emoji:'🎮',color:'#9775fa'},
-    {id:'bills',name:'Счета',emoji:'📄',color:'#4dabf7'},
-    {id:'cafe',name:'Кафе',emoji:'☕',color:'#f783ac'},
-    {id:'travel',name:'Поездки',emoji:'✈️',color:'#3bc9db'},
-    {id:'edu',name:'Учёба',emoji:'📚',color:'#69db7c'},
-    {id:'pets',name:'Питомцы',emoji:'🐾',color:'#a9e34b'},
-    {id:'other_e',name:'Другое',emoji:'📦',color:'#868e96'},
+    {id:'food',name:'Еда',emoji:'🍔',color:'#ff6b6b',subs:['Продукты','Доставка','Перекусы']},
+    {id:'cafe',name:'Кафе и рестораны',emoji:'☕',color:'#f783ac',subs:['Кафе','Рестораны','Фастфуд','Кофе']},
+    {id:'transport',name:'Транспорт',emoji:'🚗',color:'#ffa94d',subs:['Топливо','Такси','Общественный','Парковка']},
+    {id:'home',name:'Жильё',emoji:'🏠',color:'#ffd43b',subs:['Аренда','Ипотека','Ремонт','Мебель']},
+    {id:'bills',name:'Счета и связь',emoji:'💡',color:'#4dabf7',subs:['Электричество','Вода/Газ','Интернет','Моб. связь']},
+    {id:'shopping',name:'Покупки',emoji:'🛍️',color:'#da77f2',subs:['Одежда','Обувь','Электроника','Для дома']},
+    {id:'health',name:'Здоровье',emoji:'💊',color:'#ff8787',subs:['Аптека','Врачи','Стоматология','Фитнес']},
+    {id:'fun',name:'Развлечения',emoji:'🎮',color:'#9775fa',subs:['Кино','Игры','Хобби','Концерты']},
+    {id:'subs',name:'Подписки',emoji:'📺',color:'#5c7cfa',subs:['Стриминг','Музыка','Приложения','Облако']},
+    {id:'travel',name:'Путешествия',emoji:'✈️',color:'#3bc9db',subs:['Билеты','Отели','Экскурсии','Виза']},
+    {id:'edu',name:'Образование',emoji:'🎓',color:'#69db7c',subs:['Курсы','Книги','Репетитор']},
+    {id:'pets',name:'Питомцы',emoji:'🐾',color:'#a9e34b',subs:['Корм','Ветеринар','Аксессуары']},
+    {id:'kids',name:'Дети',emoji:'👶',color:'#ffa8a8',subs:['Сад/Школа','Игрушки','Кружки','Одежда']},
+    {id:'care',name:'Уход за собой',emoji:'💆',color:'#faa2c1',subs:['Парикмахер','Косметика','Спа']},
+    {id:'other_e',name:'Другое',emoji:'📦',color:'#868e96',subs:[]},
   ],
   income: [
-    {id:'salary',name:'Зарплата',emoji:'💼',color:'#3ecf8e'},
-    {id:'freelance',name:'Подработка',emoji:'🧑‍💻',color:'#38d9a9'},
-    {id:'gift',name:'Подарок',emoji:'🎁',color:'#63e6be'},
-    {id:'invest',name:'Инвестиции',emoji:'📈',color:'#20c997'},
-    {id:'rent',name:'Аренда',emoji:'🔑',color:'#0ca678'},
-    {id:'other_i',name:'Другое',emoji:'💵',color:'#82c91e'},
+    {id:'salary',name:'Зарплата',emoji:'💼',color:'#3ecf8e',subs:['Оклад','Премия','Аванс']},
+    {id:'freelance',name:'Фриланс',emoji:'🧑‍💻',color:'#38d9a9',subs:['Проекты','Консультации']},
+    {id:'business',name:'Бизнес',emoji:'💰',color:'#20c997',subs:['Выручка','Прибыль']},
+    {id:'invest',name:'Инвестиции',emoji:'📈',color:'#0ca678',subs:['Дивиденды','Проценты','Продажа активов']},
+    {id:'rent',name:'Аренда',emoji:'🔑',color:'#63e6be',subs:['Аренда жилья']},
+    {id:'gift',name:'Подарки',emoji:'🎁',color:'#82c91e',subs:['Подарок','Кэшбэк']},
+    {id:'other_i',name:'Прочее',emoji:'💵',color:'#94d82d',subs:[]},
   ]
 };
 // Категории data-driven: всё в state.cats (дефолтные сидируются в migrate с isSystem). Flutter → таблица categories.
@@ -938,16 +944,22 @@ function load(){
   $('#curSelect').value=state.currency;
   renderHeader();
 }
-// Сидируем дефолтные категории в state.cats (один раз), чтобы их можно было редактировать/удалять
+// Сидируем/обновляем таксономию категорий (одноразово по версии). Данные не теряются: upsert по id.
 function seedCategories(){
   if(!Array.isArray(state.cats))state.cats=[];
-  if(!state.cats.some(c=>c.isSystem)){
-    const seed=[];
-    CATS.expense.forEach(c=>seed.push({...c,type:'expense',isSystem:true}));
-    CATS.income.forEach(c=>seed.push({...c,type:'income',isSystem:true}));
-    state.cats=seed.concat(state.cats);
-    AF.Store.save(state);
-  }
+  if(!Array.isArray(state.subcats))state.subcats=[];
+  if((state.taxonomyVersion||0)>=TAXONOMY_VERSION && state.cats.some(c=>c.isSystem))return;
+  const all=[...CATS.expense.map(c=>({...c,type:'expense'})),...CATS.income.map(c=>({...c,type:'income'}))];
+  all.forEach(tc=>{
+    const ex=state.cats.find(c=>c.id===tc.id);
+    if(ex){ex.name=tc.name;ex.emoji=tc.emoji;ex.color=tc.color;ex.type=tc.type;ex.isSystem=true;}
+    else state.cats.push({id:tc.id,name:tc.name,emoji:tc.emoji,color:tc.color,type:tc.type,isSystem:true,createdAt:Date.now()});
+    // стартовые подкатегории — только если у категории их ещё нет (не дублируем, не трогаем созданные пользователем)
+    if(tc.subs&&tc.subs.length&&!state.subcats.some(s=>s.categoryId===tc.id))
+      tc.subs.forEach((nm,j)=>state.subcats.push({id:'s_'+tc.id+'_'+j,categoryId:tc.id,name:nm,createdAt:Date.now()}));
+  });
+  state.taxonomyVersion=TAXONOMY_VERSION;
+  AF.Store.save(state);
 }
 function save(){ AF.Store.save(state); renderHeader(); }
 function applyTheme(){
