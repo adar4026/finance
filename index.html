@@ -339,6 +339,28 @@
   .prof-row:active{background:var(--card2)}
   .prof-row .chev{color:var(--muted2);font-size:18px}
 
+  /* ===== Goals (Screen 7) ===== */
+  .goals-summary{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:18px;padding:18px;color:#fff;margin:10px 0 16px;text-align:center;box-shadow:0 12px 30px rgba(109,93,246,.35)}
+  .goals-summary .gs-v{font-size:30px;font-weight:800;letter-spacing:-.5px}
+  .goals-summary .gs-sub{font-size:12.5px;opacity:.9;margin-top:6px}
+  .gsec{font-size:13px;font-weight:600;color:var(--muted2);margin:6px 2px 11px}
+  .goal-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+  .goal-card.done{opacity:.8}
+  .gc-head{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+  .gc-dot{width:13px;height:13px;border-radius:5px;flex-shrink:0}
+  .gc-nm{flex:1;font-size:16px;font-weight:700}
+  .gc-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--income-soft);color:var(--income)}
+  .gc-amt{font-size:14px;color:var(--muted);margin-bottom:10px}
+  .gc-amt b{color:var(--text);font-size:19px;font-weight:800}
+  .gc-bar{height:12px;border-radius:7px;background:var(--bg2);overflow:hidden;margin-bottom:10px}
+  .gc-fill{height:100%;border-radius:7px;transition:width .4s}
+  .gc-foot{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .gc-fc{font-size:12px;color:var(--muted2);flex:1}
+  .gc-add{border:none;background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:700;padding:9px 15px;border-radius:11px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .gc-add:active{transform:scale(.95)}
+  .goals-empty{text-align:center;color:var(--muted2);padding:34px 16px}
+  .goals-empty .big{font-size:40px;margin-bottom:10px}
+
   /* ===== Budgets (Screen 6) ===== */
   .budget-total{margin-bottom:16px}
   .bt-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:13px}
@@ -787,6 +809,7 @@
     </div>
     <button class="prof-row" id="changePhoto"><span>📷 Сменить фото</span><span class="chev">›</span></button>
     <input type="file" id="photoInput" accept="image/*" hidden>
+    <button class="prof-row" id="profGoals"><span>🎯 Цели</span><span class="chev">›</span></button>
     <button class="prof-row" id="profTheme"><span id="profThemeLbl">🌙 Тёмная тема</span><span class="chev">›</span></button>
     <button class="prof-row" id="profExport"><span>⬇️ Экспорт данных (JSON)</span><span class="chev">›</span></button>
     <button class="prof-row" id="profMore"><span>⚙️ Все настройки</span><span class="chev">›</span></button>
@@ -802,6 +825,36 @@
     <button class="am-item" data-add="income"><span class="am-ic" style="background:var(--income-soft)">💰</span>Доход</button>
     <button class="am-item" data-add="transfer"><span class="am-ic" style="background:var(--accent-soft)">🔄</span>Перевод</button>
     <button class="am-item" data-add="receipt"><span class="am-ic" style="background:#4dabf71f">🧾</span>Чек</button>
+  </div>
+</div>
+
+<!-- Цели (Goals, Screen 7) -->
+<div class="overlay" id="goalsOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top">
+      <div class="nm">🎯 Цели</div>
+      <button class="iconbtn" id="goalsClose">×</button>
+    </div>
+    <div class="goals-summary" id="goalsSummary"></div>
+    <div id="goalsList"></div>
+    <button class="set-btn" id="addGoalBtn" style="border-style:dashed;color:var(--accent);justify-content:center"><span>＋ Новая цель</span></button>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
+<!-- Редактор цели -->
+<div class="overlay" id="goalEditOverlay">
+  <div class="sheet" style="max-width:440px">
+    <div class="grab"></div>
+    <h2><span id="goalEditTitle">Цель</span><span class="x" id="goalEditClose">×</span></h2>
+    <div class="field"><label>Название</label><input type="text" id="goalName" maxlength="30" autocomplete="off"><div class="err" id="goalNameErr">Введите название</div></div>
+    <div class="row2">
+      <div class="field"><label>Целевая сумма</label><input type="number" id="goalTarget" inputmode="decimal" min="0" placeholder="0"><div class="err" id="goalTargetErr">Введите сумму</div></div>
+      <div class="field"><label>Дата (необяз.)</label><input type="date" id="goalDeadline"></div>
+    </div>
+    <div class="field"><label>Цвет</label><div class="color-row" id="goalColorRow"></div></div>
+    <button class="btn-primary" id="goalSave">Сохранить</button>
+    <button class="btn-del" id="goalDelete" style="display:none">Удалить цель</button>
   </div>
 </div>
 
@@ -1414,6 +1467,92 @@ function deleteBudget(){
   save();$('#budgetEditOverlay').classList.remove('show');render();toast('Бюджет удалён');
 }
 
+/* ============ Цели (Goals, Screen 7) ============ */
+let goalEdit=null, gColor='#6d5df6';
+function goalForecast(g){
+  const left=g.targetAmount-g.savedAmount;
+  if(left<=0)return 'Цель достигнута 🎉';
+  if(g.deadline){
+    const dl=new Date(g.deadline), now=new Date();
+    if(dl<now)return 'Срок прошёл · осталось '+num(left);
+    const months=Math.max(1,Math.round((dl-now)/(1000*60*60*24*30)));
+    return 'до '+dl.toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'2-digit'})+' · нужно '+num(left/months)+'/мес';
+  }
+  return 'Осталось '+num(left);
+}
+function openGoals(){$('#profOverlay').classList.remove('show');renderGoals();$('#goalsOverlay').classList.add('show');}
+function renderGoals(){
+  const goals=state.goals||[];
+  const active=goals.filter(g=>g.savedAmount<g.targetAmount);
+  const done=goals.filter(g=>g.savedAmount>=g.targetAmount);
+  const tgt=active.reduce((s,g)=>s+g.targetAmount,0), sav=active.reduce((s,g)=>s+g.savedAmount,0);
+  const pct=tgt?Math.round(sav/tgt*100):0;
+  $('#goalsSummary').innerHTML=goals.length
+    ? `<div class="gs-v">${pct}%</div><div class="gs-sub">${active.length} ${plural(active.length,'активная цель','активные цели','активных целей')} · накоплено ${num(sav)} из ${num(tgt)}</div>`
+    : `<div class="gs-v">🎯</div><div class="gs-sub">Поставьте первую финансовую цель</div>`;
+  const el=$('#goalsList');
+  if(!goals.length){el.innerHTML=`<div class="goals-empty"><div class="big">🎯</div><p>Целей пока нет.<br>Нажмите «Новая цель».</p></div>`;return;}
+  let html=active.map(goalCard).join('');
+  if(done.length)html+=`<div class="gsec">Достигнутые</div>`+done.map(goalCard).join('');
+  el.innerHTML=html;
+  $$('#goalsList .gc-add').forEach(b=>b.onclick=e=>{e.stopPropagation();contributeGoal(b.dataset.g);});
+  $$('#goalsList .goal-card').forEach(c=>c.onclick=()=>openGoalEdit(c.dataset.g));
+}
+function goalCard(g){
+  const pct=AF.Services.Goal.progress(g), done=g.savedAmount>=g.targetAmount;
+  const col=g.color||'#6d5df6';
+  return `<div class="goal-card ${done?'done':''}" data-g="${g.id}">
+    <div class="gc-head"><span class="gc-dot" style="background:${col}"></span><span class="gc-nm">${esc(g.name)}</span>
+      ${done?'<span class="gc-badge">✓ Достигнута</span>':''}</div>
+    <div class="gc-amt"><b>${num(g.savedAmount)}</b> из ${num(g.targetAmount)}</div>
+    <div class="gc-bar"><div class="gc-fill" style="width:${pct}%;background:${col}"></div></div>
+    <div class="gc-foot"><span class="gc-fc">${goalForecast(g)}</span>
+      ${done?'':`<button class="gc-add" data-g="${g.id}">Пополнить</button>`}</div>
+  </div>`;
+}
+function contributeGoal(id){
+  const g=state.goals.find(x=>x.id===id);if(!g)return;
+  const v=parseFloat((prompt('Сколько добавить к цели «'+g.name+'»?','')||'').replace(',','.'));
+  if(!v||v<=0)return;
+  g.savedAmount=Math.round((g.savedAmount+v)*100)/100;
+  const reached=g.savedAmount>=g.targetAmount;
+  if(reached)g.status='completed';
+  save();renderGoals();renderHeader();
+  toast(reached?'🎉 Цель достигнута!':'Добавлено '+num(v));
+}
+function openGoalEdit(id){
+  goalEdit=id||null;
+  if(id){const g=state.goals.find(x=>x.id===id);gColor=g.color||'#6d5df6';
+    $('#goalName').value=g.name;$('#goalTarget').value=g.targetAmount;$('#goalDeadline').value=g.deadline||'';
+    $('#goalEditTitle').textContent='Цель';$('#goalDelete').style.display='block';}
+  else{gColor=ACC_COLORS[0];$('#goalName').value='';$('#goalTarget').value='';$('#goalDeadline').value='';
+    $('#goalEditTitle').textContent='Новая цель';$('#goalDelete').style.display='none';}
+  $('#goalNameErr').classList.remove('show');$('#goalTargetErr').classList.remove('show');
+  renderGoalColors();
+  $('#goalEditOverlay').classList.add('show');
+  setTimeout(()=>{if(!id)$('#goalName').focus();},250);
+}
+function renderGoalColors(){
+  $('#goalColorRow').innerHTML=ACC_COLORS.map(c=>`<div class="color-sw ${c===gColor?'sel':''}" data-color="${c}" style="background:${c}"></div>`).join('');
+  $$('#goalColorRow .color-sw').forEach(el=>el.onclick=()=>{gColor=el.dataset.color;renderGoalColors();});
+}
+function saveGoal(){
+  const name=$('#goalName').value.trim();
+  const target=parseFloat($('#goalTarget').value);
+  if(!name){$('#goalNameErr').classList.add('show');$('#goalName').focus();return;}
+  if(!target||target<=0){$('#goalTargetErr').classList.add('show');$('#goalTarget').focus();return;}
+  const deadline=$('#goalDeadline').value||null;
+  if(goalEdit){const g=state.goals.find(x=>x.id===goalEdit);Object.assign(g,{name,targetAmount:target,deadline,color:gColor});}
+  else state.goals.push({id:'g'+Date.now().toString(36),name,targetAmount:Math.round(target*100)/100,savedAmount:0,currency:state.currency,deadline,color:gColor,status:'active',createdAt:Date.now()});
+  save();$('#goalEditOverlay').classList.remove('show');renderGoals();toast('Цель сохранена ✓');
+}
+function deleteGoal(){
+  if(!goalEdit)return;
+  if(!confirm('Удалить цель?'))return;
+  state.goals=state.goals.filter(g=>g.id!==goalEdit);
+  save();$('#goalEditOverlay').classList.remove('show');renderGoals();toast('Цель удалена');
+}
+
 // UI-обёртки над AF.Services.Account (логика — в services/account_service.js)
 function accBalance(accId,endDate){return AF.Services.Account.balance(state,accId,endDate);}
 const ACC_TYPE_LABEL={bank:'Банковский счёт',cash:'Наличные',savings:'Сбережения',investment:'Инвестиции',crypto:'Криптокошелёк'};
@@ -1833,6 +1972,11 @@ function loadDemo(){
       .forEach((e,i)=>tx.push({id:Date.now()+Math.random()+i,type:'expense',amount:e[1],cat:e[0],account:accs[i%accs.length],date:dstr(base,3+i*3),note:''}));
   }
   state.tx=tx;state.budgets={food:400,transport:150,fun:200,cafe:150};
+  const dl=new Date();dl.setMonth(dl.getMonth()+8);
+  state.goals=[
+    {id:'g1',name:'Подушка безопасности',targetAmount:10000,savedAmount:3908,currency:'€',deadline:dl.toISOString().slice(0,10),color:'#6d5df6',status:'active',createdAt:Date.now()},
+    {id:'g2',name:'Отпуск',targetAmount:2000,savedAmount:2000,currency:'€',deadline:null,color:'#3bc9db',status:'completed',createdAt:Date.now()},
+  ];
   save();anchor=new Date();render();toast('Демо-данные загружены');
 }
 function dstr(b,d){return new Date(b.getFullYear(),b.getMonth(),d).toISOString().slice(0,10);}
@@ -2102,6 +2246,14 @@ function importCSV(text){
 }
 $('#demoBtn').onclick=loadDemo;
 $('#clearBtn').onclick=()=>{if(confirm('Удалить все операции?')){state.tx=[];state.budgets={};save();render();toast('Данные удалены');}};
+// Цели (Goals)
+$('#profGoals').onclick=openGoals;
+$('#goalsClose').onclick=()=>$('#goalsOverlay').classList.remove('show');
+$('#addGoalBtn').onclick=()=>openGoalEdit(null);
+$('#goalEditClose').onclick=()=>$('#goalEditOverlay').classList.remove('show');
+$('#goalEditOverlay').onclick=e=>{if(e.target.id==='goalEditOverlay')$('#goalEditOverlay').classList.remove('show');};
+$('#goalSave').onclick=saveGoal;
+$('#goalDelete').onclick=deleteGoal;
 // Бюджеты
 $('#addBudgetBtn').onclick=()=>openBudgetEdit(null);
 $('#budEditClose').onclick=()=>$('#budgetEditOverlay').classList.remove('show');
@@ -2109,7 +2261,7 @@ $('#budgetEditOverlay').onclick=e=>{if(e.target.id==='budgetEditOverlay')$('#bud
 $('#budSave').onclick=saveBudget;
 $('#budDelete').onclick=deleteBudget;
 $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Старт ============ */
 load();
