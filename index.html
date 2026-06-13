@@ -339,6 +339,29 @@
   .prof-row:active{background:var(--card2)}
   .prof-row .chev{color:var(--muted2);font-size:18px}
 
+  /* ===== Security (Screen 11) ===== */
+  .sec-toggle{display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;font-size:15px}
+  .sw{width:50px;height:30px;border-radius:16px;background:var(--line);border:none;cursor:pointer;position:relative;transition:.2s;flex-shrink:0}
+  .sw.on{background:var(--accent)}
+  .sw::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+  .sw.on::after{left:23px}
+  .sec-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;font-size:15px;color:var(--text);cursor:pointer;font-family:inherit;text-align:left}
+  .sec-btn:active{background:var(--card2)}
+  .sec-btn .chev{color:var(--muted2);font-size:18px}
+  .pin-overlay{background:var(--bg);align-items:center;justify-content:center;z-index:200}
+  .pin-box{text-align:center;padding:24px;width:100%;max-width:340px}
+  .pin-logo{font-size:40px;margin-bottom:12px}
+  .pin-title{font-size:18px;font-weight:700;margin-bottom:24px;color:var(--text)}
+  .pin-dots{display:flex;gap:16px;justify-content:center;margin-bottom:36px}
+  .pin-dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--muted2);transition:.15s}
+  .pin-dot.on{background:var(--accent);border-color:var(--accent)}
+  .pin-dot.err{border-color:var(--expense);background:var(--expense)}
+  .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:280px;margin:0 auto}
+  .pin-pad button{height:70px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:26px;font-weight:600;cursor:pointer}
+  .pin-pad button:active{background:var(--card2)}
+  .pin-pad .pk-back{border:none;background:none;font-size:22px}
+  .pin-cancel{margin-top:24px;border:none;background:none;color:var(--accent);font-size:15px;font-weight:600;cursor:pointer}
+
   /* ===== Export & Backups (Screen 12–13) ===== */
   .exp-period{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 2px}
   .exp-period span{font-size:12.5px;color:var(--muted)}
@@ -614,7 +637,7 @@
   <!-- Screen: Home dashboard (Product Book Screen 1) -->
   <div class="screen active" id="scrRecords">
     <div class="capital">
-      <div class="cap-head"><span class="cap-l">Общий капитал 👁</span><span class="cap-cur" id="capCur">EUR</span></div>
+      <div class="cap-head"><span class="cap-l">Общий капитал <span id="capEye" style="cursor:pointer">👁</span></span><span class="cap-cur" id="capCur">EUR</span></div>
       <div class="cap-val" id="capVal">€0</div>
       <div class="cap-chg" id="capChg">+€0 · 0% за месяц</div>
       <div class="cap-ie">
@@ -882,6 +905,7 @@
     <button class="prof-row" id="profGoals"><span>🎯 Цели</span><span class="chev">›</span></button>
     <button class="prof-row" id="profCalendar"><span>📅 Календарь</span><span class="chev">›</span></button>
     <button class="prof-row" id="profHealth"><span>❤️ Финансовое здоровье</span><span class="chev">›</span></button>
+    <button class="prof-row" id="profSecurity"><span>🔐 Безопасность</span><span class="chev">›</span></button>
     <button class="prof-row" id="profTheme"><span id="profThemeLbl">🌙 Тёмная тема</span><span class="chev">›</span></button>
     <button class="prof-row" id="profExport"><span>📤 Экспорт и копии</span><span class="chev">›</span></button>
     <button class="prof-row" id="profMore"><span>⚙️ Все настройки</span><span class="chev">›</span></button>
@@ -897,6 +921,31 @@
     <button class="am-item" data-add="income"><span class="am-ic" style="background:var(--income-soft)">💰</span>Доход</button>
     <button class="am-item" data-add="transfer"><span class="am-ic" style="background:var(--accent-soft)">🔄</span>Перевод</button>
     <button class="am-item" data-add="receipt"><span class="am-ic" style="background:#4dabf71f">🧾</span>Чек</button>
+  </div>
+</div>
+
+<!-- Безопасность (Screen 11) -->
+<div class="overlay" id="securityOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top"><div class="nm">🔐 Безопасность</div><button class="iconbtn" id="securityClose">×</button></div>
+    <div id="securityBody" style="margin-top:10px"></div>
+    <p style="font-size:11.5px;color:var(--muted2);margin-top:14px;line-height:1.5">PIN — локальная блокировка приложения на этом устройстве. Хранится в виде хэша, не в открытом виде.</p>
+  </div>
+</div>
+
+<!-- PIN-код (установка / ввод) -->
+<div class="overlay pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <div class="pin-logo">🔐</div>
+    <div class="pin-title" id="pinTitle">Введите PIN-код</div>
+    <div class="pin-dots" id="pinDots"></div>
+    <div class="pin-pad" id="pinPad">
+      <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+      <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+      <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+      <span></span><button data-k="0">0</button><button data-k="back" class="pk-back">⌫</button>
+    </div>
+    <button class="pin-cancel" id="pinCancel">Отмена</button>
   </div>
 </div>
 
@@ -1131,8 +1180,9 @@ let detailAcc=null, detailAnchor=new Date(), detailType='expense', lineChart;
 const $=s=>document.querySelector(s);
 const $$=s=>document.querySelectorAll(s);
 // UI-обёртки над AF.Services.Currency (бизнес-логика — в services/currency_service.js)
-const fmtCur=(n,cur)=>AF.Services.Currency.format(n,cur||state.currency);
-const num=n=>AF.Services.Currency.format(n,state.currency);
+function maskAmt(cur){const s=AF.Services.Currency.SYM[cur];return (s||(cur&&cur.length<=2?cur:''))+'•••';}
+const fmtCur=(n,cur)=>state.hideAmounts?maskAmt(cur||state.currency):AF.Services.Currency.format(n,cur||state.currency);
+const num=n=>state.hideAmounts?maskAmt(state.currency):AF.Services.Currency.format(n,state.currency);
 const signed=(n,t)=>(t==='income'?'+':'−')+fmtCur(Math.abs(n),state.currency);
 
 /* ============ Хранилище (Repository AF.Store → SQLite/Drift в Flutter) ============ */
@@ -1930,6 +1980,48 @@ function doBackupRestore(text){
   $('#exportOverlay').classList.remove('show');toast('Данные восстановлены ✓');
 }
 
+/* ============ Безопасность (Screen 11): PIN + скрытие сумм ============ */
+async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('af_pin_'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+function openSecurity(){$('#profOverlay').classList.remove('show');renderSecurity();$('#securityOverlay').classList.add('show');}
+function renderSecurity(){
+  const pinOn=!!state.pinHash, hide=!!state.hideAmounts;
+  let html=`<div class="sec-toggle"><span>🔒 PIN-код на вход</span><button class="sw ${pinOn?'on':''}" id="swPin"></button></div>`;
+  if(pinOn)html+=`<button class="sec-btn" id="changePinBtn"><span>Изменить PIN</span><span class="chev">›</span></button>`;
+  html+=`<div class="sec-toggle"><span>🙈 Скрывать суммы</span><button class="sw ${hide?'on':''}" id="swHide"></button></div>`;
+  $('#securityBody').innerHTML=html;
+  $('#swPin').onclick=()=>{ if(state.pinHash)pinStart('disable'); else pinStart('set'); };
+  if(pinOn)$('#changePinBtn').onclick=()=>pinStart('change');
+  $('#swHide').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();renderSecurity();render();updateEye();};
+}
+// PIN state machine
+let pinState={mode:null,buf:'',temp:null};
+function pinStart(mode){pinState={mode,buf:'',temp:null};
+  $('#pinCancel').style.display=mode==='unlock'?'none':'block';
+  setPinTitle();renderPinDots();$('#pinOverlay').classList.add('show');}
+function setPinTitle(t){const m=pinState.mode;
+  $('#pinTitle').textContent=t||(m==='unlock'?'Введите PIN-код':m==='set'?'Придумайте PIN-код':m==='change'?'Текущий PIN-код':m==='disable'?'PIN для отключения':'PIN-код');}
+function renderPinDots(err){$('#pinDots').innerHTML=[0,1,2,3].map(i=>`<span class="pin-dot ${i<pinState.buf.length?'on':''} ${err?'err':''}"></span>`).join('');}
+function pinKey(d){
+  if(d==='back'){pinState.buf=pinState.buf.slice(0,-1);renderPinDots();return;}
+  if(pinState.buf.length>=4)return;
+  pinState.buf+=d;renderPinDots();
+  if(pinState.buf.length===4)setTimeout(pinComplete,130);
+}
+async function pinComplete(){
+  const code=pinState.buf,m=pinState.mode;
+  if(m==='unlock'){ if(await sha(code)===state.pinHash){closePin();} else pinError(); return; }
+  if(m==='disable'){ if(await sha(code)===state.pinHash){state.pinHash=null;save();closePin();renderSecurity();toast('PIN отключён');} else pinError(); return; }
+  if(m==='change'){ if(await sha(code)===state.pinHash){pinState.mode='set';pinState.buf='';pinState.temp=null;setPinTitle('Новый PIN-код');renderPinDots();} else pinError(); return; }
+  if(m==='set'){
+    if(!pinState.temp){pinState.temp=code;pinState.buf='';setPinTitle('Повторите PIN-код');renderPinDots();}
+    else if(pinState.temp===code){state.pinHash=await sha(code);save();closePin();renderSecurity();toast('PIN установлен ✓');}
+    else{pinState.temp=null;pinState.buf='';renderPinDots(true);setTimeout(()=>{setPinTitle('Не совпало. Придумайте заново');renderPinDots();},400);}
+  }
+}
+function pinError(){renderPinDots(true);if(navigator.vibrate)navigator.vibrate(120);pinState.buf='';setTimeout(()=>renderPinDots(),400);}
+function closePin(){$('#pinOverlay').classList.remove('show');}
+function updateEye(){const e=$('#capEye');if(e)e.textContent=state.hideAmounts?'🙈':'👁';}
+
 // UI-обёртки над AF.Services.Account (логика — в services/account_service.js)
 function accBalance(accId,endDate){return AF.Services.Account.balance(state,accId,endDate);}
 const ACC_TYPE_LABEL={bank:'Банковский счёт',cash:'Наличные',savings:'Сбережения',investment:'Инвестиции',crypto:'Криптокошелёк'};
@@ -2639,6 +2731,13 @@ function importCSV(text){
 }
 $('#demoBtn').onclick=loadDemo;
 $('#clearBtn').onclick=()=>{if(confirm('Удалить все операции?')){state.tx=[];state.budgets={};save();render();toast('Данные удалены');}};
+// Безопасность
+$('#profSecurity').onclick=openSecurity;
+$('#securityClose').onclick=()=>$('#securityOverlay').classList.remove('show');
+$('#securityOverlay').onclick=e=>{if(e.target.id==='securityOverlay')$('#securityOverlay').classList.remove('show');};
+$$('#pinPad button[data-k]').forEach(b=>b.onclick=()=>pinKey(b.dataset.k));
+$('#pinCancel').onclick=()=>{if(pinState.mode!=='unlock')closePin();};
+$('#capEye').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();render();updateEye();};
 // Финздоровье
 $('#profHealth').onclick=openHealth;
 $('#healthClose').onclick=()=>$('#healthOverlay').classList.remove('show');
@@ -2677,6 +2776,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#acc
 /* ============ Старт ============ */
 load();
 showScreen('scrRecords');
+updateEye();
+if(state.pinHash)pinStart('unlock'); // блокировка на входе
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 </script>
