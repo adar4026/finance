@@ -190,6 +190,17 @@
   .display .num{font-size:44px;font-weight:800;letter-spacing:-1px;text-align:center;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1}
   .sheet-label{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:9px}
+  .receipt-add{width:100%;padding:16px;border:1.5px dashed var(--line);border-radius:14px;background:none;color:var(--muted);
+    font-size:14.5px;cursor:pointer;font-family:inherit;min-height:54px}
+  .receipt-add:active{background:var(--card2)}
+  .receipt-thumb{position:relative;width:92px;height:112px;border-radius:13px;overflow:hidden;border:1px solid var(--line)}
+  .receipt-thumb img{width:100%;height:100%;object-fit:cover;cursor:pointer;display:block}
+  .receipt-del{position:absolute;top:5px;right:5px;width:25px;height:25px;border-radius:50%;border:none;background:rgba(0,0,0,.55);
+    color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .receipt-viewer{background:rgba(0,0,0,.92);align-items:center;justify-content:center}
+  .receipt-viewer img{max-width:92%;max-height:84vh;border-radius:8px}
+  .rv-close{position:absolute;top:max(16px,env(safe-area-inset-top));right:18px;width:42px;height:42px;border-radius:50%;
+    border:none;background:rgba(255,255,255,.16);color:#fff;font-size:26px;cursor:pointer;z-index:2}
   .cat-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
   .cat-strip::-webkit-scrollbar{display:none}
   .cat-pick{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;width:56px;padding:7px 3px;
@@ -554,6 +565,11 @@
     <div class="field" style="margin-bottom:12px">
       <input type="text" id="fNote" placeholder="Комментарий (необязательно)">
     </div>
+    <div id="receiptBlock" style="margin-bottom:14px">
+      <div class="sheet-label">Чек</div>
+      <div id="receiptArea"></div>
+      <input type="file" id="receiptInput" accept="image/*" hidden>
+    </div>
     <div class="keypad">
       <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button class="op" data-k="÷">÷</button>
       <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button class="op" data-k="×">×</button>
@@ -695,6 +711,12 @@
   </div>
 </div>
 
+<!-- Полноэкранный просмотр чека -->
+<div class="overlay receipt-viewer" id="receiptViewer">
+  <button class="rv-close" id="receiptViewerClose">×</button>
+  <img id="receiptViewerImg" alt="Чек">
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -749,7 +771,7 @@ let period='month';
 let homeRange='1m';
 let curScreen='scrRecords';
 // add-sheet state
-let aType='expense', aCat='food', aSubcat=null, aExpr='0', editId=null;
+let aType='expense', aCat='food', aSubcat=null, aReceipt=null, aExpr='0', editId=null;
 const subcatById=id=>(state.subcats||[]).find(s=>s.id===id);
 // account editor
 let accEdit=null, accEmoji='💳', accColor='#6d5df6', accType='bank';
@@ -932,7 +954,7 @@ function recentRow(t){
   const c=catById(t.cat),acc=state.accounts.find(a=>a.id===t.account),cur=(acc&&acc.currency)||state.currency;
   const sub=t.subcategoryId?subcatById(t.subcategoryId):null;
   return `<div class="rec" data-id="${t.id}"><div class="em" style="background:${c.color}22">${c.emoji}</div>
-    <div class="info"><div class="t1">${esc(c.name)}${sub?' · '+esc(sub.name):''}${t.note?' · '+esc(t.note):''}</div><div class="t2">${acc?acc.emoji+' '+esc(acc.name):''}</div></div>
+    <div class="info"><div class="t1">${esc(c.name)}${sub?' · '+esc(sub.name):''}${t.receiptPath?' 🧾':''}${t.note?' · '+esc(t.note):''}</div><div class="t2">${acc?acc.emoji+' '+esc(acc.name):''}</div></div>
     <div class="right"><div class="amt ${t.type==='income'?'inc':'exp'}">${signedCur(t.amount,t.type,cur)}</div><div class="dt">${dt}</div></div></div>`;
 }
 function renderAccStrip(){
@@ -1051,7 +1073,7 @@ function txRow(t){
   const sub=t.subcategoryId?subcatById(t.subcategoryId):null;
   return `<div class="tx" data-id="${t.id}">
     <div class="em" style="background:${c.color}22">${c.emoji}</div>
-    <div class="info"><div class="t1">${c.name}${sub?' · '+esc(sub.name):''}</div>
+    <div class="info"><div class="t1">${c.name}${sub?' · '+esc(sub.name):''}${t.receiptPath?' <span style="font-size:12px">🧾</span>':''}</div>
       <div class="t2">${(acc?acc.emoji+' '+acc.name:'')}${t.note?' · '+esc(t.note):''}</div></div>
     <div class="amt ${t.type==='income'?'inc':'exp'}">${signed(t.amount,t.type)}</div>
   </div>`;
@@ -1277,13 +1299,13 @@ function openSheet(id){
   buildAccountSelect();
   if(id){
     const t=state.tx.find(x=>x.id==id);
-    aType=t.type;aExpr=String(t.amount);aCat=t.cat||CATS.expense[0].id;aSubcat=t.subcategoryId||null;
+    aType=t.type;aExpr=String(t.amount);aCat=t.cat||CATS.expense[0].id;aSubcat=t.subcategoryId||null;aReceipt=t.receiptPath||null;
     $('#fDate').value=t.date.slice(0,10);$('#fNote').value=t.note||'';
     if(t.type==='transfer'){$('#fFrom').value=t.from;$('#fTo').value=t.to;}
     else $('#fAccount').value=t.account;
     $('#delBtn').style.display='block';
   }else{
-    aType='expense';aExpr='0';aCat=CATS.expense[0].id;aSubcat=null;
+    aType='expense';aExpr='0';aCat=CATS.expense[0].id;aSubcat=null;aReceipt=null;
     $('#fDate').value=new Date().toISOString().slice(0,10);$('#fNote').value='';
     $('#delBtn').style.display='none';
   }
@@ -1306,8 +1328,10 @@ function setType(t,keepCat){
   $('#transRow').style.display=isT?'flex':'none';
   $('#catBlock').style.display=isT?'none':'block';
   $('#subcatBlock').style.display=isT?'none':'block';
+  $('#receiptBlock').style.display=isT?'none':'block';
   $('#accField').style.display=isT?'none':'block';
   if(isT)return;
+  renderReceipt();
   const cats=catsFor(t);
   if(!keepCat)aCat=cats[0].id;
   else if(!cats.find(c=>c.id===aCat))aCat=cats[0].id;
@@ -1337,6 +1361,18 @@ function renderSubcats(){
     renderSubcats();
   });
 }
+function renderReceipt(){
+  const el=$('#receiptArea');
+  if(aReceipt){
+    el.innerHTML=`<div class="receipt-thumb"><img src="${aReceipt}" id="receiptImg" alt="Чек"><button class="receipt-del" id="receiptDel">✕</button></div>`;
+    $('#receiptImg').onclick=()=>openReceiptViewer(aReceipt);
+    $('#receiptDel').onclick=()=>{aReceipt=null;renderReceipt();};
+  }else{
+    el.innerHTML=`<button class="receipt-add" id="receiptAdd">📷 Прикрепить фото чека</button>`;
+    $('#receiptAdd').onclick=()=>$('#receiptInput').click();
+  }
+}
+function openReceiptViewer(src){$('#receiptViewerImg').src=src;$('#receiptViewer').classList.add('show');}
 function updateDisplay(){$('#dispNum').textContent=aExpr;}
 function evalExpr(e){
   let s=e.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');
@@ -1377,9 +1413,9 @@ function saveTx(){
   }else if(editId){
     const t=state.tx.find(x=>x.id==editId);
     delete t.from;delete t.to;delete t.toAmount;
-    Object.assign(t,{type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note});
+    Object.assign(t,{type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note,receiptPath:aReceipt||null});
   }else{
-    state.tx.push({id:Date.now(),type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note});
+    state.tx.push({id:Date.now(),type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note,receiptPath:aReceipt||null});
   }
   save();closeSheet();
   anchor=new Date(date);render();buildAccountSelect();
@@ -1488,9 +1524,23 @@ $('#addMenuClose').onclick=()=>$('#addMenu').classList.remove('show');
 $('#addMenu').onclick=e=>{if(e.target.id==='addMenu')$('#addMenu').classList.remove('show');};
 $$('#addMenu .am-item').forEach(b=>b.onclick=()=>{
   $('#addMenu').classList.remove('show');
-  const t=b.dataset.add==='receipt'?'expense':b.dataset.add;
+  const isReceipt=b.dataset.add==='receipt';
+  const t=isReceipt?'expense':b.dataset.add;
   openSheet(null); setType(t);
+  if(isReceipt)setTimeout(()=>$('#receiptInput').click(),300); // «Чек» сразу предлагает фото
 });
+// Фото чека: камера/галерея + сжатие (хранение локально, dataURL)
+$('#receiptInput').onchange=e=>{const f=e.target.files[0];if(!f){return;}
+  const r=new FileReader();
+  r.onload=()=>{const img=new Image();img.onload=()=>{
+    const max=1000;let w=img.width,h=img.height;
+    if(w>max||h>max){if(w>h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;}}
+    const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);
+    aReceipt=cv.toDataURL('image/jpeg',0.7);renderReceipt();toast('Чек прикреплён ✓');
+  };img.onerror=()=>toast('Не удалось открыть фото');img.src=r.result;};
+  r.readAsDataURL(f);e.target.value='';};
+$('#receiptViewerClose').onclick=()=>$('#receiptViewer').classList.remove('show');
+$('#receiptViewer').onclick=e=>{if(e.target.id==='receiptViewer')$('#receiptViewer').classList.remove('show');};
 $('#closeSheet').onclick=closeSheet;
 $('#overlay').onclick=e=>{if(e.target.id==='overlay')closeSheet();};
 $('#segExp').onclick=()=>setType('expense');
@@ -1715,7 +1765,7 @@ function importCSV(text){
 }
 $('#demoBtn').onclick=loadDemo;
 $('#clearBtn').onclick=()=>{if(confirm('Удалить все операции?')){state.tx=[];state.budgets={};save();render();toast('Данные удалены');}};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Старт ============ */
 load();
