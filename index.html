@@ -483,27 +483,35 @@
   .goals-empty .big{font-size:40px;margin-bottom:10px}
 
   /* ===== Budgets (Screen 6) ===== */
-  .budget-total{margin-bottom:16px}
-  .bt-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:13px}
-  .bt-amt{font-size:27px;font-weight:800;letter-spacing:-.6px}
-  .bt-of{font-size:13.5px;color:var(--muted);font-weight:600}
-  .bt-bar{height:15px;border-radius:8px;background:var(--bg2);overflow:hidden;margin-bottom:9px}
-  .bt-fill{height:100%;border-radius:8px;transition:width .4s}
-  .bt-foot{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted2)}
-  .bt-foot .over{color:var(--expense);font-weight:600}
-  .bt-empty{font-size:13.5px;color:var(--muted2);text-align:center;padding:8px 0}
-  .bud-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:11px;cursor:pointer;box-shadow:var(--shadow);transition:.12s}
+  /* Budgets v2 — герой */
+  .bud-hero{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:24px;padding:22px 20px;color:#fff;margin-bottom:20px;box-shadow:0 14px 32px rgba(109,93,246,.30)}
+  .bud-hero .bh-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .bud-hero .bh-lbl{font-size:15px;opacity:.92}
+  .bud-hero .bh-badge{font-size:12.5px;font-weight:700;background:rgba(255,255,255,.2);padding:4px 10px;border-radius:9px;white-space:nowrap}
+  .bud-hero .bh-val{font-size:44px;font-weight:800;letter-spacing:-1px;margin:6px 0 16px;white-space:nowrap}
+  .bud-hero .bh-bar{height:12px;background:rgba(255,255,255,.22);border-radius:7px;overflow:hidden}
+  .bud-hero .bh-fill{height:100%;background:#fff;border-radius:7px;transition:width .4s}
+  .bud-hero .bh-foot{display:flex;justify-content:space-between;font-size:13.5px;margin-top:10px;opacity:.92}
+  .bud-hero .bh-empty{font-size:14px;opacity:.92;margin-top:8px}
+  /* Budgets v2 — карточки категорий */
+  .bud-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px;cursor:pointer;transition:.12s}
   .bud-card:active{transform:scale(.99)}
-  .bc-head{display:flex;align-items:center;gap:11px;margin-bottom:11px}
-  .bc-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-  .bc-nm{flex:1;font-size:16px;font-weight:700}
-  .bc-amt{font-size:14px;color:var(--muted);font-weight:600;white-space:nowrap}
-  .bc-amt.over{color:var(--expense)}
-  .bc-bar{height:11px;border-radius:7px;background:var(--bg2);overflow:hidden;margin-bottom:7px}
-  .bc-fill{height:100%;border-radius:7px;transition:width .4s}
-  .bc-foot{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted2)}
-  .bc-foot .over{color:var(--expense);font-weight:600}
-  .bc-foot .warn{color:var(--warn);font-weight:600}
+  .bud-card.over{border:2px solid rgba(239,68,68,.42)}
+  .bc-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .bc-ic{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .bc-info{flex:1;min-width:0}
+  .bc-nm{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bc-sub{font-size:13px;color:var(--muted);font-weight:500;margin-top:1px}
+  .bc-right{text-align:right;flex-shrink:0}
+  .bc-rl{font-size:12px;color:var(--muted2);font-weight:600}
+  .bc-rl.over{color:var(--expense)}
+  .bc-rl.warn{color:var(--warn)}
+  .bc-rv{font-size:16px;font-weight:700;color:var(--text)}
+  .bc-rv.over{color:var(--expense);font-weight:800}
+  .bc-edit{width:30px;height:30px;border:none;background:none;color:var(--muted2);font-size:14px;cursor:pointer;flex-shrink:0;opacity:.55;padding:0}
+  .bc-edit:active{opacity:1}
+  .bc-bar{height:10px;border-radius:6px;background:var(--bg2);overflow:hidden}
+  .bc-fill{height:100%;border-radius:6px;transition:width .4s}
   .bud-empty{text-align:center;color:var(--muted2);padding:30px 16px}
   .bud-empty .big{font-size:38px;margin-bottom:10px}
   .bud-limit-input{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--card)}
@@ -737,10 +745,10 @@
 
   <!-- Screen: Budgets (Product Book Screen 6) -->
   <div class="screen" id="scrBudgets">
-    <div class="panel budget-total" id="budgetTotal"></div>
-    <div class="sec-head"><span>Бюджеты по категориям</span></div>
+    <div id="budgetTotal"></div>
+    <div class="sec-head"><span>По категориям</span></div>
     <div id="budCards"></div>
-    <button class="set-btn" id="addBudgetBtn" style="border-style:dashed;color:var(--accent);justify-content:center"><span>＋ Добавить бюджет</span></button>
+    <button class="add-dashed" id="addBudgetBtn">＋ Добавить бюджет</button>
     <div style="height:20px"></div>
   </div>
 
@@ -1628,13 +1636,14 @@ function renderAnaPie(cur){
     options:{cutout:'70%',maintainAspectRatio:false,plugins:{legend:{display:false},
       tooltip:{enabled:entries.length>0,callbacks:{label:c=>' '+num(c.raw)}}}}});
 }
-// Операции выбранной категории за текущий период Аналитики
-function openCatTx(catIds,label){
-  const r=anaRange(anaPeriod,0);
+// Операции выбранной категории за период (по умолчанию — текущий период Аналитики)
+function openCatTx(catIds,label,range,rangeLabel){
+  const r=range||anaRange(anaPeriod,0);
+  const lbl=rangeLabel||anaHeroLabel(anaPeriod,r);
   const list=state.tx.filter(t=>t.type==='expense'&&catIds.includes(t.cat)&&inAnaRange(t,r));
   const sum=list.reduce((s,t)=>s+t.amount,0);
   $('#catTxTitle').firstChild.textContent=label+' ';
-  $('#catTxLabel').textContent=anaHeroLabel(anaPeriod,r);
+  $('#catTxLabel').textContent=lbl;
   $('#catTxSum').textContent='Всего: −'+num(sum)+' · '+list.length+' '+plural(list.length,'операция','операции','операций');
   $('#catTxList').innerHTML=groupedTxHtml(list);
   $$('#catTxList .tx').forEach(x=>x.onclick=()=>openSheet(x.dataset.id));
@@ -1674,21 +1683,24 @@ function budgetLevel(pct){return pct>=100?'critical':pct>=80?'warning':'ok';}
 function budgetColor(level,fallback){return level==='critical'?'var(--expense)':level==='warning'?'var(--warn)':(fallback||'var(--income)');}
 
 function renderBudgets(){
-  // ① Общий бюджет
+  // ① Герой — общий бюджет (акцент на остаток / перерасход)
   const {limit,spent}=budgetTotals();
-  const monthName=budgetMonthRange().from.toLocaleDateString('ru-RU',{month:'long'});
-  const bt=$('#budgetTotal');
+  const mr=budgetMonthRange();
+  const monthLbl=(m=>m.charAt(0).toUpperCase()+m.slice(1))(mr.from.toLocaleDateString('ru-RU',{month:'long'}));
+  const bt=$('#budgetTotal'); bt.className='bud-hero';
   if(!limit){
-    bt.innerHTML=`<div class="bt-head"><span class="bh-title" style="font-size:16px;font-weight:700">Общий бюджет (${monthName})</span></div><div class="bt-empty">Бюджеты не заданы — добавьте лимит для категории ниже</div>`;
+    bt.innerHTML=`<div class="bh-top"><span class="bh-lbl">Бюджет · ${monthLbl}</span></div>
+      <div class="bh-empty">Бюджеты не заданы — добавьте лимит для категории ниже.</div>`;
   }else{
-    const rawPct=spent/limit*100,pct=Math.min(100,rawPct),over=spent>limit;
-    const col=budgetColor(budgetLevel(rawPct));
-    bt.innerHTML=`<div class="bt-head"><span><span class="bt-amt">${num(spent)}</span> <span class="bt-of">из ${num(limit)}</span></span></div>
-      <div class="bt-bar"><div class="bt-fill" style="width:${pct}%;background:${col}"></div></div>
-      <div class="bt-foot"><span>Потрачено ${Math.round(rawPct)}%</span><span class="${over?'over':''}">${over?'Превышен на '+num(spent-limit):'Осталось '+num(limit-spent)}</span></div>`;
+    const rawPct=spent/limit*100,pct=Math.min(100,rawPct),over=spent>limit,left=limit-spent;
+    bt.innerHTML=`<div class="bh-top"><span class="bh-lbl">${over?'Перерасход бюджета':'Осталось в бюджете'}</span>
+        <span class="bh-badge">${Math.round(rawPct)}% использовано</span></div>
+      <div class="bh-val">${over?'−'+num(spent-limit):num(left)}</div>
+      <div class="bh-bar"><div class="bh-fill" style="width:${pct}%"></div></div>
+      <div class="bh-foot"><span>Потрачено ${num(spent)}</span><span>Лимит ${num(limit)}</span></div>`;
   }
-  // ② Карточки бюджетов по категориям
-  const ids=budgetIds();
+  // ② Карточки бюджетов по категориям (перерасход / почти-исчерпанные сверху)
+  const ids=budgetIds().sort((a,b)=>(budgetSpent(b)/(+state.budgets[b]))-(budgetSpent(a)/(+state.budgets[a])));
   const el=$('#budCards');
   if(!ids.length){
     el.innerHTML=`<div class="bud-empty"><div class="big">🎯</div><p>Бюджетов пока нет.<br>Нажмите «Добавить бюджет».</p></div>`;
@@ -1697,15 +1709,20 @@ function renderBudgets(){
       const c=catById(cid),lim=+state.budgets[cid],sp=budgetSpent(cid);
       const rawPct=sp/lim*100,pct=Math.min(100,rawPct),over=sp>lim,lvl=budgetLevel(rawPct);
       const col=budgetColor(lvl,c.color);
-      const footR=over?`<span class="over">Превышен на ${num(sp-lim)}</span>`:(lvl==='warning'?`<span class="warn">Осталось ${num(lim-sp)}</span>`:`<span>Осталось ${num(lim-sp)}</span>`);
-      return `<div class="bud-card" data-cat="${cid}">
-        <div class="bc-head"><span class="bc-ic" style="background:${c.color}22">${c.emoji}</span>
-          <span class="bc-nm">${esc(c.name)}</span><span class="bc-amt ${over?'over':''}">${num(sp)} / ${num(lim)}</span></div>
+      const rl=over?'over':(lvl==='warning'?'warn':'');
+      return `<div class="bud-card ${over?'over':''}" data-cat="${cid}">
+        <div class="bc-head">
+          <span class="bc-ic" style="background:${c.color}22">${c.emoji}</span>
+          <div class="bc-info"><div class="bc-nm">${esc(c.name)}</div><div class="bc-sub">${num(sp)} из ${num(lim)}</div></div>
+          <div class="bc-right"><div class="bc-rl ${rl}">${over?'Перерасход':'Осталось'}</div><div class="bc-rv ${over?'over':''}">${over?num(sp-lim):num(lim-sp)}</div></div>
+          <button class="bc-edit" data-edit="${cid}" aria-label="Изменить лимит">✏️</button>
+        </div>
         <div class="bc-bar"><div class="bc-fill" style="width:${pct}%;background:${col}"></div></div>
-        <div class="bc-foot"><span>${Math.round(rawPct)}%</span>${footR}</div>
       </div>`;
     }).join('');
-    $$('#budCards .bud-card').forEach(r=>r.onclick=()=>openBudgetEdit(r.dataset.cat));
+    // тап по карточке → операции категории за месяц; ✏️ → редактор лимита
+    $$('#budCards .bud-card').forEach(r=>r.onclick=()=>{const c=catById(r.dataset.cat);openCatTx([r.dataset.cat],c.emoji+' '+c.name,mr,monthLbl);});
+    $$('#budCards .bc-edit').forEach(b=>b.onclick=e=>{e.stopPropagation();openBudgetEdit(b.dataset.edit);});
   }
 }
 let budEdit=null, budCat=null;
