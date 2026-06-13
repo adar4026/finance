@@ -239,29 +239,18 @@
     font-size:14px;font-weight:600;cursor:pointer;margin-top:9px}
 
   /* ===== Accounts v2 (Redesign) ===== */
-  .cap2{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:16px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;gap:12px}
-  .cap2-l{min-width:0}
-  .cap2 .c2-label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
-  .cap2 .c2-val{font-size:29px;font-weight:800;letter-spacing:-.6px;margin-top:6px;white-space:nowrap}
-  .cap2 .c2-chg{font-size:12.5px;margin-top:8px;font-weight:600}
-  .cap2-donut{width:82px;height:82px;flex-shrink:0;position:relative}
-  .acc3{border-radius:18px;padding:15px;margin-bottom:12px;border:1px solid var(--line);cursor:pointer;transition:.12s}
+  .acc3{border-radius:20px;padding:16px;margin-bottom:12px;border:1px solid var(--line);cursor:pointer;transition:.12s}
   .acc3:active{transform:scale(.99)}
   .acc3-head{display:flex;align-items:center;gap:13px;margin-bottom:12px}
   .acc3-ic{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
   .acc3-nm{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .acc3-sub{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acc3-sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .acc3-dots{color:var(--muted2);font-size:18px;letter-spacing:1px;cursor:pointer;padding:2px 6px;align-self:flex-start}
   .acc3-bot{display:flex;justify-content:space-between;align-items:flex-end}
   .acc3-bal{font-size:21px;font-weight:800;letter-spacing:-.3px}
   .acc3-pct{font-size:15px;font-weight:700}
-  .add-dashed{width:100%;padding:15px;border:1.5px dashed var(--line);border-radius:16px;background:none;color:var(--accent);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:18px}
+  .add-dashed{width:100%;padding:15px;border:1.5px dashed var(--line);border-radius:18px;background:none;color:var(--accent);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:18px}
   .add-dashed:active{background:var(--card2)}
-  .dist2-panel .dist2-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
-  .dist2-panel .dist2-row:last-of-type{border-bottom:none}
-  .dist2-row .l{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text)}
-  .dist2-row .l .d{width:11px;height:11px;border-radius:50%;flex-shrink:0}
-  .dist2-row .r{font-size:13.5px;color:var(--muted);white-space:nowrap}
   .dist2-toggle{color:var(--accent);font-size:13.5px;font-weight:600;cursor:pointer;margin-top:10px}
 
   /* ===== Экран Accounts (Screen 3) ===== */
@@ -530,7 +519,7 @@
   .ana-hero .ah-val{font-size:42px;font-weight:800;letter-spacing:-1px;margin:6px 0 18px;white-space:nowrap}
   .ana-hero .ah-subs{display:flex;gap:12px}
   .ah-sub{flex:1;background:rgba(255,255,255,.16);border-radius:16px;padding:14px;min-width:0}
-  .ah-sub .ah-ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:18px;font-weight:800;color:#fff}
+  .ah-sub .ah-ic{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:16px;font-weight:800;color:#fff}
   .ah-sub .ah-ic.inc{background:var(--income)}
   .ah-sub .ah-ic.exp{background:var(--expense)}
   .ah-sub .ah-sl{font-size:12.5px;opacity:.85}
@@ -602,7 +591,7 @@
   .cap-chg{display:inline-block;font-size:12.5px;background:rgba(255,255,255,.2);padding:4px 11px;border-radius:9px;margin:10px 0 16px;font-weight:700}
   .cap-ie{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
   .cap-ie .cib{background:rgba(255,255,255,.16);border-radius:16px;padding:12px 11px}
-  .cap-ie .ci-ic{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:9px;color:#fff;font-weight:700}
+  .cap-ie .ci-ic{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:9px;color:#fff;font-weight:700}
   .cap-ie .ci-l{font-size:11px;opacity:.92}
   .cap-ie .ci-v{font-size:15px;font-weight:800;margin-top:3px;white-space:nowrap}
   .cap-ie .ci-s{font-size:10px;opacity:.8;margin-top:2px;white-space:nowrap}
@@ -696,9 +685,9 @@
       <div class="cap-val" id="capVal">€0</div>
       <div class="cap-chg" id="capChg">+€0 · 0% за месяц</div>
       <div class="cap-ie">
-        <div class="cib"><div class="ci-ic" style="background:#22c55e">↗</div><div class="ci-l">Доходы</div><div class="ci-v" id="capInc">+€0</div><div class="ci-s" id="capIncN">0 операций</div></div>
-        <div class="cib"><div class="ci-ic" style="background:#ef4444">↘</div><div class="ci-l">Расходы</div><div class="ci-v" id="capExp">−€0</div><div class="ci-s" id="capExpN">0 операций</div></div>
-        <div class="cib"><div class="ci-ic" style="background:#8b7cf8">⇄</div><div class="ci-l">Ден. поток</div><div class="ci-v" id="capFlow">+€0</div><div class="ci-s">за месяц</div></div>
+        <div class="cib"><div class="ci-ic" style="background:var(--income)">↗</div><div class="ci-l">Доходы</div><div class="ci-v" id="capInc">+€0</div><div class="ci-s" id="capIncN">0 операций</div></div>
+        <div class="cib"><div class="ci-ic" style="background:var(--expense)">↘</div><div class="ci-l">Расходы</div><div class="ci-v" id="capExp">−€0</div><div class="ci-s" id="capExpN">0 операций</div></div>
+        <div class="cib"><div class="ci-ic" style="background:var(--accent2)">⇄</div><div class="ci-l">Ден. поток</div><div class="ci-v" id="capFlow">+€0</div><div class="ci-s">за месяц</div></div>
       </div>
     </div>
 
@@ -754,19 +743,26 @@
 
   <!-- Screen: Accounts (Product Book Screen 3) -->
   <div class="screen" id="scrAccounts">
-    <div class="cap2">
-      <div class="cap2-l">
-        <div class="c2-label">Общий капитал <span id="capEye2" style="cursor:pointer">👁</span></div>
-        <div class="c2-val" id="accTotalCapital">€0</div>
-        <div class="c2-chg" id="accCapChg"></div>
+    <div class="capital">
+      <div class="cap-head"><span class="cap-l">Общий капитал <span id="capEye2" style="cursor:pointer">👁</span></span><span class="cap-cur" id="accCapCur">EUR</span></div>
+      <div class="cap-val" id="accTotalCapital">€0</div>
+      <div class="cap-chg" id="accCapChg">+€0 · 0% за месяц</div>
+      <div class="cap-ie">
+        <div class="cib"><div class="ci-ic" style="background:var(--income)">↗</div><div class="ci-l">Доходы</div><div class="ci-v" id="accCapInc">+€0</div><div class="ci-s" id="accCapIncN">0 операций</div></div>
+        <div class="cib"><div class="ci-ic" style="background:var(--expense)">↘</div><div class="ci-l">Расходы</div><div class="ci-v" id="accCapExp">−€0</div><div class="ci-s" id="accCapExpN">0 операций</div></div>
+        <div class="cib"><div class="ci-ic" style="background:var(--accent2)">⇄</div><div class="ci-l">Ден. поток</div><div class="ci-v" id="accCapFlow">+€0</div><div class="ci-s">за месяц</div></div>
       </div>
-      <div class="cap2-donut"><canvas id="distChart"></canvas></div>
     </div>
     <div id="accList"></div>
     <button class="add-dashed" id="addAccBtn">+ Добавить счёт</button>
-    <div class="panel dist2-panel">
-      <h3 style="margin-bottom:8px">Распределение капитала</h3>
-      <div id="distList"></div>
+    <div class="panel">
+      <h3>Распределение капитала</h3>
+      <div class="cat-split">
+        <div class="cat-donut"><canvas id="distChart"></canvas>
+          <div class="donut-center"><div class="dc-l">Счетов</div><div class="dc-v" id="distCount">0</div></div>
+        </div>
+        <div class="catlist" id="distList"></div>
+      </div>
       <div class="dist2-toggle" id="distToggle">Показать в процентах ⌄</div>
     </div>
     <div style="height:20px"></div>
@@ -2124,12 +2120,21 @@ let distMode='amount';
 function renderAccountsScreen(){
   const cap=totalCapital();
   $('#accTotalCapital').textContent=num(cap);
-  // изменение за месяц
-  const a=new Date(), from=new Date(a.getFullYear(),a.getMonth(),1);
+  $('#accCapCur').textContent=curCode(state.currency);
+  // изменение капитала за текущий месяц (бейдж как на Home)
+  const a=new Date(), from=new Date(a.getFullYear(),a.getMonth(),1), to=new Date(a.getFullYear(),a.getMonth()+1,0,23,59,59);
   const start=totalCapital(new Date(from.getTime()-1)), delta=cap-start, pct=start?delta/Math.abs(start)*100:0;
-  const chg=$('#accCapChg');
-  if(state.hideAmounts){chg.textContent='';}
-  else{chg.innerHTML=`<span style="color:${delta>=0?'var(--income)':'var(--expense)'}">${delta>=0?'▲':'▼'} ${(delta>=0?'+':'−')+num(Math.abs(delta))} (${Math.abs(pct).toFixed(2)}%)</span> <span style="color:var(--muted)">за месяц</span>`;}
+  $('#accCapChg').textContent=(delta>=0?'+':'−')+num(Math.abs(delta))+' · '+(delta>=0?'+':'−')+Math.abs(pct).toFixed(2)+'% за месяц';
+  // доходы/расходы/поток за текущий месяц
+  const ml=state.tx.filter(t=>{const d=new Date(t.date);return d>=from&&d<=to;});
+  const inc=ml.filter(t=>t.type==='income'),exp=ml.filter(t=>t.type==='expense');
+  const si=inc.reduce((s,t)=>s+t.amount,0),se=exp.reduce((s,t)=>s+t.amount,0);
+  $('#accCapInc').textContent='+'+num(si);
+  $('#accCapExp').textContent='−'+num(se);
+  $('#accCapFlow').textContent=(si-se>=0?'+':'−')+num(Math.abs(si-se));
+  $('#accCapIncN').textContent=inc.length+' '+plural(inc.length,'операция','операции','операций');
+  $('#accCapExpN').textContent=exp.length+' '+plural(exp.length,'операция','операции','операций');
+  updateEye();
   renderDistChart();
   renderAccounts();
   renderDistList();
@@ -2146,12 +2151,13 @@ function renderDistChart(){
 }
 function renderDistList(){
   const dist=distData();const el=$('#distList');
-  if(!dist.length){el.innerHTML=`<div style="color:var(--muted2);font-size:13px;padding:6px 0">Нет положительных балансов</div>`;$('#distToggle').style.display='none';return;}
+  $('#distCount').textContent=dist.length;
+  if(!dist.length){el.innerHTML=`<div style="color:var(--muted2);font-size:13px;padding:6px 0">Нет балансов</div>`;$('#distToggle').style.display='none';return;}
   $('#distToggle').style.display='block';
   $('#distToggle').textContent=distMode==='amount'?'Показать в процентах ⌄':'Показать суммы ⌄';
   el.innerHTML=dist.map(d=>{
     const right=distMode==='amount'?fmtCur(d.balance,d.account.currency||state.currency):Math.round(d.share)+'%';
-    return `<div class="dist2-row"><span class="l"><span class="d" style="background:${d.account.color||'#6d5df6'}"></span>${esc(d.account.name)}</span><span class="r">${right}</span></div>`;
+    return `<div class="catrow" style="cursor:default"><span class="cdot" style="background:${d.account.color||'#6d5df6'}"></span><span class="cname">${esc(d.account.name)}</span><span class="cval">${right}</span></div>`;
   }).join('');
 }
 function accountCardHtml(a,archived){
