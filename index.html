@@ -546,9 +546,11 @@
   .crow-l{flex:1;min-width:0}
   .crow-nm{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .crow-chg{font-size:13px;font-weight:700;margin-top:2px}
-  .crow-chg.up{color:var(--expense)}
-  .crow-chg.down{color:var(--income)}
+  .crow-chg.bad{color:var(--expense)}
+  .crow-chg.good{color:var(--income)}
   .crow-chg.flat{color:var(--muted2)}
+  .ana-cat-seg{margin:0 0 14px}
+  .ana-cat-seg button.on{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
   .crow-r{text-align:right;flex-shrink:0;padding-left:8px}
   .crow-amt{font-size:16px;font-weight:800;white-space:nowrap;letter-spacing:-.2px}
   .crow-prev{font-size:13px;color:var(--muted2);margin-top:3px;white-space:nowrap}
@@ -740,10 +742,13 @@
       <div class="chart-box tall"><canvas id="barChart"></canvas></div>
     </div>
     <div class="panel">
-      <h3>Категории расходов</h3>
+      <div class="seg-ie ana-cat-seg" id="anaCatSeg">
+        <button class="on" data-t="expense">Расходы</button>
+        <button data-t="income">Доходы</button>
+      </div>
       <div class="cat-donut-top">
         <div class="cat-donut"><canvas id="pieChart"></canvas>
-          <div class="donut-center"><div class="dc-l">Расходы</div><div class="dc-v" id="pieTotal">€0</div></div>
+          <div class="donut-center"><div class="dc-l" id="pieTotalLbl">Расходы</div><div class="dc-v" id="pieTotal">€0</div></div>
         </div>
       </div>
       <div class="catlist2" id="catLegend"></div>
@@ -1254,6 +1259,8 @@ let anchor=new Date();
 let period='month';
 let homeRange='1m';
 let anaPeriod='month';
+let anaCatType='expense';   // тип для блока «Категории» (Расходы/Доходы)
+let anaCur=[], anaPre=[];   // tx текущего/прошлого периода (для перерисовки кольца при смене вкладки)
 let curScreen='scrRecords';
 // add-sheet state
 let aType='expense', aCat='food', aSubcat=null, aReceipt=null, aExpr='0', editId=null;
@@ -1600,6 +1607,7 @@ function renderAnalytics(){
   const A=AF.Services.Analytics;
   const range=anaRange(anaPeriod,0), prev=anaRange(anaPeriod,-1);
   const cur=state.tx.filter(t=>inAnaRange(t,range)), pre=state.tx.filter(t=>inAnaRange(t,prev));
+  anaCur=cur; anaPre=pre;
   const inc=A.income(cur),exp=A.expense(cur),net=inc-exp;
   const preNet=A.income(pre)-A.expense(pre);
   $('#anaInc').textContent='+'+num(inc);
@@ -1628,21 +1636,26 @@ function renderAnaBar(){
       scales:{x:{grid:{display:false},ticks:{color:muted}},
         y:{grid:{color:grid},ticks:{color:muted,callback:v=>v>=1000?(v/1000)+'k':v},beginAtZero:true}}}});
 }
-// бейдж изменения суммы категории к прошлому периоду (▲ рост расхода=красный / ▼ снижение=зелёный)
-function catChangeBadge(curV,prevV){
-  if(prevV<=0.005)return curV>0.005?{txt:'▲ ∞%',cls:'up'}:{txt:'—',cls:'flat'};
+// бейдж изменения суммы категории к прошлому периоду.
+// Цвет семантический: для расходов рост=плохо(красный); для доходов рост=хорошо(зелёный).
+function catChangeBadge(curV,prevV,type){
+  const goodUp=type==='income';
+  if(prevV<=0.005)return curV>0.005?{txt:'▲ ∞%',cls:goodUp?'good':'bad'}:{txt:'—',cls:'flat'};
   const d=(curV-prevV)/prevV*100;
   if(Math.abs(d)<0.05)return {txt:'0%',cls:'flat'};
-  return {txt:(d>=0?'▲ ':'▼ ')+Math.abs(d).toFixed(1).replace('.',',')+'%',cls:d>=0?'up':'down'};
+  const up=d>=0, good=(goodUp?up:!up);
+  return {txt:(up?'▲ ':'▼ ')+Math.abs(d).toFixed(1).replace('.',',')+'%',cls:good?'good':'bad'};
 }
 function renderAnaPie(cur,pre){
-  const exp=cur.filter(t=>t.type==='expense');const byCat={};exp.forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+t.amount);
-  const byCatPrev={};(pre||[]).filter(t=>t.type==='expense').forEach(t=>byCatPrev[t.cat]=(byCatPrev[t.cat]||0)+t.amount);
+  const ty=anaCatType;
+  $('#pieTotalLbl').textContent=ty==='income'?'Доходы':'Расходы';
+  const sel=cur.filter(t=>t.type===ty);const byCat={};sel.forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+t.amount);
+  const byCatPrev={};(pre||[]).filter(t=>t.type===ty).forEach(t=>byCatPrev[t.cat]=(byCatPrev[t.cat]||0)+t.amount);
   const entries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);const total=entries.reduce((s,e)=>s+e[1],0);
   $('#pieTotal').textContent=num(total);
   // строка категории: крупный кружок · имя + Δ% к прошлому · сумма + прошлая сумма (как в Money Flow)
   const rowHtml=(color,name,curV,prevV,attr)=>{
-    const b=catChangeBadge(curV,prevV);
+    const b=catChangeBadge(curV,prevV,ty);
     return `<div class="crow" ${attr}>
       <span class="cdot-lg" style="background:${color}"></span>
       <div class="crow-l"><div class="crow-nm">${esc(name)}</div><div class="crow-chg ${b.cls}">${b.txt}</div></div>
@@ -1657,10 +1670,10 @@ function renderAnaPie(cur,pre){
     rows.push(rowHtml('var(--muted2)','Другое',restSum,restPrev,`data-cats="${tail.map(e=>e[0]).join(',')}"`));
   }
   $('#catLegend').innerHTML=entries.length?rows.join('')
-    :`<div style="text-align:center;color:var(--muted2);font-size:13px;padding:14px">Нет расходов</div>`;
+    :`<div style="text-align:center;color:var(--muted2);font-size:13px;padding:14px">${ty==='income'?'Нет доходов':'Нет расходов'}</div>`;
   $$('#catLegend .crow').forEach(row=>row.onclick=()=>{
-    if(row.dataset.cat){const c=catById(row.dataset.cat);openCatTx([row.dataset.cat],c.emoji+' '+c.name);}
-    else if(row.dataset.cats){openCatTx(row.dataset.cats.split(','),'Другое');}
+    if(row.dataset.cat){const c=catById(row.dataset.cat);openCatTx([row.dataset.cat],c.emoji+' '+c.name,null,null,ty);}
+    else if(row.dataset.cats){openCatTx(row.dataset.cats.split(','),ty==='income'?'Прочие доходы':'Другое',null,null,ty);}
   });
   if(pieChart)pieChart.destroy();
   pieChart=new Chart($('#pieChart'),{type:'doughnut',
@@ -1669,15 +1682,16 @@ function renderAnaPie(cur,pre){
     options:{cutout:'70%',maintainAspectRatio:false,plugins:{legend:{display:false},
       tooltip:{enabled:entries.length>0,callbacks:{label:c=>' '+num(c.raw)}}}}});
 }
-// Операции выбранной категории за период (по умолчанию — текущий период Аналитики)
-function openCatTx(catIds,label,range,rangeLabel){
+// Операции выбранной категории за период (по умолчанию — расходы текущего периода Аналитики)
+function openCatTx(catIds,label,range,rangeLabel,type){
+  const ty=type||'expense';
   const r=range||anaRange(anaPeriod,0);
   const lbl=rangeLabel||anaHeroLabel(anaPeriod,r);
-  const list=state.tx.filter(t=>t.type==='expense'&&catIds.includes(t.cat)&&inAnaRange(t,r));
+  const list=state.tx.filter(t=>t.type===ty&&catIds.includes(t.cat)&&inAnaRange(t,r));
   const sum=list.reduce((s,t)=>s+t.amount,0);
   $('#catTxTitle').firstChild.textContent=label+' ';
   $('#catTxLabel').textContent=lbl;
-  $('#catTxSum').textContent='Всего: −'+num(sum)+' · '+list.length+' '+plural(list.length,'операция','операции','операций');
+  $('#catTxSum').textContent='Всего: '+(ty==='income'?'+':'−')+num(sum)+' · '+list.length+' '+plural(list.length,'операция','операции','операций');
   $('#catTxList').innerHTML=groupedTxHtml(list);
   $$('#catTxList .tx').forEach(x=>x.onclick=()=>openSheet(x.dataset.id));
   $('#catTxOverlay').classList.add('show');
@@ -2616,6 +2630,9 @@ $$('.nav button[data-s]').forEach(b=>b.onclick=()=>showScreen(b.dataset.s));
 // Аналитика: селектор периода
 $$('#anaPeriods button').forEach(b=>b.onclick=()=>{anaPeriod=b.dataset.p;
   $$('#anaPeriods button').forEach(x=>x.classList.toggle('on',x===b));renderAnalytics();});
+// Вкладки Расходы/Доходы в блоке «Категории» — перерисовывают только кольцо+список
+$$('#anaCatSeg button').forEach(b=>b.onclick=()=>{anaCatType=b.dataset.t;
+  $$('#anaCatSeg button').forEach(x=>x.classList.toggle('on',x===b));renderAnaPie(anaCur,anaPre);});
 // Главная: Quick Actions
 $('#toAllTx').onclick=openAllTx;
 $('#allTxClose').onclick=()=>$('#allTxOverlay').classList.remove('show');
