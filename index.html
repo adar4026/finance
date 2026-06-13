@@ -285,7 +285,8 @@
   .subtitle{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;padding-left:1px}
   .subtitle .live{width:6px;height:6px;border-radius:50%;background:var(--income);flex-shrink:0}
   .iconbtn.bell{position:relative}
-  .iconbtn.bell .dot{position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--accent);border:2px solid var(--card)}
+  .iconbtn.bell .dot{position:absolute;top:1px;right:1px;min-width:16px;height:16px;border-radius:8px;background:var(--accent);
+    color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--card)}
   .avatar{width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));
     background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;
     font-size:17px;color:#fff;transition:.15s;overflow:hidden}
@@ -324,6 +325,11 @@
   .bh-fill{height:100%;border-radius:8px;transition:width .4s}
   .bh-foot{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted2)}
   .bh-empty{font-size:13.5px;color:var(--muted2);text-align:center;padding:4px 0}
+  .add-menu{max-width:480px}
+  .am-item{display:flex;align-items:center;gap:14px;width:100%;padding:15px 16px;border:1px solid var(--line);border-radius:15px;
+    background:var(--card);color:var(--text);font-size:16px;font-weight:600;cursor:pointer;margin-bottom:10px;font-family:inherit;text-align:left;min-height:60px}
+  .am-item:active{background:var(--card2)}
+  .am-ic{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
   .quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
   .qa{display:flex;flex-direction:column;align-items:center;gap:8px;border:none;background:none;cursor:pointer;padding:4px 0;font-family:inherit}
   .qa-ic{width:62px;height:62px;border-radius:19px;display:flex;align-items:center;justify-content:center;font-size:26px;transition:.12s}
@@ -336,14 +342,14 @@
   .cap-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
   .cap-l{font-size:13px;opacity:.92}
   .cap-cur{font-size:12px;background:rgba(255,255,255,.2);padding:4px 11px;border-radius:8px;font-weight:600}
-  .cap-val{font-size:34px;font-weight:800;letter-spacing:-.6px;line-height:1.1}
-  .cap-chg{display:inline-block;font-size:12.5px;background:rgba(255,255,255,.18);padding:4px 11px;border-radius:8px;margin:9px 0 14px;font-weight:600}
+  .cap-val{font-size:38px;font-weight:800;letter-spacing:-.7px;line-height:1.1}
+  .cap-chg{display:inline-block;font-size:12.5px;background:rgba(255,255,255,.18);padding:5px 12px;border-radius:9px;margin:10px 0 16px;font-weight:600}
   .cap-ie{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-  .cap-ie .cib{background:rgba(255,255,255,.15);border-radius:14px;padding:11px 11px}
-  .cap-ie .ci-ic{width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:13px;margin-bottom:8px;font-weight:700}
-  .cap-ie .ci-l{font-size:10.5px;opacity:.9}
-  .cap-ie .ci-v{font-size:14.5px;font-weight:700;margin-top:2px;white-space:nowrap}
-  .cap-ie .ci-s{font-size:9.5px;opacity:.78;margin-top:1px;white-space:nowrap}
+  .cap-ie .cib{background:rgba(255,255,255,.15);border-radius:15px;padding:12px 11px}
+  .cap-ie .ci-ic{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:9px;color:#fff;font-weight:700}
+  .cap-ie .ci-l{font-size:11px;opacity:.92}
+  .cap-ie .ci-v{font-size:15px;font-weight:800;margin-top:3px;white-space:nowrap}
+  .cap-ie .ci-s{font-size:10px;opacity:.8;margin-top:2px;white-space:nowrap}
   .ranges{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap}
   .ranges button{border:1px solid var(--line);background:var(--card2);color:var(--muted);font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:9px;cursor:pointer;transition:.15s}
   .ranges button.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
@@ -429,23 +435,18 @@
 
   <!-- Screen: Home dashboard (Product Book Screen 1) -->
   <div class="screen active" id="scrRecords">
-    <div class="cashflow-card">
-      <div class="cf-label">Денежный поток за <span id="cfPeriod">месяц</span></div>
-      <div class="cf-value" id="cfValue">+€0</div>
-      <div class="cf-ie">
-        <div class="cf-b"><div class="cf-bl">↓ Доходы</div><div class="cf-bv" id="cfIncome">+€0</div></div>
-        <div class="cf-b"><div class="cf-bl">↑ Расходы</div><div class="cf-bv" id="cfExpense">−€0</div></div>
+    <div class="capital">
+      <div class="cap-head"><span class="cap-l">Общий капитал 👁</span><span class="cap-cur" id="capCur">EUR</span></div>
+      <div class="cap-val" id="capVal">€0</div>
+      <div class="cap-chg" id="capChg">+€0 · 0% за месяц</div>
+      <div class="cap-ie">
+        <div class="cib"><div class="ci-ic" style="background:#22c55e">↗</div><div class="ci-l">Доходы</div><div class="ci-v" id="capInc">+€0</div><div class="ci-s" id="capIncN">0 операций</div></div>
+        <div class="cib"><div class="ci-ic" style="background:#ef4444">↘</div><div class="ci-l">Расходы</div><div class="ci-v" id="capExp">−€0</div><div class="ci-s" id="capExpN">0 операций</div></div>
+        <div class="cib"><div class="ci-ic" style="background:#8b7cf8">⇄</div><div class="ci-l">Ден. поток</div><div class="ci-v" id="capFlow">+€0</div><div class="ci-s">за месяц</div></div>
       </div>
     </div>
 
     <div class="panel budget-home" id="budgetHome"></div>
-
-    <div class="quick-actions">
-      <button class="qa" data-qa="expense"><span class="qa-ic" style="background:var(--expense-soft)">💸</span><span class="qa-l">Расход</span></button>
-      <button class="qa" data-qa="income"><span class="qa-ic" style="background:var(--income-soft)">💰</span><span class="qa-l">Доход</span></button>
-      <button class="qa" data-qa="transfer"><span class="qa-ic" style="background:var(--accent-soft)">🔄</span><span class="qa-l">Перевод</span></button>
-      <button class="qa" data-qa="receipt"><span class="qa-ic" style="background:#4dabf71f">🧾</span><span class="qa-l">Чек</span></button>
-    </div>
 
     <div class="sec-head"><span>Последние операции</span><a id="toAllTx">Все операции ›</a></div>
     <div class="daycard" id="recentList" style="overflow:hidden"></div>
@@ -668,6 +669,18 @@
   </div>
 </div>
 
+<!-- Меню добавления (из кнопки +) -->
+<div class="overlay" id="addMenu">
+  <div class="sheet add-menu">
+    <div class="grab"></div>
+    <h2>Добавить<span class="x" id="addMenuClose">×</span></h2>
+    <button class="am-item" data-add="expense"><span class="am-ic" style="background:var(--expense-soft)">💸</span>Расход</button>
+    <button class="am-item" data-add="income"><span class="am-ic" style="background:var(--income-soft)">💰</span>Доход</button>
+    <button class="am-item" data-add="transfer"><span class="am-ic" style="background:var(--accent-soft)">🔄</span>Перевод</button>
+    <button class="am-item" data-add="receipt"><span class="am-ic" style="background:#4dabf71f">🧾</span>Чек</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -777,7 +790,7 @@ function renderHeader(){
   const av=$('#avatarBtn');if(!av)return;
   av.style.cssText=avatarStyle();av.textContent=avatarInner();
   const n=notifications().length;
-  $('#bellDot').style.display=n?'block':'none';
+  const dot=$('#bellDot');if(n){dot.textContent=n;dot.style.display='flex';}else dot.style.display='none';
   const sub=$('#updSub');
   if(curScreen==='scrRecords'){sub.innerHTML=`<span class="live"></span>Обновлено ${relTime(state.updatedAt)}`;sub.style.display='flex';}
   else sub.style.display='none';
@@ -851,12 +864,20 @@ function render(){
 function totalCapital(endDate){return AF.Services.Account.totalCapital(state,endDate);}
 function signedCur(n,t,cur){return (t==='income'?'+':'−')+fmtCur(Math.abs(n),cur);}
 function updateHome(list,inc,exp){
-  const flow=inc-exp;
+  const capNow=totalCapital(null);
+  const {from}=periodRange();
+  const capStart=totalCapital(new Date(from.getTime()-1));
+  const delta=capNow-capStart, pct=capStart?delta/Math.abs(capStart)*100:0;
   const pw={day:'день',week:'неделю',month:'месяц',year:'год',all:'всё время'}[period];
-  $('#cfPeriod').textContent=pw;
-  $('#cfValue').textContent=(flow>=0?'+':'−')+num(Math.abs(flow));
-  $('#cfIncome').textContent='+'+num(inc);
-  $('#cfExpense').textContent='−'+num(exp);
+  $('#capVal').textContent=num(capNow);
+  $('#capChg').textContent=(delta>=0?'+':'−')+num(Math.abs(delta))+' · '+(delta>=0?'+':'−')+Math.abs(pct).toFixed(2)+'% за '+pw;
+  $('#capInc').textContent='+'+num(inc);
+  $('#capExp').textContent='−'+num(exp);
+  $('#capFlow').textContent=(inc-exp>=0?'+':'−')+num(Math.abs(inc-exp));
+  const ni=list.filter(t=>t.type==='income').length, ne=list.filter(t=>t.type==='expense').length;
+  $('#capIncN').textContent=ni+' '+plural(ni,'операция','операции','операций');
+  $('#capExpN').textContent=ne+' '+plural(ne,'операция','операции','операций');
+  $('#capCur').textContent=curCode(state.currency);
   renderBudgetHome();
   renderRecent(list);
 }
@@ -1419,14 +1440,18 @@ function dstr(b,d){return new Date(b.getFullYear(),b.getMonth(),d).toISOString()
 /* ============ События ============ */
 $$('.nav button[data-s]').forEach(b=>b.onclick=()=>showScreen(b.dataset.s));
 // Главная: Quick Actions
-$$('.qa').forEach(b=>b.onclick=()=>{
-  const t=b.dataset.qa==='receipt'?'expense':b.dataset.qa;
-  openSheet(null); setType(t);
-});
 $('#toAllTx').onclick=openAllTx;
 $('#allTxClose').onclick=()=>$('#allTxOverlay').classList.remove('show');
 $('#allTxOverlay').onclick=e=>{if(e.target.id==='allTxOverlay')$('#allTxOverlay').classList.remove('show');};
-$('#addBtn').onclick=()=>openSheet(null);
+// Кнопка + открывает меню добавления (Расход/Доход/Перевод/Чек встроены сюда)
+$('#addBtn').onclick=()=>$('#addMenu').classList.add('show');
+$('#addMenuClose').onclick=()=>$('#addMenu').classList.remove('show');
+$('#addMenu').onclick=e=>{if(e.target.id==='addMenu')$('#addMenu').classList.remove('show');};
+$$('#addMenu .am-item').forEach(b=>b.onclick=()=>{
+  $('#addMenu').classList.remove('show');
+  const t=b.dataset.add==='receipt'?'expense':b.dataset.add;
+  openSheet(null); setType(t);
+});
 $('#closeSheet').onclick=closeSheet;
 $('#overlay').onclick=e=>{if(e.target.id==='overlay')closeSheet();};
 $('#segExp').onclick=()=>setType('expense');
@@ -1651,7 +1676,7 @@ function importCSV(text){
 }
 $('#demoBtn').onclick=loadDemo;
 $('#clearBtn').onclick=()=>{if(confirm('Удалить все операции?')){state.tx=[];state.budgets={};save();render();toast('Данные удалены');}};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Старт ============ */
 load();
