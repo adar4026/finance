@@ -339,6 +339,19 @@
   .prof-row:active{background:var(--card2)}
   .prof-row .chev{color:var(--muted2);font-size:18px}
 
+  /* ===== Export & Backups (Screen 12–13) ===== */
+  .exp-period{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 2px}
+  .exp-period span{font-size:12.5px;color:var(--muted)}
+  .exp-period select{padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:13px;font-family:inherit}
+  .exp-row{display:flex;align-items:center;gap:13px;width:100%;padding:14px;border:1px solid var(--line);border-radius:14px;
+    background:var(--card);color:var(--text);cursor:pointer;margin-bottom:9px;font-family:inherit;text-align:left}
+  .exp-row:active{background:var(--card2)}
+  .exp-ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+  .exp-tx{flex:1;display:flex;flex-direction:column}
+  .exp-tx b{font-size:14.5px;font-weight:600}
+  .exp-tx i{font-size:11.5px;color:var(--muted2);font-style:normal;margin-top:2px}
+  .exp-row .chev{color:var(--muted2);font-size:18px}
+
   /* ===== Financial Health (Screen 9) ===== */
   .health-ring{border:1px solid var(--line);border-radius:18px;padding:18px;text-align:center;margin:10px 0 14px;box-shadow:var(--shadow);cursor:pointer}
   .health-ring:active{background:var(--card2)}
@@ -870,7 +883,7 @@
     <button class="prof-row" id="profCalendar"><span>📅 Календарь</span><span class="chev">›</span></button>
     <button class="prof-row" id="profHealth"><span>❤️ Финансовое здоровье</span><span class="chev">›</span></button>
     <button class="prof-row" id="profTheme"><span id="profThemeLbl">🌙 Тёмная тема</span><span class="chev">›</span></button>
-    <button class="prof-row" id="profExport"><span>⬇️ Экспорт данных (JSON)</span><span class="chev">›</span></button>
+    <button class="prof-row" id="profExport"><span>📤 Экспорт и копии</span><span class="chev">›</span></button>
     <button class="prof-row" id="profMore"><span>⚙️ Все настройки</span><span class="chev">›</span></button>
   </div>
 </div>
@@ -884,6 +897,25 @@
     <button class="am-item" data-add="income"><span class="am-ic" style="background:var(--income-soft)">💰</span>Доход</button>
     <button class="am-item" data-add="transfer"><span class="am-ic" style="background:var(--accent-soft)">🔄</span>Перевод</button>
     <button class="am-item" data-add="receipt"><span class="am-ic" style="background:#4dabf71f">🧾</span>Чек</button>
+  </div>
+</div>
+
+<!-- Экспорт и резервные копии (Screen 12–13) -->
+<div class="overlay" id="exportOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top"><div class="nm">📤 Экспорт и копии</div><button class="iconbtn" id="exportClose">×</button></div>
+    <div class="sec-head" style="margin-top:10px"><span>Экспорт</span></div>
+    <div class="exp-period"><span>Период</span>
+      <select id="expPeriod"><option value="month">Текущий месяц</option><option value="year">Текущий год</option><option value="all">Всё время</option></select></div>
+    <button class="exp-row" id="expPdf"><span class="exp-ic" style="background:#ef444414">📄</span><span class="exp-tx"><b>PDF-отчёт</b><i>Сводка за период + операции</i></span><span class="chev">›</span></button>
+    <button class="exp-row" id="expXls"><span class="exp-ic" style="background:#22c55e14">📊</span><span class="exp-tx"><b>Excel (.xls)</b><i>Таблица операций</i></span><span class="chev">›</span></button>
+    <button class="exp-row" id="expCsv"><span class="exp-ic" style="background:#4dabf71f">📋</span><span class="exp-tx"><b>CSV</b><i>Для импорта в другие приложения</i></span><span class="chev">›</span></button>
+    <div class="sec-head" style="margin-top:18px"><span>Резервные копии</span></div>
+    <button class="exp-row" id="bkpCreate"><span class="exp-ic" style="background:var(--accent-soft)">💾</span><span class="exp-tx"><b>Создать копию</b><i>Файл alex_finance_backup.afb</i></span><span class="chev">›</span></button>
+    <button class="exp-row" id="bkpRestore"><span class="exp-ic" style="background:#f59e0b22">♻️</span><span class="exp-tx"><b>Восстановить из копии</b><i>Загрузить .afb — заменит данные</i></span><span class="chev">›</span></button>
+    <input type="file" id="bkpFile" accept=".afb,application/json,.json" hidden>
+    <div id="bkpLast" style="font-size:11.5px;color:var(--muted2);text-align:center;margin-top:12px"></div>
+    <div style="height:24px"></div>
   </div>
 </div>
 
@@ -1159,6 +1191,9 @@ function notifications(){
   state.accounts.forEach(a=>{const b=accBalance(a.id);if(b<0)list.push({ic:'📉',bg:'var(--expense-soft)',t1:'Минус на счёте: '+a.name,t2:'Баланс '+(b<0?'−':'')+fmtCur(Math.abs(b),a.currency||state.currency)});});
   // просроченные напоминания
   overdueReminders().forEach(r=>list.push({ic:'⏰',bg:'var(--expense-soft)',t1:'Просрочено: '+r.title,t2:'было '+new Date(r.dueDate).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})+' · '+num(r.amount)}));
+  // напоминание о резервной копии (старше 7 дней или не было)
+  if((state.tx||[]).length>5){const age=state.lastBackup?(Date.now()-state.lastBackup)/86400000:999;
+    if(age>=7)list.push({ic:'💾',bg:'var(--warn-soft)',t1:'Сделайте резервную копию',t2:state.lastBackup?('последняя '+relTime(state.lastBackup)):'копии ещё не было'});}
   return list;
 }
 function renderHeader(){
@@ -1857,6 +1892,44 @@ function openHealthDetail(res){
   $('#healthDetailOverlay').classList.add('show');
 }
 
+/* ============ Экспорт и резервные копии (Screen 12–13) ============ */
+function openExport(){
+  $('#profOverlay').classList.remove('show');
+  $('#bkpLast').textContent=state.lastBackup?('Последняя копия: '+new Date(state.lastBackup).toLocaleString('ru-RU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})):'Копий ещё не было';
+  $('#exportOverlay').classList.add('show');
+}
+function exportRange(){
+  const v=$('#expPeriod').value, now=new Date();
+  if(v==='month')return {from:new Date(now.getFullYear(),now.getMonth(),1),to:new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59),label:now.toLocaleDateString('ru-RU',{month:'long',year:'numeric'})};
+  if(v==='year')return {from:new Date(now.getFullYear(),0,1),to:new Date(now.getFullYear(),11,31,23,59,59),label:String(now.getFullYear())+' год'};
+  return {from:new Date(2000,0,1),to:new Date(2999,0,1),label:'всё время'};
+}
+function exportTx(){const {from,to}=exportRange();return state.tx.filter(t=>{const d=new Date(t.date);return d>=from&&d<=to;});}
+function downloadFile(name,content,mime){const blob=new Blob([content],{type:mime+';charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);}
+function stamp(){return new Date().toISOString().slice(0,10);}
+function doExportCsv(){const list=exportTx();if(!list.length){toast('Нет операций за период');return;}downloadFile('alex_finance_'+stamp()+'.csv','﻿'+AF.Services.Export.csv(list,state),'text/csv');toast('CSV сохранён ✓');}
+function doExportXls(){const list=exportTx();if(!list.length){toast('Нет операций за период');return;}const {label}=exportRange();downloadFile('alex_finance_'+stamp()+'.xls','﻿'+AF.Services.Export.xlsHtml(list,state,label),'application/vnd.ms-excel');toast('Excel сохранён ✓');}
+function doExportPdf(){
+  const list=exportTx();if(!list.length){toast('Нет операций за период');return;}
+  const {label}=exportRange();const w=window.open('','_blank');
+  if(!w){toast('Разрешите всплывающие окна для PDF');return;}
+  w.document.write(AF.Services.Export.reportHTML(state,list,label));w.document.close();
+  setTimeout(()=>{try{w.focus();w.print();}catch(e){}},500);
+}
+function doBackupCreate(){
+  downloadFile('alex_finance_backup_'+stamp()+'.afb',AF.Services.Backup.create(state),'application/json');
+  state.lastBackup=Date.now();save();
+  $('#bkpLast').textContent='Последняя копия: '+new Date(state.lastBackup).toLocaleString('ru-RU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  toast('Резервная копия создана ✓');
+}
+function doBackupRestore(text){
+  const res=AF.Services.Backup.restore(text);
+  if(!res.ok){toast(res.error);return;}
+  if(!confirm('Восстановить из копии? Текущие данные будут заменены.'))return;
+  state=res.value;AF.Store.save(state);load();render();
+  $('#exportOverlay').classList.remove('show');toast('Данные восстановлены ✓');
+}
+
 // UI-обёртки над AF.Services.Account (логика — в services/account_service.js)
 function accBalance(accId,endDate){return AF.Services.Account.balance(state,accId,endDate);}
 const ACC_TYPE_LABEL={bank:'Банковский счёт',cash:'Наличные',savings:'Сбережения',investment:'Инвестиции',crypto:'Криптокошелёк'};
@@ -2352,7 +2425,7 @@ $('#profOverlay').onclick=e=>{if(e.target.id==='profOverlay')$('#profOverlay').c
 $('#profName').oninput=e=>{state.profileName=e.target.value;};
 $('#profName').onchange=()=>{save();renderHeader();$('#profAvatar').textContent=avatarInner();};
 $('#profTheme').onclick=()=>{toggleTheme();$('#profThemeLbl').textContent=themeLabel();};
-$('#profExport').onclick=()=>{$('#profOverlay').classList.remove('show');exportData();};
+$('#profExport').onclick=openExport;
 $('#profMore').onclick=()=>{$('#profOverlay').classList.remove('show');showScreen('scrMore');};
 $('#changePhoto').onclick=()=>$('#photoInput').click();
 $('#photoInput').onchange=e=>{const f=e.target.files[0];if(!f)return;
@@ -2419,7 +2492,15 @@ function exportData(){
   toast('Файл сохранён ✓');
 }
 $('#exportBtn').onclick=exportData;
-$('#exportTop').onclick=exportData;
+$('#exportTop').onclick=openExport;
+// Экспорт и резервные копии
+$('#exportClose').onclick=()=>$('#exportOverlay').classList.remove('show');
+$('#expPdf').onclick=doExportPdf;
+$('#expXls').onclick=doExportXls;
+$('#expCsv').onclick=doExportCsv;
+$('#bkpCreate').onclick=doBackupCreate;
+$('#bkpRestore').onclick=()=>$('#bkpFile').click();
+$('#bkpFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{doBackupRestore(String(r.result));e.target.value='';};r.readAsText(f);};
 $('#importBtn').onclick=()=>$('#importFile').click();
 $('#importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{
@@ -2591,7 +2672,7 @@ $('#budgetEditOverlay').onclick=e=>{if(e.target.id==='budgetEditOverlay')$('#bud
 $('#budSave').onclick=saveBudget;
 $('#budDelete').onclick=deleteBudget;
 $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Старт ============ */
 load();
