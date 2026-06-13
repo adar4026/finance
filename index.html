@@ -539,14 +539,19 @@
   .cat-donut-top .cat-donut{width:150px;height:150px}
   .cat-donut-top .donut-center .dc-v{font-size:20px}
   .catlist2{display:flex;flex-direction:column}
-  .crow{display:flex;align-items:center;gap:11px;padding:13px 2px;border-top:1px solid var(--line);cursor:pointer;transition:background .12s}
+  .crow{display:flex;align-items:center;gap:13px;padding:13px 2px;border-top:1px solid var(--line);cursor:pointer;transition:background .12s}
   .crow:first-child{border-top:none}
   .crow:active{background:var(--accent-soft)}
-  .crow .cdot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
-  .crow .cname{flex:1;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .crow .cval{font-size:14.5px;font-weight:700;white-space:nowrap}
-  .crow .cpct{font-size:12px;color:var(--muted2);width:40px;text-align:right;flex-shrink:0}
-  .crow .cchev{color:var(--muted2);font-size:17px;flex-shrink:0;margin-left:-2px}
+  .crow .cdot-lg{width:30px;height:30px;border-radius:50%;flex-shrink:0}
+  .crow-l{flex:1;min-width:0}
+  .crow-nm{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .crow-chg{font-size:13px;font-weight:700;margin-top:2px}
+  .crow-chg.up{color:var(--expense)}
+  .crow-chg.down{color:var(--income)}
+  .crow-chg.flat{color:var(--muted2)}
+  .crow-r{text-align:right;flex-shrink:0;padding-left:8px}
+  .crow-amt{font-size:16px;font-weight:800;white-space:nowrap;letter-spacing:-.2px}
+  .crow-prev{font-size:13px;color:var(--muted2);margin-top:3px;white-space:nowrap}
   .ana-summary{display:flex;gap:12px;margin-bottom:12px}
   .ana-card{flex:1;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 16px;box-shadow:var(--shadow);min-width:0}
   .ana-card .ac-l{font-size:13px;color:var(--muted);margin-bottom:9px}
@@ -738,7 +743,7 @@
       <h3>Категории расходов</h3>
       <div class="cat-donut-top">
         <div class="cat-donut"><canvas id="pieChart"></canvas>
-          <div class="donut-center"><div class="dc-l">Всего</div><div class="dc-v" id="pieTotal">€0</div></div>
+          <div class="donut-center"><div class="dc-l">Расходы</div><div class="dc-v" id="pieTotal">€0</div></div>
         </div>
       </div>
       <div class="catlist2" id="catLegend"></div>
@@ -1606,7 +1611,7 @@ function renderAnalytics(){
   if(Math.abs(preNet)>0.5){const d=Math.round((net-preNet)/Math.abs(preNet)*100);chg.textContent=(d>=0?'▲ ':'▼ ')+Math.abs(d)+'% к пред.';chg.style.display='';}
   else chg.style.display='none';
   $('#anaBarHint').textContent='6 '+{week:'недель',month:'мес.',quarter:'кварт.',year:'лет'}[anaPeriod];
-  renderAnaBar();renderAnaPie(cur);renderAnaCompare(cur,pre);
+  renderAnaBar();renderAnaPie(cur,pre);renderAnaCompare(cur,pre);
 }
 function renderAnaBar(){
   const A=AF.Services.Analytics,labels=[],incD=[],expD=[];
@@ -1623,21 +1628,36 @@ function renderAnaBar(){
       scales:{x:{grid:{display:false},ticks:{color:muted}},
         y:{grid:{color:grid},ticks:{color:muted,callback:v=>v>=1000?(v/1000)+'k':v},beginAtZero:true}}}});
 }
-function renderAnaPie(cur){
+// бейдж изменения суммы категории к прошлому периоду (▲ рост расхода=красный / ▼ снижение=зелёный)
+function catChangeBadge(curV,prevV){
+  if(prevV<=0.005)return curV>0.005?{txt:'▲ ∞%',cls:'up'}:{txt:'—',cls:'flat'};
+  const d=(curV-prevV)/prevV*100;
+  if(Math.abs(d)<0.05)return {txt:'0%',cls:'flat'};
+  return {txt:(d>=0?'▲ ':'▼ ')+Math.abs(d).toFixed(1).replace('.',',')+'%',cls:d>=0?'up':'down'};
+}
+function renderAnaPie(cur,pre){
   const exp=cur.filter(t=>t.type==='expense');const byCat={};exp.forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+t.amount);
+  const byCatPrev={};(pre||[]).filter(t=>t.type==='expense').forEach(t=>byCatPrev[t.cat]=(byCatPrev[t.cat]||0)+t.amount);
   const entries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);const total=entries.reduce((s,e)=>s+e[1],0);
   $('#pieTotal').textContent=num(total);
-  // список: топ-6 категорий, остальное — «Другое»
-  const TOPN=6;const head=entries.slice(0,TOPN);const restSum=entries.slice(TOPN).reduce((s,e)=>s+e[1],0);
-  const rows=head.map(e=>{const c=catById(e[0]);
-    return `<div class="crow" data-cat="${e[0]}"><span class="cdot" style="background:${c.color}"></span>
-      <span class="cname">${esc(c.name)}</span><span class="cval">${num(e[1])}</span>
-      <span class="cpct">${Math.round(e[1]/total*100)}%</span><span class="cchev">›</span></div>`;});
-  if(restSum>0)rows.push(`<div class="crow" data-cats="${entries.slice(TOPN).map(e=>e[0]).join(',')}"><span class="cdot" style="background:var(--muted2)"></span>
-      <span class="cname">Другое</span><span class="cval">${num(restSum)}</span>
-      <span class="cpct">${Math.round(restSum/total*100)}%</span><span class="cchev">›</span></div>`);
+  // строка категории: крупный кружок · имя + Δ% к прошлому · сумма + прошлая сумма (как в Money Flow)
+  const rowHtml=(color,name,curV,prevV,attr)=>{
+    const b=catChangeBadge(curV,prevV);
+    return `<div class="crow" ${attr}>
+      <span class="cdot-lg" style="background:${color}"></span>
+      <div class="crow-l"><div class="crow-nm">${esc(name)}</div><div class="crow-chg ${b.cls}">${b.txt}</div></div>
+      <div class="crow-r"><div class="crow-amt">${num(curV)}</div><div class="crow-prev">${num(prevV)}</div></div>
+    </div>`;
+  };
+  const TOPN=6;const head=entries.slice(0,TOPN);const tail=entries.slice(TOPN);
+  const rows=head.map(e=>{const c=catById(e[0]);return rowHtml(c.color,c.name,e[1],byCatPrev[e[0]]||0,`data-cat="${e[0]}"`);});
+  if(tail.length){
+    const restSum=tail.reduce((s,e)=>s+e[1],0);
+    const restPrev=tail.reduce((s,e)=>s+(byCatPrev[e[0]]||0),0);
+    rows.push(rowHtml('var(--muted2)','Другое',restSum,restPrev,`data-cats="${tail.map(e=>e[0]).join(',')}"`));
+  }
   $('#catLegend').innerHTML=entries.length?rows.join('')
-    :`<div style="text-align:center;color:var(--muted2);font-size:13px;padding:6px">Нет расходов</div>`;
+    :`<div style="text-align:center;color:var(--muted2);font-size:13px;padding:14px">Нет расходов</div>`;
   $$('#catLegend .crow').forEach(row=>row.onclick=()=>{
     if(row.dataset.cat){const c=catById(row.dataset.cat);openCatTx([row.dataset.cat],c.emoji+' '+c.name);}
     else if(row.dataset.cats){openCatTx(row.dataset.cats.split(','),'Другое');}
