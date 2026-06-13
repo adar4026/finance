@@ -14,6 +14,14 @@ AF.Services.Analytics = {
     return m;
   },
 
+  // Топ категорий по сумме (по типу, с долей %)
+  topCategories(txList, type, limit) {
+    const m = this.byCategory(txList, type || 'expense');
+    const total = Object.values(m).reduce((s, v) => s + v, 0) || 1;
+    return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, limit || 5)
+      .map(([cat, amount]) => ({ cat, amount, share: amount / total * 100 }));
+  },
+
   // Сравнение двух наборов (этот период / прошлый)
   compare(curList, prevList) {
     const ci = this.income(curList), pi = this.income(prevList);

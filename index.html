@@ -339,6 +339,33 @@
   .prof-row:active{background:var(--card2)}
   .prof-row .chev{color:var(--muted2);font-size:18px}
 
+  /* ===== Analytics (Screen 2) ===== */
+  .ana-periods{display:flex;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:4px;margin-bottom:14px}
+  .ana-periods button{flex:1;border:none;background:none;color:var(--muted);font-size:13px;font-weight:600;padding:10px 4px;border-radius:9px;cursor:pointer;transition:.15s}
+  .ana-periods button.on{background:var(--accent);color:#fff}
+  .ana-summary{display:flex;gap:12px;margin-bottom:12px}
+  .ana-card{flex:1;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 16px;box-shadow:var(--shadow);min-width:0}
+  .ana-card .ac-l{font-size:13px;color:var(--muted);margin-bottom:9px}
+  .ana-card .ac-v{font-size:26px;font-weight:800;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ana-card.inc .ac-v{color:var(--income)}
+  .ana-card.exp .ac-v{color:var(--expense)}
+  .ana-card.net{margin-bottom:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;box-shadow:0 12px 30px rgba(109,93,246,.35)}
+  .ana-card.net .ac-l{color:rgba(255,255,255,.9)}
+  .ana-card.net .ac-v{color:#fff;font-size:36px}
+  .cmp-row{display:flex;justify-content:space-between;align-items:center;padding:13px 2px;border-bottom:1px solid var(--line);font-size:14.5px}
+  .cmp-row:last-child{border-bottom:none}
+  .cmp-row .cl{color:var(--muted)}
+  .cmp-row .cur{font-weight:700}
+  .cmp-row .prev{color:var(--muted2);font-size:12.5px;margin-left:5px}
+  .cmp-row .delta{font-weight:700;font-size:13px;margin-left:7px}
+  .top-row{display:flex;align-items:center;gap:11px;padding:12px 2px;border-bottom:1px solid var(--line)}
+  .top-row:last-child{border-bottom:none}
+  .top-row .rank{width:16px;font-size:13px;color:var(--muted2);font-weight:700}
+  .top-row .tic{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .top-row .tnm{flex:1;font-size:14.5px;font-weight:600}
+  .top-row .tpct{font-size:12px;color:var(--muted2);margin-right:9px}
+  .top-row .tamt{font-weight:700;font-size:14.5px;white-space:nowrap}
+
   /* ===== Home Screen 1 (Cash Flow / Summary / Budget / Quick Actions) ===== */
   .cashflow-card{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:24px;padding:24px 22px;
     color:#fff;box-shadow:0 14px 34px rgba(109,93,246,.38);margin-bottom:14px;text-align:center}
@@ -483,16 +510,37 @@
     <div class="daycard" id="recentList" style="overflow:hidden"></div>
   </div>
 
-  <!-- Screen: Charts -->
+  <!-- Screen: Analytics (Product Book Screen 2) -->
   <div class="screen" id="scrCharts">
+    <div class="ana-periods" id="anaPeriods">
+      <button data-p="week">Неделя</button>
+      <button data-p="month" class="on">Месяц</button>
+      <button data-p="quarter">Квартал</button>
+      <button data-p="year">Год</button>
+    </div>
+
+    <div class="ana-summary">
+      <div class="ana-card inc"><div class="ac-l">Доходы</div><div class="ac-v" id="anaInc">+€0</div></div>
+      <div class="ana-card exp"><div class="ac-l">Расходы</div><div class="ac-v" id="anaExp">−€0</div></div>
+    </div>
+    <div class="ana-card net"><div class="ac-l">Результат за <span id="anaPeriodLbl">месяц</span></div><div class="ac-v" id="anaNet">+€0</div></div>
+
     <div class="panel">
-      <h3>Доходы и расходы <span class="hint">6 периодов</span></h3>
+      <h3>Доходы и расходы <span class="hint" id="anaBarHint">6 периодов</span></h3>
       <div class="chart-box tall"><canvas id="barChart"></canvas></div>
     </div>
     <div class="panel">
       <h3>Расходы по категориям</h3>
       <div class="chart-box"><canvas id="pieChart"></canvas></div>
       <div class="catlist" id="catLegend"></div>
+    </div>
+    <div class="panel">
+      <h3>Сравнение с прошлым периодом</h3>
+      <div id="anaCompare"></div>
+    </div>
+    <div class="panel">
+      <h3>Топ категорий расходов</h3>
+      <div id="anaTop"></div>
     </div>
   </div>
 
@@ -817,6 +865,7 @@ let state=AF.Store.defaults();
 let anchor=new Date();
 let period='month';
 let homeRange='1m';
+let anaPeriod='month';
 let curScreen='scrRecords';
 // add-sheet state
 let aType='expense', aCat='food', aSubcat=null, aReceipt=null, aExpr='0', editId=null;
@@ -952,7 +1001,7 @@ function render(){
   const exp=list.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
 
   updateHome(list,inc,exp);
-  renderCharts(list);
+  renderAnalytics();
   renderBudgets();
   renderAccountsScreen();
   renderHeader();
@@ -1140,14 +1189,53 @@ function txRow(t){
   </div>`;
 }
 
-function renderCharts(list){
-  // pie
-  const exp=list.filter(t=>t.type==='expense');
-  const byCat={};exp.forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+t.amount);
-  const entries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
-  const total=entries.reduce((s,e)=>s+e[1],0);
-  const leg=$('#catLegend');
-  leg.innerHTML=entries.length?entries.map(e=>{const c=catById(e[0]);
+/* ============ Аналитика (Screen 2) ============ */
+function anaRange(p,offset){
+  const now=new Date();
+  if(p==='week'){const d=new Date(now);const dow=(d.getDay()+6)%7;d.setDate(d.getDate()-dow+offset*7);
+    const from=new Date(d.getFullYear(),d.getMonth(),d.getDate());const to=new Date(from);to.setDate(from.getDate()+6);to.setHours(23,59,59,999);return {from,to};}
+  if(p==='month')return {from:new Date(now.getFullYear(),now.getMonth()+offset,1),to:new Date(now.getFullYear(),now.getMonth()+offset+1,0,23,59,59)};
+  if(p==='quarter'){const q=Math.floor(now.getMonth()/3)+offset;return {from:new Date(now.getFullYear(),q*3,1),to:new Date(now.getFullYear(),q*3+3,0,23,59,59)};}
+  return {from:new Date(now.getFullYear()+offset,0,1),to:new Date(now.getFullYear()+offset,11,31,23,59,59)};
+}
+function anaLabel(p,r){
+  if(p==='week')return r.from.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+  if(p==='month')return r.from.toLocaleDateString('ru-RU',{month:'short'});
+  if(p==='quarter')return 'Q'+(Math.floor(r.from.getMonth()/3)+1)+"'"+String(r.from.getFullYear()).slice(2);
+  return String(r.from.getFullYear());
+}
+const inAnaRange=(t,r)=>{const d=new Date(t.date);return d>=r.from&&d<=r.to;};
+function renderAnalytics(){
+  const A=AF.Services.Analytics;
+  const range=anaRange(anaPeriod,0), prev=anaRange(anaPeriod,-1);
+  const cur=state.tx.filter(t=>inAnaRange(t,range)), pre=state.tx.filter(t=>inAnaRange(t,prev));
+  const inc=A.income(cur),exp=A.expense(cur),net=inc-exp;
+  $('#anaInc').textContent='+'+num(inc);
+  $('#anaExp').textContent='−'+num(exp);
+  $('#anaNet').textContent=(net>=0?'+':'−')+num(Math.abs(net));
+  $('#anaPeriodLbl').textContent={week:'неделю',month:'месяц',quarter:'квартал',year:'год'}[anaPeriod];
+  $('#anaBarHint').textContent='6 '+{week:'недель',month:'мес.',quarter:'кварт.',year:'лет'}[anaPeriod];
+  renderAnaBar();renderAnaPie(cur);renderAnaCompare(cur,pre);renderAnaTop(cur);
+}
+function renderAnaBar(){
+  const A=AF.Services.Analytics,labels=[],incD=[],expD=[];
+  for(let i=5;i>=0;i--){const r=anaRange(anaPeriod,-i);labels.push(anaLabel(anaPeriod,r));
+    const list=state.tx.filter(t=>inAnaRange(t,r));incD.push(A.income(list));expD.push(A.expense(list));}
+  const css=getComputedStyle(document.documentElement),muted=css.getPropertyValue('--muted').trim(),grid=css.getPropertyValue('--line').trim();
+  if(barChart)barChart.destroy();
+  barChart=new Chart($('#barChart'),{type:'bar',
+    data:{labels,datasets:[
+      {label:'Доходы',data:incD,backgroundColor:css.getPropertyValue('--income').trim(),borderRadius:6,maxBarThickness:18},
+      {label:'Расходы',data:expD,backgroundColor:css.getPropertyValue('--expense').trim(),borderRadius:6,maxBarThickness:18}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{labels:{color:muted,boxWidth:12,padding:12,font:{size:12}}},
+      tooltip:{callbacks:{label:c=>c.dataset.label+': '+num(c.raw)}}},
+      scales:{x:{grid:{display:false},ticks:{color:muted}},
+        y:{grid:{color:grid},ticks:{color:muted,callback:v=>v>=1000?(v/1000)+'k':v},beginAtZero:true}}}});
+}
+function renderAnaPie(cur){
+  const exp=cur.filter(t=>t.type==='expense');const byCat={};exp.forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+t.amount);
+  const entries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);const total=entries.reduce((s,e)=>s+e[1],0);
+  $('#catLegend').innerHTML=entries.length?entries.map(e=>{const c=catById(e[0]);
     return `<div class="catrow"><span class="cdot" style="background:${c.color}"></span>
       <span class="cname">${c.name}</span><span class="cval">${num(e[1])}</span>
       <span class="cpct">${Math.round(e[1]/total*100)}%</span></div>`;}).join('')
@@ -1155,28 +1243,30 @@ function renderCharts(list){
   if(pieChart)pieChart.destroy();
   pieChart=new Chart($('#pieChart'),{type:'doughnut',
     data:{labels:entries.map(e=>catById(e[0]).name),datasets:[{data:entries.length?entries.map(e=>e[1]):[1],
-      backgroundColor:entries.length?entries.map(e=>catById(e[0]).color):['#2a2f3a'],borderWidth:0}]},
+      backgroundColor:entries.length?entries.map(e=>catById(e[0]).color):['#eceef4'],borderWidth:0}]},
     options:{cutout:'66%',maintainAspectRatio:false,plugins:{legend:{display:false},
       tooltip:{enabled:entries.length>0,callbacks:{label:c=>' '+num(c.raw)}}}}});
-
-  // bar: 6 periods back
-  const labels=[],incD=[],expD=[];
-  for(let i=5;i>=0;i--){
-    const r=rangeBack(i);
-    labels.push(r.label);
-    incD.push(state.tx.filter(t=>t.type==='income'&&inRange(t,r)).reduce((s,t)=>s+t.amount,0));
-    expD.push(state.tx.filter(t=>t.type==='expense'&&inRange(t,r)).reduce((s,t)=>s+t.amount,0));
-  }
-  const css=getComputedStyle(document.documentElement),muted=css.getPropertyValue('--muted').trim(),grid=css.getPropertyValue('--line').trim();
-  if(barChart)barChart.destroy();
-  barChart=new Chart($('#barChart'),{type:'bar',
-    data:{labels,datasets:[
-      {label:'Доходы',data:incD,backgroundColor:css.getPropertyValue('--income').trim(),borderRadius:6,maxBarThickness:20},
-      {label:'Расходы',data:expD,backgroundColor:css.getPropertyValue('--expense').trim(),borderRadius:6,maxBarThickness:20}]},
-    options:{maintainAspectRatio:false,plugins:{legend:{labels:{color:muted,boxWidth:12,padding:12,font:{size:12}}},
-      tooltip:{callbacks:{label:c=>c.dataset.label+': '+num(c.raw)}}},
-      scales:{x:{grid:{display:false},ticks:{color:muted}},
-        y:{grid:{color:grid},ticks:{color:muted,callback:v=>v>=1000?(v/1000)+'k':v},beginAtZero:true}}}});
+}
+function renderAnaCompare(cur,pre){
+  const A=AF.Services.Analytics;
+  const rows=[{l:'Доходы',c:A.income(cur),p:A.income(pre),good:'up'},
+    {l:'Расходы',c:A.expense(cur),p:A.expense(pre),good:'down'},
+    {l:'Результат',c:A.cashFlow(cur),p:A.cashFlow(pre),good:'up'}];
+  $('#anaCompare').innerHTML=rows.map(r=>{
+    const d=r.p?Math.round((r.c-r.p)/Math.abs(r.p)*100):0;
+    const up=r.c>=r.p, better=(r.good==='up')?up:!up;
+    const dtxt=r.p?((up?'▲':'▼')+' '+Math.abs(d)+'%'):'—';
+    return `<div class="cmp-row"><span class="cl">${r.l}</span>
+      <span class="cr"><span class="cur">${num(r.c)}</span><span class="prev">/ ${num(r.p)}</span><span class="delta" style="color:${better?'var(--income)':'var(--expense)'}">${dtxt}</span></span></div>`;
+  }).join('');
+}
+function renderAnaTop(cur){
+  const top=AF.Services.Analytics.topCategories(cur,'expense',5);
+  $('#anaTop').innerHTML=top.length?top.map((t,i)=>{const c=catById(t.cat);
+    return `<div class="top-row"><span class="rank">${i+1}</span>
+      <span class="tic" style="background:${c.color}22">${c.emoji}</span>
+      <span class="tnm">${esc(c.name)}</span><span class="tpct">${Math.round(t.share)}%</span><span class="tamt">${num(t.amount)}</span></div>`;}).join('')
+    :`<div style="text-align:center;color:var(--muted2);font-size:13px;padding:18px">Нет расходов за период</div>`;
 }
 function rangeBack(i){
   const a=new Date(anchor);let from,to,label;
@@ -1347,8 +1437,8 @@ function showScreen(id){
   $$('.nav button[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
   const titles={scrRecords:'Главная',scrCharts:'Аналитика',scrAccounts:'Счета',scrBudgets:'Бюджет',scrMore:'Настройки'};
   $('#screenTitle').textContent=titles[id];
-  // период не нужен на «Счета» и «Настройки»
-  const noPeriod=(id==='scrMore'||id==='scrAccounts');
+  // глобальный период не нужен на «Счета», «Настройки», «Аналитика» (у неё свой)
+  const noPeriod=(id==='scrMore'||id==='scrAccounts'||id==='scrCharts');
   $('.periods').style.display=noPeriod?'none':'flex';
   $('#navrow').style.display=(noPeriod||period==='all')?'none':'flex';
   render();
@@ -1639,6 +1729,9 @@ function dstr(b,d){return new Date(b.getFullYear(),b.getMonth(),d).toISOString()
 
 /* ============ События ============ */
 $$('.nav button[data-s]').forEach(b=>b.onclick=()=>showScreen(b.dataset.s));
+// Аналитика: селектор периода
+$$('#anaPeriods button').forEach(b=>b.onclick=()=>{anaPeriod=b.dataset.p;
+  $$('#anaPeriods button').forEach(x=>x.classList.toggle('on',x===b));renderAnalytics();});
 // Главная: Quick Actions
 $('#toAllTx').onclick=openAllTx;
 $('#allTxClose').onclick=()=>$('#allTxOverlay').classList.remove('show');
