@@ -265,6 +265,18 @@
     display:flex;align-items:center;justify-content:center;transition:.15s}
   .fab-account:active{transform:scale(.92)}
 
+  /* ===== Управление категориями (Story 2.4) ===== */
+  .cat-row{display:flex;align-items:center;gap:13px;padding:14px;background:var(--card);border:1px solid var(--line);
+    border-radius:15px;margin-bottom:10px;cursor:pointer;transition:.12s}
+  .cat-row:active{background:var(--card2)}
+  .cat-row .cr-ic{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .cat-row .cr-nm{font-size:15.5px;font-weight:600}
+  .cat-row .cr-sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .cat-row .chev{color:var(--muted2);font-size:18px}
+  .subcat-edit{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:18px;border:1px solid var(--line);
+    background:var(--card);font-size:13.5px;color:var(--text);margin:0 8px 8px 0}
+  .subcat-edit .del{color:var(--muted2);cursor:pointer;font-size:15px}
+
   /* ===== Account Details: настройки + архив (Story 1.4) ===== */
   .set-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:16px 16px;border:1px solid var(--line);
     border-radius:15px;background:var(--card);color:var(--text);font-size:15.5px;cursor:pointer;margin-bottom:10px;font-family:inherit;text-align:left;min-height:54px}
@@ -518,6 +530,7 @@
         <option value="₸">₸ Тенге</option><option value="₴">₴ Гривна</option>
       </select>
     </div>
+    <div class="setrow"><span>Категории</span><button id="catMgrBtn">Управлять</button></div>
     <div class="setrow"><span>Экспорт данных</span><button id="exportBtn">Скачать JSON</button></div>
     <div class="setrow"><span>Импорт (JSON / CSV)</span><button id="importBtn">Загрузить файл</button>
       <input type="file" id="importFile" accept=".json,.csv,text/csv,application/json" hidden></div>
@@ -711,6 +724,39 @@
   </div>
 </div>
 
+<!-- Управление категориями (Story 2.4) -->
+<div class="overlay" id="catMgrOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top">
+      <div class="nm">Категории</div>
+      <button class="iconbtn" id="catMgrClose">×</button>
+    </div>
+    <div class="seg-ie" id="catMgrSeg" style="margin-top:10px">
+      <button class="on" data-t="expense">Расходы</button>
+      <button data-t="income">Доходы</button>
+    </div>
+    <div id="catMgrList" style="margin-top:6px"></div>
+    <button class="set-btn" id="catAddBtn" style="border-style:dashed;color:var(--accent);justify-content:center"><span>＋ Добавить категорию</span></button>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
+<!-- Редактор категории -->
+<div class="overlay" id="catEditOverlay">
+  <div class="sheet acc-editor">
+    <div class="grab"></div>
+    <h2><span id="catEditTitle">Категория</span><span class="x" id="catEditClose">×</span></h2>
+    <div class="field"><label>Название</label><input type="text" id="catName" maxlength="24" autocomplete="off"><div class="err" id="catNameErr">Введите название</div></div>
+    <div class="field"><label>Цвет</label><div class="color-row" id="catColorRow"></div></div>
+    <div class="field"><label>Иконка</label><div class="cat-strip" id="catEmojiStrip"></div></div>
+    <div class="field"><label>Подкатегории</label>
+      <div class="subcat-strip" id="catSubStrip" style="flex-wrap:wrap"></div>
+    </div>
+    <button class="btn-primary" id="catSave">Сохранить</button>
+    <button class="btn-del" id="catDelete" style="display:none">Удалить категорию</button>
+  </div>
+</div>
+
 <!-- Полноэкранный просмотр чека -->
 <div class="overlay receipt-viewer" id="receiptViewer">
   <button class="rv-close" id="receiptViewerClose">×</button>
@@ -745,10 +791,11 @@ const CATS = {
     {id:'other_i',name:'Другое',emoji:'💵',color:'#82c91e'},
   ]
 };
-// catsFor/allCats читают и пользовательские категории (state.cats) — нужны для импорта CSV
-function allCats(){return [...CATS.expense,...CATS.income,...(state.cats||[])];}
-function catsFor(type){return CATS[type].concat((state.cats||[]).filter(c=>c.type===type));}
-const catById=id=>allCats().find(c=>c.id===id)||{name:'Другое',emoji:'❓',color:'#868e96'};
+// Категории data-driven: всё в state.cats (дефолтные сидируются в migrate с isSystem). Flutter → таблица categories.
+function allCats(){return state.cats||[];}
+function catsFor(type){return (state.cats||[]).filter(c=>c.type===type);}
+const catById=id=>(state.cats||[]).find(c=>c.id===id)||{name:'Другое',emoji:'❓',color:'#868e96'};
+const CAT_EMOJI=['🍔','🚗','🏠','🛍️','💊','🎮','📄','☕','✈️','📚','🐾','💼','🎁','📈','🔑','🎵','👕','⛽','🚿','📱','🎓','🏥','🍷','🎬','💪','🎨','🏷️','🧾','💵','🐷'];
 const ACC_EMOJI=['💵','💳','🏦','🐷','📈','🪙','💰','💶','📱','🎒','💎','🏛️'];
 // Типы счетов (Product Book Screen 5) — с дефолтными иконкой и цветом
 const ACC_TYPES=[
@@ -775,6 +822,7 @@ let aType='expense', aCat='food', aSubcat=null, aReceipt=null, aExpr='0', editId
 const subcatById=id=>(state.subcats||[]).find(s=>s.id===id);
 // account editor
 let accEdit=null, accEmoji='💳', accColor='#6d5df6', accType='bank';
+let catMgrType='expense', catEdit=null, cEmoji='🍔', cColor='#6d5df6';
 // asset graph detail
 let detailAcc=null, detailAnchor=new Date(), detailType='expense', lineChart;
 
@@ -788,9 +836,21 @@ const signed=(n,t)=>(t==='income'?'+':'−')+fmtCur(Math.abs(n),state.currency);
 /* ============ Хранилище (Repository AF.Store → SQLite/Drift в Flutter) ============ */
 function load(){
   state=AF.Store.load();
+  seedCategories();
   applyTheme();
   $('#curSelect').value=state.currency;
   renderHeader();
+}
+// Сидируем дефолтные категории в state.cats (один раз), чтобы их можно было редактировать/удалять
+function seedCategories(){
+  if(!Array.isArray(state.cats))state.cats=[];
+  if(!state.cats.some(c=>c.isSystem)){
+    const seed=[];
+    CATS.expense.forEach(c=>seed.push({...c,type:'expense',isSystem:true}));
+    CATS.income.forEach(c=>seed.push({...c,type:'income',isSystem:true}));
+    state.cats=seed.concat(state.cats);
+    AF.Store.save(state);
+  }
 }
 function save(){ AF.Store.save(state); renderHeader(); }
 function applyTheme(){
@@ -1494,6 +1554,65 @@ function delAcc(){
   save();$('#accOverlay').classList.remove('show');render();buildAccountSelect();toast('Счёт удалён');
 }
 
+/* ============ Управление категориями (Story 2.4) ============ */
+function openCatMgr(){catMgrType='expense';$$('#catMgrSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t==='expense'));renderCatMgr();$('#catMgrOverlay').classList.add('show');}
+function renderCatMgr(){
+  $('#catMgrList').innerHTML=catsFor(catMgrType).map(c=>{
+    const ns=(state.subcats||[]).filter(s=>s.categoryId===c.id).length;
+    return `<div class="cat-row" data-cat="${c.id}">
+      <div class="cr-ic" style="background:${(c.color||'#6d5df6')}22">${c.emoji}</div>
+      <div style="flex:1"><div class="cr-nm">${esc(c.name)}</div>${ns?`<div class="cr-sub">${ns} ${plural(ns,'подкатегория','подкатегории','подкатегорий')}</div>`:''}</div>
+      <span class="chev">›</span></div>`;
+  }).join('');
+  $$('#catMgrList .cat-row').forEach(r=>r.onclick=()=>openCatEdit(r.dataset.cat));
+}
+function openCatEdit(id){
+  catEdit=id||null;
+  if(id){const c=catById(id);cEmoji=c.emoji;cColor=c.color||'#6d5df6';$('#catName').value=c.name;
+    $('#catEditTitle').textContent='Категория';$('#catDelete').style.display=catsFor(catMgrType).length>1?'block':'none';}
+  else{cEmoji=CAT_EMOJI[0];cColor=ACC_COLORS[0];$('#catName').value='';$('#catEditTitle').textContent='Новая категория';$('#catDelete').style.display='none';}
+  $('#catNameErr').classList.remove('show');$('#catName').classList.remove('invalid');
+  renderCatColors();renderCatEmoji();renderCatSubs();
+  $('#catEditOverlay').classList.add('show');
+  setTimeout(()=>{if(!id)$('#catName').focus();},250);
+}
+function renderCatColors(){
+  $('#catColorRow').innerHTML=ACC_COLORS.map(c=>`<div class="color-sw ${c===cColor?'sel':''}" data-color="${c}" style="background:${c}"></div>`).join('');
+  $$('#catColorRow .color-sw').forEach(el=>el.onclick=()=>{cColor=el.dataset.color;renderCatColors();});
+}
+function renderCatEmoji(){
+  $('#catEmojiStrip').innerHTML=CAT_EMOJI.map(e=>`<div class="cat-pick ${e===cEmoji?'sel':''}" data-e="${e}" style="width:50px"><span class="ce">${e}</span></div>`).join('');
+  $$('#catEmojiStrip .cat-pick').forEach(el=>el.onclick=()=>{cEmoji=el.dataset.e;renderCatEmoji();});
+}
+function renderCatSubs(){
+  if(!catEdit){$('#catSubStrip').innerHTML=`<span style="font-size:12.5px;color:var(--muted2)">Сохраните категорию, чтобы добавить подкатегории</span>`;return;}
+  const subs=(state.subcats||[]).filter(s=>s.categoryId===catEdit);
+  $('#catSubStrip').innerHTML=subs.map(s=>`<span class="subcat-edit">${esc(s.name)}<span class="del" data-del="${s.id}">✕</span></span>`).join('')
+    +`<span class="subcat-chip add" id="catSubAdd">+ добавить</span>`;
+  $$('#catSubStrip .del').forEach(el=>el.onclick=()=>{state.subcats=state.subcats.filter(s=>s.id!==el.dataset.del);save();renderCatSubs();});
+  $('#catSubAdd').onclick=()=>{const name=(prompt('Название подкатегории')||'').trim();
+    if(name){state.subcats.push({id:'s'+Date.now().toString(36),categoryId:catEdit,name});save();renderCatSubs();}};
+}
+function saveCat(){
+  const name=$('#catName').value.trim();
+  if(!name){$('#catNameErr').classList.add('show');$('#catName').classList.add('invalid');$('#catName').focus();return;}
+  if(catEdit){const c=catById(catEdit);Object.assign(c,{name,emoji:cEmoji,color:cColor});}
+  else{const id='c'+Date.now().toString(36);state.cats.push({id,name,type:catMgrType,emoji:cEmoji,color:cColor});catEdit=id;}
+  save();renderCatMgr();$('#catEditOverlay').classList.remove('show');render();toast('Категория сохранена ✓');
+}
+function deleteCat(){
+  if(!catEdit)return;
+  const list=catsFor(catMgrType);
+  if(list.length<=1){toast('Нельзя удалить последнюю категорию');return;}
+  const used=state.tx.some(t=>t.cat===catEdit);
+  const other=list.find(c=>c.id!==catEdit&&/other_/.test(c.id))||list.find(c=>c.id!==catEdit);
+  if(!confirm(used?`Операции этой категории станут «${other.name}». Удалить категорию?`:'Удалить категорию?'))return;
+  state.tx.forEach(t=>{if(t.cat===catEdit)t.cat=other.id;});
+  state.subcats=state.subcats.filter(s=>s.categoryId!==catEdit);
+  state.cats=state.cats.filter(c=>c.id!==catEdit);
+  save();renderCatMgr();$('#catEditOverlay').classList.remove('show');render();toast('Категория удалена');
+}
+
 /* ============ Прочее ============ */
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1700);}
 function loadDemo(){
@@ -1584,6 +1703,15 @@ $('#photoInput').onchange=e=>{const f=e.target.files[0];if(!f)return;
   r.readAsDataURL(f);e.target.value='';};
 
 $('#curSelect').onchange=e=>{state.currency=e.target.value;save();render();};
+// Управление категориями
+$('#catMgrBtn').onclick=openCatMgr;
+$('#catMgrClose').onclick=()=>$('#catMgrOverlay').classList.remove('show');
+$$('#catMgrSeg button').forEach(b=>b.onclick=()=>{catMgrType=b.dataset.t;$$('#catMgrSeg button').forEach(x=>x.classList.toggle('on',x===b));renderCatMgr();});
+$('#catAddBtn').onclick=()=>openCatEdit(null);
+$('#catEditClose').onclick=()=>$('#catEditOverlay').classList.remove('show');
+$('#catEditOverlay').onclick=e=>{if(e.target.id==='catEditOverlay')$('#catEditOverlay').classList.remove('show');};
+$('#catSave').onclick=saveCat;
+$('#catDelete').onclick=deleteCat;
 $('#addAccBtn').onclick=()=>openAcc(null);
 $('#closeAcc').onclick=()=>$('#accOverlay').classList.remove('show');
 $('#accOverlay').onclick=e=>{if(e.target.id==='accOverlay')$('#accOverlay').classList.remove('show');};
@@ -1765,7 +1893,7 @@ function importCSV(text){
 }
 $('#demoBtn').onclick=loadDemo;
 $('#clearBtn').onclick=()=>{if(confirm('Удалить все операции?')){state.tx=[];state.budgets={};save();render();toast('Данные удалены');}};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Старт ============ */
 load();
