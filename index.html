@@ -180,15 +180,16 @@
   @keyframes up{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
   .sheet .grab{width:40px;height:4px;border-radius:3px;background:var(--line);margin:0 auto 14px}
   .seg{display:flex;background:var(--card);border-radius:13px;padding:4px;margin-bottom:14px;border:1px solid var(--line)}
-  .seg button{flex:1;border:none;background:none;padding:11px;border-radius:10px;color:var(--muted);font-size:14.5px;font-weight:600;cursor:pointer;transition:.15s}
+  .seg button{flex:1;border:none;background:none;padding:13px;border-radius:11px;color:var(--muted);font-size:15px;font-weight:600;cursor:pointer;transition:.15s}
   .seg button.on-exp{background:var(--expense);color:#fff}
   .seg button.on-inc{background:var(--income);color:#fff}
   .seg button.on-trans{background:var(--accent);color:#fff}
-  .display{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;
-    display:flex;align-items:center;justify-content:space-between;min-height:60px}
-  .display .cur{font-size:20px;color:var(--muted);font-weight:700}
-  .display .num{font-size:30px;font-weight:800;letter-spacing:-.5px;text-align:right;flex:1;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .display{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:18px 18px;margin-bottom:16px;
+    display:flex;align-items:center;justify-content:center;gap:6px;min-height:84px}
+  .display .cur{font-size:28px;color:var(--muted);font-weight:700}
+  .display .num{font-size:44px;font-weight:800;letter-spacing:-1px;text-align:center;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1}
+  .sheet-label{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:9px}
   .cat-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
   .cat-strip::-webkit-scrollbar{display:none}
   .cat-pick{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;padding:9px 4px;
@@ -528,7 +529,10 @@
       <button id="segTrans">Перевод</button>
     </div>
     <div class="display"><span class="cur" id="dispCur">€</span><span class="num" id="dispNum">0</span></div>
-    <div class="cat-strip" id="catStrip"></div>
+    <div id="catBlock">
+      <div class="sheet-label">Категория</div>
+      <div class="cat-strip" id="catStrip"></div>
+    </div>
     <div class="metarow" id="transRow" style="display:none">
       <div class="m"><label>Со счёта</label><select id="fFrom"></select></div>
       <div class="m"><label>На счёт</label><select id="fTo"></select></div>
@@ -1287,7 +1291,7 @@ function setType(t,keepCat){
   $('#segTrans').className=t==='transfer'?'on-trans':'';
   const isT=t==='transfer';
   $('#transRow').style.display=isT?'flex':'none';
-  $('#catStrip').style.display=isT?'none':'flex';
+  $('#catBlock').style.display=isT?'none':'block';
   $('#accField').style.display=isT?'none':'block';
   if(isT)return;
   const cats=catsFor(t);
@@ -1326,6 +1330,8 @@ function key(k){
 function saveTx(){
   const val=evalExpr(aExpr);
   if(!val||val<=0){toast('Введите сумму');return;}
+  // Категория обязательна для Расход/Доход (Screen 5)
+  if(aType!=='transfer'&&!aCat){toast('Выберите категорию');return;}
   const date=$('#fDate').value||new Date().toISOString().slice(0,10);
   const note=$('#fNote').value.trim();
   if(aType==='transfer'){
