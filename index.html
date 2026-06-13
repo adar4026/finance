@@ -96,10 +96,10 @@
   .summary .ie .ar{font-size:13px}
 
   /* tx list grouped by day */
-  .daygroup{margin-bottom:6px}
-  .dayhead{display:flex;align-items:center;justify-content:space-between;padding:14px 4px 8px}
-  .dayhead .dl{font-size:13px;font-weight:600;color:var(--muted)}
-  .dayhead .dr{font-size:12.5px;font-weight:600}
+  .daygroup{margin-bottom:10px}
+  .dayhead{display:flex;align-items:center;justify-content:space-between;padding:16px 2px 9px;gap:10px}
+  .dayhead .dl{font-size:14.5px;font-weight:700;color:var(--muted)}
+  .dayhead .dr{font-size:13px;font-weight:700;background:var(--bg2);padding:3px 11px;border-radius:9px;white-space:nowrap}
   .daycard{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
   .tx{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer;transition:.12s}
   .tx:last-child{border-bottom:none}
@@ -674,7 +674,7 @@
     </div>
 
     <div class="sec-head"><span>Последние операции</span><a id="toAllTx">Все операции ›</a></div>
-    <div class="daycard" id="recentList" style="overflow:hidden"></div>
+    <div id="recentList"></div>
   </div>
 
   <!-- Screen: Analytics (Product Book Screen 2) -->
@@ -1383,24 +1383,9 @@ function renderBudgetHome(){
 function renderRecent(list){
   const items=[...list].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id).slice(0,10);
   const el=$('#recentList');
-  if(!items.length){el.innerHTML=`<div class="empty"><div class="big">🗒️</div><p>Нет операций за период.<br>Нажмите «+», чтобы добавить.</p></div>`;return;}
-  el.innerHTML=items.map(recentRow).join('');
-  $$('#recentList .rec').forEach(r=>r.onclick=()=>openSheet(r.dataset.id));
-}
-function recentRow(t){
-  const dt=new Date(t.date).toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
-  if(t.type==='transfer'){
-    const from=state.accounts.find(a=>a.id===t.from),to=state.accounts.find(a=>a.id===t.to);
-    const fc=(from&&from.currency)||state.currency;
-    return `<div class="rec" data-id="${t.id}"><div class="em" style="background:var(--accent-soft)">🔄</div>
-      <div class="info"><div class="t1">Перевод</div><div class="t2">${from?esc(from.name):'?'} → ${to?esc(to.name):'?'}</div></div>
-      <div class="right"><div class="amt tr">${fmtCur(t.amount,fc)}</div><div class="dt">${dt}</div></div></div>`;
-  }
-  const c=catById(t.cat),acc=state.accounts.find(a=>a.id===t.account),cur=(acc&&acc.currency)||state.currency;
-  const sub=t.subcategoryId?subcatById(t.subcategoryId):null;
-  return `<div class="rec" data-id="${t.id}"><div class="em" style="background:${c.color}22">${c.emoji}</div>
-    <div class="info"><div class="t1">${esc(c.name)}${sub?' · '+esc(sub.name):''}${t.receiptPath?' 🧾':''}${t.note?' · '+esc(t.note):''}</div><div class="t2">${acc?acc.emoji+' '+esc(acc.name):''}</div></div>
-    <div class="right"><div class="amt ${t.type==='income'?'inc':'exp'}">${signedCur(t.amount,t.type,cur)}</div><div class="dt">${dt}</div></div></div>`;
+  if(!items.length){el.innerHTML=`<div class="daycard"><div class="empty"><div class="big">🗒️</div><p>Нет операций за период.<br>Нажмите «+», чтобы добавить.</p></div></div>`;return;}
+  el.innerHTML=groupedTxHtml(items);
+  $$('#recentList .tx').forEach(r=>r.onclick=()=>openSheet(r.dataset.id));
 }
 function renderAccStrip(){
   $('#accStrip').innerHTML=state.accounts.map((a,i)=>{
@@ -1459,6 +1444,11 @@ function renderCapChart(){
         y:{position:'right',grid:{color:grid},ticks:{color:muted,maxTicksLimit:5,callback:v=>v>=1000||v<=-1000?(Math.round(v/100)/10)+'k':v}}}},
     plugins:[capBubble]});
 }
+// «Суббота, 13 июня 2026 г.» — день недели + дата + год (как в Money Flow)
+function dayLabelFull(day){
+  const s=new Date(day).toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  return s.charAt(0).toUpperCase()+s.slice(1);
+}
 function groupedTxHtml(list){
   if(!list.length)return `<div class="empty"><div class="big">🗒️</div><p>Нет операций за период.</p></div>`;
   const byDay={};list.forEach(t=>{(byDay[t.date.slice(0,10)]=byDay[t.date.slice(0,10)]||[]).push(t);});
@@ -1466,9 +1456,8 @@ function groupedTxHtml(list){
   return days.map(day=>{
     const items=byDay[day].sort((a,b)=>b.id-a.id);
     const net=items.reduce((s,t)=>s+(t.type==='transfer'?0:(t.type==='income'?t.amount:-t.amount)),0);
-    const dl=new Date(day).toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'});
-    return `<div class="daygroup"><div class="dayhead"><span class="dl">${dl}</span>
-      <span class="dr" style="color:${net>=0?'var(--income)':'var(--text)'}">${(net>=0?'+':'−')+num(Math.abs(net))}</span></div>
+    return `<div class="daygroup"><div class="dayhead"><span class="dl">${dayLabelFull(day)}</span>
+      <span class="dr" style="color:${net>=0?'var(--income)':'var(--expense)'}">${(net>=0?'+':'−')+num(Math.abs(net))}</span></div>
       <div class="daycard">${items.map(txRow).join('')}</div></div>`;
   }).join('');
 }
@@ -1488,11 +1477,9 @@ function renderTx(list){
   el.innerHTML=days.map(day=>{
     const items=byDay[day].sort((a,b)=>b.id-a.id);
     const net=items.reduce((s,t)=>s+(t.type==='transfer'?0:(t.type==='income'?t.amount:-t.amount)),0);
-    const dd=new Date(day);
-    const dl=dd.toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'});
     return `<div class="daygroup">
-      <div class="dayhead"><span class="dl">${dl}</span>
-        <span class="dr" style="color:${net>=0?'var(--income)':'var(--text)'}">${(net>=0?'+':'−')+num(Math.abs(net))}</span></div>
+      <div class="dayhead"><span class="dl">${dayLabelFull(day)}</span>
+        <span class="dr" style="color:${net>=0?'var(--income)':'var(--expense)'}">${(net>=0?'+':'−')+num(Math.abs(net))}</span></div>
       <div class="daycard">${items.map(txRow).join('')}</div>
     </div>`;
   }).join('');
