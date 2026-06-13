@@ -236,6 +236,32 @@
   .btn-del{width:100%;padding:13px;border:1px solid var(--expense);border-radius:13px;background:none;color:var(--expense);
     font-size:14px;font-weight:600;cursor:pointer;margin-top:9px}
 
+  /* ===== Accounts v2 (Redesign) ===== */
+  .cap2{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:16px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .cap2-l{min-width:0}
+  .cap2 .c2-label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .cap2 .c2-val{font-size:29px;font-weight:800;letter-spacing:-.6px;margin-top:6px;white-space:nowrap}
+  .cap2 .c2-chg{font-size:12.5px;margin-top:8px;font-weight:600}
+  .cap2-donut{width:82px;height:82px;flex-shrink:0;position:relative}
+  .acc3{border-radius:18px;padding:15px;margin-bottom:12px;border:1px solid var(--line);cursor:pointer;transition:.12s}
+  .acc3:active{transform:scale(.99)}
+  .acc3-head{display:flex;align-items:center;gap:13px;margin-bottom:12px}
+  .acc3-ic{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+  .acc3-nm{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acc3-sub{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acc3-dots{color:var(--muted2);font-size:18px;letter-spacing:1px;cursor:pointer;padding:2px 6px;align-self:flex-start}
+  .acc3-bot{display:flex;justify-content:space-between;align-items:flex-end}
+  .acc3-bal{font-size:21px;font-weight:800;letter-spacing:-.3px}
+  .acc3-pct{font-size:15px;font-weight:700}
+  .add-dashed{width:100%;padding:15px;border:1.5px dashed var(--line);border-radius:16px;background:none;color:var(--accent);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:18px}
+  .add-dashed:active{background:var(--card2)}
+  .dist2-panel .dist2-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+  .dist2-panel .dist2-row:last-of-type{border-bottom:none}
+  .dist2-row .l{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text)}
+  .dist2-row .l .d{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+  .dist2-row .r{font-size:13.5px;color:var(--muted);white-space:nowrap}
+  .dist2-toggle{color:var(--accent);font-size:13.5px;font-weight:600;cursor:pointer;margin-top:10px}
+
   /* ===== Экран Accounts (Screen 3) ===== */
   .cap-card-lg{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:24px;padding:26px 22px 24px;
     color:#fff;box-shadow:0 14px 34px rgba(109,93,246,.38);margin-bottom:16px;text-align:center}
@@ -698,21 +724,22 @@
 
   <!-- Screen: Accounts (Product Book Screen 3) -->
   <div class="screen" id="scrAccounts">
-    <div class="cap-card-lg">
-      <div class="ccl-label">Общий капитал</div>
-      <div class="ccl-value" id="accTotalCapital">€0</div>
-      <div class="ccl-sub" id="accCapitalSub">—</div>
-    </div>
-    <div class="panel">
-      <h3 style="margin-bottom:14px">Распределение капитала</h3>
-      <div class="dist-wrap">
-        <div class="dist-chart"><canvas id="distChart"></canvas></div>
-        <div class="dist-legend" id="distLegend"></div>
+    <div class="cap2">
+      <div class="cap2-l">
+        <div class="c2-label">Общий капитал <span id="capEye2" style="cursor:pointer">👁</span></div>
+        <div class="c2-val" id="accTotalCapital">€0</div>
+        <div class="c2-chg" id="accCapChg"></div>
       </div>
+      <div class="cap2-donut"><canvas id="distChart"></canvas></div>
     </div>
-    <div class="sec-head"><span>Мои счета</span></div>
     <div id="accList"></div>
-    <button class="fab-account" id="addAccBtn" title="Добавить счёт">＋</button>
+    <button class="add-dashed" id="addAccBtn">+ Добавить счёт</button>
+    <div class="panel dist2-panel">
+      <h3 style="margin-bottom:8px">Распределение капитала</h3>
+      <div id="distList"></div>
+      <div class="dist2-toggle" id="distToggle">Показать в процентах ⌄</div>
+    </div>
+    <div style="height:20px"></div>
   </div>
 
   <!-- Screen: Settings (через меню аватара) -->
@@ -2020,7 +2047,7 @@ async function pinComplete(){
 }
 function pinError(){renderPinDots(true);if(navigator.vibrate)navigator.vibrate(120);pinState.buf='';setTimeout(()=>renderPinDots(),400);}
 function closePin(){$('#pinOverlay').classList.remove('show');}
-function updateEye(){const e=$('#capEye');if(e)e.textContent=state.hideAmounts?'🙈':'👁';}
+function updateEye(){['#capEye','#capEye2'].forEach(s=>{const e=$(s);if(e)e.textContent=state.hideAmounts?'🙈':'👁';});}
 
 // UI-обёртки над AF.Services.Account (логика — в services/account_service.js)
 function accBalance(accId,endDate){return AF.Services.Account.balance(state,accId,endDate);}
@@ -2028,37 +2055,55 @@ const ACC_TYPE_LABEL={bank:'Банковский счёт',cash:'Наличны�
 function curCode(cur){return ({'€':'EUR','$':'USD','₽':'RUB','£':'GBP','₸':'KZT','₴':'UAH'})[cur]||cur;}
 function plural(n,one,few,many){const a=n%10,b=n%100;if(a===1&&b!==11)return one;if(a>=2&&a<=4&&(b<10||b>=20))return few;return many;}
 
-// Экран Accounts (Screen 3): капитал + распределение + список
+// Экран Accounts v2: капитал+пончик, градиентные карточки, распределение со списком
+let distMode='amount';
 function renderAccountsScreen(){
-  $('#accTotalCapital').textContent=num(totalCapital());
-  const active=AF.Services.Account.active(state);
-  $('#accCapitalSub').textContent=active.length+' '+plural(active.length,'счёт','счёта','счетов');
+  const cap=totalCapital();
+  $('#accTotalCapital').textContent=num(cap);
+  // изменение за месяц
+  const a=new Date(), from=new Date(a.getFullYear(),a.getMonth(),1);
+  const start=totalCapital(new Date(from.getTime()-1)), delta=cap-start, pct=start?delta/Math.abs(start)*100:0;
+  const chg=$('#accCapChg');
+  if(state.hideAmounts){chg.textContent='';}
+  else{chg.innerHTML=`<span style="color:${delta>=0?'var(--income)':'var(--expense)'}">${delta>=0?'▲':'▼'} ${(delta>=0?'+':'−')+num(Math.abs(delta))} (${Math.abs(pct).toFixed(2)}%)</span> <span style="color:var(--muted)">за месяц</span>`;}
   renderDistChart();
   renderAccounts();
+  renderDistList();
 }
 let distChart;
+function distData(){return AF.Services.Account.distribution(state).filter(d=>d.balance>0).sort((a,b)=>b.balance-a.balance);}
 function renderDistChart(){
-  const dist=AF.Services.Account.distribution(state).filter(d=>d.balance>0).sort((a,b)=>b.balance-a.balance);
+  const dist=distData();
   if(distChart)distChart.destroy();
   distChart=new Chart($('#distChart'),{type:'doughnut',
-    data:{labels:dist.map(d=>d.account.name),datasets:[{data:dist.length?dist.map(d=>d.balance):[1],
-      backgroundColor:dist.length?dist.map(d=>d.account.color||'#6d5df6'):['#eceef4'],borderWidth:0}]},
-    options:{cutout:'62%',maintainAspectRatio:false,plugins:{legend:{display:false},
-      tooltip:{enabled:dist.length>0,callbacks:{label:c=>' '+num(c.raw)}}}}});
-  $('#distLegend').innerHTML=dist.length?dist.map(d=>
-    `<div class="dist-leg"><span class="d" style="background:${d.account.color||'#6d5df6'}"></span>
-      <span class="n">${esc(d.account.name)}</span><span class="p">${Math.round(d.share)}%</span></div>`).join('')
-    :`<div style="color:var(--muted2);font-size:13px">Нет положительных балансов</div>`;
+    data:{datasets:[{data:dist.length?dist.map(d=>d.balance):[1],
+      backgroundColor:dist.length?dist.map(d=>d.account.color||'#6d5df6'):['var(--line)'],borderWidth:0}]},
+    options:{cutout:'66%',maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+}
+function renderDistList(){
+  const dist=distData();const el=$('#distList');
+  if(!dist.length){el.innerHTML=`<div style="color:var(--muted2);font-size:13px;padding:6px 0">Нет положительных балансов</div>`;$('#distToggle').style.display='none';return;}
+  $('#distToggle').style.display='block';
+  $('#distToggle').textContent=distMode==='amount'?'Показать в процентах ⌄':'Показать суммы ⌄';
+  el.innerHTML=dist.map(d=>{
+    const right=distMode==='amount'?fmtCur(d.balance,d.account.currency||state.currency):Math.round(d.share)+'%';
+    return `<div class="dist2-row"><span class="l"><span class="d" style="background:${d.account.color||'#6d5df6'}"></span>${esc(d.account.name)}</span><span class="r">${right}</span></div>`;
+  }).join('');
 }
 function accountCardHtml(a,archived){
-  const bal=accBalance(a.id),cur=a.currency||state.currency,share=AF.Services.Account.share(state,a.id);
-  const sub=archived?'В архиве':((ACC_TYPE_LABEL[a.type]||'Счёт')+(share>0?' · '+Math.round(share)+'% капитала':''));
-  return `<div class="acc2${archived?' archived':''}" data-acc="${a.id}">
-    <div class="acc2-ic" style="background:${(a.color||'#6d5df6')}1f">${a.emoji}</div>
-    <div class="acc2-mid"><div class="acc2-nm">${esc(a.name)}</div><div class="acc2-sub">${sub}</div></div>
-    <div class="acc2-right">
-      <div class="acc2-bal" style="color:${bal<0?'var(--expense)':'var(--text)'}">${(bal<0?'−':'')+fmtCur(Math.abs(bal),cur)}</div>
-      <div class="acc2-cur">${curCode(cur)}</div>
+  const bal=accBalance(a.id),cur=a.currency||state.currency,share=Math.round(AF.Services.Account.share(state,a.id));
+  const col=a.color||'#6d5df6';
+  const sub=(ACC_TYPE_LABEL[a.type]||'Счёт')+' • '+curCode(cur);
+  const bg=archived?'var(--card)':`linear-gradient(135deg, ${col}1f, var(--card) 70%)`;
+  return `<div class="acc3${archived?' archived':''}" data-acc="${a.id}" style="background:${bg};border-color:${archived?'var(--line)':col+'33'}">
+    <div class="acc3-head">
+      <span class="acc3-ic" style="background:${col};color:#fff">${a.emoji}</span>
+      <div style="flex:1;min-width:0"><div class="acc3-nm">${esc(a.name)}</div><div class="acc3-sub">${archived?'В архиве':sub}</div></div>
+      <span class="acc3-dots" data-edit="${a.id}">⋯</span>
+    </div>
+    <div class="acc3-bot">
+      <span class="acc3-bal" style="color:${bal<0?'var(--expense)':'var(--text)'}">${(bal<0?'−':'')+fmtCur(Math.abs(bal),cur)}</span>
+      ${share>0&&!archived?`<span class="acc3-pct" style="color:${col}">${share}%</span>`:''}
     </div>
   </div>`;
 }
@@ -2069,7 +2114,8 @@ function renderAccounts(){
   let html=active.map(a=>accountCardHtml(a,false)).join('');
   if(archived.length)html+=`<div class="arch-head">📦 Архив (${archived.length})</div>`+archived.map(a=>accountCardHtml(a,true)).join('');
   el.innerHTML=html;
-  $$('#accList .acc2').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
+  $$('#accList .acc3').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
+  $$('#accList .acc3-dots').forEach(b=>b.onclick=e=>{e.stopPropagation();openAcc(b.dataset.edit);});
 }
 
 /* ============ Asset Graph: детали счёта ============ */
@@ -2738,6 +2784,8 @@ $('#securityOverlay').onclick=e=>{if(e.target.id==='securityOverlay')$('#securit
 $$('#pinPad button[data-k]').forEach(b=>b.onclick=()=>pinKey(b.dataset.k));
 $('#pinCancel').onclick=()=>{if(pinState.mode!=='unlock')closePin();};
 $('#capEye').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();render();updateEye();};
+$('#capEye2').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();render();updateEye();};
+$('#distToggle').onclick=()=>{distMode=distMode==='amount'?'percent':'amount';renderDistList();};
 // Финздоровье
 $('#profHealth').onclick=openHealth;
 $('#healthClose').onclick=()=>$('#healthOverlay').classList.remove('show');
