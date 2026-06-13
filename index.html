@@ -534,6 +534,19 @@
   .cat-split .catrow .cname{font-size:13px}
   .cat-split .catrow .cval{font-size:12.5px}
   .cat-split .catrow .cpct{width:28px;font-size:11px}
+  /* Категории: кольцо сверху по центру + список во всю ширину (тапабельный) */
+  .cat-donut-top{display:flex;justify-content:center;margin:2px 0 8px}
+  .cat-donut-top .cat-donut{width:150px;height:150px}
+  .cat-donut-top .donut-center .dc-v{font-size:20px}
+  .catlist2{display:flex;flex-direction:column}
+  .crow{display:flex;align-items:center;gap:11px;padding:13px 2px;border-top:1px solid var(--line);cursor:pointer;transition:background .12s}
+  .crow:first-child{border-top:none}
+  .crow:active{background:var(--accent-soft)}
+  .crow .cdot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+  .crow .cname{flex:1;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .crow .cval{font-size:14.5px;font-weight:700;white-space:nowrap}
+  .crow .cpct{font-size:12px;color:var(--muted2);width:40px;text-align:right;flex-shrink:0}
+  .crow .cchev{color:var(--muted2);font-size:17px;flex-shrink:0;margin-left:-2px}
   .ana-summary{display:flex;gap:12px;margin-bottom:12px}
   .ana-card{flex:1;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 16px;box-shadow:var(--shadow);min-width:0}
   .ana-card .ac-l{font-size:13px;color:var(--muted);margin-bottom:9px}
@@ -723,12 +736,12 @@
     </div>
     <div class="panel">
       <h3>Категории расходов</h3>
-      <div class="cat-split">
+      <div class="cat-donut-top">
         <div class="cat-donut"><canvas id="pieChart"></canvas>
           <div class="donut-center"><div class="dc-l">Всего</div><div class="dc-v" id="pieTotal">€0</div></div>
         </div>
-        <div class="catlist" id="catLegend"></div>
       </div>
+      <div class="catlist2" id="catLegend"></div>
     </div>
     <div class="panel">
       <h3>Сравнение с прошлым периодом</h3>
@@ -1617,15 +1630,15 @@ function renderAnaPie(cur){
   // список: топ-6 категорий, остальное — «Другое»
   const TOPN=6;const head=entries.slice(0,TOPN);const restSum=entries.slice(TOPN).reduce((s,e)=>s+e[1],0);
   const rows=head.map(e=>{const c=catById(e[0]);
-    return `<div class="catrow" data-cat="${e[0]}"><span class="cdot" style="background:${c.color}"></span>
+    return `<div class="crow" data-cat="${e[0]}"><span class="cdot" style="background:${c.color}"></span>
       <span class="cname">${esc(c.name)}</span><span class="cval">${num(e[1])}</span>
-      <span class="cpct">${Math.round(e[1]/total*100)}%</span></div>`;});
-  if(restSum>0)rows.push(`<div class="catrow" data-cats="${entries.slice(TOPN).map(e=>e[0]).join(',')}"><span class="cdot" style="background:var(--muted2)"></span>
+      <span class="cpct">${Math.round(e[1]/total*100)}%</span><span class="cchev">›</span></div>`;});
+  if(restSum>0)rows.push(`<div class="crow" data-cats="${entries.slice(TOPN).map(e=>e[0]).join(',')}"><span class="cdot" style="background:var(--muted2)"></span>
       <span class="cname">Другое</span><span class="cval">${num(restSum)}</span>
-      <span class="cpct">${Math.round(restSum/total*100)}%</span></div>`);
+      <span class="cpct">${Math.round(restSum/total*100)}%</span><span class="cchev">›</span></div>`);
   $('#catLegend').innerHTML=entries.length?rows.join('')
     :`<div style="text-align:center;color:var(--muted2);font-size:13px;padding:6px">Нет расходов</div>`;
-  $$('#catLegend .catrow').forEach(row=>row.onclick=()=>{
+  $$('#catLegend .crow').forEach(row=>row.onclick=()=>{
     if(row.dataset.cat){const c=catById(row.dataset.cat);openCatTx([row.dataset.cat],c.emoji+' '+c.name);}
     else if(row.dataset.cats){openCatTx(row.dataset.cats.split(','),'Другое');}
   });
