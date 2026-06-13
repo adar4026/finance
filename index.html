@@ -339,6 +339,37 @@
   .prof-row:active{background:var(--card2)}
   .prof-row .chev{color:var(--muted2);font-size:18px}
 
+  /* ===== Financial Calendar (Screen 8) ===== */
+  .cal-forecast{display:flex;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:18px;padding:16px 8px;color:#fff;box-shadow:0 12px 30px rgba(109,93,246,.35);margin-top:10px}
+  .cal-forecast .cf-col{flex:1;text-align:center;min-width:0}
+  .cal-forecast .cf-l{font-size:11px;opacity:.9}
+  .cal-forecast .cf-v{font-size:16px;font-weight:800;margin-top:5px;white-space:nowrap}
+  .cal-forecast .cf-div{width:1px;background:rgba(255,255,255,.25);margin:2px 0}
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .cal-nav button{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;width:34px;height:34px;border-radius:9px}
+  .cal-nav .lbl{font-size:15px;font-weight:700;text-transform:capitalize}
+  .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:10.5px;color:var(--muted2);margin-bottom:6px}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+  .cal-day{padding:7px 0 4px;font-size:13px;color:var(--text);border-radius:9px;cursor:pointer;position:relative;min-height:34px}
+  .cal-day.out{color:var(--muted2);opacity:.5}
+  .cal-day.today{background:var(--accent);color:#fff;font-weight:700}
+  .cal-day.sel{background:var(--accent-soft);color:var(--accent);font-weight:700}
+  .cal-day .dots{display:flex;gap:2px;justify-content:center;margin-top:2px;height:5px}
+  .cal-day .dots i{width:5px;height:5px;border-radius:50%;display:inline-block}
+  .ev-row{display:flex;align-items:center;gap:11px;padding:12px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+  .ev-row:last-child{border-bottom:none}
+  .ev-ic{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+  .ev-info{flex:1;min-width:0}
+  .ev-t1{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ev-t2{font-size:11.5px;color:var(--muted2);margin-top:2px}
+  .ev-amt{font-weight:700;font-size:14.5px;white-space:nowrap}
+  .ev-amt.inc{color:var(--income)} .ev-amt.exp{color:var(--expense)}
+  .ev-check{border:none;background:var(--income-soft);color:var(--income);width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:15px;flex-shrink:0}
+  .overdue-box{background:var(--expense-soft);border:1px solid var(--expense);border-radius:16px;padding:12px 14px;margin-top:12px}
+  .overdue-box .ob-h{font-size:13px;font-weight:700;color:var(--expense);margin-bottom:6px}
+  .overdue-box .ev-row{border-color:rgba(0,0,0,.06)}
+  .cal-empty{text-align:center;color:var(--muted2);font-size:13px;padding:18px}
+
   /* ===== Goals (Screen 7) ===== */
   .goals-summary{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:18px;padding:18px;color:#fff;margin:10px 0 16px;text-align:center;box-shadow:0 12px 30px rgba(109,93,246,.35)}
   .goals-summary .gs-v{font-size:30px;font-weight:800;letter-spacing:-.5px}
@@ -810,6 +841,7 @@
     <button class="prof-row" id="changePhoto"><span>📷 Сменить фото</span><span class="chev">›</span></button>
     <input type="file" id="photoInput" accept="image/*" hidden>
     <button class="prof-row" id="profGoals"><span>🎯 Цели</span><span class="chev">›</span></button>
+    <button class="prof-row" id="profCalendar"><span>📅 Календарь</span><span class="chev">›</span></button>
     <button class="prof-row" id="profTheme"><span id="profThemeLbl">🌙 Тёмная тема</span><span class="chev">›</span></button>
     <button class="prof-row" id="profExport"><span>⬇️ Экспорт данных (JSON)</span><span class="chev">›</span></button>
     <button class="prof-row" id="profMore"><span>⚙️ Все настройки</span><span class="chev">›</span></button>
@@ -825,6 +857,44 @@
     <button class="am-item" data-add="income"><span class="am-ic" style="background:var(--income-soft)">💰</span>Доход</button>
     <button class="am-item" data-add="transfer"><span class="am-ic" style="background:var(--accent-soft)">🔄</span>Перевод</button>
     <button class="am-item" data-add="receipt"><span class="am-ic" style="background:#4dabf71f">🧾</span>Чек</button>
+  </div>
+</div>
+
+<!-- Финансовый календарь (Screen 8) -->
+<div class="overlay" id="calOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top"><div class="nm">📅 Календарь</div><button class="iconbtn" id="calClose">×</button></div>
+    <div id="calOverdue"></div>
+    <div class="cal-forecast" id="calForecast"></div>
+    <div class="panel" style="margin:14px 0">
+      <div class="cal-nav"><button id="calPrev">‹</button><span class="lbl" id="calMonthLbl">—</span><button id="calNext">›</button></div>
+      <div class="cal-weekdays"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+    <div class="sec-head"><span id="calEventsTitle">Предстоящие события</span><a id="calShowAll" style="display:none">Все ›</a></div>
+    <div id="calEvents"></div>
+    <button class="set-btn" id="addReminderBtn" style="border-style:dashed;color:var(--accent);justify-content:center"><span>＋ Добавить напоминание</span></button>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
+<!-- Редактор напоминания -->
+<div class="overlay" id="reminderEditOverlay">
+  <div class="sheet" style="max-width:440px">
+    <div class="grab"></div>
+    <h2><span id="remEditTitle">Напоминание</span><span class="x" id="remEditClose">×</span></h2>
+    <div class="seg" id="remSeg"><button id="remExp" class="on-exp">Расход</button><button id="remInc">Доход</button></div>
+    <div class="field"><label>Название</label><input type="text" id="remTitle" maxlength="40" autocomplete="off"><div class="err" id="remTitleErr">Введите название</div></div>
+    <div class="row2">
+      <div class="field"><label>Сумма</label><input type="number" id="remAmount" inputmode="decimal" min="0" placeholder="0"><div class="err" id="remAmountErr">Введите сумму</div></div>
+      <div class="field"><label>Дата</label><input type="date" id="remDate"></div>
+    </div>
+    <div class="field"><label>Повтор</label>
+      <select id="remRepeat"><option value="none">Не повторять</option><option value="daily">Ежедневно</option><option value="weekly">Еженедельно</option><option value="monthly">Ежемесячно</option><option value="yearly">Ежегодно</option></select>
+    </div>
+    <div class="field"><label>Категория (необязательно)</label><div class="cat-strip" id="remCatStrip"></div></div>
+    <button class="btn-primary" id="remSave">Сохранить</button>
+    <button class="btn-del" id="remDelete" style="display:none">Удалить напоминание</button>
   </div>
 </div>
 
@@ -1043,6 +1113,8 @@ function notifications(){
   });
   // счета в минусе
   state.accounts.forEach(a=>{const b=accBalance(a.id);if(b<0)list.push({ic:'📉',bg:'var(--expense-soft)',t1:'Минус на счёте: '+a.name,t2:'Баланс '+(b<0?'−':'')+fmtCur(Math.abs(b),a.currency||state.currency)});});
+  // просроченные напоминания
+  overdueReminders().forEach(r=>list.push({ic:'⏰',bg:'var(--expense-soft)',t1:'Просрочено: '+r.title,t2:'было '+new Date(r.dueDate).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})+' · '+num(r.amount)}));
   return list;
 }
 function renderHeader(){
@@ -1553,6 +1625,125 @@ function deleteGoal(){
   save();$('#goalEditOverlay').classList.remove('show');renderGoals();toast('Цель удалена');
 }
 
+/* ============ Финансовый календарь (Screen 8) ============ */
+let calAnchor=new Date(), calSelDay=null, remEdit=null, remType='expense', remCat=null;
+const REPEAT_LBL={none:'разово',daily:'ежедневно',weekly:'еженедельно',monthly:'ежемесячно',yearly:'ежегодно'};
+function reminderIcon(r){return r.categoryId?catById(r.categoryId).emoji:(r.type==='income'?'💰':'🔔');}
+function reminderColor(r){return r.categoryId?catById(r.categoryId).color:'#6d5df6';}
+function todayStart(){const d=new Date();d.setHours(0,0,0,0);return d;}
+function activeReminders(){return (state.reminders||[]).filter(r=>r.isActive!==false);}
+function overdueReminders(){const t=todayStart();
+  return activeReminders().filter(r=>(r.repeatType||'none')==='none'&&!r.done&&new Date(r.dueDate)<t).sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));}
+function openCalendar(){$('#profOverlay').classList.remove('show');calAnchor=new Date();calSelDay=null;renderCalendar();$('#calOverlay').classList.add('show');}
+function renderCalendar(){renderOverdue();renderForecast();renderCalGrid();renderCalEvents();}
+function renderForecast(){
+  const F=AF.Services.Forecast;
+  const now=totalCapital(), d7=F.balanceForecast(state,7), d30=F.balanceForecast(state,30);
+  const col=v=>v>=now?'#d6f5e6':'#ffd6d6';
+  $('#calForecast').innerHTML=`
+    <div class="cf-col"><div class="cf-l">Сегодня</div><div class="cf-v">${num(now)}</div></div>
+    <div class="cf-div"></div>
+    <div class="cf-col"><div class="cf-l">Через 7 дней</div><div class="cf-v" style="color:${col(d7)}">${num(d7)}</div></div>
+    <div class="cf-div"></div>
+    <div class="cf-col"><div class="cf-l">Через 30 дней</div><div class="cf-v" style="color:${col(d30)}">${num(d30)}</div></div>`;
+}
+function renderOverdue(){
+  const ov=overdueReminders();const el=$('#calOverdue');
+  if(!ov.length){el.innerHTML='';return;}
+  el.innerHTML=`<div class="overdue-box"><div class="ob-h">⚠️ Просроченные (${ov.length})</div>`+
+    ov.map(r=>{const d=new Date(r.dueDate);
+      return `<div class="ev-row" data-rem="${r.id}">
+        <span class="ev-ic" style="background:${reminderColor(r)}22">${reminderIcon(r)}</span>
+        <div class="ev-info"><div class="ev-t1">${esc(r.title)}</div><div class="ev-t2">${d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</div></div>
+        <span class="ev-amt ${r.type==='income'?'inc':'exp'}">${r.type==='income'?'+':'−'}${num(r.amount)}</span>
+        <button class="ev-check" data-done="${r.id}" title="Отметить выполненным">✓</button>
+      </div>`;}).join('')+`</div>`;
+  $$('#calOverdue .ev-check').forEach(b=>b.onclick=e=>{e.stopPropagation();markReminderDone(b.dataset.done);});
+  $$('#calOverdue .ev-row').forEach(r=>r.onclick=()=>openReminderEdit(r.dataset.rem));
+}
+function calMonthEvents(){ // {dayNumber: {inc:bool,exp:bool}}
+  const y=calAnchor.getFullYear(),m=calAnchor.getMonth();
+  const from=new Date(y,m,1),to=new Date(y,m+1,0,23,59,59);
+  const map={};
+  activeReminders().forEach(r=>AF.Services.Forecast.occurrencesBetween(r,from,to).forEach(d=>{
+    const day=d.getDate();(map[day]=map[day]||{}); if(r.type==='income')map[day].inc=true; else map[day].exp=true;}));
+  return map;
+}
+function renderCalGrid(){
+  const y=calAnchor.getFullYear(),m=calAnchor.getMonth();
+  $('#calMonthLbl').textContent=new Date(y,m,1).toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+  const first=new Date(y,m,1),lead=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate();
+  const ev=calMonthEvents();const t=new Date();const isThisMonth=(t.getFullYear()===y&&t.getMonth()===m);
+  let html='';
+  for(let i=0;i<lead;i++)html+=`<div class="cal-day out"></div>`;
+  for(let d=1;d<=days;d++){
+    const e=ev[d];const today=isThisMonth&&t.getDate()===d;const sel=calSelDay===d;
+    const dots=e?`<div class="dots">${e.inc?'<i style="background:#22c55e"></i>':''}${e.exp?'<i style="background:#ef4444"></i>':''}</div>`:`<div class="dots"></div>`;
+    html+=`<div class="cal-day ${today?'today':''} ${sel?'sel':''}" data-day="${d}">${d}${dots}</div>`;
+  }
+  $('#calGrid').innerHTML=html;
+  $$('#calGrid .cal-day[data-day]').forEach(c=>c.onclick=()=>{const d=+c.dataset.day;calSelDay=(calSelDay===d?null:d);renderCalGrid();renderCalEvents();});
+}
+function renderCalEvents(){
+  const el=$('#calEvents');const y=calAnchor.getFullYear(),m=calAnchor.getMonth();
+  if(calSelDay){
+    const from=new Date(y,m,calSelDay,0,0,0),to=new Date(y,m,calSelDay,23,59,59);
+    const items=[];activeReminders().forEach(r=>AF.Services.Forecast.occurrencesBetween(r,from,to).forEach(d=>items.push({r,d})));
+    $('#calEventsTitle').textContent='События '+from.toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+    $('#calShowAll').style.display='block';
+    el.innerHTML=items.length?items.map(({r,d})=>eventRow(r,d)).join(''):`<div class="cal-empty">Нет событий в этот день</div>`;
+  }else{
+    const t=todayStart();const horizon=new Date(t.getTime()+62*86400000);
+    const items=activeReminders().map(r=>({r,d:AF.Services.Forecast.nextOccurrence(r,t)})).filter(x=>x.d&&x.d>=t&&x.d<=horizon).sort((a,b)=>a.d-b.d);
+    $('#calEventsTitle').textContent='Предстоящие события';
+    $('#calShowAll').style.display='none';
+    el.innerHTML=items.length?items.map(({r,d})=>eventRow(r,d)).join(''):`<div class="cal-empty">Нет предстоящих событий</div>`;
+  }
+  $$('#calEvents .ev-row').forEach(r=>r.onclick=()=>openReminderEdit(r.dataset.rem));
+}
+function eventRow(r,d){
+  const rep=(r.repeatType&&r.repeatType!=='none')?' · '+REPEAT_LBL[r.repeatType]:'';
+  return `<div class="ev-row" data-rem="${r.id}">
+    <span class="ev-ic" style="background:${reminderColor(r)}22">${reminderIcon(r)}</span>
+    <div class="ev-info"><div class="ev-t1">${esc(r.title)}</div><div class="ev-t2">${d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}${rep}</div></div>
+    <span class="ev-amt ${r.type==='income'?'inc':'exp'}">${r.type==='income'?'+':'−'}${num(r.amount)}</span>
+  </div>`;
+}
+function markReminderDone(id){const r=(state.reminders||[]).find(x=>x.id===id);if(!r)return;r.done=true;save();renderCalendar();toast('Отмечено выполненным ✓');}
+function openReminderEdit(id){
+  remEdit=id||null;
+  if(id){const r=state.reminders.find(x=>x.id===id);remType=r.type;remCat=r.categoryId||null;
+    $('#remTitle').value=r.title;$('#remAmount').value=r.amount;$('#remDate').value=r.dueDate;$('#remRepeat').value=r.repeatType||'none';
+    $('#remEditTitle').textContent='Напоминание';$('#remDelete').style.display='block';}
+  else{remType='expense';remCat=null;$('#remTitle').value='';$('#remAmount').value='';$('#remDate').value=new Date().toISOString().slice(0,10);$('#remRepeat').value='monthly';
+    $('#remEditTitle').textContent='Новое напоминание';$('#remDelete').style.display='none';}
+  $('#remTitleErr').classList.remove('show');$('#remAmountErr').classList.remove('show');
+  setRemType(remType);
+  $('#reminderEditOverlay').classList.add('show');
+  setTimeout(()=>{if(!id)$('#remTitle').focus();},250);
+}
+function setRemType(t){remType=t;$('#remExp').className=t==='expense'?'on-exp':'';$('#remInc').className=t==='income'?'on-inc':'';
+  if(remCat&&catById(remCat).type!==t)remCat=null;renderRemCatStrip();}
+function renderRemCatStrip(){
+  $('#remCatStrip').innerHTML=catsFor(remType).map(c=>
+    `<div class="cat-pick ${c.id===remCat?'sel':''}" data-cat="${c.id}"><span class="ce" style="background:${c.color}22">${c.emoji}</span><span class="cl">${c.name}</span></div>`).join('');
+  $$('#remCatStrip .cat-pick').forEach(el=>el.onclick=()=>{remCat=(remCat===el.dataset.cat?null:el.dataset.cat);renderRemCatStrip();});
+}
+function saveReminder(){
+  const title=$('#remTitle').value.trim();const amount=parseFloat($('#remAmount').value);
+  if(!title){$('#remTitleErr').classList.add('show');$('#remTitle').focus();return;}
+  if(!amount||amount<=0){$('#remAmountErr').classList.add('show');$('#remAmount').focus();return;}
+  const data={title,amount:Math.round(amount*100)/100,type:remType,dueDate:$('#remDate').value||new Date().toISOString().slice(0,10),repeatType:$('#remRepeat').value,categoryId:remCat||null,isActive:true};
+  if(remEdit){const r=state.reminders.find(x=>x.id===remEdit);Object.assign(r,data);if(r.repeatType!=='none')r.done=false;}
+  else state.reminders.push(Object.assign({id:'r'+Date.now().toString(36),done:false,createdAt:Date.now()},data));
+  save();$('#reminderEditOverlay').classList.remove('show');renderCalendar();renderHeader();toast('Напоминание сохранено ✓');
+}
+function deleteReminder(){
+  if(!remEdit)return;
+  state.reminders=state.reminders.filter(r=>r.id!==remEdit);
+  save();$('#reminderEditOverlay').classList.remove('show');renderCalendar();toast('Напоминание удалено');
+}
+
 // UI-обёртки над AF.Services.Account (логика — в services/account_service.js)
 function accBalance(accId,endDate){return AF.Services.Account.balance(state,accId,endDate);}
 const ACC_TYPE_LABEL={bank:'Банковский счёт',cash:'Наличные',savings:'Сбережения',investment:'Инвестиции',crypto:'Криптокошелёк'};
@@ -1977,6 +2168,13 @@ function loadDemo(){
     {id:'g1',name:'Подушка безопасности',targetAmount:10000,savedAmount:3908,currency:'€',deadline:dl.toISOString().slice(0,10),color:'#6d5df6',status:'active',createdAt:Date.now()},
     {id:'g2',name:'Отпуск',targetAmount:2000,savedAmount:2000,currency:'€',deadline:null,color:'#3bc9db',status:'completed',createdAt:Date.now()},
   ];
+  const ym=(d)=>`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  state.reminders=[
+    {id:'r1',title:'Аренда квартиры',amount:1200,type:'expense',dueDate:ym(17),repeatType:'monthly',categoryId:'home',isActive:true,done:false,createdAt:Date.now()},
+    {id:'r2',title:'Netflix',amount:15,type:'expense',dueDate:ym(20),repeatType:'monthly',categoryId:'subs',isActive:true,done:false,createdAt:Date.now()},
+    {id:'r3',title:'Зарплата',amount:2500,type:'income',dueDate:ym(25),repeatType:'monthly',categoryId:'salary',isActive:true,done:false,createdAt:Date.now()},
+    {id:'r4',title:'Оплатить налог',amount:300,type:'expense',dueDate:ym(3),repeatType:'none',categoryId:'bills',isActive:true,done:false,createdAt:Date.now()},
+  ];
   save();anchor=new Date();render();toast('Демо-данные загружены');
 }
 function dstr(b,d){return new Date(b.getFullYear(),b.getMonth(),d).toISOString().slice(0,10);}
@@ -2246,6 +2444,19 @@ function importCSV(text){
 }
 $('#demoBtn').onclick=loadDemo;
 $('#clearBtn').onclick=()=>{if(confirm('Удалить все операции?')){state.tx=[];state.budgets={};save();render();toast('Данные удалены');}};
+// Календарь
+$('#profCalendar').onclick=openCalendar;
+$('#calClose').onclick=()=>$('#calOverlay').classList.remove('show');
+$('#calPrev').onclick=()=>{calAnchor=new Date(calAnchor.getFullYear(),calAnchor.getMonth()-1,1);calSelDay=null;renderCalGrid();renderCalEvents();};
+$('#calNext').onclick=()=>{calAnchor=new Date(calAnchor.getFullYear(),calAnchor.getMonth()+1,1);calSelDay=null;renderCalGrid();renderCalEvents();};
+$('#calShowAll').onclick=()=>{calSelDay=null;renderCalGrid();renderCalEvents();};
+$('#addReminderBtn').onclick=()=>openReminderEdit(null);
+$('#remEditClose').onclick=()=>$('#reminderEditOverlay').classList.remove('show');
+$('#reminderEditOverlay').onclick=e=>{if(e.target.id==='reminderEditOverlay')$('#reminderEditOverlay').classList.remove('show');};
+$('#remExp').onclick=()=>setRemType('expense');
+$('#remInc').onclick=()=>setRemType('income');
+$('#remSave').onclick=saveReminder;
+$('#remDelete').onclick=deleteReminder;
 // Цели (Goals)
 $('#profGoals').onclick=openGoals;
 $('#goalsClose').onclick=()=>$('#goalsOverlay').classList.remove('show');
@@ -2261,7 +2472,7 @@ $('#budgetEditOverlay').onclick=e=>{if(e.target.id==='budgetEditOverlay')$('#bud
 $('#budSave').onclick=saveBudget;
 $('#budDelete').onclick=deleteBudget;
 $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Старт ============ */
 load();
