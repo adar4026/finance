@@ -121,7 +121,9 @@
   .chart-box{position:relative;height:230px}
   .chart-box.tall{height:260px}
   .catlist{display:flex;flex-direction:column;gap:11px;margin-top:14px}
-  .catrow{display:flex;align-items:center;gap:8px;font-size:13.5px}
+  .catrow{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer;border-radius:9px;margin:0 -6px;padding:3px 6px;transition:background .12s}
+  .catrow:active{background:var(--accent-soft)}
+  .cat-tx-sum{font-size:13.5px;color:var(--muted);font-weight:600;margin-top:2px}
   .catrow .cdot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
   .catrow .cname{flex:1;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .catrow .cval{font-weight:700;font-size:13px;white-space:nowrap}
@@ -931,6 +933,18 @@
   </div>
 </div>
 
+<!-- Операции по категории (тап по категории в Аналитике) -->
+<div class="overlay" id="catTxOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top">
+      <div class="nm" id="catTxTitle">Категория <span id="catTxLabel" style="font-size:13px;color:var(--muted);font-weight:500"></span></div>
+      <button class="iconbtn" id="catTxClose">×</button>
+    </div>
+    <div class="cat-tx-sum" id="catTxSum"></div>
+    <div id="catTxList" style="margin-top:8px"></div>
+  </div>
+</div>
+
 <!-- Уведомления -->
 <div class="overlay" id="notifOverlay">
   <div class="modal">
@@ -1595,20 +1609,36 @@ function renderAnaPie(cur){
   // список: топ-6 категорий, остальное — «Другое»
   const TOPN=6;const head=entries.slice(0,TOPN);const restSum=entries.slice(TOPN).reduce((s,e)=>s+e[1],0);
   const rows=head.map(e=>{const c=catById(e[0]);
-    return `<div class="catrow"><span class="cdot" style="background:${c.color}"></span>
+    return `<div class="catrow" data-cat="${e[0]}"><span class="cdot" style="background:${c.color}"></span>
       <span class="cname">${esc(c.name)}</span><span class="cval">${num(e[1])}</span>
       <span class="cpct">${Math.round(e[1]/total*100)}%</span></div>`;});
-  if(restSum>0)rows.push(`<div class="catrow"><span class="cdot" style="background:var(--muted2)"></span>
+  if(restSum>0)rows.push(`<div class="catrow" data-cats="${entries.slice(TOPN).map(e=>e[0]).join(',')}"><span class="cdot" style="background:var(--muted2)"></span>
       <span class="cname">Другое</span><span class="cval">${num(restSum)}</span>
       <span class="cpct">${Math.round(restSum/total*100)}%</span></div>`);
   $('#catLegend').innerHTML=entries.length?rows.join('')
     :`<div style="text-align:center;color:var(--muted2);font-size:13px;padding:6px">Нет расходов</div>`;
+  $$('#catLegend .catrow').forEach(row=>row.onclick=()=>{
+    if(row.dataset.cat){const c=catById(row.dataset.cat);openCatTx([row.dataset.cat],c.emoji+' '+c.name);}
+    else if(row.dataset.cats){openCatTx(row.dataset.cats.split(','),'Другое');}
+  });
   if(pieChart)pieChart.destroy();
   pieChart=new Chart($('#pieChart'),{type:'doughnut',
     data:{labels:entries.map(e=>catById(e[0]).name),datasets:[{data:entries.length?entries.map(e=>e[1]):[1],
       backgroundColor:entries.length?entries.map(e=>catById(e[0]).color):['#eceef4'],borderWidth:0}]},
     options:{cutout:'70%',maintainAspectRatio:false,plugins:{legend:{display:false},
       tooltip:{enabled:entries.length>0,callbacks:{label:c=>' '+num(c.raw)}}}}});
+}
+// Операции выбранной категории за текущий период Аналитики
+function openCatTx(catIds,label){
+  const r=anaRange(anaPeriod,0);
+  const list=state.tx.filter(t=>t.type==='expense'&&catIds.includes(t.cat)&&inAnaRange(t,r));
+  const sum=list.reduce((s,t)=>s+t.amount,0);
+  $('#catTxTitle').firstChild.textContent=label+' ';
+  $('#catTxLabel').textContent=anaHeroLabel(anaPeriod,r);
+  $('#catTxSum').textContent='Всего: −'+num(sum)+' · '+list.length+' '+plural(list.length,'операция','операции','операций');
+  $('#catTxList').innerHTML=groupedTxHtml(list);
+  $$('#catTxList .tx').forEach(x=>x.onclick=()=>openSheet(x.dataset.id));
+  $('#catTxOverlay').classList.add('show');
 }
 function renderAnaCompare(cur,pre){
   const A=AF.Services.Analytics;
@@ -2530,6 +2560,8 @@ $$('#anaPeriods button').forEach(b=>b.onclick=()=>{anaPeriod=b.dataset.p;
 $('#toAllTx').onclick=openAllTx;
 $('#allTxClose').onclick=()=>$('#allTxOverlay').classList.remove('show');
 $('#allTxOverlay').onclick=e=>{if(e.target.id==='allTxOverlay')$('#allTxOverlay').classList.remove('show');};
+$('#catTxClose').onclick=()=>$('#catTxOverlay').classList.remove('show');
+$('#catTxOverlay').onclick=e=>{if(e.target.id==='catTxOverlay')$('#catTxOverlay').classList.remove('show');};
 // Кнопка + открывает меню добавления (Расход/Доход/Перевод/Чек встроены сюда)
 $('#addBtn').onclick=()=>$('#addMenu').classList.add('show');
 $('#addMenuClose').onclick=()=>$('#addMenu').classList.remove('show');
