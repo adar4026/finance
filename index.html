@@ -339,6 +339,34 @@
   .prof-row:active{background:var(--card2)}
   .prof-row .chev{color:var(--muted2);font-size:18px}
 
+  /* ===== Budgets (Screen 6) ===== */
+  .budget-total{margin-bottom:16px}
+  .bt-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:13px}
+  .bt-amt{font-size:27px;font-weight:800;letter-spacing:-.6px}
+  .bt-of{font-size:13.5px;color:var(--muted);font-weight:600}
+  .bt-bar{height:15px;border-radius:8px;background:var(--bg2);overflow:hidden;margin-bottom:9px}
+  .bt-fill{height:100%;border-radius:8px;transition:width .4s}
+  .bt-foot{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted2)}
+  .bt-foot .over{color:var(--expense);font-weight:600}
+  .bt-empty{font-size:13.5px;color:var(--muted2);text-align:center;padding:8px 0}
+  .bud-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:11px;cursor:pointer;box-shadow:var(--shadow);transition:.12s}
+  .bud-card:active{transform:scale(.99)}
+  .bc-head{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+  .bc-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .bc-nm{flex:1;font-size:16px;font-weight:700}
+  .bc-amt{font-size:14px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .bc-amt.over{color:var(--expense)}
+  .bc-bar{height:11px;border-radius:7px;background:var(--bg2);overflow:hidden;margin-bottom:7px}
+  .bc-fill{height:100%;border-radius:7px;transition:width .4s}
+  .bc-foot{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted2)}
+  .bc-foot .over{color:var(--expense);font-weight:600}
+  .bc-foot .warn{color:var(--warn);font-weight:600}
+  .bud-empty{text-align:center;color:var(--muted2);padding:30px 16px}
+  .bud-empty .big{font-size:38px;margin-bottom:10px}
+  .bud-limit-input{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--card)}
+  .bud-limit-input .cur{font-size:22px;color:var(--muted);font-weight:700}
+  .bud-limit-input input{flex:1;border:none;background:none;color:var(--text);font-size:24px;font-weight:800;outline:none;font-family:inherit}
+
   /* ===== Analytics (Screen 2) ===== */
   .ana-periods{display:flex;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:4px;margin-bottom:14px}
   .ana-periods button{flex:1;border:none;background:none;color:var(--muted);font-size:13px;font-weight:600;padding:10px 4px;border-radius:9px;cursor:pointer;transition:.15s}
@@ -544,9 +572,13 @@
     </div>
   </div>
 
-  <!-- Screen: Budgets -->
+  <!-- Screen: Budgets (Product Book Screen 6) -->
   <div class="screen" id="scrBudgets">
-    <div id="budList"></div>
+    <div class="panel budget-total" id="budgetTotal"></div>
+    <div class="sec-head"><span>Бюджеты по категориям</span></div>
+    <div id="budCards"></div>
+    <button class="set-btn" id="addBudgetBtn" style="border-style:dashed;color:var(--accent);justify-content:center"><span>＋ Добавить бюджет</span></button>
+    <div style="height:20px"></div>
   </div>
 
   <!-- Screen: Accounts (Product Book Screen 3) -->
@@ -770,6 +802,21 @@
     <button class="am-item" data-add="income"><span class="am-ic" style="background:var(--income-soft)">💰</span>Доход</button>
     <button class="am-item" data-add="transfer"><span class="am-ic" style="background:var(--accent-soft)">🔄</span>Перевод</button>
     <button class="am-item" data-add="receipt"><span class="am-ic" style="background:#4dabf71f">🧾</span>Чек</button>
+  </div>
+</div>
+
+<!-- Редактор бюджета (Budgets MVP) -->
+<div class="overlay" id="budgetEditOverlay">
+  <div class="sheet" style="max-width:440px">
+    <div class="grab"></div>
+    <h2><span id="budEditTitle">Бюджет</span><span class="x" id="budEditClose">×</span></h2>
+    <div class="field" id="budCatField"><label>Категория</label><div class="cat-strip" id="budCatStrip"></div></div>
+    <div class="field"><label>Лимит на месяц</label>
+      <div class="bud-limit-input"><span class="cur">€</span><input type="number" id="budLimit" inputmode="decimal" placeholder="0" step="1" min="0"></div>
+      <div class="err" id="budLimitErr">Введите лимит больше 0</div>
+    </div>
+    <button class="btn-primary" id="budSave">Сохранить</button>
+    <button class="btn-del" id="budDelete" style="display:none">Удалить бюджет</button>
   </div>
 </div>
 
@@ -1031,9 +1078,7 @@ function updateHome(list,inc,exp){
 // Budget Card (общий месячный бюджет = сумма лимитов категорий)
 function renderBudgetHome(){
   const el=$('#budgetHome');
-  const limit=Object.values(state.budgets||{}).reduce((s,v)=>s+(+v||0),0);
-  const a=new Date(anchor), from=new Date(a.getFullYear(),a.getMonth(),1), to=new Date(a.getFullYear(),a.getMonth()+1,0,23,59,59);
-  const spent=state.tx.filter(t=>{const d=new Date(t.date);return t.type==='expense'&&d>=from&&d<=to;}).reduce((s,t)=>s+t.amount,0);
+  const {limit,spent}=budgetTotals();   // тот же расчёт, что на экране «Бюджет» (траты по категориям с лимитом)
   if(!limit){
     el.innerHTML=`<div class="bh-head"><span class="bh-title">Бюджет месяца</span></div><div class="bh-empty">Лимиты не заданы — нажмите, чтобы настроить</div>`;
     el.onclick=()=>showScreen('scrBudgets');return;
@@ -1278,30 +1323,83 @@ function rangeBack(i){
 }
 function inRange(t,r){const d=new Date(t.date);return d>=r.from&&d<=r.to;}
 
+// ==== Бюджеты (месячные) ====
+function budgetMonthRange(){const a=new Date(anchor);return {from:new Date(a.getFullYear(),a.getMonth(),1),to:new Date(a.getFullYear(),a.getMonth()+1,0,23,59,59)};}
+function budgetSpent(catId){const {from,to}=budgetMonthRange();
+  return state.tx.filter(t=>t.type==='expense'&&t.cat===catId&&new Date(t.date)>=from&&new Date(t.date)<=to).reduce((s,t)=>s+t.amount,0);}
+function budgetIds(){return Object.keys(state.budgets||{}).filter(c=>(+state.budgets[c]||0)>0);}
+function budgetTotals(){let limit=0,spent=0;budgetIds().forEach(c=>{limit+=+state.budgets[c];spent+=budgetSpent(c);});return {limit,spent};}
+// уровень алёрта по проценту: ok | warning(>=80) | critical(>=100)
+function budgetLevel(pct){return pct>=100?'critical':pct>=80?'warning':'ok';}
+function budgetColor(level,fallback){return level==='critical'?'var(--expense)':level==='warning'?'var(--warn)':(fallback||'var(--income)');}
+
 function renderBudgets(){
-  const el=$('#budList');
-  const {from,to}=(function(){const a=new Date(anchor);return {from:new Date(a.getFullYear(),a.getMonth(),1),to:new Date(a.getFullYear(),a.getMonth()+1,0,23,59,59)};})();
-  const spent={};
-  state.tx.filter(t=>{const d=new Date(t.date);return t.type==='expense'&&d>=from&&d<=to;}).forEach(t=>spent[t.cat]=(spent[t.cat]||0)+t.amount);
-  el.innerHTML=`<p style="color:var(--muted);font-size:12.5px;margin:2px 4px 14px">Лимиты расходов на месяц (${from.toLocaleDateString('ru-RU',{month:'long'})}). Введите сумму, чтобы задать бюджет.</p>`+
-    catsFor('expense').map(c=>{
-      const lim=state.budgets[c.id]||0;const sp=spent[c.id]||0;
-      const pct=lim?Math.min(100,sp/lim*100):0;
-      const over=lim&&sp>lim;
-      const col=over?'var(--expense)':pct>80?'#ffa94d':c.color;
-      return `<div class="bud">
-        <div class="h"><div class="em" style="background:${c.color}22">${c.emoji}</div>
-          <div class="nm">${c.name}</div>
-          <div class="lim"><input type="number" inputmode="decimal" placeholder="—" value="${lim||''}" data-bud="${c.id}"> ${state.currency}</div></div>
-        <div class="progress"><div class="fill" style="width:${pct}%;background:${col}"></div></div>
-        <div class="sub"><span>Потрачено: ${num(sp)}</span><span>${lim?(over?'Превышен на '+num(sp-lim):'Осталось '+num(lim-sp)):'без лимита'}</span></div>
+  // ① Общий бюджет
+  const {limit,spent}=budgetTotals();
+  const monthName=budgetMonthRange().from.toLocaleDateString('ru-RU',{month:'long'});
+  const bt=$('#budgetTotal');
+  if(!limit){
+    bt.innerHTML=`<div class="bt-head"><span class="bh-title" style="font-size:16px;font-weight:700">Общий бюджет (${monthName})</span></div><div class="bt-empty">Бюджеты не заданы — добавьте лимит для категории ниже</div>`;
+  }else{
+    const rawPct=spent/limit*100,pct=Math.min(100,rawPct),over=spent>limit;
+    const col=budgetColor(budgetLevel(rawPct));
+    bt.innerHTML=`<div class="bt-head"><span><span class="bt-amt">${num(spent)}</span> <span class="bt-of">из ${num(limit)}</span></span></div>
+      <div class="bt-bar"><div class="bt-fill" style="width:${pct}%;background:${col}"></div></div>
+      <div class="bt-foot"><span>Потрачено ${Math.round(rawPct)}%</span><span class="${over?'over':''}">${over?'Превышен на '+num(spent-limit):'Осталось '+num(limit-spent)}</span></div>`;
+  }
+  // ② Карточки бюджетов по категориям
+  const ids=budgetIds();
+  const el=$('#budCards');
+  if(!ids.length){
+    el.innerHTML=`<div class="bud-empty"><div class="big">🎯</div><p>Бюджетов пока нет.<br>Нажмите «Добавить бюджет».</p></div>`;
+  }else{
+    el.innerHTML=ids.map(cid=>{
+      const c=catById(cid),lim=+state.budgets[cid],sp=budgetSpent(cid);
+      const rawPct=sp/lim*100,pct=Math.min(100,rawPct),over=sp>lim,lvl=budgetLevel(rawPct);
+      const col=budgetColor(lvl,c.color);
+      const footR=over?`<span class="over">Превышен на ${num(sp-lim)}</span>`:(lvl==='warning'?`<span class="warn">Осталось ${num(lim-sp)}</span>`:`<span>Осталось ${num(lim-sp)}</span>`);
+      return `<div class="bud-card" data-cat="${cid}">
+        <div class="bc-head"><span class="bc-ic" style="background:${c.color}22">${c.emoji}</span>
+          <span class="bc-nm">${esc(c.name)}</span><span class="bc-amt ${over?'over':''}">${num(sp)} / ${num(lim)}</span></div>
+        <div class="bc-bar"><div class="bc-fill" style="width:${pct}%;background:${col}"></div></div>
+        <div class="bc-foot"><span>${Math.round(rawPct)}%</span>${footR}</div>
       </div>`;
     }).join('');
-  $$('#budList input[data-bud]').forEach(i=>i.onchange=()=>{
-    const v=parseFloat(i.value)||0;
-    if(v>0)state.budgets[i.dataset.bud]=v;else delete state.budgets[i.dataset.bud];
-    save();renderBudgets();
-  });
+    $$('#budCards .bud-card').forEach(r=>r.onclick=()=>openBudgetEdit(r.dataset.cat));
+  }
+}
+let budEdit=null, budCat=null;
+function openBudgetEdit(cid){
+  budEdit=cid||null; budCat=cid||null;
+  if(cid){const c=catById(cid);$('#budEditTitle').textContent=esc(c.name);$('#budLimit').value=+state.budgets[cid]||'';
+    $('#budCatField').style.display='none';$('#budDelete').style.display='block';}
+  else{$('#budEditTitle').textContent='Новый бюджет';$('#budLimit').value='';$('#budCatField').style.display='block';$('#budDelete').style.display='none';
+    renderBudCatStrip();}
+  $('#budLimitErr').classList.remove('show');
+  $('#budgetEditOverlay').classList.add('show');
+  setTimeout(()=>{if(cid)$('#budLimit').focus();},250);
+}
+function renderBudCatStrip(){
+  const free=catsFor('expense').filter(c=>!((+state.budgets[c.id]||0)>0));
+  if(!budCat||!free.some(c=>c.id===budCat))budCat=free.length?free[0].id:null;
+  $('#budCatStrip').innerHTML=free.length?free.map(c=>
+    `<div class="cat-pick ${c.id===budCat?'sel':''}" data-cat="${c.id}">
+      <span class="ce" style="background:${c.color}22">${c.emoji}</span><span class="cl">${c.name}</span></div>`).join('')
+    :`<span style="font-size:12.5px;color:var(--muted2)">У всех категорий уже есть бюджет</span>`;
+  $$('#budCatStrip .cat-pick').forEach(el=>el.onclick=()=>{budCat=el.dataset.cat;
+    $$('#budCatStrip .cat-pick').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');});
+}
+function saveBudget(){
+  const lim=parseFloat($('#budLimit').value);
+  if(!lim||lim<=0){$('#budLimitErr').classList.add('show');$('#budLimit').focus();return;}
+  if(!budCat){toast('Выберите категорию');return;}
+  state.budgets[budCat]=Math.round(lim*100)/100;
+  save();$('#budgetEditOverlay').classList.remove('show');render();toast('Бюджет сохранён ✓');
+}
+function deleteBudget(){
+  if(!budEdit)return;
+  delete state.budgets[budEdit];
+  save();$('#budgetEditOverlay').classList.remove('show');render();toast('Бюджет удалён');
 }
 
 // UI-обёртки над AF.Services.Account (логика — в services/account_service.js)
@@ -1992,7 +2090,14 @@ function importCSV(text){
 }
 $('#demoBtn').onclick=loadDemo;
 $('#clearBtn').onclick=()=>{if(confirm('Удалить все операции?')){state.tx=[];state.budgets={};save();render();toast('Данные удалены');}};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+// Бюджеты
+$('#addBudgetBtn').onclick=()=>openBudgetEdit(null);
+$('#budEditClose').onclick=()=>$('#budgetEditOverlay').classList.remove('show');
+$('#budgetEditOverlay').onclick=e=>{if(e.target.id==='budgetEditOverlay')$('#budgetEditOverlay').classList.remove('show');};
+$('#budSave').onclick=saveBudget;
+$('#budDelete').onclick=deleteBudget;
+$('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Старт ============ */
 load();
