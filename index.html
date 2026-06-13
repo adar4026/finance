@@ -275,6 +275,7 @@
   .cat-row .chev{color:var(--muted2);font-size:18px}
   .subcat-edit{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:18px;border:1px solid var(--line);
     background:var(--card);font-size:13.5px;color:var(--text);margin:0 8px 8px 0}
+  .subcat-edit .ren{cursor:pointer}
   .subcat-edit .del{color:var(--muted2);cursor:pointer;font-size:15px}
 
   /* ===== Account Details: настройки + архив (Story 1.4) ===== */
@@ -1414,7 +1415,7 @@ function renderSubcats(){
   $$('#subcatStrip .subcat-chip').forEach(el=>el.onclick=()=>{
     if(el.dataset.sub==='__add'){
       const name=(prompt('Название подкатегории')||'').trim();
-      if(name){const id='s'+Date.now().toString(36);state.subcats.push({id,categoryId:aCat,name});save();aSubcat=id;renderSubcats();}
+      if(name){const id='s'+Date.now().toString(36);state.subcats.push({id,categoryId:aCat,name,createdAt:Date.now()});save();aSubcat=id;renderSubcats();}
       return;
     }
     aSubcat=(aSubcat===el.dataset.sub)?null:el.dataset.sub;
@@ -1557,11 +1558,14 @@ function delAcc(){
 /* ============ Управление категориями (Story 2.4) ============ */
 function openCatMgr(){catMgrType='expense';$$('#catMgrSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t==='expense'));renderCatMgr();$('#catMgrOverlay').classList.add('show');}
 function renderCatMgr(){
-  $('#catMgrList').innerHTML=catsFor(catMgrType).map(c=>{
+  const list=catsFor(catMgrType);
+  if(!list.length){$('#catMgrList').innerHTML=`<div class="empty"><div class="big">🏷️</div><p>Категорий пока нет.<br>Нажмите «Добавить категорию».</p></div>`;return;}
+  $('#catMgrList').innerHTML=list.map(c=>{
     const ns=(state.subcats||[]).filter(s=>s.categoryId===c.id).length;
+    const sub=[ns?`${ns} ${plural(ns,'подкатегория','подкатегории','подкатегорий')}`:'', c.isSystem?'системная':''].filter(Boolean).join(' · ');
     return `<div class="cat-row" data-cat="${c.id}">
       <div class="cr-ic" style="background:${(c.color||'#6d5df6')}22">${c.emoji}</div>
-      <div style="flex:1"><div class="cr-nm">${esc(c.name)}</div>${ns?`<div class="cr-sub">${ns} ${plural(ns,'подкатегория','подкатегории','подкатегорий')}</div>`:''}</div>
+      <div style="flex:1"><div class="cr-nm">${esc(c.name)}</div>${sub?`<div class="cr-sub">${sub}</div>`:''}</div>
       <span class="chev">›</span></div>`;
   }).join('');
   $$('#catMgrList .cat-row').forEach(r=>r.onclick=()=>openCatEdit(r.dataset.cat));
@@ -1587,17 +1591,19 @@ function renderCatEmoji(){
 function renderCatSubs(){
   if(!catEdit){$('#catSubStrip').innerHTML=`<span style="font-size:12.5px;color:var(--muted2)">Сохраните категорию, чтобы добавить подкатегории</span>`;return;}
   const subs=(state.subcats||[]).filter(s=>s.categoryId===catEdit);
-  $('#catSubStrip').innerHTML=subs.map(s=>`<span class="subcat-edit">${esc(s.name)}<span class="del" data-del="${s.id}">✕</span></span>`).join('')
+  $('#catSubStrip').innerHTML=subs.map(s=>`<span class="subcat-edit"><span class="ren" data-ren="${s.id}">${esc(s.name)}</span><span class="del" data-del="${s.id}">✕</span></span>`).join('')
     +`<span class="subcat-chip add" id="catSubAdd">+ добавить</span>`;
+  $$('#catSubStrip .ren').forEach(el=>el.onclick=()=>{const s=state.subcats.find(x=>x.id===el.dataset.ren);
+    const name=(prompt('Переименовать подкатегорию',s.name)||'').trim();if(name){s.name=name;save();renderCatSubs();}});
   $$('#catSubStrip .del').forEach(el=>el.onclick=()=>{state.subcats=state.subcats.filter(s=>s.id!==el.dataset.del);save();renderCatSubs();});
   $('#catSubAdd').onclick=()=>{const name=(prompt('Название подкатегории')||'').trim();
-    if(name){state.subcats.push({id:'s'+Date.now().toString(36),categoryId:catEdit,name});save();renderCatSubs();}};
+    if(name){state.subcats.push({id:'s'+Date.now().toString(36),categoryId:catEdit,name,createdAt:Date.now()});save();renderCatSubs();}};
 }
 function saveCat(){
   const name=$('#catName').value.trim();
   if(!name){$('#catNameErr').classList.add('show');$('#catName').classList.add('invalid');$('#catName').focus();return;}
   if(catEdit){const c=catById(catEdit);Object.assign(c,{name,emoji:cEmoji,color:cColor});}
-  else{const id='c'+Date.now().toString(36);state.cats.push({id,name,type:catMgrType,emoji:cEmoji,color:cColor});catEdit=id;}
+  else{const id='c'+Date.now().toString(36);state.cats.push({id,name,type:catMgrType,emoji:cEmoji,color:cColor,isSystem:false,createdAt:Date.now()});catEdit=id;}
   save();renderCatMgr();$('#catEditOverlay').classList.remove('show');render();toast('Категория сохранена ✓');
 }
 function deleteCat(){
