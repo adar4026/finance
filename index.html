@@ -120,12 +120,12 @@
   .panel h3 .hint{font-size:11.5px;color:var(--muted);font-weight:400}
   .chart-box{position:relative;height:230px}
   .chart-box.tall{height:260px}
-  .catlist{display:flex;flex-direction:column;gap:10px;margin-top:14px}
-  .catrow{display:flex;align-items:center;gap:10px;font-size:13.5px}
-  .catrow .cdot{width:11px;height:11px;border-radius:4px;flex-shrink:0}
-  .catrow .cname{flex:1;color:var(--muted)}
-  .catrow .cval{font-weight:600}
-  .catrow .cpct{color:var(--muted2);font-size:11.5px;width:40px;text-align:right}
+  .catlist{display:flex;flex-direction:column;gap:11px;margin-top:14px}
+  .catrow{display:flex;align-items:center;gap:8px;font-size:13.5px}
+  .catrow .cdot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+  .catrow .cname{flex:1;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .catrow .cval{font-weight:700;font-size:13px;white-space:nowrap}
+  .catrow .cpct{color:var(--muted2);font-size:11.5px;width:34px;text-align:right;flex-shrink:0}
 
   /* accounts */
   .acc{display:flex;align-items:center;gap:13px;padding:14px;background:var(--card);border:1px solid var(--line);
@@ -511,7 +511,26 @@
   /* ===== Analytics (Screen 2) ===== */
   .ana-periods{display:flex;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:4px;margin-bottom:14px}
   .ana-periods button{flex:1;border:none;background:none;color:var(--muted);font-size:13px;font-weight:600;padding:10px 4px;border-radius:9px;cursor:pointer;transition:.15s}
-  .ana-periods button.on{background:var(--accent);color:#fff}
+  .ana-periods button.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+  /* Analytics v2 hero */
+  .ana-hero{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:24px;padding:20px;color:#fff;margin-bottom:16px;box-shadow:0 14px 32px rgba(109,93,246,.30)}
+  .ana-hero .ah-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .ana-hero .ah-lbl{font-size:14.5px;opacity:.92}
+  .ana-hero .ah-chg{font-size:12.5px;font-weight:700;background:rgba(255,255,255,.2);padding:4px 10px;border-radius:9px;white-space:nowrap}
+  .ana-hero .ah-val{font-size:42px;font-weight:800;letter-spacing:-1px;margin:6px 0 18px;white-space:nowrap}
+  .ana-hero .ah-subs{display:flex;gap:12px}
+  .ah-sub{flex:1;background:rgba(255,255,255,.16);border-radius:16px;padding:14px;min-width:0}
+  .ah-sub .ah-ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:18px;font-weight:800;color:#fff}
+  .ah-sub .ah-ic.inc{background:var(--income)}
+  .ah-sub .ah-ic.exp{background:var(--expense)}
+  .ah-sub .ah-sl{font-size:12.5px;opacity:.85}
+  .ah-sub .ah-sv{font-size:20px;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cat-split{display:flex;align-items:center;gap:16px}
+  .cat-donut{position:relative;width:128px;height:128px;flex-shrink:0}
+  .cat-donut .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+  .donut-center .dc-l{font-size:11px;color:var(--muted);font-weight:600}
+  .donut-center .dc-v{font-size:17px;font-weight:800;letter-spacing:-.3px}
+  .cat-split .catlist{flex:1;margin-top:0;min-width:0}
   .ana-summary{display:flex;gap:12px;margin-bottom:12px}
   .ana-card{flex:1;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 16px;box-shadow:var(--shadow);min-width:0}
   .ana-card .ac-l{font-size:13px;color:var(--muted);margin-bottom:9px}
@@ -686,28 +705,31 @@
       <button data-p="year">Год</button>
     </div>
 
-    <div class="ana-summary">
-      <div class="ana-card inc"><div class="ac-l">Доходы</div><div class="ac-v" id="anaInc">+€0</div></div>
-      <div class="ana-card exp"><div class="ac-l">Расходы</div><div class="ac-v" id="anaExp">−€0</div></div>
+    <div class="ana-hero">
+      <div class="ah-top"><span class="ah-lbl">Результат · <span id="anaPeriodLbl">июнь</span></span><span class="ah-chg" id="anaNetChg"></span></div>
+      <div class="ah-val" id="anaNet">+€0</div>
+      <div class="ah-subs">
+        <div class="ah-sub"><div class="ah-ic inc">↗</div><div class="ah-sl">Доходы</div><div class="ah-sv" id="anaInc">+€0</div></div>
+        <div class="ah-sub"><div class="ah-ic exp">↘</div><div class="ah-sl">Расходы</div><div class="ah-sv" id="anaExp">−€0</div></div>
+      </div>
     </div>
-    <div class="ana-card net"><div class="ac-l">Результат за <span id="anaPeriodLbl">месяц</span></div><div class="ac-v" id="anaNet">+€0</div></div>
 
     <div class="panel">
       <h3>Доходы и расходы <span class="hint" id="anaBarHint">6 периодов</span></h3>
       <div class="chart-box tall"><canvas id="barChart"></canvas></div>
     </div>
     <div class="panel">
-      <h3>Расходы по категориям</h3>
-      <div class="chart-box"><canvas id="pieChart"></canvas></div>
-      <div class="catlist" id="catLegend"></div>
+      <h3>Категории расходов</h3>
+      <div class="cat-split">
+        <div class="cat-donut"><canvas id="pieChart"></canvas>
+          <div class="donut-center"><div class="dc-l">Всего</div><div class="dc-v" id="pieTotal">€0</div></div>
+        </div>
+        <div class="catlist" id="catLegend"></div>
+      </div>
     </div>
     <div class="panel">
       <h3>Сравнение с прошлым периодом</h3>
       <div id="anaCompare"></div>
-    </div>
-    <div class="panel">
-      <h3>Топ категорий расходов</h3>
-      <div id="anaTop"></div>
     </div>
   </div>
 
@@ -1526,18 +1548,30 @@ function anaLabel(p,r){
   if(p==='quarter')return 'Q'+(Math.floor(r.from.getMonth()/3)+1)+"'"+String(r.from.getFullYear()).slice(2);
   return String(r.from.getFullYear());
 }
+// Заголовок героя: конкретный период (Июнь / неделя / II квартал / 2026)
+function anaHeroLabel(p,r){
+  if(p==='week')return r.from.toLocaleDateString('ru-RU',{day:'numeric',month:'short'})+' – '+r.to.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+  if(p==='quarter')return ['I','II','III','IV'][Math.floor(r.from.getMonth()/3)]+' кв. '+r.from.getFullYear();
+  if(p==='year')return String(r.from.getFullYear());
+  const m=r.from.toLocaleDateString('ru-RU',{month:'long'});return m.charAt(0).toUpperCase()+m.slice(1);
+}
 const inAnaRange=(t,r)=>{const d=new Date(t.date);return d>=r.from&&d<=r.to;};
 function renderAnalytics(){
   const A=AF.Services.Analytics;
   const range=anaRange(anaPeriod,0), prev=anaRange(anaPeriod,-1);
   const cur=state.tx.filter(t=>inAnaRange(t,range)), pre=state.tx.filter(t=>inAnaRange(t,prev));
   const inc=A.income(cur),exp=A.expense(cur),net=inc-exp;
+  const preNet=A.income(pre)-A.expense(pre);
   $('#anaInc').textContent='+'+num(inc);
   $('#anaExp').textContent='−'+num(exp);
   $('#anaNet').textContent=(net>=0?'+':'−')+num(Math.abs(net));
-  $('#anaPeriodLbl').textContent={week:'неделю',month:'месяц',quarter:'квартал',year:'год'}[anaPeriod];
+  $('#anaPeriodLbl').textContent=anaHeroLabel(anaPeriod,range);
+  // бейдж изменения результата к прошлому периоду
+  const chg=$('#anaNetChg');
+  if(Math.abs(preNet)>0.5){const d=Math.round((net-preNet)/Math.abs(preNet)*100);chg.textContent=(d>=0?'▲ ':'▼ ')+Math.abs(d)+'% к пред.';chg.style.display='';}
+  else chg.style.display='none';
   $('#anaBarHint').textContent='6 '+{week:'недель',month:'мес.',quarter:'кварт.',year:'лет'}[anaPeriod];
-  renderAnaBar();renderAnaPie(cur);renderAnaCompare(cur,pre);renderAnaTop(cur);
+  renderAnaBar();renderAnaPie(cur);renderAnaCompare(cur,pre);
 }
 function renderAnaBar(){
   const A=AF.Services.Analytics,labels=[],incD=[],expD=[];
@@ -1557,16 +1591,23 @@ function renderAnaBar(){
 function renderAnaPie(cur){
   const exp=cur.filter(t=>t.type==='expense');const byCat={};exp.forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+t.amount);
   const entries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);const total=entries.reduce((s,e)=>s+e[1],0);
-  $('#catLegend').innerHTML=entries.length?entries.map(e=>{const c=catById(e[0]);
+  $('#pieTotal').textContent=num(total);
+  // список: топ-6 категорий, остальное — «Другое»
+  const TOPN=6;const head=entries.slice(0,TOPN);const restSum=entries.slice(TOPN).reduce((s,e)=>s+e[1],0);
+  const rows=head.map(e=>{const c=catById(e[0]);
     return `<div class="catrow"><span class="cdot" style="background:${c.color}"></span>
-      <span class="cname">${c.name}</span><span class="cval">${num(e[1])}</span>
-      <span class="cpct">${Math.round(e[1]/total*100)}%</span></div>`;}).join('')
+      <span class="cname">${esc(c.name)}</span><span class="cval">${num(e[1])}</span>
+      <span class="cpct">${Math.round(e[1]/total*100)}%</span></div>`;});
+  if(restSum>0)rows.push(`<div class="catrow"><span class="cdot" style="background:var(--muted2)"></span>
+      <span class="cname">Другое</span><span class="cval">${num(restSum)}</span>
+      <span class="cpct">${Math.round(restSum/total*100)}%</span></div>`);
+  $('#catLegend').innerHTML=entries.length?rows.join('')
     :`<div style="text-align:center;color:var(--muted2);font-size:13px;padding:6px">Нет расходов</div>`;
   if(pieChart)pieChart.destroy();
   pieChart=new Chart($('#pieChart'),{type:'doughnut',
     data:{labels:entries.map(e=>catById(e[0]).name),datasets:[{data:entries.length?entries.map(e=>e[1]):[1],
       backgroundColor:entries.length?entries.map(e=>catById(e[0]).color):['#eceef4'],borderWidth:0}]},
-    options:{cutout:'66%',maintainAspectRatio:false,plugins:{legend:{display:false},
+    options:{cutout:'70%',maintainAspectRatio:false,plugins:{legend:{display:false},
       tooltip:{enabled:entries.length>0,callbacks:{label:c=>' '+num(c.raw)}}}}});
 }
 function renderAnaCompare(cur,pre){
@@ -1581,14 +1622,6 @@ function renderAnaCompare(cur,pre){
     return `<div class="cmp-row"><span class="cl">${r.l}</span>
       <span class="cr"><span class="cur">${num(r.c)}</span><span class="prev">/ ${num(r.p)}</span><span class="delta" style="color:${better?'var(--income)':'var(--expense)'}">${dtxt}</span></span></div>`;
   }).join('');
-}
-function renderAnaTop(cur){
-  const top=AF.Services.Analytics.topCategories(cur,'expense',5);
-  $('#anaTop').innerHTML=top.length?top.map((t,i)=>{const c=catById(t.cat);
-    return `<div class="top-row"><span class="rank">${i+1}</span>
-      <span class="tic" style="background:${c.color}22">${c.emoji}</span>
-      <span class="tnm">${esc(c.name)}</span><span class="tpct">${Math.round(t.share)}%</span><span class="tamt">${num(t.amount)}</span></div>`;}).join('')
-    :`<div style="text-align:center;color:var(--muted2);font-size:13px;padding:18px">Нет расходов за период</div>`;
 }
 function rangeBack(i){
   const a=new Date(anchor);let from,to,label;
