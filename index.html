@@ -192,15 +192,21 @@
   .sheet-label{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:9px}
   .cat-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
   .cat-strip::-webkit-scrollbar{display:none}
-  .cat-pick{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;padding:9px 4px;
-    border-radius:14px;border:1px solid var(--line);background:var(--card);cursor:pointer;transition:.12s}
+  .cat-pick{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;width:56px;padding:7px 3px;
+    border-radius:13px;border:1px solid var(--line);background:var(--card);cursor:pointer;transition:.12s}
   .cat-pick.sel{border-color:var(--accent);background:var(--accent-soft)}
-  .cat-pick .ce{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px}
-  .cat-pick .cl{font-size:10px;color:var(--muted);text-align:center;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
-  .metarow{display:flex;gap:8px;margin-bottom:12px}
-  .metarow .m{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
-  .metarow .m label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px}
-  .metarow .m input,.metarow .m select{width:100%;border:none;background:none;color:var(--text);font-size:13.5px;font-family:inherit;outline:none}
+  .cat-pick .ce{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .cat-pick .cl{font-size:9.5px;color:var(--muted);text-align:center;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+  .subcat-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
+  .subcat-strip::-webkit-scrollbar{display:none}
+  .subcat-chip{flex:0 0 auto;padding:9px 15px;border-radius:21px;border:1px solid var(--line);background:var(--card);
+    font-size:13.5px;color:var(--muted);cursor:pointer;white-space:nowrap;transition:.12s}
+  .subcat-chip.sel{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .subcat-chip.add{border-style:dashed;color:var(--accent)}
+  .metarow{display:flex;gap:10px;margin-bottom:14px}
+  .metarow .m{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;min-height:58px;display:flex;flex-direction:column;justify-content:center}
+  .metarow .m label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:5px}
+  .metarow .m input,.metarow .m select{width:100%;border:none;background:none;color:var(--text);font-size:15.5px;font-weight:500;font-family:inherit;outline:none}
   .keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .keypad button{padding:16px 0;border-radius:14px;border:1px solid var(--line);background:var(--card);
     color:var(--text);font-size:21px;font-weight:600;cursor:pointer;transition:.1s}
@@ -533,6 +539,10 @@
       <div class="sheet-label">Категория</div>
       <div class="cat-strip" id="catStrip"></div>
     </div>
+    <div id="subcatBlock">
+      <div class="sheet-label">Подкатегория <span style="font-weight:400;color:var(--muted2)">— необязательно</span></div>
+      <div class="subcat-strip" id="subcatStrip"></div>
+    </div>
     <div class="metarow" id="transRow" style="display:none">
       <div class="m"><label>Со счёта</label><select id="fFrom"></select></div>
       <div class="m"><label>На счёт</label><select id="fTo"></select></div>
@@ -739,7 +749,8 @@ let period='month';
 let homeRange='1m';
 let curScreen='scrRecords';
 // add-sheet state
-let aType='expense', aCat='food', aExpr='0', editId=null;
+let aType='expense', aCat='food', aSubcat=null, aExpr='0', editId=null;
+const subcatById=id=>(state.subcats||[]).find(s=>s.id===id);
 // account editor
 let accEdit=null, accEmoji='💳', accColor='#6d5df6', accType='bank';
 // asset graph detail
@@ -919,8 +930,9 @@ function recentRow(t){
       <div class="right"><div class="amt tr">${fmtCur(t.amount,fc)}</div><div class="dt">${dt}</div></div></div>`;
   }
   const c=catById(t.cat),acc=state.accounts.find(a=>a.id===t.account),cur=(acc&&acc.currency)||state.currency;
+  const sub=t.subcategoryId?subcatById(t.subcategoryId):null;
   return `<div class="rec" data-id="${t.id}"><div class="em" style="background:${c.color}22">${c.emoji}</div>
-    <div class="info"><div class="t1">${esc(c.name)}${t.note?' · '+esc(t.note):''}</div><div class="t2">${acc?acc.emoji+' '+esc(acc.name):''}</div></div>
+    <div class="info"><div class="t1">${esc(c.name)}${sub?' · '+esc(sub.name):''}${t.note?' · '+esc(t.note):''}</div><div class="t2">${acc?acc.emoji+' '+esc(acc.name):''}</div></div>
     <div class="right"><div class="amt ${t.type==='income'?'inc':'exp'}">${signedCur(t.amount,t.type,cur)}</div><div class="dt">${dt}</div></div></div>`;
 }
 function renderAccStrip(){
@@ -1036,9 +1048,10 @@ function txRow(t){
   }
   const c=catById(t.cat);
   const acc=state.accounts.find(a=>a.id===t.account);
+  const sub=t.subcategoryId?subcatById(t.subcategoryId):null;
   return `<div class="tx" data-id="${t.id}">
     <div class="em" style="background:${c.color}22">${c.emoji}</div>
-    <div class="info"><div class="t1">${c.name}</div>
+    <div class="info"><div class="t1">${c.name}${sub?' · '+esc(sub.name):''}</div>
       <div class="t2">${(acc?acc.emoji+' '+acc.name:'')}${t.note?' · '+esc(t.note):''}</div></div>
     <div class="amt ${t.type==='income'?'inc':'exp'}">${signed(t.amount,t.type)}</div>
   </div>`;
@@ -1264,13 +1277,13 @@ function openSheet(id){
   buildAccountSelect();
   if(id){
     const t=state.tx.find(x=>x.id==id);
-    aType=t.type;aExpr=String(t.amount);aCat=t.cat||CATS.expense[0].id;
+    aType=t.type;aExpr=String(t.amount);aCat=t.cat||CATS.expense[0].id;aSubcat=t.subcategoryId||null;
     $('#fDate').value=t.date.slice(0,10);$('#fNote').value=t.note||'';
     if(t.type==='transfer'){$('#fFrom').value=t.from;$('#fTo').value=t.to;}
     else $('#fAccount').value=t.account;
     $('#delBtn').style.display='block';
   }else{
-    aType='expense';aExpr='0';aCat=CATS.expense[0].id;
+    aType='expense';aExpr='0';aCat=CATS.expense[0].id;aSubcat=null;
     $('#fDate').value=new Date().toISOString().slice(0,10);$('#fNote').value='';
     $('#delBtn').style.display='none';
   }
@@ -1292,6 +1305,7 @@ function setType(t,keepCat){
   const isT=t==='transfer';
   $('#transRow').style.display=isT?'flex':'none';
   $('#catBlock').style.display=isT?'none':'block';
+  $('#subcatBlock').style.display=isT?'none':'block';
   $('#accField').style.display=isT?'none':'block';
   if(isT)return;
   const cats=catsFor(t);
@@ -1301,7 +1315,26 @@ function setType(t,keepCat){
     `<div class="cat-pick ${c.id===aCat?'sel':''}" data-cat="${c.id}">
       <span class="ce" style="background:${c.color}22">${c.emoji}</span><span class="cl">${c.name}</span></div>`).join('');
   $$('#catStrip .cat-pick').forEach(el=>el.onclick=()=>{
-    aCat=el.dataset.cat;$$('#catStrip .cat-pick').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');
+    aCat=el.dataset.cat;aSubcat=null;
+    $$('#catStrip .cat-pick').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');
+    renderSubcats();
+  });
+  renderSubcats();
+}
+function renderSubcats(){
+  if(aType==='transfer')return;
+  const subs=(state.subcats||[]).filter(s=>s.categoryId===aCat);
+  let html=subs.map(s=>`<div class="subcat-chip ${s.id===aSubcat?'sel':''}" data-sub="${s.id}">${esc(s.name)}</div>`).join('');
+  html+=`<div class="subcat-chip add" data-sub="__add">+ создать</div>`;
+  $('#subcatStrip').innerHTML=html;
+  $$('#subcatStrip .subcat-chip').forEach(el=>el.onclick=()=>{
+    if(el.dataset.sub==='__add'){
+      const name=(prompt('Название подкатегории')||'').trim();
+      if(name){const id='s'+Date.now().toString(36);state.subcats.push({id,categoryId:aCat,name});save();aSubcat=id;renderSubcats();}
+      return;
+    }
+    aSubcat=(aSubcat===el.dataset.sub)?null:el.dataset.sub;
+    renderSubcats();
   });
 }
 function updateDisplay(){$('#dispNum').textContent=aExpr;}
@@ -1344,9 +1377,9 @@ function saveTx(){
   }else if(editId){
     const t=state.tx.find(x=>x.id==editId);
     delete t.from;delete t.to;delete t.toAmount;
-    Object.assign(t,{type:aType,amount:val,cat:aCat,account:$('#fAccount').value,date,note});
+    Object.assign(t,{type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note});
   }else{
-    state.tx.push({id:Date.now(),type:aType,amount:val,cat:aCat,account:$('#fAccount').value,date,note});
+    state.tx.push({id:Date.now(),type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note});
   }
   save();closeSheet();
   anchor=new Date(date);render();buildAccountSelect();
