@@ -339,6 +339,32 @@
   .prof-row:active{background:var(--card2)}
   .prof-row .chev{color:var(--muted2);font-size:18px}
 
+  /* ===== Financial Health (Screen 9) ===== */
+  .health-ring{border:1px solid var(--line);border-radius:18px;padding:18px;text-align:center;margin:10px 0 14px;box-shadow:var(--shadow);cursor:pointer}
+  .health-ring:active{background:var(--card2)}
+  .health-ring .hr-status{font-size:16px;font-weight:700;margin-top:4px}
+  .health-ring .hr-hint{font-size:11.5px;color:var(--muted2);margin-top:6px}
+  .hb-row{margin-bottom:13px}
+  .hb-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+  .hb-top .hb-w{color:var(--muted2)}
+  .hb-top .hb-sc{font-weight:700}
+  .hb-bar{height:8px;border-radius:5px;background:var(--bg2);overflow:hidden}
+  .hb-fill{height:100%;border-radius:5px;transition:width .4s}
+  .hb-na{font-size:12px;color:var(--muted2);font-weight:600}
+  .hd-row{display:flex;gap:12px;padding:14px 2px;border-bottom:1px solid var(--line)}
+  .hd-row:last-child{border-bottom:none}
+  .hd-sc{font-size:22px;font-weight:800;width:48px;text-align:center;flex-shrink:0}
+  .hd-info{flex:1}
+  .hd-nm{font-size:14.5px;font-weight:700}
+  .hd-dt{font-size:12px;color:var(--muted);margin-top:3px}
+  .hd-w{font-size:11px;color:var(--muted2)}
+  .health-empty{border:1.5px solid var(--warn);background:var(--warn-soft);border-radius:18px;padding:24px 18px;text-align:center;margin:10px 0 14px}
+  .health-empty .big{font-size:42px}
+  .health-empty .he-t{font-size:16px;font-weight:700;margin-top:10px}
+  .health-empty .he-s{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+  .he-check{display:flex;gap:9px;padding:10px 2px;border-bottom:1px solid var(--line);font-size:13.5px;align-items:center}
+  .he-check:last-child{border-bottom:none}
+
   /* ===== Financial Calendar (Screen 8) ===== */
   .cal-forecast{display:flex;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:18px;padding:16px 8px;color:#fff;box-shadow:0 12px 30px rgba(109,93,246,.35);margin-top:10px}
   .cal-forecast .cf-col{flex:1;text-align:center;min-width:0}
@@ -842,6 +868,7 @@
     <input type="file" id="photoInput" accept="image/*" hidden>
     <button class="prof-row" id="profGoals"><span>🎯 Цели</span><span class="chev">›</span></button>
     <button class="prof-row" id="profCalendar"><span>📅 Календарь</span><span class="chev">›</span></button>
+    <button class="prof-row" id="profHealth"><span>❤️ Финансовое здоровье</span><span class="chev">›</span></button>
     <button class="prof-row" id="profTheme"><span id="profThemeLbl">🌙 Тёмная тема</span><span class="chev">›</span></button>
     <button class="prof-row" id="profExport"><span>⬇️ Экспорт данных (JSON)</span><span class="chev">›</span></button>
     <button class="prof-row" id="profMore"><span>⚙️ Все настройки</span><span class="chev">›</span></button>
@@ -857,6 +884,23 @@
     <button class="am-item" data-add="income"><span class="am-ic" style="background:var(--income-soft)">💰</span>Доход</button>
     <button class="am-item" data-add="transfer"><span class="am-ic" style="background:var(--accent-soft)">🔄</span>Перевод</button>
     <button class="am-item" data-add="receipt"><span class="am-ic" style="background:#4dabf71f">🧾</span>Чек</button>
+  </div>
+</div>
+
+<!-- Финансовое здоровье (Screen 9) -->
+<div class="overlay" id="healthOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top"><div class="nm">❤️ Финздоровье</div><button class="iconbtn" id="healthClose">×</button></div>
+    <div id="healthBody"></div>
+  </div>
+</div>
+
+<!-- Детальная расшифровка рейтинга -->
+<div class="overlay" id="healthDetailOverlay">
+  <div class="sheet" style="max-width:440px">
+    <div class="grab"></div>
+    <h2><span>Из чего складывается рейтинг</span><span class="x" id="healthDetailClose">×</span></h2>
+    <div id="healthDetailList"></div>
   </div>
 </div>
 
@@ -1744,6 +1788,75 @@ function deleteReminder(){
   save();$('#reminderEditOverlay').classList.remove('show');renderCalendar();toast('Напоминание удалено');
 }
 
+/* ============ Финансовое здоровье (Screen 9) ============ */
+function openHealth(){
+  $('#profOverlay').classList.remove('show');
+  const res=AF.Services.HealthScore.calculate(state);
+  snapshotHealth(res);
+  renderHealth();
+  $('#healthOverlay').classList.add('show');
+}
+function snapshotHealth(res){
+  if(!res.hasEnoughData)return;
+  state.healthHistory=state.healthHistory||[];
+  const today=new Date().toISOString().slice(0,10);
+  const last=state.healthHistory[state.healthHistory.length-1];
+  if(last&&last.date===today)last.total=res.total; else state.healthHistory.push({date:today,total:res.total});
+  if(state.healthHistory.length>60)state.healthHistory=state.healthHistory.slice(-60);
+  save();
+}
+function hbColor(s){return s>=75?'var(--income)':s>=50?'var(--warn)':'var(--expense)';}
+function renderHealth(){
+  const res=AF.Services.HealthScore.calculate(state);
+  const el=$('#healthBody');
+  if(!res.hasEnoughData){
+    const hasTx=(state.tx||[]).some(t=>t.type!=='transfer'),hasBud=Object.keys(state.budgets||{}).length>0,hasGoal=(state.goals||[]).length>0;
+    el.innerHTML=`<div class="health-empty"><div class="big">📊</div><div class="he-t">Недостаточно данных</div>
+      <div class="he-s">Добавьте операции за пару недель — и мы рассчитаем ваш рейтинг</div></div>
+      <div style="font-size:12.5px;font-weight:600;color:var(--muted);margin:4px 2px 10px">Чтобы начать:</div>
+      <div class="he-check"><span>${hasTx?'✅':'⬜'}</span> Запишите доходы и расходы</div>
+      <div class="he-check"><span>${hasBud?'✅':'⬜'}</span> Задайте бюджет по категориям</div>
+      <div class="he-check"><span>${hasGoal?'✅':'⬜'}</span> Поставьте финансовую цель</div>`;
+    return;
+  }
+  const r=52,circ=2*Math.PI*r,dash=res.total/100*circ;
+  let html=`<div class="health-ring" id="healthRing">
+    <svg viewBox="0 0 120 120" style="width:130px;height:130px">
+      <circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--bg2)" stroke-width="12"/>
+      <circle cx="60" cy="60" r="${r}" fill="none" stroke="${res.color}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 60 60)"/>
+      <text x="60" y="58" text-anchor="middle" font-size="30" font-weight="800" fill="var(--text)">${res.total}</text>
+      <text x="60" y="77" text-anchor="middle" font-size="11" fill="var(--muted)">из 100</text>
+    </svg>
+    <div class="hr-status" style="color:${res.color}">${res.status}</div>
+    <div class="hr-hint">Нажмите для расшифровки ›</div></div>`;
+  html+=`<div class="panel"><h3 style="margin-bottom:14px">Разбивка</h3>`+res.components.map(c=>
+    c.available
+      ? `<div class="hb-row"><div class="hb-top"><span>${c.name} <span class="hb-w">· ${c.weight}%</span></span><span class="hb-sc">${c.score}</span></div><div class="hb-bar"><div class="hb-fill" style="width:${c.score}%;background:${hbColor(c.score)}"></div></div></div>`
+      : `<div class="hb-row"><div class="hb-top"><span>${c.name} <span class="hb-w">· ${c.weight}%</span></span><span class="hb-na">нет данных</span></div><div class="hb-bar"></div></div>`
+  ).join('')+`</div>`;
+  const hist=(state.healthHistory||[]).slice(-12);
+  if(hist.length>=2){
+    const w=280,n=hist.length;
+    const pts=hist.map((s,i)=>(10+i/(n-1)*(w-20)).toFixed(0)+','+(58-s.total/100*48).toFixed(0)).join(' ');
+    html+=`<div class="panel"><h3 style="margin-bottom:10px">История рейтинга</h3>
+      <svg viewBox="0 0 ${w} 64" style="width:100%;height:64px">
+        <polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="${w-10}" cy="${(58-hist[n-1].total/100*48).toFixed(0)}" r="4" fill="var(--accent)"/></svg></div>`;
+  }
+  const recs=AF.Services.HealthScore.recommendations(res);
+  html+=`<div class="panel" style="margin-bottom:24px"><h3 style="margin-bottom:6px">Рекомендации</h3>`+recs.map(rc=>`<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;align-items:center"><span style="font-size:16px">${rc.ic}</span><span>${rc.t}</span></div>`).join('')+`</div>`;
+  el.innerHTML=html;
+  $('#healthRing').onclick=()=>openHealthDetail(res);
+}
+function openHealthDetail(res){
+  $('#healthDetailList').innerHTML=res.components.map(c=>{
+    const col=!c.available?'var(--muted2)':hbColor(c.score);
+    return `<div class="hd-row"><div class="hd-sc" style="color:${col}">${c.available?c.score:'—'}</div>
+      <div class="hd-info"><div class="hd-nm">${c.name} <span class="hd-w">· вес ${c.weight}%</span></div><div class="hd-dt">${c.detail}</div></div></div>`;
+  }).join('');
+  $('#healthDetailOverlay').classList.add('show');
+}
+
 // UI-обёртки над AF.Services.Account (логика — в services/account_service.js)
 function accBalance(accId,endDate){return AF.Services.Account.balance(state,accId,endDate);}
 const ACC_TYPE_LABEL={bank:'Банковский счёт',cash:'Наличные',savings:'Сбережения',investment:'Инвестиции',crypto:'Криптокошелёк'};
@@ -2175,6 +2288,7 @@ function loadDemo(){
     {id:'r3',title:'Зарплата',amount:2500,type:'income',dueDate:ym(25),repeatType:'monthly',categoryId:'salary',isActive:true,done:false,createdAt:Date.now()},
     {id:'r4',title:'Оплатить налог',amount:300,type:'expense',dueDate:ym(3),repeatType:'none',categoryId:'bills',isActive:true,done:false,createdAt:Date.now()},
   ];
+  state.healthHistory=[];for(let i=5;i>=1;i--){const d=new Date(today.getFullYear(),today.getMonth()-i,1);state.healthHistory.push({date:d.toISOString().slice(0,10),total:70+(5-i)*4});}
   save();anchor=new Date();render();toast('Демо-данные загружены');
 }
 function dstr(b,d){return new Date(b.getFullYear(),b.getMonth(),d).toISOString().slice(0,10);}
@@ -2444,6 +2558,11 @@ function importCSV(text){
 }
 $('#demoBtn').onclick=loadDemo;
 $('#clearBtn').onclick=()=>{if(confirm('Удалить все операции?')){state.tx=[];state.budgets={};save();render();toast('Данные удалены');}};
+// Финздоровье
+$('#profHealth').onclick=openHealth;
+$('#healthClose').onclick=()=>$('#healthOverlay').classList.remove('show');
+$('#healthDetailClose').onclick=()=>$('#healthDetailOverlay').classList.remove('show');
+$('#healthDetailOverlay').onclick=e=>{if(e.target.id==='healthDetailOverlay')$('#healthDetailOverlay').classList.remove('show');};
 // Календарь
 $('#profCalendar').onclick=openCalendar;
 $('#calClose').onclick=()=>$('#calOverlay').classList.remove('show');
@@ -2472,7 +2591,7 @@ $('#budgetEditOverlay').onclick=e=>{if(e.target.id==='budgetEditOverlay')$('#bud
 $('#budSave').onclick=saveBudget;
 $('#budDelete').onclick=deleteBudget;
 $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Старт ============ */
 load();
