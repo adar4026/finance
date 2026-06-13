@@ -673,8 +673,6 @@
       </div>
     </div>
 
-    <div class="panel budget-home" id="budgetHome"></div>
-
     <div class="sec-head"><span>Последние операции</span><a id="toAllTx">Все операции ›</a></div>
     <div class="daycard" id="recentList" style="overflow:hidden"></div>
   </div>
@@ -1365,12 +1363,11 @@ function updateHome(list,inc,exp){
   $('#capIncN').textContent=ni+' '+plural(ni,'операция','операции','операций');
   $('#capExpN').textContent=ne+' '+plural(ne,'операция','операции','операций');
   $('#capCur').textContent=curCode(state.currency);
-  renderBudgetHome();
   renderRecent(list);
 }
-// Budget Card (общий месячный бюджет = сумма лимитов категорий)
+// Budget Card (используется на экране «Бюджет»; на Home убран в v2)
 function renderBudgetHome(){
-  const el=$('#budgetHome');
+  const el=$('#budgetHome'); if(!el)return;
   const {limit,spent}=budgetTotals();   // тот же расчёт, что на экране «Бюджет» (траты по категориям с лимитом)
   if(!limit){
     el.innerHTML=`<div class="bh-head"><span class="bh-title">Бюджет месяца</span></div><div class="bh-empty">Лимиты не заданы — нажмите, чтобы настроить</div>`;
