@@ -337,6 +337,8 @@
   .set-btn.danger{color:var(--expense);border-color:var(--expense-soft)}
   .acc2.archived{opacity:.6}
   .arch-head{font-size:13px;font-weight:600;color:var(--muted2);margin:8px 2px 12px}
+  .btn-arch{width:100%;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--card2);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px}
+  .btn-arch:active{background:var(--card)}
 
   /* ===== Редактор счёта (Story 1.3) ===== */
   .acc-editor{max-width:440px}
@@ -957,6 +959,7 @@
     </div>
 
     <button class="btn-primary" id="saveAcc">Сохранить</button>
+    <button class="btn-arch" id="archiveAcc" style="display:none"><span id="archiveAccLbl">📦 Архивировать</span></button>
     <button class="btn-del" id="delAcc" style="display:none">Удалить счёт</button>
   </div>
 </div>
@@ -2728,12 +2731,14 @@ function openAcc(id){
     accEmoji=a.emoji; accColor=a.color||'#6d5df6'; accType=a.type||'bank';
     $('#accName').value=a.name; $('#accStart').value=(a.start||a.start===0)?a.start:'';
     $('#accCurrency').value=curSymbol(a.currency||state.currency);
-    $('#accTitle').textContent='Редактировать счёт';
+    $('#accTitle').textContent=a.isArchived?'Счёт в архиве':'Редактировать счёт';
     $('#delAcc').style.display=state.accounts.length>1?'block':'none';
+    $('#archiveAcc').style.display='block';
+    $('#archiveAccLbl').textContent=a.isArchived?'♻️ Восстановить из архива':'📦 Переместить в архив';
   }else{
     accType='bank'; const t=ACC_TYPES[0]; accEmoji=t.emoji; accColor=t.color;
     $('#accName').value=''; $('#accStart').value=''; $('#accCurrency').value=state.currency;
-    $('#accTitle').textContent='Новый счёт'; $('#delAcc').style.display='none';
+    $('#accTitle').textContent='Новый счёт'; $('#delAcc').style.display='none'; $('#archiveAcc').style.display='none';
   }
   // выбор группы (перемещение счёта между группами)
   seedAccountGroups();
@@ -3001,6 +3006,7 @@ $('#closeAcc').onclick=()=>$('#accOverlay').classList.remove('show');
 $('#accOverlay').onclick=e=>{if(e.target.id==='accOverlay')$('#accOverlay').classList.remove('show');};
 $('#saveAcc').onclick=saveAcc;
 $('#delAcc').onclick=delAcc;
+$('#archiveAcc').onclick=archiveFromEditor;
 $('#addGroupBtn').onclick=()=>openGroupEdit(null);
 $('#groupEditClose').onclick=()=>$('#groupEditOverlay').classList.remove('show');
 $('#groupEditOverlay').onclick=e=>{if(e.target.id==='groupEditOverlay')$('#groupEditOverlay').classList.remove('show');};
@@ -3023,6 +3029,15 @@ function archiveAccount(id){
   a.isArchived=!a.isArchived;a.updatedAt=Date.now();
   save();$('#detailOverlay').classList.remove('show');render();
   toast(a.isArchived?'Счёт перемещён в архив':'Счёт восстановлен ✓');
+}
+// Архивировать / восстановить из редактора счёта (при восстановлении применяет выбранную группу)
+function archiveFromEditor(){
+  if(!accEdit)return;
+  const a=state.accounts.find(x=>x.id===accEdit);if(!a)return;
+  a.groupId=$('#accGroup').value||null;     // даём восстановить в нужный раздел
+  a.isArchived=!a.isArchived;a.updatedAt=Date.now();
+  save();$('#accOverlay').classList.remove('show');render();buildAccountSelect();
+  toast(a.isArchived?'Счёт перемещён в архив 📦':'Счёт восстановлен ✓');
 }
 function deleteAccount(id){
   const others=state.accounts.filter(a=>a.id!==id);
