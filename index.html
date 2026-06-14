@@ -15,6 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="Финансы">
 <meta name="mobile-web-app-capable" content="yes">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <!-- Архитектура (feature-ready для Flutter): core → database → services. UI ниже использует только AF.Store / AF.Services -->
 <script src="js/core/result.js"></script>
 <script src="js/database/store.js"></script>
@@ -259,6 +260,10 @@
   .grp-head .grp-nm{font-size:16px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .grp-head .grp-sum{font-size:14px;font-weight:700;white-space:nowrap}
   .grp-head .grp-edit{color:var(--muted2);font-size:18px;padding:0 4px;flex-shrink:0}
+  .grp-body{min-height:8px}
+  .acc-ghost{opacity:.35}
+  .acc-chosen{box-shadow:0 10px 26px rgba(40,50,120,.18)}
+  .acc-drag{transform:scale(1.03)}
   .dist2-toggle{color:var(--accent);font-size:13.5px;font-weight:600;cursor:pointer;margin-top:10px}
   .dist-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-top:1px solid var(--line)}
   .dist-row:first-child{border-top:none}
@@ -2429,7 +2434,7 @@ function renderAccounts(){
       <span class="grp-sum" style="color:${sub<0?'var(--expense)':'var(--income)'}">${(sub<0?'−':'+')+fmtCur(Math.abs(sub),state.currency)}</span>
       ${deletable?`<span class="grp-edit" data-grpedit="${gid}">⋯</span>`:''}
     </div>`;
-    if(!isCol)html+=accs.map(a=>accountCardHtml(a,false)).join('');
+    if(!isCol)html+=`<div class="grp-body" data-grp="${gid}">`+accs.map(a=>accountCardHtml(a,false)).join('')+`</div>`;
   };
   groups.forEach(g=>groupBlock(g.id,g.name,active.filter(a=>(a.groupId||'')===g.id),true));
   const ung=active.filter(a=>!a.groupId||!groups.find(g=>g.id===a.groupId));
@@ -2440,6 +2445,30 @@ function renderAccounts(){
   $$('#accList .acc3-dots').forEach(b=>b.onclick=e=>{e.stopPropagation();openAcc(b.dataset.edit);});
   $$('#accList .grp-head').forEach(h=>h.onclick=()=>{const g=h.dataset.grp;state.groupCollapsed[g]=!state.groupCollapsed[g];save();renderAccounts();});
   $$('#accList .grp-edit').forEach(b=>b.onclick=e=>{e.stopPropagation();openGroupEdit(b.dataset.grpedit);});
+  setupAccountSort();
+}
+// Перетаскивание счетов (вверх/вниз и между группами) — SortableJS
+function setupAccountSort(){
+  if(typeof Sortable==='undefined')return;
+  $$('#accList .grp-body').forEach(body=>{
+    Sortable.create(body,{
+      group:'accounts', animation:160,
+      delay:180, delayOnTouchOnly:true, touchStartThreshold:6,
+      ghostClass:'acc-ghost', chosenClass:'acc-chosen', dragClass:'acc-drag',
+      onEnd:commitAccountOrder
+    });
+  });
+}
+function commitAccountOrder(){
+  const orig=state.accounts.slice(), byId=id=>orig.find(a=>a.id===id);
+  const seq=[], rendered=new Set();
+  $$('#accList .grp-body').forEach(b=>{
+    const gid=b.dataset.grp==='_none'?null:b.dataset.grp;
+    b.querySelectorAll('.acc3').forEach(c=>{const a=byId(c.dataset.acc); if(a){a.groupId=gid; seq.push(a.id); rendered.add(a.id);}});
+  });
+  let k=0;
+  state.accounts=orig.map(a=>rendered.has(a.id)?byId(seq[k++]):a);
+  save(); renderAccountsScreen();
 }
 // Редактор группы счетов
 let groupEdit=null;

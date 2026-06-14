@@ -1,5 +1,5 @@
 // Service worker — офлайн-кэш приложения
-const CACHE = 'finance-v57';
+const CACHE = 'finance-v58';
 const ASSETS = [
   './',
   './index.html',
@@ -18,7 +18,8 @@ const ASSETS = [
   './js/services/health_score_service.js',
   './js/services/export_service.js',
   './js/services/backup_service.js',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js'
 ];
 
 self.addEventListener('install', e => {
