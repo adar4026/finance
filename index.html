@@ -253,6 +253,12 @@
   .add-dashed{width:100%;padding:15px;border:1.5px dashed var(--line);border-radius:18px;background:none;color:var(--accent);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:18px}
   .add-dashed:active{background:var(--card2)}
   .dist2-toggle{color:var(--accent);font-size:13.5px;font-weight:600;cursor:pointer;margin-top:10px}
+  .dist-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-top:1px solid var(--line)}
+  .dist-row:first-child{border-top:none}
+  .dist-row .dr-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+  .dist-row .dr-nm{flex:1;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dist-row .dr-amt{font-size:14.5px;font-weight:700;white-space:nowrap}
+  .dist-row .dr-pct{font-size:12.5px;color:var(--muted2);width:48px;text-align:right;flex-shrink:0}
   .search-box{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin:10px 0 6px}
   .search-box .search-ic{font-size:16px;opacity:.7}
   .search-box input{flex:1;border:none;background:none;outline:none;font-size:16px;color:var(--text);font-family:inherit;min-width:0}
@@ -801,13 +807,12 @@
     <button class="add-dashed" id="addAccBtn">+ Добавить счёт</button>
     <div class="panel">
       <h3>Распределение капитала</h3>
-      <div class="cat-split">
+      <div class="cat-donut-top">
         <div class="cat-donut"><canvas id="distChart"></canvas>
           <div class="donut-center"><div class="dc-l">Счетов</div><div class="dc-v" id="distCount">0</div></div>
         </div>
-        <div class="catlist" id="distList"></div>
       </div>
-      <div class="dist2-toggle" id="distToggle">Показать в процентах ⌄</div>
+      <div id="distList"></div>
     </div>
     <div style="height:20px"></div>
   </div>
@@ -2317,7 +2322,6 @@ function curCode(cur){return ({'€':'EUR','$':'USD','₽':'RUB','£':'GBP','₸
 function plural(n,one,few,many){const a=n%10,b=n%100;if(a===1&&b!==11)return one;if(a>=2&&a<=4&&(b<10||b>=20))return few;return many;}
 
 // Экран Accounts v2: капитал+пончик, градиентные карточки, распределение со списком
-let distMode='amount';
 function renderAccountsScreen(){
   // На «Счетах» карточка простая: только общий капитал (сумма балансов по счетам)
   $('#accTotalCapital').textContent=num(totalCapital());
@@ -2340,12 +2344,12 @@ function renderDistChart(){
 function renderDistList(){
   const dist=distData();const el=$('#distList');
   $('#distCount').textContent=dist.length;
-  if(!dist.length){el.innerHTML=`<div style="color:var(--muted2);font-size:13px;padding:6px 0">Нет балансов</div>`;$('#distToggle').style.display='none';return;}
-  $('#distToggle').style.display='block';
-  $('#distToggle').textContent=distMode==='amount'?'Показать в процентах ⌄':'Показать суммы ⌄';
+  if(!dist.length){el.innerHTML=`<div style="color:var(--muted2);font-size:13px;padding:8px 0">Нет балансов</div>`;return;}
   el.innerHTML=dist.map(d=>{
-    const right=distMode==='amount'?fmtCur(d.balance,d.account.currency||state.currency):Math.round(d.share)+'%';
-    return `<div class="catrow" style="cursor:default"><span class="cdot" style="background:${d.account.color||'#6d5df6'}"></span><span class="cname">${esc(d.account.name)}</span><span class="cval">${right}</span></div>`;
+    const amt=fmtCur(d.balance,d.account.currency||state.currency);
+    const pct=Math.round(d.share)+'%';
+    return `<div class="dist-row"><span class="dr-dot" style="background:${d.account.color||'#6d5df6'}"></span>
+      <span class="dr-nm">${esc(d.account.name)}</span><span class="dr-amt">${amt}</span><span class="dr-pct">${pct}</span></div>`;
   }).join('');
 }
 function accountCardHtml(a,archived){
@@ -3067,7 +3071,6 @@ $$('#pinPad button[data-k]').forEach(b=>b.onclick=()=>pinKey(b.dataset.k));
 $('#pinCancel').onclick=()=>{if(pinState.mode!=='unlock')closePin();};
 $('#capEye').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();render();updateEye();};
 $('#capEye2').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();render();updateEye();};
-$('#distToggle').onclick=()=>{distMode=distMode==='amount'?'percent':'amount';renderDistList();};
 // Финздоровье
 $('#profHealth').onclick=openHealth;
 $('#healthClose').onclick=()=>$('#healthOverlay').classList.remove('show');
