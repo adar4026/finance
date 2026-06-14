@@ -1,5 +1,5 @@
 // Service worker — офлайн-кэш приложения
-const CACHE = 'finance-v66';
+const CACHE = 'finance-v67';
 const ASSETS = [
   './',
   './index.html',
@@ -32,14 +32,14 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Cache-first: приложение работает без интернета
+// Network-first: онлайн — всегда свежая версия (обновляем кэш), офлайн — из кэша
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
+    fetch(e.request).then(resp => {
       const copy = resp.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
       return resp;
-    }).catch(() => cached))
+    }).catch(() => caches.match(e.request))
   );
 });
