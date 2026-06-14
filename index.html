@@ -259,6 +259,11 @@
   .search-box .search-clear{border:none;background:var(--muted2);color:#fff;width:22px;height:22px;border-radius:50%;font-size:15px;line-height:1;cursor:pointer;flex-shrink:0}
   .search-hint{color:var(--muted2);font-size:13.5px;text-align:center;padding:18px 10px}
   .search-count{color:var(--muted);font-size:13px;font-weight:600;margin:8px 2px 4px}
+  .search-sum{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px 15px;margin:8px 0 12px}
+  .search-sum .ss-l{font-size:13.5px;color:var(--muted);font-weight:600}
+  .search-sum .ss-v{font-size:19px;font-weight:800;white-space:nowrap}
+  .search-sum .ss-v.inc{color:var(--income)}
+  .search-sum .ss-v.exp{color:var(--expense)}
   .rng-presets{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 16px}
   .rng-presets button{flex:1 1 30%;padding:11px 8px;border:1px solid var(--line);background:var(--card2);border-radius:12px;font-size:13.5px;font-weight:600;color:var(--text);cursor:pointer;font-family:inherit}
   .rng-presets button:active{background:var(--accent-soft);border-color:var(--accent)}
@@ -1835,7 +1840,15 @@ function runSearch(q){
   const res=state.tx.filter(t=>{const s=txSearchText(t);return terms.every(term=>s.includes(term));});
   if(!res.length){hint.style.display='block';hint.textContent='Ничего не найдено по запросу «'+q+'».';list.innerHTML='';return;}
   hint.style.display='none';
-  list.innerHTML=`<div class="search-count">Найдено: ${res.length} ${plural(res.length,'операция','операции','операций')}</div>`+groupedTxHtml(res);
+  // общая сумма найденных (доходы − расходы, переводы не учитываются)
+  const inc=res.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=res.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const net=inc-exp;
+  const sumBlock=`<div class="search-sum">
+    <div class="ss-l">Найдено: ${res.length} ${plural(res.length,'операция','операции','операций')}</div>
+    <div class="ss-v ${net>=0?'inc':'exp'}">${(net>=0?'+':'−')+num(Math.abs(net))}</div>
+  </div>`;
+  list.innerHTML=sumBlock+groupedTxHtml(res);
   $$('#searchList .tx').forEach(x=>x.onclick=()=>{$('#searchOverlay').classList.remove('show');openSheet(x.dataset.id);});
 }
 function renderAnaCompare(cur,pre){
