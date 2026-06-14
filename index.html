@@ -261,9 +261,16 @@
   .grp-head .grp-sum{font-size:14px;font-weight:700;white-space:nowrap}
   .grp-head .grp-edit{color:var(--muted2);font-size:18px;padding:0 4px;flex-shrink:0}
   .grp-body{min-height:8px}
-  .acc-ghost{opacity:.35}
-  .acc-chosen{box-shadow:0 10px 26px rgba(40,50,120,.18)}
-  .acc-drag{transform:scale(1.03)}
+  /* место, куда упадёт карточка — пунктирный акцентный слот */
+  .acc-ghost{position:relative}
+  .acc-ghost>*{opacity:0}
+  .acc-ghost::after{content:'';position:absolute;inset:0;border:2px dashed var(--accent);border-radius:20px;background:var(--accent-soft)}
+  /* парящая карточка под пальцем (клон) — ярко выделена */
+  .acc-fallback{opacity:1!important}
+  .acc-drag{opacity:1!important;border:2px solid var(--accent)!important;border-radius:20px!important;
+    box-shadow:0 22px 46px rgba(109,93,246,.45)!important;transform:scale(1.05);transition:transform .12s}
+  /* выбранная исходная карточка */
+  .acc-chosen{cursor:grabbing}
   .dist2-toggle{color:var(--accent);font-size:13.5px;font-weight:600;cursor:pointer;margin-top:10px}
   .dist-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-top:1px solid var(--line)}
   .dist-row:first-child{border-top:none}
@@ -2455,9 +2462,11 @@ function setupAccountSort(){
   if(typeof Sortable==='undefined')return;
   $$('#accList .grp-body').forEach(body=>{
     Sortable.create(body,{
-      group:'accounts', animation:160,
-      delay:180, delayOnTouchOnly:true, touchStartThreshold:6,
-      ghostClass:'acc-ghost', chosenClass:'acc-chosen', dragClass:'acc-drag',
+      group:'accounts', animation:220, easing:'cubic-bezier(0.22,1,0.36,1)',
+      delay:160, delayOnTouchOnly:true, touchStartThreshold:6,
+      forceFallback:true, fallbackTolerance:6, fallbackOnBody:true,
+      ghostClass:'acc-ghost', chosenClass:'acc-chosen', dragClass:'acc-drag', fallbackClass:'acc-fallback',
+      onChoose:()=>{ if(navigator.vibrate)navigator.vibrate(18); },
       onEnd:commitAccountOrder
     });
   });
