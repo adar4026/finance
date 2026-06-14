@@ -2444,7 +2444,15 @@ function renderAccounts(){
   groups.forEach(g=>groupBlock(g.id,g.name,active.filter(a=>(a.groupId||'')===g.id),true));
   const ung=active.filter(a=>!a.groupId||!groups.find(g=>g.id===a.groupId));
   if(ung.length)groupBlock('_none','Другие',ung,false);
-  if(archived.length)html+=`<div class="arch-head">📦 Архив (${archived.length})</div>`+archived.map(a=>accountCardHtml(a,true)).join('');
+  if(archived.length){
+    const aCol=!!state.groupCollapsed['_arch'];
+    html+=`<div class="grp-head" data-grp="_arch">
+      <span class="grp-arrow">${aCol?'▶':'▼'}</span>
+      <span class="grp-nm">📦 Архив</span>
+      <span class="grp-sum" style="color:var(--muted2)">${archived.length}</span>
+    </div>`;
+    if(!aCol)html+=archived.map(a=>accountCardHtml(a,true)).join('');
+  }
   el.innerHTML=html;
   $$('#accList .acc3').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
   $$('#accList .acc3-dots').forEach(b=>b.onclick=e=>{e.stopPropagation();openAcc(b.dataset.edit);});
