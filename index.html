@@ -252,6 +252,12 @@
   .add-dashed{width:100%;padding:15px;border:1.5px dashed var(--line);border-radius:18px;background:none;color:var(--accent);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:18px}
   .add-dashed:active{background:var(--card2)}
   .dist2-toggle{color:var(--accent);font-size:13.5px;font-weight:600;cursor:pointer;margin-top:10px}
+  .search-box{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin:10px 0 6px}
+  .search-box .search-ic{font-size:16px;opacity:.7}
+  .search-box input{flex:1;border:none;background:none;outline:none;font-size:16px;color:var(--text);font-family:inherit;min-width:0}
+  .search-box .search-clear{border:none;background:var(--muted2);color:#fff;width:22px;height:22px;border-radius:50%;font-size:15px;line-height:1;cursor:pointer;flex-shrink:0}
+  .search-hint{color:var(--muted2);font-size:13.5px;text-align:center;padding:18px 10px}
+  .search-count{color:var(--muted);font-size:13px;font-weight:600;margin:8px 2px 4px}
 
   /* ===== Экран Accounts (Screen 3) ===== */
   .cap-card-lg{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:24px;padding:26px 22px 24px;
@@ -683,6 +689,7 @@
         <div class="subtitle" id="updSub"></div>
       </div>
       <div class="acts">
+        <button class="iconbtn" id="searchTop" title="Поиск операций">🔍</button>
         <button class="iconbtn" id="exportTop" title="Экспорт данных (JSON)">⬇️</button>
         <button class="iconbtn bell" id="bellBtn" title="Уведомления">🔔<span class="dot" id="bellDot" style="display:none"></span></button>
         <button class="avatar" id="avatarBtn" title="Профиль"></button>
@@ -961,6 +968,23 @@
       <button class="iconbtn" id="allTxClose">×</button>
     </div>
     <div id="allTxList" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- Поиск операций (лупа в шапке) -->
+<div class="overlay" id="searchOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top">
+      <div class="nm">Поиск операций</div>
+      <button class="iconbtn" id="searchClose">×</button>
+    </div>
+    <div class="search-box">
+      <span class="search-ic">🔍</span>
+      <input id="searchInput" type="text" placeholder="Категория, заметка, сумма, счёт…" autocomplete="off">
+      <button class="search-clear" id="searchClear" style="display:none">×</button>
+    </div>
+    <div class="search-hint" id="searchHint">Введите запрос — например «такси», «150» или «карта».</div>
+    <div id="searchList" style="margin-top:6px"></div>
   </div>
 </div>
 
@@ -1712,6 +1736,42 @@ function openCatTx(catIds,label,range,rangeLabel,type){
   $('#catTxList').innerHTML=groupedTxHtml(list);
   $$('#catTxList .tx').forEach(x=>x.onclick=()=>openSheet(x.dataset.id));
   $('#catTxOverlay').classList.add('show');
+}
+
+// ===== Поиск операций (лупа в шапке) =====
+function txSearchText(t){
+  const parts=[];
+  if(t.type==='transfer'){
+    parts.push('перевод');
+    const f=state.accounts.find(a=>a.id===t.from), to=state.accounts.find(a=>a.id===t.to);
+    if(f)parts.push(f.name); if(to)parts.push(to.name);
+  }else{
+    const c=catById(t.cat); if(c)parts.push(c.name);
+    const sub=t.subcategoryId?subcatById(t.subcategoryId):null; if(sub)parts.push(sub.name);
+    const acc=state.accounts.find(a=>a.id===t.account); if(acc)parts.push(acc.name);
+    parts.push(t.type==='income'?'доход':'расход');
+  }
+  if(t.note)parts.push(t.note);
+  parts.push(String(t.amount), String(Math.round(t.amount)));
+  return parts.join(' ').toLowerCase();
+}
+function openSearch(){
+  $('#searchInput').value='';
+  runSearch('');
+  $('#searchOverlay').classList.add('show');
+  setTimeout(()=>$('#searchInput').focus(),250);
+}
+function runSearch(q){
+  q=(q||'').trim().toLowerCase();
+  $('#searchClear').style.display=q?'block':'none';
+  const hint=$('#searchHint'), list=$('#searchList');
+  if(!q){hint.style.display='block';hint.textContent='Введите запрос — например «такси», «150» или «карта».';list.innerHTML='';return;}
+  const terms=q.split(/\s+/).filter(Boolean);
+  const res=state.tx.filter(t=>{const s=txSearchText(t);return terms.every(term=>s.includes(term));});
+  if(!res.length){hint.style.display='block';hint.textContent='Ничего не найдено по запросу «'+q+'».';list.innerHTML='';return;}
+  hint.style.display='none';
+  list.innerHTML=`<div class="search-count">Найдено: ${res.length} ${plural(res.length,'операция','операции','операций')}</div>`+groupedTxHtml(res);
+  $$('#searchList .tx').forEach(x=>x.onclick=()=>{$('#searchOverlay').classList.remove('show');openSheet(x.dataset.id);});
 }
 function renderAnaCompare(cur,pre){
   const A=AF.Services.Analytics;
@@ -2654,6 +2714,11 @@ $$('#anaCatSeg button').forEach(b=>b.onclick=()=>{anaCatType=b.dataset.t;
 $('#toAllTx').onclick=openAllTx;
 $('#allTxClose').onclick=()=>$('#allTxOverlay').classList.remove('show');
 $('#allTxOverlay').onclick=e=>{if(e.target.id==='allTxOverlay')$('#allTxOverlay').classList.remove('show');};
+$('#searchTop').onclick=openSearch;
+$('#searchClose').onclick=()=>$('#searchOverlay').classList.remove('show');
+$('#searchOverlay').onclick=e=>{if(e.target.id==='searchOverlay')$('#searchOverlay').classList.remove('show');};
+$('#searchInput').oninput=e=>runSearch(e.target.value);
+$('#searchClear').onclick=()=>{$('#searchInput').value='';runSearch('');$('#searchInput').focus();};
 $('#catTxClose').onclick=()=>$('#catTxOverlay').classList.remove('show');
 $('#catTxOverlay').onclick=e=>{if(e.target.id==='catTxOverlay')$('#catTxOverlay').classList.remove('show');};
 // Кнопка + открывает меню добавления (Расход/Доход/Перевод/Чек встроены сюда)
@@ -2962,7 +3027,7 @@ $('#budgetEditOverlay').onclick=e=>{if(e.target.id==='budgetEditOverlay')$('#bud
 $('#budSave').onclick=saveBudget;
 $('#budDelete').onclick=deleteBudget;
 $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Старт ============ */
 load();
