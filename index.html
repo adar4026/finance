@@ -15,7 +15,6 @@
 <meta name="apple-mobile-web-app-title" content="Финансы">
 <meta name="mobile-web-app-capable" content="yes">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <!-- Архитектура (feature-ready для Flutter): core → database → services. UI ниже использует только AF.Store / AF.Services -->
 <script src="js/core/result.js"></script>
 <script src="js/database/store.js"></script>
@@ -261,16 +260,12 @@
   .grp-head .grp-sum{font-size:14px;font-weight:700;white-space:nowrap}
   .grp-head .grp-edit{color:var(--muted2);font-size:18px;padding:0 4px;flex-shrink:0}
   .grp-body{min-height:8px}
-  /* место, куда упадёт карточка — пунктирный акцентный слот */
-  .acc-ghost{position:relative}
-  .acc-ghost>*{opacity:0}
-  .acc-ghost::after{content:'';position:absolute;inset:0;border:2px dashed var(--accent);border-radius:20px;background:var(--accent-soft)}
-  /* парящая карточка под пальцем (клон) — ярко выделена */
-  .acc-fallback{opacity:1!important}
-  .acc-drag{opacity:1!important;border:2px solid var(--accent)!important;border-radius:20px!important;
-    box-shadow:0 22px 46px rgba(109,93,246,.45)!important;transform:scale(1.05);transition:transform .12s}
-  /* выбранная исходная карточка */
-  .acc-chosen{cursor:grabbing}
+  /* пустой слот, куда упадёт карточка — пунктирный акцентный */
+  .acc-ph{border:2px dashed var(--accent);background:var(--accent-soft);border-radius:20px;margin-bottom:12px;transition:height .15s ease}
+  /* парящая карточка под пальцем — ярко поднята */
+  .acc-lift{border:2px solid var(--accent)!important;border-radius:20px!important;
+    box-shadow:0 26px 54px rgba(40,50,120,.32),0 0 0 1px rgba(109,93,246,.15)!important;
+    will-change:transform;cursor:grabbing}
   .dist2-toggle{color:var(--accent);font-size:13.5px;font-weight:600;cursor:pointer;margin-top:10px}
   .dist-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-top:1px solid var(--line)}
   .dist-row:first-child{border-top:none}
@@ -2457,19 +2452,66 @@ function renderAccounts(){
   $$('#accList .grp-edit').forEach(b=>b.onclick=e=>{e.stopPropagation();openGroupEdit(b.dataset.grpedit);});
   setupAccountSort();
 }
-// Перетаскивание счетов (вверх/вниз и между группами) — SortableJS
+// Перетаскивание счетов — собственная реализация: парящая карточка + плавное следование + слот
+let accDrag=null;
 function setupAccountSort(){
-  if(typeof Sortable==='undefined')return;
-  $$('#accList .grp-body').forEach(body=>{
-    Sortable.create(body,{
-      group:'accounts', animation:220, easing:'cubic-bezier(0.22,1,0.36,1)',
-      delay:160, delayOnTouchOnly:true, touchStartThreshold:6,
-      forceFallback:true, fallbackTolerance:6, fallbackOnBody:true,
-      ghostClass:'acc-ghost', chosenClass:'acc-chosen', dragClass:'acc-drag', fallbackClass:'acc-fallback',
-      onChoose:()=>{ if(navigator.vibrate)navigator.vibrate(18); },
-      onEnd:commitAccountOrder
-    });
-  });
+  $$('#accList .grp-body .acc3:not(.archived)').forEach(card=>card.addEventListener('pointerdown',onAccDragStart));
+}
+function onAccDragStart(e){
+  if(accDrag||(e.pointerType==='mouse'&&e.button!==0))return;
+  const card=e.currentTarget, sx=e.clientX, sy=e.clientY, pid=e.pointerId;
+  const hold=setTimeout(()=>{off();liftAccCard(card,sx,sy,pid);},150);
+  function pm(ev){ if(Math.abs(ev.clientX-sx)>10||Math.abs(ev.clientY-sy)>10){clearTimeout(hold);off();} }
+  function pu(){clearTimeout(hold);off();}
+  function off(){window.removeEventListener('pointermove',pm);window.removeEventListener('pointerup',pu);window.removeEventListener('pointercancel',pu);}
+  window.addEventListener('pointermove',pm,{passive:true});
+  window.addEventListener('pointerup',pu);window.addEventListener('pointercancel',pu);
+}
+function liftAccCard(card,sx,sy,pid){
+  if(navigator.vibrate)navigator.vibrate(16);
+  const rect=card.getBoundingClientRect(), offX=sx-rect.left, offY=sy-rect.top;
+  const ph=document.createElement('div'); ph.className='acc-ph'; ph.style.height=rect.height+'px';
+  card.parentNode.insertBefore(ph,card);
+  card.style.width=rect.width+'px'; card.style.height=rect.height+'px'; card.style.margin='0';
+  card.style.position='fixed'; card.style.left='0'; card.style.top='0'; card.style.zIndex='9999'; card.style.pointerEvents='none';
+  card.classList.add('acc-lift'); document.body.appendChild(card);
+  let cx=rect.left,cy=rect.top,tx=rect.left,ty=rect.top,raf;
+  const draw=()=>card.style.transform=`translate(${cx}px,${cy}px) scale(1.045) rotate(1.2deg)`;
+  draw();
+  const loop=()=>{cx+=(tx-cx)*0.4;cy+=(ty-cy)*0.4;draw();raf=requestAnimationFrame(loop);};
+  loop(); accDrag={card,ph};
+  function move(ev){
+    tx=ev.clientX-offX; ty=ev.clientY-offY;
+    card.style.visibility='hidden';
+    const under=document.elementFromPoint(ev.clientX,ev.clientY);
+    card.style.visibility='';
+    const body=under&&under.closest?under.closest('.grp-body'):null;
+    const over=under&&under.closest?under.closest('.acc3'):null;
+    if(body){
+      if(over&&over!==card){const r=over.getBoundingClientRect();body.insertBefore(ph,(ev.clientY<r.top+r.height/2)?over:over.nextSibling);}
+      else if(!over)body.appendChild(ph);
+    }
+    const m=90,sc=document.scrollingElement||document.documentElement;
+    if(ev.clientY<m)sc.scrollTop-=Math.ceil((m-ev.clientY)/5);
+    else if(ev.clientY>innerHeight-m)sc.scrollTop+=Math.ceil((ev.clientY-(innerHeight-m))/5);
+  }
+  function up(){
+    cancelAnimationFrame(raf);
+    window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);
+    // глушим клик, который иначе сработает после отпускания
+    const kill=ev=>{ev.stopPropagation();ev.preventDefault();};
+    window.addEventListener('click',kill,true); setTimeout(()=>window.removeEventListener('click',kill,true),400);
+    const r=ph.getBoundingClientRect();
+    card.style.transition='transform .2s cubic-bezier(.2,.8,.25,1)';
+    card.style.transform=`translate(${r.left}px,${r.top}px) scale(1) rotate(0deg)`;
+    setTimeout(()=>{
+      ph.parentNode.insertBefore(card,ph); ph.remove(); card.classList.remove('acc-lift');
+      ['width','height','position','left','top','margin','zIndex','pointerEvents','transform','transition','visibility'].forEach(p=>card.style[p]='');
+      accDrag=null; commitAccountOrder();
+    },205);
+  }
+  window.addEventListener('pointermove',move,{passive:true});
+  window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
 }
 function commitAccountOrder(){
   const orig=state.accounts.slice(), byId=id=>orig.find(a=>a.id===id);
