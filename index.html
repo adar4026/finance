@@ -104,7 +104,7 @@
   .daycard{background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden}
   .tx{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer;transition:.12s}
   .tx:last-child{border-bottom:none}
-  .tx:active{background:var(--card2)}
+  .tx:active{filter:brightness(.96)}
   .tx .em{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
   .tx .info{flex:1;min-width:0}
   .tx .t1{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1642,8 +1642,8 @@ function txRow(t){
     const amtTxt=cross
       ? fmtCur(t.amount,fc)+' → '+fmtCur(t.toAmount!=null?t.toAmount:t.amount,tc)
       : fmtCur(t.amount,fc);
-    return `<div class="tx" data-id="${t.id}">
-      <div class="em" style="background:var(--accent-soft)">🔄</div>
+    return `<div class="tx" data-id="${t.id}" style="background:var(--accent-soft)">
+      <div class="em" style="background:rgba(255,255,255,.55)">🔄</div>
       <div class="info"><div class="t1">Перевод</div>
         <div class="t2">${from?esc(from.name):'?'} → ${to?esc(to.name):'?'}${t.note?' · '+esc(t.note):''}</div></div>
       <div class="amt" style="color:var(--muted)">${amtTxt}</div>
@@ -1652,8 +1652,8 @@ function txRow(t){
   const c=catById(t.cat);
   const acc=state.accounts.find(a=>a.id===t.account);
   const sub=t.subcategoryId?subcatById(t.subcategoryId):null;
-  return `<div class="tx" data-id="${t.id}">
-    <div class="em" style="background:${c.color}22">${c.emoji}</div>
+  return `<div class="tx" data-id="${t.id}" style="background:${c.color}14">
+    <div class="em" style="background:${c.color}2e">${c.emoji}</div>
     <div class="info"><div class="t1">${c.name}${sub?' · '+esc(sub.name):''}${t.receiptPath?' <span style="font-size:12px">🧾</span>':''}</div>
       <div class="t2">${(acc?acc.emoji+' '+acc.name:'')}${t.note?' · '+esc(t.note):''}</div></div>
     <div class="amt ${t.type==='income'?'inc':'exp'}">${signed(t.amount,t.type)}</div>
