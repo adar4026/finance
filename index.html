@@ -767,8 +767,7 @@
       </div>
     </div>
 
-    <div class="sec-head"><span>Последние операции</span><a id="toAllTx">Все операции ›</a></div>
-    <div id="recentList"></div>
+    <div id="recentList" style="margin-top:14px"></div>
   </div>
 
   <!-- Screen: Analytics (Product Book Screen 2) -->
@@ -1585,7 +1584,8 @@ function renderBudgetHome(){
   el.onclick=()=>showScreen('scrBudgets');
 }
 function renderRecent(list){
-  const items=[...list].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id).slice(0,10);
+  // все операции за выбранный период, сгруппированы по дням (прокручиваются на странице)
+  const items=[...list].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
   const el=$('#recentList');
   if(!items.length){el.innerHTML=`<div class="daycard"><div class="empty"><div class="big">🗒️</div><p>Нет операций за период.<br>Нажмите «+», чтобы добавить.</p></div></div>`;return;}
   el.innerHTML=groupedTxHtml(items);
@@ -2968,7 +2968,6 @@ $$('.nav button[data-s]').forEach(b=>b.onclick=()=>showScreen(b.dataset.s));
 $$('#anaCatSeg button').forEach(b=>b.onclick=()=>{anaCatType=b.dataset.t;
   $$('#anaCatSeg button').forEach(x=>x.classList.toggle('on',x===b));renderAnaPie(anaCur,anaPre);});
 // Главная: Quick Actions
-$('#toAllTx').onclick=openAllTx;
 $('#allTxClose').onclick=()=>$('#allTxOverlay').classList.remove('show');
 $('#allTxOverlay').onclick=e=>{if(e.target.id==='allTxOverlay')$('#allTxOverlay').classList.remove('show');};
 $('#searchTop').onclick=openSearch;
