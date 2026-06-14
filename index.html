@@ -345,6 +345,9 @@
   .iconbtn.bell{position:relative}
   .iconbtn.bell .dot{position:absolute;top:1px;right:1px;min-width:16px;height:16px;border-radius:8px;background:var(--accent);
     color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--card)}
+  .avatar-wrap{position:relative;display:flex}
+  .av-dot{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;border-radius:9px;background:var(--expense);
+    color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg);pointer-events:none}
   .avatar{width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));
     background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;
     font-size:17px;color:#fff;transition:.15s;overflow:hidden}
@@ -365,6 +368,7 @@
     border-radius:13px;background:var(--card);color:var(--text);font-size:14.5px;cursor:pointer;margin-bottom:9px;font-family:inherit;text-align:left}
   .prof-row:active{background:var(--card2)}
   .prof-row .chev{color:var(--muted2);font-size:18px}
+  .prof-badge{display:none;background:var(--expense);color:#fff;font-size:11px;font-weight:700;border-radius:9px;padding:1px 7px;margin-left:5px;vertical-align:1px}
 
   /* ===== Security (Screen 11) ===== */
   .sec-toggle{display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;font-size:15px}
@@ -695,8 +699,10 @@
       <div class="acts">
         <button class="iconbtn" id="searchTop" title="Поиск операций">🔍</button>
         <button class="iconbtn" id="exportTop" title="Экспорт данных (JSON)">⬇️</button>
-        <button class="iconbtn bell" id="bellBtn" title="Уведомления">🔔<span class="dot" id="bellDot" style="display:none"></span></button>
-        <button class="avatar" id="avatarBtn" title="Профиль"></button>
+        <div class="avatar-wrap">
+          <button class="avatar" id="avatarBtn" title="Профиль"></button>
+          <span class="av-dot" id="avatarDot" style="display:none"></span>
+        </div>
       </div>
     </div>
     <div class="periods" id="periods">
@@ -1042,6 +1048,7 @@
     </div>
     <button class="prof-row" id="changePhoto"><span>📷 Сменить фото</span><span class="chev">›</span></button>
     <input type="file" id="photoInput" accept="image/*" hidden>
+    <button class="prof-row" id="profNotif"><span>🔔 Уведомления <span class="prof-badge" id="profNotifBadge"></span></span><span class="chev">›</span></button>
     <button class="prof-row" id="profGoals"><span>🎯 Цели</span><span class="chev">›</span></button>
     <button class="prof-row" id="profCalendar"><span>📅 Календарь</span><span class="chev">›</span></button>
     <button class="prof-row" id="profHealth"><span>❤️ Финансовое здоровье</span><span class="chev">›</span></button>
@@ -1394,12 +1401,14 @@ function renderHeader(){
   const av=$('#avatarBtn');if(!av)return;
   av.style.cssText=avatarStyle();av.textContent=avatarInner();
   const n=notifications().length;
-  const dot=$('#bellDot');if(n){dot.textContent=n;dot.style.display='flex';}else dot.style.display='none';
+  const ad=$('#avatarDot');if(ad){if(n){ad.textContent=n>9?'9+':n;ad.style.display='flex';}else ad.style.display='none';}
+  const pb=$('#profNotifBadge');if(pb){if(n){pb.textContent=n;pb.style.display='inline-block';}else pb.style.display='none';}
   const sub=$('#updSub');
   if(curScreen==='scrRecords'){sub.innerHTML=`<span class="live"></span>Обновлено ${relTime(state.updatedAt)}`;sub.style.display='flex';}
   else sub.style.display='none';
 }
 function openNotif(){
+  $('#profOverlay').classList.remove('show');
   const list=notifications();
   $('#notifList').innerHTML=list.length?list.map(n=>
     `<div class="notif"><div class="ni" style="background:${n.bg}">${n.ic}</div>
@@ -2832,7 +2841,7 @@ function toggleTheme(){const order=['light','dark','system'];
   applyTheme();save();render();}
 function themeLabel(){return {light:'☀️ Светлая тема',dark:'🌙 Тёмная тема',system:'🌗 Системная тема'}[state.theme]||'☀️ Светлая тема';}
 // Шапка: колокольчик + аватар + профиль
-$('#bellBtn').onclick=openNotif;
+$('#profNotif').onclick=openNotif;
 $('#notifClose').onclick=()=>$('#notifOverlay').classList.remove('show');
 $('#notifOverlay').onclick=e=>{if(e.target.id==='notifOverlay')$('#notifOverlay').classList.remove('show');};
 $('#avatarBtn').onclick=openProfile;
