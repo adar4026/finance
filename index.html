@@ -759,7 +759,6 @@
     <div class="capital">
       <div class="cap-head"><span class="cap-l">Общий капитал <span id="capEye" style="cursor:pointer">👁</span></span><span class="cap-cur" id="capCur">EUR</span></div>
       <div class="cap-val" id="capVal">€0</div>
-      <div class="cap-chg" id="capChg">+€0 · 0% за месяц</div>
       <div class="cap-ie">
         <div class="cib"><div class="ci-ic" style="background:var(--income)">↗</div><div class="ci-l">Доходы</div><div class="ci-v" id="capInc">+€0</div><div class="ci-s" id="capIncN">0 операций</div></div>
         <div class="cib"><div class="ci-ic" style="background:var(--expense)">↘</div><div class="ci-l">Расходы</div><div class="ci-v" id="capExp">−€0</div><div class="ci-s" id="capExpN">0 операций</div></div>
@@ -1553,12 +1552,7 @@ function totalCapital(endDate){return AF.Services.Account.totalCapital(state,end
 function signedCur(n,t,cur){return (t==='income'?'+':'−')+fmtCur(Math.abs(n),cur);}
 function updateHome(list,inc,exp){
   const capNow=totalCapital(null);
-  const {from}=periodRange();
-  const capStart=totalCapital(new Date(from.getTime()-1));
-  const delta=capNow-capStart, pct=capStart?delta/Math.abs(capStart)*100:0;
-  const pw={day:'день',week:'неделю',month:'месяц',year:'год',all:'всё время'}[period];
   $('#capVal').textContent=num(capNow);
-  $('#capChg').textContent=(delta>=0?'+':'−')+num(Math.abs(delta))+' · '+(delta>=0?'+':'−')+Math.abs(pct).toFixed(2)+'% за '+pw;
   $('#capInc').textContent='+'+num(inc);
   $('#capExp').textContent='−'+num(exp);
   $('#capFlow').textContent=(inc-exp>=0?'+':'−')+num(Math.abs(inc-exp));
