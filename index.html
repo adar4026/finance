@@ -259,6 +259,13 @@
   .grp-head .grp-nm{font-size:16px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .grp-head .grp-sum{font-size:14px;font-weight:700;white-space:nowrap}
   .grp-head .grp-edit{color:var(--muted2);font-size:18px;padding:0 4px;flex-shrink:0}
+  .acc-toolbar{display:flex;justify-content:flex-end;margin:0 0 10px}
+  .acc-edit-toggle{border:1px solid var(--line);background:var(--card2);color:var(--text);font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:12px;cursor:pointer;font-family:inherit}
+  .acc-edit-toggle.on{background:var(--accent);color:#fff;border-color:transparent}
+  .acc-edit-toggle:active{opacity:.85}
+  .acc-handle{display:inline-flex;flex-direction:column;justify-content:center;gap:4px;padding:8px 4px;cursor:grab;touch-action:none;flex-shrink:0;align-self:flex-start}
+  .acc-handle span{display:block;width:22px;height:2.5px;background:var(--muted2);border-radius:2px}
+  .acc3.editing{cursor:default}
   .grp-body{min-height:8px}
   /* пустой слот, куда упадёт карточка — пунктирный акцентный */
   .acc-ph{border:2px dashed var(--accent);background:var(--accent-soft);border-radius:20px;margin-bottom:12px;transition:height .15s ease}
@@ -819,6 +826,7 @@
       <div class="cap-head"><span class="cap-l">Общий капитал <span id="capEye2" style="cursor:pointer">👁</span></span><span class="cap-cur" id="accCapCur">EUR</span></div>
       <div class="cap-val" id="accTotalCapital">€0</div>
     </div>
+    <div class="acc-toolbar"><button id="accEditBtn" class="acc-edit-toggle">↕ Изменить порядок</button></div>
     <div id="accList"></div>
     <div class="acc-add-row">
       <button class="add-dashed" id="addAccBtn">+ Счёт</button>
@@ -2392,16 +2400,21 @@ function renderDistList(){
       <span class="dr-nm">${esc(d.account.name)}</span><span class="dr-amt">${amt}</span><span class="dr-pct">${pct}</span></div>`;
   }).join('');
 }
+let accEditMode=false;
 function accountCardHtml(a,archived){
   const bal=accBalance(a.id),cur=a.currency||state.currency,share=Math.round(AF.Services.Account.share(state,a.id));
   const col=a.color||'#6d5df6';
   const sub=(ACC_TYPE_LABEL[a.type]||'Счёт')+' • '+curCode(cur);
   const bg=archived?'var(--card)':`linear-gradient(135deg, ${col}1f, var(--card) 70%)`;
-  return `<div class="acc3${archived?' archived':''}" data-acc="${a.id}" style="background:${bg};border-color:${archived?'var(--line)':col+'33'}">
+  const editing=accEditMode&&!archived;
+  const right=editing
+    ? `<span class="acc-handle" data-handle="${a.id}"><span></span><span></span><span></span></span>`
+    : `<span class="acc3-dots" data-edit="${a.id}">⋯</span>`;
+  return `<div class="acc3${archived?' archived':''}${editing?' editing':''}" data-acc="${a.id}" style="background:${bg};border-color:${archived?'var(--line)':col+'33'}">
     <div class="acc3-head">
       <span class="acc3-ic" style="background:${col};color:#fff">${a.emoji}</span>
       <div style="flex:1;min-width:0"><div class="acc3-nm">${esc(a.name)}</div><div class="acc3-sub">${archived?'В архиве':sub}</div></div>
-      <span class="acc3-dots" data-edit="${a.id}">⋯</span>
+      ${right}
     </div>
     <div class="acc3-bot">
       <span class="acc3-bal" style="color:${bal<0?'var(--expense)':'var(--text)'}">${(bal<0?'−':'')+fmtCur(Math.abs(bal),cur)}</span>
@@ -2454,26 +2467,25 @@ function renderAccounts(){
     if(!aCol)html+=archived.map(a=>accountCardHtml(a,true)).join('');
   }
   el.innerHTML=html;
-  $$('#accList .acc3').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
-  $$('#accList .acc3-dots').forEach(b=>b.onclick=e=>{e.stopPropagation();openAcc(b.dataset.edit);});
+  if(!accEditMode){
+    $$('#accList .acc3').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
+    $$('#accList .acc3-dots').forEach(b=>b.onclick=e=>{e.stopPropagation();openAcc(b.dataset.edit);});
+  }
   $$('#accList .grp-head').forEach(h=>h.onclick=()=>{const g=h.dataset.grp;state.groupCollapsed[g]=!state.groupCollapsed[g];save();renderAccounts();});
   $$('#accList .grp-edit').forEach(b=>b.onclick=e=>{e.stopPropagation();openGroupEdit(b.dataset.grpedit);});
   setupAccountSort();
 }
-// Перетаскивание счетов — собственная реализация: парящая карточка + плавное следование + слот
+// Перетаскивание счетов — только в режиме редактирования, за ручку (≡)
 let accDrag=null;
 function setupAccountSort(){
-  $$('#accList .grp-body .acc3:not(.archived)').forEach(card=>card.addEventListener('pointerdown',onAccDragStart));
-}
-function onAccDragStart(e){
-  if(accDrag||(e.pointerType==='mouse'&&e.button!==0))return;
-  const card=e.currentTarget, sx=e.clientX, sy=e.clientY, pid=e.pointerId;
-  const hold=setTimeout(()=>{off();liftAccCard(card,sx,sy,pid);},150);
-  function pm(ev){ if(Math.abs(ev.clientX-sx)>10||Math.abs(ev.clientY-sy)>10){clearTimeout(hold);off();} }
-  function pu(){clearTimeout(hold);off();}
-  function off(){window.removeEventListener('pointermove',pm);window.removeEventListener('pointerup',pu);window.removeEventListener('pointercancel',pu);}
-  window.addEventListener('pointermove',pm,{passive:true});
-  window.addEventListener('pointerup',pu);window.addEventListener('pointercancel',pu);
+  if(!accEditMode)return;
+  $$('#accList .acc-handle').forEach(h=>{
+    h.addEventListener('pointerdown',e=>{
+      if(accDrag||(e.pointerType==='mouse'&&e.button!==0))return;
+      e.preventDefault(); e.stopPropagation();
+      const card=h.closest('.acc3'); if(card)liftAccCard(card,e.clientX,e.clientY,e.pointerId);
+    });
+  });
 }
 function liftAccCard(card,sx,sy,pid){
   if(navigator.vibrate)navigator.vibrate(16);
@@ -3066,6 +3078,10 @@ $('#accOverlay').onclick=e=>{if(e.target.id==='accOverlay')$('#accOverlay').clas
 $('#saveAcc').onclick=saveAcc;
 $('#delAcc').onclick=delAcc;
 $('#archiveAcc').onclick=archiveFromEditor;
+$('#accEditBtn').onclick=()=>{accEditMode=!accEditMode;
+  $('#accEditBtn').classList.toggle('on',accEditMode);
+  $('#accEditBtn').textContent=accEditMode?'✓ Готово':'↕ Изменить порядок';
+  renderAccounts();};
 $('#addGroupBtn').onclick=()=>openGroupEdit(null);
 $('#groupEditClose').onclick=()=>$('#groupEditOverlay').classList.remove('show');
 $('#groupEditOverlay').onclick=e=>{if(e.target.id==='groupEditOverlay')$('#groupEditOverlay').classList.remove('show');};
