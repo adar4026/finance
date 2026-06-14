@@ -617,7 +617,7 @@
   .cap-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
   .cap-l{font-size:14.5px;opacity:.92}
   .cap-cur{font-size:12px;background:rgba(255,255,255,.2);padding:4px 11px;border-radius:9px;font-weight:600}
-  .cap-val{font-size:42px;font-weight:800;letter-spacing:-1px;line-height:1.1}
+  .cap-val{font-size:34px;font-weight:800;letter-spacing:-.6px;line-height:1.15}
   .cap-chg{display:inline-block;font-size:12.5px;background:rgba(255,255,255,.2);padding:4px 11px;border-radius:9px;margin:10px 0 16px;font-weight:700}
   .cap-ie{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
   .cap-ie .cib{background:rgba(255,255,255,.16);border-radius:16px;padding:12px 11px}
@@ -1298,7 +1298,7 @@ let detailAcc=null, detailAnchor=new Date(), detailType='expense', lineChart;
 const $=s=>document.querySelector(s);
 const $$=s=>document.querySelectorAll(s);
 // UI-обёртки над AF.Services.Currency (бизнес-логика — в services/currency_service.js)
-function maskAmt(cur){const s=AF.Services.Currency.SYM[cur];return (s||(cur&&cur.length<=2?cur:''))+'•••';}
+function maskAmt(cur){const s=AF.Services.Currency.SYM[cur];return (s||(cur&&cur.length<=2?cur:''))+'∗∗∗∗';}
 const fmtCur=(n,cur)=>state.hideAmounts?maskAmt(cur||state.currency):AF.Services.Currency.format(n,cur||state.currency);
 const num=n=>state.hideAmounts?maskAmt(state.currency):AF.Services.Currency.format(n,state.currency);
 const signed=(n,t)=>(t==='income'?'+':'−')+fmtCur(Math.abs(n),state.currency);
