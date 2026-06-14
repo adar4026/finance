@@ -252,6 +252,13 @@
   .acc3-pct{font-size:15px;font-weight:700}
   .add-dashed{width:100%;padding:15px;border:1.5px dashed var(--line);border-radius:18px;background:none;color:var(--accent);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:18px}
   .add-dashed:active{background:var(--card2)}
+  .acc-add-row{display:flex;gap:10px}
+  .acc-add-row .add-dashed{margin-bottom:18px}
+  .grp-head{display:flex;align-items:center;gap:9px;padding:16px 4px 9px;cursor:pointer;user-select:none}
+  .grp-head .grp-arrow{font-size:10px;color:var(--muted2);width:11px;flex-shrink:0}
+  .grp-head .grp-nm{font-size:16px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .grp-head .grp-sum{font-size:14px;font-weight:700;white-space:nowrap}
+  .grp-head .grp-edit{color:var(--muted2);font-size:18px;padding:0 4px;flex-shrink:0}
   .dist2-toggle{color:var(--accent);font-size:13.5px;font-weight:600;cursor:pointer;margin-top:10px}
   .dist-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-top:1px solid var(--line)}
   .dist-row:first-child{border-top:none}
@@ -804,7 +811,10 @@
       <div class="cap-val" id="accTotalCapital">€0</div>
     </div>
     <div id="accList"></div>
-    <button class="add-dashed" id="addAccBtn">+ Добавить счёт</button>
+    <div class="acc-add-row">
+      <button class="add-dashed" id="addAccBtn">+ Счёт</button>
+      <button class="add-dashed" id="addGroupBtn">+ Группа</button>
+    </div>
     <div class="panel">
       <h3>Распределение капитала</h3>
       <div class="cat-donut-top">
@@ -910,6 +920,11 @@
       <div class="type-grid" id="accTypeGrid"></div>
     </div>
 
+    <div class="field">
+      <label>Группа</label>
+      <select id="accGroup"></select>
+    </div>
+
     <div class="row2">
       <div class="field">
         <label>Начальный баланс</label>
@@ -938,6 +953,21 @@
 
     <button class="btn-primary" id="saveAcc">Сохранить</button>
     <button class="btn-del" id="delAcc" style="display:none">Удалить счёт</button>
+  </div>
+</div>
+
+<!-- Редактор группы счетов -->
+<div class="overlay" id="groupEditOverlay">
+  <div class="sheet" style="max-width:440px">
+    <div class="grab"></div>
+    <h2><span id="groupEditTitle">Группа счетов</span><span class="x" id="groupEditClose">×</span></h2>
+    <div class="field">
+      <label>Название группы</label>
+      <input type="text" id="groupName" placeholder="Например: Крипто" maxlength="24" autocomplete="off">
+      <div class="err" id="groupNameErr">Введите название</div>
+    </div>
+    <button class="btn-primary" id="groupSave">Сохранить</button>
+    <button class="btn-del" id="groupDelete" style="display:none">Удалить группу</button>
   </div>
 </div>
 
@@ -2369,15 +2399,73 @@ function accountCardHtml(a,archived){
     </div>
   </div>`;
 }
+// ==== Группы счетов (Наличные/Карты/Крипто + свои) ====
+function seedAccountGroups(){
+  if(!state.accountGroups){
+    state.accountGroups=[
+      {id:'g_cash',name:'Наличные',order:0},
+      {id:'g_cards',name:'Карты',order:1},
+      {id:'g_crypto',name:'Крипто',order:2}
+    ];
+    state.accounts.forEach(a=>{ if(!a.groupId) a.groupId = a.type==='cash'?'g_cash' : a.type==='crypto'?'g_crypto' : 'g_cards'; });
+    save();
+  }
+  if(!state.groupCollapsed)state.groupCollapsed={};
+}
+const accGroups=()=>(state.accountGroups||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
 function renderAccounts(){
+  seedAccountGroups();
   const el=$('#accList');
   const active=AF.Services.Account.active(state);
   const archived=state.accounts.filter(a=>a.isArchived);
-  let html=active.map(a=>accountCardHtml(a,false)).join('');
+  const groups=accGroups();
+  let html='';
+  const groupBlock=(gid,name,accs,deletable)=>{
+    const sub=accs.reduce((s,a)=>s+accBalance(a.id),0);
+    const isCol=!!state.groupCollapsed[gid];
+    html+=`<div class="grp-head" data-grp="${gid}">
+      <span class="grp-arrow">${isCol?'▶':'▼'}</span>
+      <span class="grp-nm">${esc(name)}</span>
+      <span class="grp-sum" style="color:${sub<0?'var(--expense)':'var(--income)'}">${(sub<0?'−':'+')+fmtCur(Math.abs(sub),state.currency)}</span>
+      ${deletable?`<span class="grp-edit" data-grpedit="${gid}">⋯</span>`:''}
+    </div>`;
+    if(!isCol)html+=accs.map(a=>accountCardHtml(a,false)).join('');
+  };
+  groups.forEach(g=>groupBlock(g.id,g.name,active.filter(a=>(a.groupId||'')===g.id),true));
+  const ung=active.filter(a=>!a.groupId||!groups.find(g=>g.id===a.groupId));
+  if(ung.length)groupBlock('_none','Другие',ung,false);
   if(archived.length)html+=`<div class="arch-head">📦 Архив (${archived.length})</div>`+archived.map(a=>accountCardHtml(a,true)).join('');
   el.innerHTML=html;
   $$('#accList .acc3').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
   $$('#accList .acc3-dots').forEach(b=>b.onclick=e=>{e.stopPropagation();openAcc(b.dataset.edit);});
+  $$('#accList .grp-head').forEach(h=>h.onclick=()=>{const g=h.dataset.grp;state.groupCollapsed[g]=!state.groupCollapsed[g];save();renderAccounts();});
+  $$('#accList .grp-edit').forEach(b=>b.onclick=e=>{e.stopPropagation();openGroupEdit(b.dataset.grpedit);});
+}
+// Редактор группы счетов
+let groupEdit=null;
+function openGroupEdit(id){
+  groupEdit=id||null;
+  const g=id?state.accountGroups.find(x=>x.id===id):null;
+  $('#groupEditTitle').textContent=g?'Группа счетов':'Новая группа';
+  $('#groupName').value=g?g.name:'';
+  $('#groupNameErr').classList.remove('show');
+  $('#groupDelete').style.display=g?'block':'none';
+  $('#groupEditOverlay').classList.add('show');
+  setTimeout(()=>{if(!id)$('#groupName').focus();},250);
+}
+function saveGroup(){
+  const name=$('#groupName').value.trim();
+  if(!name){$('#groupNameErr').classList.add('show');$('#groupName').focus();return;}
+  if(groupEdit){state.accountGroups.find(x=>x.id===groupEdit).name=name;}
+  else{const ord=Math.max(-1,...state.accountGroups.map(g=>g.order||0))+1;state.accountGroups.push({id:'g'+Date.now(),name,order:ord});}
+  save();$('#groupEditOverlay').classList.remove('show');render();toast(groupEdit?'Группа сохранена ✓':'Группа создана ✓');
+}
+function delGroup(){
+  if(!groupEdit)return;
+  if(!confirm('Удалить группу? Счета останутся, но станут без группы.'))return;
+  state.accounts.forEach(a=>{if(a.groupId===groupEdit)a.groupId=null;});
+  state.accountGroups=state.accountGroups.filter(g=>g.id!==groupEdit);
+  save();$('#groupEditOverlay').classList.remove('show');render();toast('Группа удалена');
 }
 
 /* ============ Asset Graph: детали счёта ============ */
@@ -2618,6 +2706,10 @@ function openAcc(id){
     $('#accName').value=''; $('#accStart').value=''; $('#accCurrency').value=state.currency;
     $('#accTitle').textContent='Новый счёт'; $('#delAcc').style.display='none';
   }
+  // выбор группы (перемещение счёта между группами)
+  seedAccountGroups();
+  $('#accGroup').innerHTML='<option value="">Без группы</option>'+accGroups().map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('');
+  $('#accGroup').value = id ? (state.accounts.find(x=>x.id===id).groupId||'') : (accGroups()[0]?accGroups()[0].id:'');
   clearAccErrors();
   renderAccType(); renderAccColors(); renderAccEmoji();
   $('#accOverlay').classList.add('show');
@@ -2654,11 +2746,12 @@ function saveAcc(){
   // Валидация: баланс >= 0
   if(isNaN(start)||start<0){$('#accStartErr').classList.add('show');$('#accStart').classList.add('invalid');$('#accStart').focus();return;}
   const currency=$('#accCurrency').value;
+  const groupId=$('#accGroup').value||null;
   if(accEdit){
     const a=state.accounts.find(x=>x.id===accEdit);
-    Object.assign(a,{name,emoji:accEmoji,color:accColor,type:accType,start,currency,updatedAt:Date.now()});
+    Object.assign(a,{name,emoji:accEmoji,color:accColor,type:accType,start,currency,groupId,updatedAt:Date.now()});
   }else{
-    state.accounts.push({id:'a'+Date.now(),name,emoji:accEmoji,color:accColor,type:accType,start,currency,isArchived:false,createdAt:Date.now(),updatedAt:Date.now()});
+    state.accounts.push({id:'a'+Date.now(),name,emoji:accEmoji,color:accColor,type:accType,start,currency,groupId,isArchived:false,createdAt:Date.now(),updatedAt:Date.now()});
   }
   save();$('#accOverlay').classList.remove('show');render();buildAccountSelect();toast(accEdit?'Счёт сохранён ✓':'Счёт создан ✓');
 }
@@ -2879,6 +2972,11 @@ $('#closeAcc').onclick=()=>$('#accOverlay').classList.remove('show');
 $('#accOverlay').onclick=e=>{if(e.target.id==='accOverlay')$('#accOverlay').classList.remove('show');};
 $('#saveAcc').onclick=saveAcc;
 $('#delAcc').onclick=delAcc;
+$('#addGroupBtn').onclick=()=>openGroupEdit(null);
+$('#groupEditClose').onclick=()=>$('#groupEditOverlay').classList.remove('show');
+$('#groupEditOverlay').onclick=e=>{if(e.target.id==='groupEditOverlay')$('#groupEditOverlay').classList.remove('show');};
+$('#groupSave').onclick=saveGroup;
+$('#groupDelete').onclick=delGroup;
 
 // Account Details (Screen 4)
 $('#dClose').onclick=()=>$('#detailOverlay').classList.remove('show');
@@ -3104,7 +3202,7 @@ $('#budgetEditOverlay').onclick=e=>{if(e.target.id==='budgetEditOverlay')$('#bud
 $('#budSave').onclick=saveBudget;
 $('#budDelete').onclick=deleteBudget;
 $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Старт ============ */
 load();
