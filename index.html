@@ -782,12 +782,18 @@
 
   <!-- Screen: Analytics (Product Book Screen 2) -->
   <div class="screen" id="scrCharts">
-    <div class="ana-hero">
-      <div class="ah-top"><span class="ah-lbl">Результат · <span id="anaPeriodLbl">июнь</span></span><span class="ah-chg" id="anaNetChg"></span></div>
-      <div class="ah-val" id="anaNet">+€0</div>
-      <div class="ah-subs">
-        <div class="ah-sub"><div class="ah-ic inc">↗</div><div class="ah-sl">Доходы</div><div class="ah-sv" id="anaInc">+€0</div></div>
-        <div class="ah-sub"><div class="ah-ic exp">↘</div><div class="ah-sl">Расходы</div><div class="ah-sv" id="anaExp">−€0</div></div>
+    <div class="capital">
+      <div class="cap-top">
+        <div class="cap-head">
+          <span class="cap-l">Результат · <span id="anaPeriodLbl">Июнь</span></span>
+          <span class="ah-chg" id="anaNetChg"></span>
+        </div>
+        <div class="cap-val" id="anaNet">+€0</div>
+      </div>
+      <svg class="cap-wave" viewBox="0 0 1200 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,22 C260,42 460,6 680,18 C900,30 1050,10 1200,22 L1200,40 L0,40 Z" fill="#fff"/></svg>
+      <div class="cap-bottom">
+        <div class="cib2"><span class="ci2-ic inc">↗</span><div class="ci2-l">Доходы</div><div class="ci2-v" id="anaInc">+€0</div></div>
+        <div class="cib2"><span class="ci2-ic exp">↘</span><div class="ci2-l">Расходы</div><div class="ci2-v" id="anaExp">−€0</div></div>
       </div>
     </div>
 

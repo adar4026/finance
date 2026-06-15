@@ -1,5 +1,5 @@
 // Service worker — офлайн-кэш приложения
-const CACHE = 'finance-v74';
+const CACHE = 'finance-v75';
 const ASSETS = [
   './',
   './index.html',
