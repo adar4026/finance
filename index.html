@@ -230,6 +230,15 @@
     border:none;background:rgba(255,255,255,.16);color:#fff;font-size:26px;cursor:pointer;z-index:2}
   .cat-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
   .cat-strip::-webkit-scrollbar{display:none}
+  /* Сетка иконок (вниз, шахматкой) */
+  .emoji-grid{display:flex;flex-wrap:wrap;gap:10px;padding:4px 0 6px;justify-content:flex-start}
+  .emoji-grid .emoji-tile{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);
+    display:flex;align-items:center;justify-content:center;font-size:21px;cursor:pointer;transition:.12s;padding:0}
+  .emoji-grid .emoji-tile:active{transform:scale(.92)}
+  .emoji-grid .emoji-tile.sel{border-color:var(--accent);background:var(--accent-soft);border-width:2px}
+  /* шахматное смещение: каждый чётный столбец чуть ниже */
+  .emoji-grid .emoji-tile:nth-child(even){transform:translateY(7px)}
+  .emoji-grid .emoji-tile:nth-child(even):active{transform:translateY(7px) scale(.92)}
   .cat-pick{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;width:56px;padding:7px 3px;
     border-radius:13px;border:1px solid var(--line);background:var(--card);cursor:pointer;transition:.12s}
   .cat-pick.sel{border-color:var(--accent);background:var(--accent-soft)}
@@ -396,8 +405,8 @@
   .type-card .te{font-size:23px}
   .type-card .tl{font-size:11.5px;color:var(--muted);font-weight:600;text-align:center}
   .type-card.sel .tl{color:var(--accent)}
-  .color-row{display:flex;gap:11px;flex-wrap:wrap}
-  .color-sw{width:42px;height:42px;border-radius:13px;cursor:pointer;border:3px solid transparent;transition:.12s}
+  .color-row{display:flex;gap:10px;flex-wrap:wrap}
+  .color-sw{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:.12s}
   .color-sw:active{transform:scale(.92)}
   .color-sw.sel{border-color:var(--text);transform:scale(1.06)}
 
@@ -1506,7 +1515,7 @@
     <h2><span id="catEditTitle">Категория</span><span class="x" id="catEditClose">×</span></h2>
     <div class="field"><label>Название</label><input type="text" id="catName" maxlength="24" autocomplete="off"><div class="err" id="catNameErr">Введите название</div></div>
     <div class="field"><label>Цвет</label><div class="color-row" id="catColorRow"></div></div>
-    <div class="field"><label>Иконка</label><div class="cat-strip" id="catEmojiStrip"></div></div>
+    <div class="field"><label>Иконка</label><div class="emoji-grid" id="catEmojiStrip"></div></div>
     <div class="field"><label>Подкатегории</label>
       <div class="subcat-strip" id="catSubStrip" style="flex-wrap:wrap"></div>
     </div>
@@ -1559,7 +1568,7 @@ const CATS = {
 function allCats(){return state.cats||[];}
 function catsFor(type){return (state.cats||[]).filter(c=>c.type===type);}
 const catById=id=>(state.cats||[]).find(c=>c.id===id)||{name:'Другое',emoji:'❓',color:'#868e96'};
-const CAT_EMOJI=['🍔','🚗','🏠','🛍️','💊','🎮','📄','☕','✈️','📚','🐾','💼','🎁','📈','🔑','🎵','👕','⛽','🚿','📱','🎓','🏥','🍷','🎬','💪','🎨','🏷️','🧾','💵','🐷'];
+const CAT_EMOJI=['🍔','🍕','🍷','☕','🛒','🚗','⛽','🚌','✈️','🏠','🔑','💡','🚿','📱','💻','🛍️','👕','👟','💊','🏥','💪','🏋️','🎮','🎬','🎵','🎨','📚','🎓','🐾','🎁','💼','📈','💰','💵','🏦','🧾','📄','🏷️','✂️','💅','👶','🍼','🐷','🌳','🎄','🐶','🐱','⚽','🏖️','🎉'];
 const ACC_EMOJI=['💵','💳','🏦','🐷','📈','🪙','💰','💶','📱','🎒','💎','🏛️'];
 // Типы счетов (Product Book Screen 5) — с дефолтными иконкой и цветом
 const ACC_TYPES=[
@@ -1569,7 +1578,7 @@ const ACC_TYPES=[
   {id:'investment',name:'Инвестиции', emoji:'📈', color:'#3bc9db'},
   {id:'crypto',    name:'Крипто',     emoji:'🪙', color:'#fab005'},
 ];
-const ACC_COLORS=['#6d5df6','#22c55e','#ef4444','#f59e0b','#3bc9db','#da77f2','#4dabf7','#fab005','#fa5252','#82c91e'];
+const ACC_COLORS=['#6d5df6','#7048e8','#9775fa','#4263eb','#3b82f6','#228be6','#4dabf7','#3bc9db','#22b8cf','#12b886','#22c55e','#40c057','#82c91e','#fab005','#f59e0b','#fd7e14','#ef4444','#fa5252','#e64980','#f06595','#da77f2','#cc5de8','#868e96','#495057'];
 const curSymbol=cur=>AF.Services.Currency.SYM[cur]||cur; // 'EUR'->'€', '€'->'€'
 const EMOJI_POOL=['🏷️','🧾','🍔','🚗','🏠','🛍️','💊','🎮','📄','☕','✈️','📚','🐾','💼','🎁','📈','🔑','🎵','👕','⛽','🚿','📱','🎓','🏥','🍷','🎬','💪','🎨'];
 const COLOR_POOL=['#ff6b6b','#ffa94d','#ffd43b','#da77f2','#9775fa','#4dabf7','#3bc9db','#69db7c','#a9e34b','#f783ac','#ff8787','#63e6be','#fab005','#e599f7','#74c0fc','#ffc078'];
@@ -3252,8 +3261,8 @@ function renderCatColors(){
   $$('#catColorRow .color-sw').forEach(el=>el.onclick=()=>{cColor=el.dataset.color;renderCatColors();});
 }
 function renderCatEmoji(){
-  $('#catEmojiStrip').innerHTML=CAT_EMOJI.map(e=>`<div class="cat-pick ${e===cEmoji?'sel':''}" data-e="${e}" style="width:50px"><span class="ce">${e}</span></div>`).join('');
-  $$('#catEmojiStrip .cat-pick').forEach(el=>el.onclick=()=>{cEmoji=el.dataset.e;renderCatEmoji();});
+  $('#catEmojiStrip').innerHTML=CAT_EMOJI.map(e=>`<button class="emoji-tile ${e===cEmoji?'sel':''}" data-e="${e}">${e}</button>`).join('');
+  $$('#catEmojiStrip .emoji-tile').forEach(el=>el.onclick=()=>{cEmoji=el.dataset.e;renderCatEmoji();});
 }
 function renderCatSubs(){
   if(!catEdit){$('#catSubStrip').innerHTML=`<span style="font-size:12.5px;color:var(--muted2)">Сохраните категорию, чтобы добавить подкатегории</span>`;return;}
