@@ -728,6 +728,55 @@
     color:var(--bg);padding:12px 20px;border-radius:12px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;
     transition:.25s;z-index:90}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ===== Statistics (Screen 14) ===== */
+  .stats-period-sel{display:flex;gap:4px}
+  .sp-btn{border:none;background:rgba(255,255,255,.18);color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;opacity:.7;font-family:inherit}
+  .sp-btn.on{background:rgba(255,255,255,.35);opacity:1}
+  .stats-kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stats-kpi{background:var(--card2);border-radius:14px;padding:12px 14px}
+  .stats-kpi .sk-l{font-size:11.5px;color:var(--muted);margin-bottom:4px}
+  .stats-kpi .sk-v{font-size:18px;font-weight:700;color:var(--text)}
+  .stats-kpi .sk-s{font-size:11px;color:var(--muted2);margin-top:2px}
+  .stats-bar-wrap{background:var(--card2);border-radius:14px;padding:14px}
+  .stats-bars{display:flex;align-items:flex-end;gap:5px;height:72px;margin-bottom:8px}
+  .stats-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .stats-bar-fill{width:100%;border-radius:4px 4px 0 0;background:var(--accent);opacity:.25;min-height:4px;transition:.3s}
+  .stats-bar-fill.hi{opacity:1}
+  .stats-bar-lbl{font-size:9.5px;color:var(--muted2);text-align:center}
+  .stats-rank-list{display:flex;flex-direction:column;gap:8px}
+  .stats-rank-row{display:flex;align-items:center;gap:9px;padding:4px 0}
+  .stats-rank-n{font-size:12px;color:var(--muted);width:16px;text-align:center;flex-shrink:0}
+  .stats-rank-ic{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .stats-rank-info{flex:1;min-width:0}
+  .stats-rank-name{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stats-rank-sub{font-size:11px;color:var(--muted2);margin-top:1px}
+  .stats-rank-right{text-align:right;flex-shrink:0}
+  .stats-rank-val{font-size:13.5px;font-weight:700}
+  .stats-rank-pct{font-size:11px;color:var(--muted2);margin-top:1px}
+  .stats-heatmap{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px}
+  .stats-hm-cell{aspect-ratio:1;border-radius:4px;background:var(--card2)}
+  .stats-hm-cell.hm1{background:var(--accent);opacity:.2}
+  .stats-hm-cell.hm2{background:var(--accent);opacity:.45}
+  .stats-hm-cell.hm3{background:var(--accent);opacity:.7}
+  .stats-hm-cell.hm4{background:var(--accent);opacity:1}
+  .stats-achiev-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stats-achiev{background:var(--card2);border-radius:14px;padding:12px;display:flex;gap:10px;align-items:center}
+  .stats-achiev.locked{opacity:.35}
+  .sa-ic{font-size:26px;flex-shrink:0}
+  .sa-name{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.3}
+  .sa-desc{font-size:11px;color:var(--muted2);margin-top:2px}
+  .stats-rec-list{display:flex;flex-direction:column;gap:8px}
+  .stats-rec-row{background:var(--card2);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px}
+  .sr-ic{font-size:22px;flex-shrink:0;width:36px;text-align:center}
+  .sr-info{flex:1;min-width:0}
+  .sr-l{font-size:12px;color:var(--muted);margin-bottom:2px}
+  .sr-v{font-size:16px;font-weight:700}
+  .sr-s{font-size:11px;color:var(--muted2);margin-top:1px}
+  .stats-habit-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line)}
+  .stats-habit-row:last-child{border-bottom:none}
+  .sh-l{font-size:13.5px}
+  .sh-v{font-size:14px;font-weight:700;color:var(--accent)}
 </style>
 </head>
 <body>
@@ -1128,6 +1177,7 @@
     <button class="prof-row" id="profGoals"><span>🎯 Цели</span><span class="chev">›</span></button>
     <button class="prof-row" id="profCalendar"><span>📅 Календарь</span><span class="chev">›</span></button>
     <button class="prof-row" id="profHealth"><span>❤️ Финансовое здоровье</span><span class="chev">›</span></button>
+    <button class="prof-row" id="profStats"><span>📊 Статистика</span><span class="chev">›</span></button>
     <button class="prof-row" id="profSecurity"><span>🔐 Безопасность</span><span class="chev">›</span></button>
     <button class="prof-row" id="profTheme"><span id="profThemeLbl">🌙 Тёмная тема</span><span class="chev">›</span></button>
     <button class="prof-row" id="profExport"><span>📤 Экспорт и копии</span><span class="chev">›</span></button>
@@ -1273,6 +1323,57 @@
     <div class="field"><label>Цвет</label><div class="color-row" id="goalColorRow"></div></div>
     <button class="btn-primary" id="goalSave">Сохранить</button>
     <button class="btn-del" id="goalDelete" style="display:none">Удалить цель</button>
+  </div>
+</div>
+
+<!-- Статистика (Screen 14) -->
+<div class="overlay" id="statsOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top">
+      <div class="nm">📊 Статистика</div>
+      <button class="iconbtn" id="statsClose">×</button>
+    </div>
+    <!-- Герой -->
+    <div class="capital" id="statsHero" style="margin:10px 0 14px">
+      <div class="cap-top">
+        <div class="cap-head">
+          <div class="cap-l">
+            <div class="cap-title" id="statsPeriodLbl">Общий оборот · 2026</div>
+          </div>
+          <div class="cap-actions">
+            <div class="stats-period-sel">
+              <button class="sp-btn on" data-sp="year">Год</button>
+              <button class="sp-btn" data-sp="month">Месяц</button>
+              <button class="sp-btn" data-sp="all">Всё</button>
+            </div>
+          </div>
+        </div>
+        <div class="cap-val" id="statsTurnover">€ 0</div>
+      </div>
+      <svg class="cap-wave" viewBox="0 0 560 32" preserveAspectRatio="none"><path d="M0,16 C140,32 420,0 560,16 L560,32 L0,32 Z" fill="#fff"/></svg>
+      <div class="cap-bottom">
+        <div class="cib2">
+          <div class="ci2-ic" style="background:var(--income-soft);color:var(--income)">↗</div>
+          <div class="ci2-t"><div class="ci2-l">Доходы</div><div class="ci2-v" id="statsInc">€ 0</div></div>
+        </div>
+        <div class="cib2">
+          <div class="ci2-ic" style="background:var(--expense-soft);color:var(--expense)">↘</div>
+          <div class="ci2-t"><div class="ci2-l">Расходы</div><div class="ci2-v" id="statsExp">€ 0</div></div>
+        </div>
+        <div class="cib2">
+          <div class="ci2-ic" style="background:var(--accent-soft);color:var(--accent)">⇄</div>
+          <div class="ci2-t"><div class="ci2-l">Поток</div><div class="ci2-v" id="statsFlow">€ 0</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- Вкладки -->
+    <div class="seg-ie" id="statsTabs" style="margin-bottom:12px">
+      <button class="on" data-st="overview">Обзор</button>
+      <button data-st="records">Рекорды</button>
+      <button data-st="habits">Привычки</button>
+    </div>
+    <div id="statsBody"></div>
+    <div style="height:24px"></div>
   </div>
 </div>
 
@@ -3313,6 +3414,21 @@ $('#capDots').onclick=openProfile;
 $('#capEye2').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();render();updateEye();};
 // Финздоровье
 $('#profHealth').onclick=openHealth;
+$('#profStats').onclick=openStats;
+$('#statsClose').onclick=()=>$('#statsOverlay').classList.remove('show');
+$('#statsOverlay').onclick=e=>{if(e.target.id==='statsOverlay')$('#statsOverlay').classList.remove('show');};
+$('#statsTabs').onclick=e=>{
+  const btn=e.target.closest('[data-st]');if(!btn)return;
+  statsTab=btn.dataset.st;
+  $('#statsTabs').querySelectorAll('[data-st]').forEach(b=>b.classList.toggle('on',b===btn));
+  renderStatsBody();
+};
+$('#statsHero').querySelectorAll('.sp-btn').forEach(btn=>btn.onclick=()=>{
+  statsPeriod=btn.dataset.sp;
+  $('#statsHero').querySelectorAll('.sp-btn').forEach(b=>b.classList.toggle('on',b===btn));
+  renderStatsHero();
+  renderStatsBody();
+});
 $('#healthClose').onclick=()=>$('#healthOverlay').classList.remove('show');
 $('#healthDetailClose').onclick=()=>$('#healthDetailOverlay').classList.remove('show');
 $('#healthDetailOverlay').onclick=e=>{if(e.target.id==='healthDetailOverlay')$('#healthDetailOverlay').classList.remove('show');};
@@ -3344,7 +3460,357 @@ $('#budgetEditOverlay').onclick=e=>{if(e.target.id==='budgetEditOverlay')$('#bud
 $('#budSave').onclick=saveBudget;
 $('#budDelete').onclick=deleteBudget;
 $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+
+/* ============ Statistics (Screen 14) ============ */
+let statsPeriod='year'; // 'month'|'year'|'all'
+let statsTab='overview';
+
+function statsRange(){
+  const now=new Date();
+  if(statsPeriod==='month'){
+    const s=new Date(now.getFullYear(),now.getMonth(),1);
+    const e=new Date(now.getFullYear(),now.getMonth()+1,0);
+    return [s,e];
+  }
+  if(statsPeriod==='year'){
+    return [new Date(now.getFullYear(),0,1), new Date(now.getFullYear(),11,31)];
+  }
+  // all
+  const txs=state.tx||[];
+  if(!txs.length) return [new Date(now.getFullYear(),0,1), now];
+  const dates=txs.map(t=>new Date(t.date));
+  return [new Date(Math.min(...dates)), now];
+}
+
+function statsRangeLabel(){
+  const now=new Date();
+  if(statsPeriod==='month'){
+    return now.toLocaleDateString('ru',{month:'long',year:'numeric'});
+  }
+  if(statsPeriod==='year') return String(now.getFullYear());
+  return 'Всё время';
+}
+
+function statsTxInRange(){
+  const [from,to]=statsRange();
+  return (state.tx||[]).filter(t=>{
+    const d=new Date(t.date);
+    return d>=from && d<=to && t.type!=='transfer';
+  });
+}
+
+function openStats(){
+  $('#profOverlay').classList.remove('show');
+  renderStatsHero();
+  renderStatsBody();
+  $('#statsOverlay').classList.add('show');
+}
+
+function renderStatsHero(){
+  const txs=statsTxInRange();
+  const inc=txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const turnover=inc+exp;
+  const flow=inc-exp;
+  $('#statsTurnover').textContent=fmtCur(turnover);
+  $('#statsInc').textContent=fmtCur(inc);
+  $('#statsExp').textContent=fmtCur(exp);
+  const flowEl=$('#statsFlow');
+  flowEl.textContent=(flow>=0?'+':'')+fmtCur(flow);
+  flowEl.style.color=flow>=0?'var(--income)':'var(--expense)';
+  $('#statsPeriodLbl').textContent='Общий оборот · '+statsRangeLabel();
+}
+
+function renderStatsBody(){
+  const el=$('#statsBody');
+  if(statsTab==='overview') el.innerHTML=buildStatsOverview();
+  else if(statsTab==='records') el.innerHTML=buildStatsRecords();
+  else el.innerHTML=buildStatsHabits();
+}
+
+function buildStatsOverview(){
+  const txs=statsTxInRange();
+  const expTxs=txs.filter(t=>t.type==='expense');
+  const totalExp=expTxs.reduce((s,t)=>s+t.amount,0);
+
+  // KPI
+  const [from,to]=statsRange();
+  const totalDays=Math.max(1,Math.round((to-from)/86400000)+1);
+  const avgDay=totalExp/totalDays;
+
+  // months in range
+  const monthSet=new Set(expTxs.map(t=>t.date.slice(0,7)));
+  const totalMonths=Math.max(1,monthSet.size);
+  const avgMonth=totalExp/totalMonths;
+
+  // best/worst expense day
+  const byDay={};
+  expTxs.forEach(t=>{const d=t.date.slice(0,10);byDay[d]=(byDay[d]||0)+t.amount;});
+  const dayEntries=Object.entries(byDay);
+  let worstDay=null,worstAmt=0,bestDay=null,bestAmt=Infinity;
+  dayEntries.forEach(([d,a])=>{
+    if(a>worstAmt){worstAmt=a;worstDay=d;}
+    if(a<bestAmt){bestAmt=a;bestDay=d;}
+  });
+  const fmtDay=d=>d?new Date(d+'T12:00:00').toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'}):'-';
+
+  // monthly bars (last 6 months)
+  const now=new Date();
+  const months=[];
+  for(let i=5;i>=0;i--){
+    const y=now.getFullYear(),m=now.getMonth()-i;
+    const dt=new Date(y,m,1);
+    const key=dt.toISOString().slice(0,7);
+    const lbl=dt.toLocaleDateString('ru',{month:'short'});
+    const val=(state.tx||[]).filter(t=>t.type==='expense'&&t.date.startsWith(key)).reduce((s,t)=>s+t.amount,0);
+    months.push({lbl,val,key});
+  }
+  const maxM=Math.max(...months.map(m=>m.val),1);
+  const nowKey=now.toISOString().slice(0,7);
+  const barsHtml=months.map(m=>`<div class="stats-bar-col">
+    <div class="stats-bar-fill${m.key===nowKey?' hi':''}" style="height:${Math.round(m.val/maxM*100)}%"></div>
+    <div class="stats-bar-lbl">${m.lbl}</div>
+  </div>`).join('');
+
+  // top 5 expense categories
+  const byCat={};
+  expTxs.forEach(t=>{if(t.categoryId)byCat[t.categoryId]=(byCat[t.categoryId]||0)+t.amount;});
+  const catEntries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const rankHtml=catEntries.length ? catEntries.map(([cid,amt],i)=>{
+    const cat=catById(cid)||{name:'Другое',icon:'📦',color:'#888'};
+    const pct=totalExp>0?Math.round(amt/totalExp*100):0;
+    const cnt=expTxs.filter(t=>t.categoryId===cid).length;
+    return `<div class="stats-rank-row">
+      <div class="stats-rank-n">${i+1}</div>
+      <div class="stats-rank-ic" style="background:${cat.color}22">${cat.icon||'📦'}</div>
+      <div class="stats-rank-info">
+        <div class="stats-rank-name">${esc(cat.name)}</div>
+        <div class="stats-rank-sub">${cnt} операций</div>
+      </div>
+      <div class="stats-rank-right">
+        <div class="stats-rank-val">${fmtCur(amt)}</div>
+        <div class="stats-rank-pct">${pct}%</div>
+      </div>
+    </div>`;
+  }).join('') : '<div style="color:var(--muted);font-size:13px;padding:10px 0">Нет данных за период</div>';
+
+  // heatmap last 28 days
+  const hmDays=[];
+  for(let i=27;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    hmDays.push(d.toISOString().slice(0,10));
+  }
+  const hmMax=Math.max(...hmDays.map(d=>byDay[d]||0),1);
+  const hmHtml=hmDays.map(d=>{
+    const v=byDay[d]||0;
+    let cls='';
+    if(v>0){const r=v/hmMax;cls=r>0.75?'hm4':r>0.45?'hm3':r>0.15?'hm2':'hm1';}
+    return `<div class="stats-hm-cell ${cls}" title="${d}: ${fmtCur(v)}"></div>`;
+  }).join('');
+
+  // achievements
+  const achiev=buildAchievements();
+  const achHtml=achiev.map(a=>`<div class="stats-achiev${a.locked?' locked':''}">
+    <div class="sa-ic">${a.ic}</div>
+    <div><div class="sa-name">${a.name}</div><div class="sa-desc">${a.desc}</div></div>
+  </div>`).join('');
+
+  return `
+  <div class="panel" style="margin-bottom:14px">
+    <h3>Ключевые показатели</h3>
+    <div class="stats-kpi-grid">
+      <div class="stats-kpi"><div class="sk-l">Средний расход/день</div><div class="sk-v">${fmtCur(avgDay)}</div></div>
+      <div class="stats-kpi"><div class="sk-l">Средний расход/месяц</div><div class="sk-v">${fmtCur(avgMonth)}</div></div>
+      <div class="stats-kpi"><div class="sk-l">Самый дорогой день</div><div class="sk-v">${fmtCur(worstAmt)}</div><div class="sk-s">${fmtDay(worstDay)}</div></div>
+      <div class="stats-kpi"><div class="sk-l">Самый экономный день</div><div class="sk-v">${bestDay?fmtCur(bestAmt):'-'}</div><div class="sk-s">${fmtDay(bestDay)}</div></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-bottom:14px">
+    <h3>Расходы по месяцам</h3>
+    <div class="stats-bar-wrap" style="background:transparent;padding:0">
+      <div class="stats-bars">${barsHtml}</div>
+    </div>
+  </div>
+  <div class="panel" style="margin-bottom:14px">
+    <h3>Топ категории расходов</h3>
+    <div class="stats-rank-list">${rankHtml}</div>
+  </div>
+  <div class="panel" style="margin-bottom:14px">
+    <h3>Тепловая карта трат <span class="hint">28 дней</span></h3>
+    <div class="stats-heatmap">${hmHtml}</div>
+    <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted2);margin-top:2px">
+      <span>Меньше</span>
+      <div style="display:flex;gap:3px;align-items:center">
+        <div style="width:11px;height:11px;border-radius:3px;background:var(--accent);opacity:.2"></div>
+        <div style="width:11px;height:11px;border-radius:3px;background:var(--accent);opacity:.45"></div>
+        <div style="width:11px;height:11px;border-radius:3px;background:var(--accent);opacity:.7"></div>
+        <div style="width:11px;height:11px;border-radius:3px;background:var(--accent)"></div>
+      </div>
+      <span>Больше</span>
+    </div>
+  </div>
+  <div class="panel" style="margin-bottom:14px">
+    <h3>Достижения</h3>
+    <div class="stats-achiev-grid">${achHtml}</div>
+  </div>`;
+}
+
+function buildStatsRecords(){
+  const txs=statsTxInRange();
+  const expTxs=txs.filter(t=>t.type==='expense');
+  const incTxs=txs.filter(t=>t.type==='income');
+
+  // top single transactions
+  const topExp=expTxs.slice().sort((a,b)=>b.amount-a.amount).slice(0,3);
+  const topInc=incTxs.slice().sort((a,b)=>b.amount-a.amount).slice(0,3);
+
+  // days
+  const byDay={};
+  expTxs.forEach(t=>{const d=t.date.slice(0,10);byDay[d]=(byDay[d]||0)+t.amount;});
+  const dayEntries=Object.entries(byDay).sort((a,b)=>b[1]-a[1]);
+  const worstDay=dayEntries[0];
+  const bestDay=dayEntries[dayEntries.length-1];
+
+  // monthly totals
+  const byMonth={};
+  expTxs.forEach(t=>{const m=t.date.slice(0,7);byMonth[m]=(byMonth[m]||0)+t.amount;});
+  const monthEntries=Object.entries(byMonth).sort((a,b)=>b[1]-a[1]);
+  const worstMonth=monthEntries[0];
+  const bestMonth=monthEntries[monthEntries.length-1];
+
+  const fmtDay=d=>d?new Date(d+'T12:00:00').toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'}):'-';
+  const fmtMonth=m=>{if(!m)return'-';const[y,mo]=m.split('-');return new Date(+y,+mo-1,1).toLocaleDateString('ru',{month:'long',year:'numeric'});};
+  const txRow=t=>{const cat=catById(t.categoryId)||{icon:'📦'};return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)"><span style="font-size:15px">${cat.icon||'📦'}</span><span style="flex:1;font-size:13px;color:var(--muted)">${fmtDay(t.date.slice(0,10))}</span><span style="font-weight:700;font-size:14px">${fmtCur(t.amount)}</span></div>`;};
+
+  return `
+  <div class="panel" style="margin-bottom:14px">
+    <h3>Дни</h3>
+    <div class="stats-rec-list">
+      <div class="stats-rec-row"><div class="sr-ic">🔥</div><div class="sr-info"><div class="sr-l">Самый дорогой день</div><div class="sr-v">${worstDay?fmtCur(worstDay[1]):'-'}</div><div class="sr-s">${fmtDay(worstDay?.[0])}</div></div></div>
+      <div class="stats-rec-row"><div class="sr-ic">🟢</div><div class="sr-info"><div class="sr-l">Самый экономный день</div><div class="sr-v">${bestDay?fmtCur(bestDay[1]):'-'}</div><div class="sr-s">${fmtDay(bestDay?.[0])}</div></div></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-bottom:14px">
+    <h3>Месяцы</h3>
+    <div class="stats-rec-list">
+      <div class="stats-rec-row"><div class="sr-ic">📈</div><div class="sr-info"><div class="sr-l">Самый затратный месяц</div><div class="sr-v">${worstMonth?fmtCur(worstMonth[1]):'-'}</div><div class="sr-s">${fmtMonth(worstMonth?.[0])}</div></div></div>
+      <div class="stats-rec-row"><div class="sr-ic">💚</div><div class="sr-info"><div class="sr-l">Самый экономный месяц</div><div class="sr-v">${bestMonth?fmtCur(bestMonth[1]):'-'}</div><div class="sr-s">${fmtMonth(bestMonth?.[0])}</div></div></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-bottom:14px">
+    <h3>Крупнейшие расходы</h3>
+    ${topExp.length?topExp.map(txRow).join(''):'<div style="color:var(--muted);font-size:13px">Нет данных</div>'}
+  </div>
+  <div class="panel" style="margin-bottom:14px">
+    <h3>Крупнейшие доходы</h3>
+    ${topInc.length?topInc.map(txRow).join(''):'<div style="color:var(--muted);font-size:13px">Нет данных</div>'}
+  </div>`;
+}
+
+function buildStatsHabits(){
+  const all=(state.tx||[]).filter(t=>t.type!=='transfer');
+  const expAll=all.filter(t=>t.type==='expense');
+
+  // day of week with most spending
+  const byDow=[0,0,0,0,0,0,0];
+  const byDowCnt=[0,0,0,0,0,0,0];
+  expAll.forEach(t=>{const dow=(new Date(t.date+'T12:00:00').getDay()+6)%7;byDow[dow]+=t.amount;byDowCnt[dow]++;});
+  const dowNames=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const peakDow=byDow.indexOf(Math.max(...byDow));
+
+  // avg transactions per week
+  const dates=expAll.map(t=>new Date(t.date));
+  const minD=dates.length?Math.min(...dates):Date.now();
+  const weeks=Math.max(1,Math.round((Date.now()-minD)/604800000));
+  const avgPerWeek=(expAll.length/weeks).toFixed(1);
+
+  // zero-spend days in last 30
+  const last30=[];
+  for(let i=0;i<30;i++){const d=new Date();d.setDate(d.getDate()-i);last30.push(d.toISOString().slice(0,10));}
+  const expDays=new Set(expAll.map(t=>t.date.slice(0,10)));
+  const zeroDays=last30.filter(d=>!expDays.has(d)).length;
+
+  // most used category
+  const byCat={};
+  expAll.forEach(t=>{if(t.categoryId)byCat[t.categoryId]=(byCat[t.categoryId]||0)+1;});
+  const topCatId=Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];
+  const topCat=topCatId?catById(topCatId[0]):null;
+
+  // weekend vs weekday
+  const weekendExp=expAll.filter(t=>{const d=(new Date(t.date+'T12:00:00').getDay()+6)%7;return d>=5;}).reduce((s,t)=>s+t.amount,0);
+  const weekdayExp=expAll.filter(t=>{const d=(new Date(t.date+'T12:00:00').getDay()+6)%7;return d<5;}).reduce((s,t)=>s+t.amount,0);
+  const weekendShare=weekdayExp+weekendExp>0?Math.round(weekendExp/(weekdayExp+weekendExp)*100):0;
+
+  return `<div class="panel" style="margin-bottom:14px">
+    <h3>Паттерны трат</h3>
+    <div class="stats-habit-row"><div class="sh-l">Пиковый день недели</div><div class="sh-v">${dowNames[peakDow]}</div></div>
+    <div class="stats-habit-row"><div class="sh-l">Операций в неделю (среднее)</div><div class="sh-v">${avgPerWeek}</div></div>
+    <div class="stats-habit-row"><div class="sh-l">Дней без трат (30 дн.)</div><div class="sh-v">${zeroDays}</div></div>
+    <div class="stats-habit-row"><div class="sh-l">Самая частая категория</div><div class="sh-v">${topCat?topCat.icon+' '+topCat.name:'—'}</div></div>
+    <div class="stats-habit-row"><div class="sh-l">Доля трат в выходные</div><div class="sh-v">${weekendShare}%</div></div>
+  </div>
+  <div class="panel" style="margin-bottom:14px">
+    <h3>Активность по дням недели</h3>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:64px;margin-bottom:6px">
+      ${byDow.map((v,i)=>{const h=byDow[peakDow]>0?Math.round(v/byDow[peakDow]*100):0;return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;border-radius:4px 4px 0 0;background:var(--accent);opacity:${i===peakDow?'1':'.28'};height:${h}%;min-height:4px"></div><div style="font-size:9.5px;color:var(--muted2)">${dowNames[i]}</div></div>`;}).join('')}
+    </div>
+  </div>`;
+}
+
+function buildAchievements(){
+  const tx=state.tx||[];
+  const expTx=tx.filter(t=>t.type==='expense');
+  const goals=state.goals||[];
+  const bud=state.budgets||{};
+
+  // 1. Первая операция
+  const hasAnyTx=tx.length>0;
+
+  // 2. Первая цель достигнута
+  const goalDone=goals.some(g=>g.currentAmount>=g.targetAmount);
+
+  // 3. Серия дней в бюджете (streak)
+  let streak=0,maxStreak=0,cur=0;
+  const budKeys=Object.keys(bud);
+  if(budKeys.length>0){
+    const sorted=[...new Set(expTx.map(t=>t.date.slice(0,10)))].sort();
+    for(let i=0;i<30;i++){
+      const d=new Date();d.setDate(d.getDate()-i);
+      const ds=d.toISOString().slice(0,10);
+      const dayExp=expTx.filter(t=>t.date.startsWith(ds)).reduce((s,t)=>s+t.amount,0);
+      // simplified: "in budget" = daily spend < totalBudgetLimit/30
+      const monthLimit=Object.values(bud).reduce((s,b)=>s+(b.limit||0),0);
+      const dailyLimit=monthLimit/30;
+      if(dayExp<=dailyLimit){cur++;if(cur>maxStreak)maxStreak=cur;}else cur=0;
+    }
+    streak=maxStreak;
+  }
+
+  // 4. Месяцев с положительным потоком
+  const byMonth={};
+  tx.filter(t=>t.type!=='transfer').forEach(t=>{
+    const m=t.date.slice(0,7);
+    if(!byMonth[m])byMonth[m]={inc:0,exp:0};
+    if(t.type==='income')byMonth[m].inc+=t.amount; else byMonth[m].exp+=t.amount;
+  });
+  const posMonths=Object.values(byMonth).filter(m=>m.inc>m.exp).length;
+
+  // 5. 100 операций
+  const has100=expTx.length>=100;
+
+  // 6. Год без отрицательного баланса на всех счетах
+  const allPositive=(state.accounts||[]).every(a=>!a.isArchived&&accBalance(a)>=0);
+
+  return[
+    {ic:'🚀',name:'Первый шаг',desc:'Добавлена первая операция',locked:!hasAnyTx},
+    {ic:'🎯',name:'Цель достигнута',desc:'Накоплено на первую цель',locked:!goalDone},
+    {ic:'🔥',name:`Серия ${streak} дн.`,desc:'Дней в рамках бюджета',locked:streak<3},
+    {ic:'📈',name:`${posMonths} мес. в плюсе`,desc:'Доходы превысили расходы',locked:posMonths<1},
+    {ic:'💯',name:'100 операций',desc:'Записано 100 расходов',locked:!has100},
+    {ic:'🌟',name:'Все счета в плюсе',desc:'Нет отрицательных балансов',locked:!allPositive},
+  ];
+}
 
 /* ============ Старт ============ */
 load();
