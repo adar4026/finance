@@ -239,6 +239,13 @@
   /* шахматное смещение: каждый чётный столбец чуть ниже */
   .emoji-grid .emoji-tile:nth-child(even){transform:translateY(7px)}
   .emoji-grid .emoji-tile:nth-child(even):active{transform:translateY(7px) scale(.92)}
+  /* Сетка категорий (вниз, шахматкой) — 4 в ряд */
+  .cat-grid{display:flex;flex-wrap:wrap;gap:14px 0;padding:4px 0 10px}
+  .cat-grid .cat-pick{flex:0 0 25%;width:auto;padding:0 2px;border:none;background:none}
+  .cat-grid .cat-pick .ce{width:46px;height:46px;border-radius:50%;font-size:22px}
+  .cat-grid .cat-pick .cl{font-size:11px}
+  .cat-grid .cat-pick.sel .ce{outline:2px solid var(--accent);outline-offset:2px}
+  .cat-grid .cat-pick:nth-child(even){transform:translateY(10px)}
   .cat-pick{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;width:56px;padding:7px 3px;
     border-radius:13px;border:1px solid var(--line);background:var(--card);cursor:pointer;transition:.12s}
   .cat-pick.sel{border-color:var(--accent);background:var(--accent-soft)}
@@ -1005,7 +1012,7 @@
     <div class="display"><span class="cur" id="dispCur">€</span><span class="num" id="dispNum">0</span></div>
     <div id="catBlock">
       <div class="sheet-label">Категория</div>
-      <div class="cat-strip" id="catStrip"></div>
+      <div class="cat-grid" id="catStrip"></div>
     </div>
     <div id="subcatBlock">
       <div class="sheet-label">Подкатегория <span style="font-weight:400;color:var(--muted2)">— необязательно</span></div>
@@ -1535,7 +1542,7 @@
 <script>
 /* ============ Категории ============ */
 // Production-таксономия (источник для сидирования; подкатегории — стартовые).
-const TAXONOMY_VERSION=2;
+const TAXONOMY_VERSION=3;
 const CATS = {
   expense: [
     {id:'food',name:'Еда',emoji:'🍔',color:'#ff6b6b',subs:['Продукты','Доставка','Перекусы']},
@@ -1552,6 +1559,9 @@ const CATS = {
     {id:'pets',name:'Питомцы',emoji:'🐾',color:'#a9e34b',subs:['Корм','Ветеринар','Аксессуары']},
     {id:'kids',name:'Дети',emoji:'👶',color:'#ffa8a8',subs:['Сад/Школа','Игрушки','Кружки','Одежда']},
     {id:'care',name:'Уход за собой',emoji:'💆',color:'#faa2c1',subs:['Парикмахер','Косметика','Спа']},
+    {id:'sport',name:'Спорт',emoji:'🏋️',color:'#ff922b',subs:['Зал','Инвентарь','Секции']},
+    {id:'taxes',name:'Налоги и сборы',emoji:'🏛️',color:'#748ffc',subs:['Налоги','Штрафы','Комиссии']},
+    {id:'gifts_e',name:'Подарки',emoji:'🎁',color:'#f06595',subs:['Подарки','Праздники','Цветы']},
     {id:'other_e',name:'Другое',emoji:'📦',color:'#868e96',subs:[]},
   ],
   income: [
@@ -1561,6 +1571,8 @@ const CATS = {
     {id:'invest',name:'Инвестиции',emoji:'📈',color:'#0ca678',subs:['Дивиденды','Проценты','Продажа активов']},
     {id:'rent',name:'Аренда',emoji:'🔑',color:'#63e6be',subs:['Аренда жилья']},
     {id:'gift',name:'Подарки',emoji:'🎁',color:'#82c91e',subs:['Подарок','Кэшбэк']},
+    {id:'cashback',name:'Кэшбэк и возвраты',emoji:'💳',color:'#66d9e8',subs:['Кэшбэк','Возврат','Бонусы']},
+    {id:'benefits',name:'Пособия',emoji:'🏦',color:'#3bc9db',subs:['Пенсия','Стипендия','Соцвыплаты']},
     {id:'other_i',name:'Прочее',emoji:'💵',color:'#94d82d',subs:[]},
   ]
 };
