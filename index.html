@@ -1368,6 +1368,8 @@
       <select id="remRepeat"><option value="none">Не повторять</option><option value="daily">Ежедневно</option><option value="weekly">Еженедельно</option><option value="monthly">Ежемесячно</option><option value="yearly">Ежегодно</option></select>
     </div>
     <div class="field"><label>Категория (необязательно)</label><div class="cat-strip" id="remCatStrip"></div></div>
+    <div class="field"><label>Счёт списания</label><select id="remAccount"></select></div>
+    <div class="sec-toggle" style="margin-bottom:14px"><span>Создавать операцию автоматически</span><button class="sw" id="remAutoPost"></button></div>
     <button class="btn-primary" id="remSave">Сохранить</button>
     <button class="btn-del" id="remDelete" style="display:none">Удалить напоминание</button>
   </div>
@@ -2428,13 +2430,41 @@ function renderRecurring(){
   el.innerHTML=items.length?items.map(({r,d})=>eventRow(r,d)).join(''):`<div class="cal-empty">Пока нет регулярных платежей.<br>Добавьте подписку, аренду или зарплату — они будут повторяться автоматически.</div>`;
   $$('#recurList .ev-row').forEach(x=>x.onclick=()=>openReminderEdit(x.dataset.rem));
 }
+// Авто-проводка: регулярные напоминания с autoPost сами создают операции в дни срабатывания
+function processAutoPost(){
+  const today=new Date();today.setHours(23,59,59,999);
+  let nid=Date.now(),created=0;
+  (state.reminders||[]).forEach(r=>{
+    if(r.isActive===false||!r.autoPost)return;
+    const rt=r.repeatType||'none';if(rt==='none')return;
+    let from;
+    if(r.lastPosted){from=new Date(r.lastPosted);from.setDate(from.getDate()+1);}
+    else from=new Date(r.dueDate);
+    from.setHours(0,0,0,0);
+    const occ=AF.Services.Forecast.occurrencesBetween(r,from,today);
+    if(!occ.length)return;
+    const acc=(r.accountId&&state.accounts.find(a=>a.id===r.accountId))?r.accountId:(state.accounts[0]&&state.accounts[0].id);
+    if(!acc)return;
+    occ.forEach(d=>{
+      state.tx.push({id:nid++,type:r.type,amount:r.amount,cat:r.categoryId||catsFor(r.type)[0].id,subcategoryId:null,account:acc,date:d.toISOString().slice(0,10),note:(r.title||'')+' · авто 🔁',receiptPath:null,autoFrom:r.id});
+      created++;
+    });
+    r.lastPosted=occ[occ.length-1].toISOString().slice(0,10);
+  });
+  if(created){save();if(typeof toast==='function')toast(`Авто-операций добавлено: ${created} 🔁`);}
+  return created;
+}
 function markReminderDone(id){const r=(state.reminders||[]).find(x=>x.id===id);if(!r)return;r.done=true;save();renderCalendar();toast('Отмечено выполненным ✓');}
 function openReminderEdit(id){
   remEdit=id||null;
+  $('#remAccount').innerHTML=state.accounts.map(a=>`<option value="${a.id}">${a.emoji} ${esc(a.name)}</option>`).join('');
   if(id){const r=state.reminders.find(x=>x.id===id);remType=r.type;remCat=r.categoryId||null;
     $('#remTitle').value=r.title;$('#remAmount').value=r.amount;$('#remDate').value=r.dueDate;$('#remRepeat').value=r.repeatType||'none';
+    if(r.accountId)$('#remAccount').value=r.accountId;
+    $('#remAutoPost').classList.toggle('on',!!r.autoPost);
     $('#remEditTitle').textContent='Напоминание';$('#remDelete').style.display='block';}
   else{remType='expense';remCat=null;$('#remTitle').value='';$('#remAmount').value='';$('#remDate').value=new Date().toISOString().slice(0,10);$('#remRepeat').value='monthly';
+    $('#remAutoPost').classList.remove('on');
     $('#remEditTitle').textContent='Новое напоминание';$('#remDelete').style.display='none';}
   $('#remTitleErr').classList.remove('show');$('#remAmountErr').classList.remove('show');
   setRemType(remType);
@@ -2452,10 +2482,11 @@ function saveReminder(){
   const title=$('#remTitle').value.trim();const amount=parseFloat($('#remAmount').value);
   if(!title){$('#remTitleErr').classList.add('show');$('#remTitle').focus();return;}
   if(!amount||amount<=0){$('#remAmountErr').classList.add('show');$('#remAmount').focus();return;}
-  const data={title,amount:Math.round(amount*100)/100,type:remType,dueDate:$('#remDate').value||new Date().toISOString().slice(0,10),repeatType:$('#remRepeat').value,categoryId:remCat||null,isActive:true};
+  const autoPost=$('#remAutoPost').classList.contains('on');
+  const data={title,amount:Math.round(amount*100)/100,type:remType,dueDate:$('#remDate').value||new Date().toISOString().slice(0,10),repeatType:$('#remRepeat').value,categoryId:remCat||null,accountId:$('#remAccount').value||null,autoPost,isActive:true};
   if(remEdit){const r=state.reminders.find(x=>x.id===remEdit);Object.assign(r,data);if(r.repeatType!=='none')r.done=false;}
   else state.reminders.push(Object.assign({id:'r'+Date.now().toString(36),done:false,createdAt:Date.now()},data));
-  save();$('#reminderEditOverlay').classList.remove('show');renderCalendar();renderRecurring();renderHeader();toast('Напоминание сохранено ✓');
+  save();processAutoPost();$('#reminderEditOverlay').classList.remove('show');render();renderCalendar();renderRecurring();renderHeader();toast('Напоминание сохранено ✓');
 }
 function deleteReminder(){
   if(!remEdit)return;
@@ -3041,7 +3072,8 @@ function saveTx(){
   if(!editId && aType!=='transfer' && rep!=='none'){
     state.reminders=state.reminders||[];
     const title=note||catById(aCat).name;
-    state.reminders.push({id:'r'+Date.now().toString(36),title,amount:val,type:aType,dueDate:date,repeatType:rep,categoryId:aCat,isActive:true,done:false,createdAt:Date.now()});
+    // autoPost: будущие срабатывания создадут операции сами; lastPosted=date — сегодняшняя уже создана вручную
+    state.reminders.push({id:'r'+Date.now().toString(36),title,amount:val,type:aType,dueDate:date,repeatType:rep,categoryId:aCat,accountId:$('#fAccount').value,autoPost:true,lastPosted:date,isActive:true,done:false,createdAt:Date.now()});
   }
   save();closeSheet();
   anchor=new Date(date);render();buildAccountSelect();
@@ -3660,6 +3692,7 @@ $('#remExp').onclick=()=>setRemType('expense');
 $('#remInc').onclick=()=>setRemType('income');
 $('#remSave').onclick=saveReminder;
 $('#remDelete').onclick=deleteReminder;
+$('#remAutoPost').onclick=()=>$('#remAutoPost').classList.toggle('on');
 // Цели (Goals)
 $('#profGoals').onclick=openGoals;
 $('#goalsClose').onclick=()=>$('#goalsOverlay').classList.remove('show');
@@ -4029,9 +4062,12 @@ function buildAchievements(){
 
 /* ============ Старт ============ */
 load();
+processAutoPost(); // создать операции по регулярным платежам, наступившим с прошлого открытия
 showScreen('scrRecords');
 updateEye();
 if(state.pinHash)pinStart('unlock'); // блокировка на входе
+// при возврате в приложение — догнать пропущенные авто-операции
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(processAutoPost())render(); } });
 
 if('serviceWorker' in navigator){
   let swRefreshing=false;
