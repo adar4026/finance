@@ -231,14 +231,11 @@
   .cat-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
   .cat-strip::-webkit-scrollbar{display:none}
   /* Сетка иконок (вниз, шахматкой) */
-  .emoji-grid{display:flex;flex-wrap:wrap;gap:10px;padding:4px 0 6px;justify-content:flex-start}
+  .emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:4px 0 6px;justify-items:center}
   .emoji-grid .emoji-tile{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);
     display:flex;align-items:center;justify-content:center;font-size:21px;cursor:pointer;transition:.12s;padding:0}
   .emoji-grid .emoji-tile:active{transform:scale(.92)}
   .emoji-grid .emoji-tile.sel{border-color:var(--accent);background:var(--accent-soft);border-width:2px}
-  /* шахматное смещение: каждый чётный столбец чуть ниже */
-  .emoji-grid .emoji-tile:nth-child(even){transform:translateY(7px)}
-  .emoji-grid .emoji-tile:nth-child(even):active{transform:translateY(7px) scale(.92)}
   /* Сетка категорий (вниз, шахматкой) — 4 в ряд */
   .cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 6px;padding:4px 0 10px}
   .cat-grid .cat-pick{width:auto;padding:0 2px;border:none;background:none}
