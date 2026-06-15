@@ -1221,6 +1221,7 @@
     </div>
     <div class="drawer-list">
       <button class="drawer-row" id="drNotif"><span class="dr-ic">🔔</span>Уведомления<span class="prof-badge" id="drNotifBadge"></span></button>
+      <button class="drawer-row" id="drCats"><span class="dr-ic">🗂️</span>Категории</button>
       <button class="drawer-row" id="drGoals"><span class="dr-ic">🎯</span>Цели</button>
       <button class="drawer-row" id="drCalendar"><span class="dr-ic">📅</span>Календарь</button>
       <button class="drawer-row" id="drRecur"><span class="dr-ic">🔁</span>Регулярные платежи</button>
@@ -3513,6 +3514,7 @@ $('#drawerOverlay').onclick=e=>{if(e.target.id==='drawerOverlay')closeDrawer();}
 $('#drawerHead').onclick=()=>{closeDrawer();openProfile();};
 const drGo=fn=>()=>{closeDrawer();fn();};
 $('#drNotif').onclick=drGo(openNotif);
+$('#drCats').onclick=drGo(openCatMgr);
 $('#drGoals').onclick=drGo(openGoals);
 $('#drCalendar').onclick=drGo(openCalendar);
 $('#drRecur').onclick=drGo(openRecurring);
