@@ -196,7 +196,7 @@
   .drawer-row .prof-badge{margin-left:auto}
   .drawer-sep{height:1px;background:var(--line);margin:8px 22px}
   .sheet{background:var(--bg);width:100%;max-width:560px;border-radius:26px 26px 0 0;
-    padding:16px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:var(--shadow);
+    padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));box-shadow:var(--shadow);
     animation:up .25s ease;max-height:96vh;overflow-y:auto}
   @keyframes up{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
   .sheet .grab{width:40px;height:4px;border-radius:3px;background:var(--line);margin:0 auto 14px}
@@ -1062,7 +1062,7 @@
       <button class="op" data-k="clear">C</button><button data-k="back-hold" style="visibility:hidden"></button><button class="save" id="saveBtn">✓</button>
     </div>
     <button class="btn-del" id="delBtn" style="display:none">Удалить операцию</button>
-    <button class="x" id="closeSheet" style="position:absolute;top:10px;right:12px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--line);border-radius:50%;font-size:24px;line-height:1;color:var(--text);cursor:pointer;z-index:30;padding:0">×</button>
+    <button class="x" id="closeSheet" style="position:absolute;top:calc(env(safe-area-inset-top) + 8px);right:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--line);border-radius:50%;font-size:24px;line-height:1;color:var(--text);cursor:pointer;z-index:40;padding:0">×</button>
   </div>
 </div>
 
