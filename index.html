@@ -685,21 +685,16 @@
   /* ===== Главная: дашборд ===== */
   .capital{background:var(--cap-grad);border-radius:22px;color:#fff;box-shadow:0 12px 28px rgba(109,93,246,.28);margin-bottom:16px;overflow:hidden}
   .cap-simple{padding:15px 16px}
-  .cap-top{padding:16px 16px 13px;position:relative}
-  .cap-deco{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
-  .cap-deco svg{position:absolute;left:0;bottom:-6px;width:100%;height:88%;opacity:.55}
-  .cap-brand{position:absolute;right:18px;top:62%;transform:translateY(-50%);
-    font-family:'Snell Roundhand','Apple Chancery','Segoe Script',cursive;font-size:32px;font-weight:600;
-    color:rgba(255,255,255,.6);text-shadow:0 1px 6px rgba(80,60,180,.25);white-space:nowrap}
+  .cap-top{padding:16px 16px 13px;position:relative;background:url(wave-card.jpg) center top/100% 100% no-repeat;aspect-ratio:760/337}
   .cap-head,.cap-top .cap-val{position:relative;z-index:1}
   .cap-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
   .cap-l{font-size:14.5px;opacity:.95;font-weight:600}
   .cap-actions{display:flex;align-items:center;gap:8px}
   .cap-cur{font-size:12px;background:rgba(255,255,255,.2);padding:4px 11px;border-radius:9px;font-weight:600}
   .cap-dots{font-size:18px;opacity:.85;cursor:pointer;padding:0 2px;letter-spacing:1px}
-  .cap-menu{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;width:38px;height:34px;background:rgba(255,255,255,.18);border:none;border-radius:11px;cursor:pointer;flex-shrink:0;padding:0}
-  .cap-menu:active{background:rgba(255,255,255,.28)}
-  .cap-menu span{display:block;width:18px;height:2.4px;background:#fff;border-radius:2px}
+  .cap-menu{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;width:44px;height:40px;background:transparent;border:none;border-radius:11px;cursor:pointer;flex-shrink:0;padding:0}
+  .cap-menu:active{background:rgba(255,255,255,.18)}
+  .cap-menu span{display:block;width:18px;height:2.4px;background:transparent;border-radius:2px}
   .cap-val{font-size:30px;font-weight:800;letter-spacing:-.6px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .cap-simple .cap-val{font-size:23px;margin-top:4px}
   #capVal{font-size:24px}
@@ -851,17 +846,12 @@
   <div class="screen active" id="scrRecords">
     <div class="capital">
       <div class="cap-top">
-        <div class="cap-deco" aria-hidden="true">
-          <svg id="capWaveSvg" viewBox="0 0 400 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
-          <span class="cap-brand">Al Finance</span>
-        </div>
         <div class="cap-head">
           <span class="cap-l">Общий капитал <span id="capEye" style="cursor:pointer">👁</span></span>
           <button class="cap-menu" id="capDots" aria-label="Меню"><span></span><span></span><span></span></button>
         </div>
         <div class="cap-val" id="capVal">€0</div>
       </div>
-      <svg class="cap-wave" viewBox="0 0 1200 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,22 C260,42 460,6 680,18 C900,30 1050,10 1200,22 L1200,40 L0,40 Z" fill="#fff"/></svg>
       <div class="cap-bottom">
         <div class="cib2"><span class="ci2-ic inc">↗</span><div class="ci2-l">Доходы</div><div class="ci2-v" id="capInc">+€0</div><div class="ci2-s" id="capIncN">0 операций</div></div>
         <div class="cib2"><span class="ci2-ic exp">↘</span><div class="ci2-l">Расходы</div><div class="ci2-v" id="capExp">−€0</div><div class="ci2-s" id="capExpN">0 операций</div></div>
@@ -4008,34 +3998,6 @@ function buildAchievements(){
 }
 
 /* ============ Старт ============ */
-// Декоративные текучие волны на карточке капитала (плотный пучок тонких нитей — как на референсе)
-function buildCapWaves(){
-  const svg=document.getElementById('capWaveSvg');if(!svg)return;
-  const W=400,H=120;let p='';
-  // центральная линия ленты — плавный «свуш»: поднимается слева к гребню, затем стекает вправо
-  const center=xn=> H*0.60 - 28*Math.sin(Math.min(1,xn*1.12)*Math.PI) + 12*xn;
-  function bundle(N,spread,ampMul,freq,phase0,brightMul,swMul){
-    for(let i=0;i<N;i++){
-      const t=i/(N-1), off=(t-0.5)*2;                 // -1..1 смещение нити от оси ленты
-      const phase=phase0+off*1.8;
-      let d='';
-      for(let x=0;x<=W;x+=5){
-        const xn=x/W, env=Math.sin(xn*Math.PI);       // лента раздувается к центру по ширине
-        const amp=8+ampMul*env;
-        const y=center(xn) + off*spread*env + amp*Math.sin(x*freq+phase) + 4*Math.sin(x*0.013+t*5);
-        d+=(x?'L':'M')+x+','+y.toFixed(1)+' ';
-      }
-      const bright=Math.pow(Math.cos(off*1.3),2);       // ярче у оси ленты, тускнеет к краям
-      const op=(0.05+brightMul*bright).toFixed(3);
-      const sw=(0.35+swMul*bright).toFixed(2);
-      p+=`<path d="${d}" fill="none" stroke="#fff" stroke-opacity="${op}" stroke-width="${sw}"/>`;
-    }
-  }
-  bundle(64,26,22,0.022,0,0.32,0.55);   // основная яркая лента
-  bundle(40,18,15,0.028,1.4,0.16,0.35); // тонкая дымка сверху
-  svg.innerHTML=p;
-}
-buildCapWaves();
 load();
 showScreen('scrRecords');
 updateEye();
