@@ -200,6 +200,12 @@
     animation:up .25s ease;max-height:96vh;overflow-y:auto}
   @keyframes up{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
   .sheet .grab{width:40px;height:4px;border-radius:3px;background:var(--line);margin:0 auto 14px}
+  .modal{background:var(--bg);width:100%;max-width:560px;border-radius:26px 26px 0 0;
+    padding:18px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -8px 40px rgba(0,0,0,.25);
+    animation:up .25s ease;max-height:90vh;overflow-y:auto}
+  .modal h2{font-size:19px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+  .modal h2 .x{width:34px;height:34px;border-radius:50%;background:var(--card2);border:none;color:var(--text);
+    font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .seg{display:flex;background:var(--card);border-radius:13px;padding:4px;margin-bottom:14px;border:1px solid var(--line)}
   .seg button{flex:1;border:none;background:none;padding:13px;border-radius:11px;color:var(--muted);font-size:15px;font-weight:600;cursor:pointer;transition:.15s}
   .seg button.on-exp{background:var(--expense);color:#fff}
