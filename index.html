@@ -121,6 +121,7 @@
   .panel h3 .hint{font-size:11.5px;color:var(--muted);font-weight:400}
   .chart-box{position:relative;height:230px}
   .chart-box.tall{height:260px}
+  .chart-box.cap{height:300px}
   .catlist{display:flex;flex-direction:column;gap:11px;margin-top:14px}
   .catrow{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer;border-radius:9px;margin:0 -6px;padding:3px 6px;transition:background .12s}
   .catrow:active{background:var(--accent-soft)}
@@ -863,7 +864,7 @@
         <button data-r="1y">1Г</button>
         <button data-r="all">Всё</button>
       </div>
-      <div class="chart-box tall"><canvas id="capChart"></canvas></div>
+      <div class="chart-box cap"><canvas id="capChart"></canvas></div>
     </div>
     <div class="panel">
       <div class="seg-ie ana-cat-seg" id="anaCatSeg">
@@ -1733,45 +1734,65 @@ function capPoints(range){
   const now=new Date(Math.max(Date.now(),...ds,0));now.setHours(23,59,59,999);
   const out=[];const push=(d,label)=>out.push({label,value:Math.round(totalCapital(new Date(d))*100)/100});
   const dayLbl=d=>d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  const monLbl=d=>[cap(d.toLocaleDateString('ru-RU',{month:'short'})),String(d.getFullYear())]; // двухстрочно: месяц / год
   if(range==='7d')for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);push(d,dayLbl(d));}
   else if(range==='1m')for(let i=29;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);push(d,dayLbl(d));}
   else if(range==='3m')for(let i=12;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i*7);push(d,dayLbl(d));}
-  else if(range==='6m')for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i+1,0,23,59,59);push(d,d.toLocaleDateString('ru-RU',{month:'short'}));}
-  else if(range==='1y')for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i+1,0,23,59,59);push(d,d.toLocaleDateString('ru-RU',{month:'short'}));}
+  else if(range==='6m')for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i+1,0,23,59,59);push(d,monLbl(d));}
+  else if(range==='1y')for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i+1,0,23,59,59);push(d,monLbl(d));}
   else{
     const ds=state.tx.map(t=>new Date(t.date));const first=ds.length?new Date(Math.min(...ds)):new Date();
     const months=Math.max(1,(now.getFullYear()-first.getFullYear())*12+now.getMonth()-first.getMonth());
     const step=Math.ceil(months/11)||1;
-    for(let i=months;i>=0;i-=step){const d=new Date(now.getFullYear(),now.getMonth()-i+1,0,23,59,59);push(d,d.toLocaleDateString('ru-RU',{month:'short',year:'2-digit'}));}
+    for(let i=months;i>=0;i-=step){const d=new Date(now.getFullYear(),now.getMonth()-i+1,0,23,59,59);push(d,monLbl(d));}
   }
   return out;
 }
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+// Полое кольцо-маркер на конце линии + пузырёк значения (как в референсе)
 const capBubble={id:'capbubble',afterDatasetsDraw(chart){
   const m=chart.getDatasetMeta(0);if(!m||!m.data.length)return;
   const last=m.data[m.data.length-1],v=chart.data.datasets[0].data.slice(-1)[0];
-  const ctx=chart.ctx,css=getComputedStyle(document.documentElement),acc=css.getPropertyValue('--accent').trim();
-  const txt=num(v);ctx.save();ctx.font='700 11px -apple-system,system-ui,sans-serif';
-  const w=ctx.measureText(txt).width+16,h=22;let x=last.x-w/2,y=last.y-h-9;
-  x=Math.max(2,Math.min(x,chart.width-w-2));if(y<2)y=last.y+9;
-  ctx.fillStyle=acc;roundRect(ctx,x,y,w,h,8);ctx.fill();
+  const ctx=chart.ctx,css=getComputedStyle(document.documentElement);
+  const line=css.getPropertyValue('--income').trim(),cardBg=css.getPropertyValue('--card').trim();
+  ctx.save();
+  // пузырёк значения над маркером
+  const txt=num(v);ctx.font='700 11.5px -apple-system,system-ui,sans-serif';
+  const w=ctx.measureText(txt).width+18,h=24;let x=last.x-w/2,y=last.y-h-12;
+  x=Math.max(2,Math.min(x,chart.width-w-2));if(y<2)y=last.y+12;
+  ctx.fillStyle=line;roundRect(ctx,x,y,w,h,9);ctx.fill();
   ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,x+w/2,y+h/2);
-  ctx.beginPath();ctx.arc(last.x,last.y,4.5,0,7);ctx.fillStyle=acc;ctx.fill();
-  ctx.strokeStyle=css.getPropertyValue('--card').trim();ctx.lineWidth=2;ctx.stroke();ctx.restore();
+  // полое кольцо на точке: белая заливка + цветная обводка
+  ctx.beginPath();ctx.arc(last.x,last.y,6,0,7);ctx.fillStyle=cardBg;ctx.fill();
+  ctx.lineWidth=3;ctx.strokeStyle=line;ctx.stroke();
+  ctx.restore();
 }};
 let capChart;
 function renderCapChart(){
   const pts=capPoints(homeRange);
-  const css=getComputedStyle(document.documentElement),acc=css.getPropertyValue('--accent').trim(),muted=css.getPropertyValue('--muted').trim(),grid=css.getPropertyValue('--line').trim();
+  const css=getComputedStyle(document.documentElement);
+  const line=css.getPropertyValue('--income').trim(),muted=css.getPropertyValue('--muted2').trim(),grid=css.getPropertyValue('--line').trim();
   if(capChart)capChart.destroy();
   const cv=$('#capChart');
+  // вертикальный градиент заливки: насыщенный сверху → прозрачный снизу
+  const ctx=cv.getContext('2d');
+  const grad=ctx.createLinearGradient(0,0,0,cv.clientHeight||300);
+  grad.addColorStop(0,line+'33');grad.addColorStop(.55,line+'14');grad.addColorStop(1,line+'00');
   capChart=new Chart(cv,{type:'line',
-    data:{labels:pts.map(p=>p.label),datasets:[{data:pts.map(p=>p.value),borderColor:acc,borderWidth:2.5,
-      tension:.38,fill:true,backgroundColor:acc+'1f',pointRadius:0,pointHoverRadius:4}]},
-    options:{maintainAspectRatio:false,layout:{padding:{top:24,right:14,left:2}},
+    data:{labels:pts.map(p=>p.label),datasets:[{data:pts.map(p=>p.value),borderColor:line,borderWidth:3,
+      tension:.45,fill:true,backgroundColor:grad,pointRadius:0,pointHoverRadius:5,
+      borderCapStyle:'round',borderJoinStyle:'round'}]},
+    options:{maintainAspectRatio:false,layout:{padding:{top:30,right:16,left:4,bottom:4}},
+      interaction:{intersect:false,mode:'index'},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>num(c.raw)}}},
-      scales:{x:{grid:{display:false},ticks:{color:muted,maxTicksLimit:5,maxRotation:0,autoSkip:true}},
-        y:{position:'right',grid:{color:grid},ticks:{color:muted,maxTicksLimit:5,callback:v=>v>=1000||v<=-1000?(Math.round(v/100)/10)+'k':v}}}},
+      scales:{
+        x:{grid:{display:false},border:{display:false},
+           ticks:{color:muted,font:{size:12.5},maxTicksLimit:6,maxRotation:0,autoSkip:true,padding:8}},
+        y:{position:'left',border:{display:false},
+           grid:{color:grid,drawTicks:false,lineWidth:1.2,borderDash:[5,5]},
+           ticks:{color:muted,font:{size:12.5},maxTicksLimit:5,padding:10,
+             callback:v=>Math.abs(v)>=1000?(Math.round(v/100)/10)+'k':v}}}},
     plugins:[capBubble]});
 }
 // «Суббота, 13 июня 2026 г.» — день недели + дата + год (как в Money Flow)
