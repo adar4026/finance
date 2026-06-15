@@ -1010,6 +1010,18 @@
       <div class="m" id="accField"><label>Счёт</label><select id="fAccount"></select></div>
       <div class="m"><label>Дата</label><input type="date" id="fDate"></div>
     </div>
+    <div id="scheduleBlock" style="margin-bottom:12px">
+      <div class="sheet-label">Расписание <span style="font-weight:400;color:var(--muted2)">— повтор</span></div>
+      <div class="metarow"><div class="m" style="flex:1"><label>Повторять</label>
+        <select id="fRepeat">
+          <option value="none">Не повторять</option>
+          <option value="daily">Ежедневно</option>
+          <option value="weekly">Еженедельно</option>
+          <option value="monthly">Ежемесячно</option>
+          <option value="yearly">Ежегодно</option>
+        </select>
+      </div></div>
+    </div>
     <div class="field" style="margin-bottom:12px">
       <input type="text" id="fNote" placeholder="Комментарий (необязательно)">
     </div>
@@ -1026,7 +1038,7 @@
       <button class="op" data-k="clear">C</button><button data-k="back-hold" style="visibility:hidden"></button><button class="save" id="saveBtn">✓</button>
     </div>
     <button class="btn-del" id="delBtn" style="display:none">Удалить операцию</button>
-    <button class="x" id="closeSheet" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:26px;color:var(--muted);cursor:pointer">×</button>
+    <button class="x" id="closeSheet" style="position:absolute;top:10px;right:12px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--line);border-radius:50%;font-size:24px;line-height:1;color:var(--text);cursor:pointer;z-index:30;padding:0">×</button>
   </div>
 </div>
 
@@ -2914,6 +2926,7 @@ function openSheet(id){
     $('#fDate').value=new Date().toISOString().slice(0,10);$('#fNote').value='';
     $('#delBtn').style.display='none';
   }
+  $('#fRepeat').value='none';
   setType(aType,true);
   updateDisplay();
   $('#overlay').classList.add('show');
@@ -2934,6 +2947,7 @@ function setType(t,keepCat){
   $('#catBlock').style.display=isT?'none':'block';
   $('#subcatBlock').style.display=isT?'none':'block';
   $('#receiptBlock').style.display=isT?'none':'block';
+  $('#scheduleBlock').style.display=isT?'none':'block';
   $('#accField').style.display=isT?'none':'block';
   if(isT)return;
   renderReceipt();
@@ -3022,9 +3036,17 @@ function saveTx(){
   }else{
     state.tx.push({id:Date.now(),type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note,receiptPath:aReceipt||null});
   }
+  // Расписание: при выбранном повторе создаём регулярное напоминание (для новой операции)
+  const rep=$('#fRepeat').value;
+  if(!editId && aType!=='transfer' && rep!=='none'){
+    state.reminders=state.reminders||[];
+    const title=note||catById(aCat).name;
+    state.reminders.push({id:'r'+Date.now().toString(36),title,amount:val,type:aType,dueDate:date,repeatType:rep,categoryId:aCat,isActive:true,done:false,createdAt:Date.now()});
+  }
   save();closeSheet();
   anchor=new Date(date);render();buildAccountSelect();
-  toast(editId?'Сохранено ✓':(aType==='transfer'?'Перевод добавлен ✓':aType==='income'?'Доход добавлен ✓':'Расход добавлен ✓'));
+  const repToast=(!editId&&aType!=='transfer'&&rep!=='none')?' · повтор задан 🔁':'';
+  toast((editId?'Сохранено ✓':(aType==='transfer'?'Перевод добавлен ✓':aType==='income'?'Доход добавлен ✓':'Расход добавлен ✓'))+repToast);
 }
 function delTx(){
   if(!editId)return;
