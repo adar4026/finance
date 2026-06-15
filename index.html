@@ -1221,9 +1221,15 @@
 <div class="overlay" id="catTxOverlay" style="align-items:flex-start">
   <div class="detail-sheet">
     <div class="detail-top">
-      <div class="nm" id="catTxTitle">Категория <span id="catTxLabel" style="font-size:13px;color:var(--muted);font-weight:500"></span></div>
+      <div class="nm" id="catTxTitle">Категория</div>
       <button class="iconbtn" id="catTxClose">×</button>
     </div>
+    <div class="seg-ie" id="catTxSeg" style="margin:8px 0 6px">
+      <button data-m="month" class="on">Месяц</button>
+      <button data-m="year">Год</button>
+      <button data-m="all">Всё</button>
+    </div>
+    <div class="navrow" id="catTxNav" style="margin:2px 0 6px"><button id="catTxPrev">‹</button><div class="lbl" id="catTxNavLbl">—</div><button id="catTxNext">›</button></div>
     <div class="cat-tx-sum" id="catTxSum"></div>
     <div id="catTxList" style="margin-top:8px"></div>
   </div>
@@ -2109,18 +2115,37 @@ const pieLabels={id:'pieLabels',afterDatasetsDraw(chart){
   ctx.restore();
 }};
 // Операции выбранной категории за период (по умолчанию — расходы текущего периода Аналитики)
+let catTxIds=[],catTxType='expense',catTxName='',catTxMode='month',catTxAnchor=new Date();
 function openCatTx(catIds,label,range,rangeLabel,type){
-  const ty=type||'expense';
-  const r=range||periodRange();
-  const lbl=rangeLabel||periodLabel();
-  const list=state.tx.filter(t=>t.type===ty&&catIds.includes(t.cat)&&inAnaRange(t,r));
+  catTxIds=catIds;catTxType=type||'expense';catTxName=label;
+  catTxMode='month';
+  catTxAnchor=(range&&range.from)?new Date(range.from):new Date();
+  $$('#catTxSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m==='month'));
+  renderCatTx();
+  $('#catTxOverlay').classList.add('show');
+}
+function catTxRange(){
+  const a=catTxAnchor,y=a.getFullYear(),m=a.getMonth();
+  if(catTxMode==='year')return {from:new Date(y,0,1),to:new Date(y,11,31,23,59,59),lbl:String(y)};
+  if(catTxMode==='all')return {from:new Date(2000,0,1),to:new Date(2999,0,1),lbl:'Всё время'};
+  const lbl=a.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+  return {from:new Date(y,m,1),to:new Date(y,m+1,0,23,59,59),lbl:lbl.charAt(0).toUpperCase()+lbl.slice(1)};
+}
+function renderCatTx(){
+  const r=catTxRange(),ty=catTxType;
+  const list=state.tx.filter(t=>t.type===ty&&catTxIds.includes(t.cat)&&inAnaRange(t,r));
   const sum=list.reduce((s,t)=>s+t.amount,0);
-  $('#catTxTitle').firstChild.textContent=label+' ';
-  $('#catTxLabel').textContent=lbl;
+  $('#catTxTitle').textContent=catTxName;
+  $('#catTxNavLbl').textContent=r.lbl;
+  $('#catTxNav').style.visibility=catTxMode==='all'?'hidden':'visible';
   $('#catTxSum').textContent='Всего: '+(ty==='income'?'+':'−')+num(sum)+' · '+list.length+' '+plural(list.length,'операция','операции','операций');
   $('#catTxList').innerHTML=groupedTxHtml(list);
   $$('#catTxList .tx').forEach(x=>x.onclick=()=>openSheet(x.dataset.id));
-  $('#catTxOverlay').classList.add('show');
+}
+function catTxShift(dir){
+  if(catTxMode==='month')catTxAnchor=new Date(catTxAnchor.getFullYear(),catTxAnchor.getMonth()+dir,1);
+  else if(catTxMode==='year')catTxAnchor=new Date(catTxAnchor.getFullYear()+dir,0,1);
+  renderCatTx();
 }
 
 // ===== Поиск операций (лупа в шапке) =====
@@ -3377,6 +3402,9 @@ $('#searchInput').oninput=e=>runSearch(e.target.value);
 $('#searchClear').onclick=()=>{$('#searchInput').value='';runSearch('');$('#searchInput').focus();};
 $('#catTxClose').onclick=()=>$('#catTxOverlay').classList.remove('show');
 $('#catTxOverlay').onclick=e=>{if(e.target.id==='catTxOverlay')$('#catTxOverlay').classList.remove('show');};
+$('#catTxSeg').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;catTxMode=b.dataset.m;$$('#catTxSeg button').forEach(x=>x.classList.toggle('on',x===b));renderCatTx();};
+$('#catTxPrev').onclick=()=>catTxShift(-1);
+$('#catTxNext').onclick=()=>catTxShift(1);
 // Кнопка + открывает меню добавления (Расход/Доход/Перевод/Чек встроены сюда)
 $('#addBtn').onclick=()=>$('#addMenu').classList.add('show');
 $('#addMenuClose').onclick=()=>$('#addMenu').classList.remove('show');
