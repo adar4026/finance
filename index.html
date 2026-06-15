@@ -237,7 +237,14 @@
   .emoji-grid .emoji-tile:active{transform:scale(.92)}
   .emoji-grid .emoji-tile.sel{border-color:var(--accent);background:var(--accent-soft);border-width:2px}
   /* Сетка категорий (вниз, шахматкой) — 4 в ряд */
-  .cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 6px;padding:4px 0 10px}
+  .cat-toggle{display:flex;align-items:center;gap:11px;width:100%;padding:12px 14px;border:1px solid var(--line);
+    border-radius:14px;background:var(--card);color:var(--text);font-family:inherit;cursor:pointer;text-align:left}
+  .cat-toggle:active{background:var(--card2)}
+  .cat-toggle .ct-ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--accent-soft);flex-shrink:0}
+  .cat-toggle .ct-nm{flex:1;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cat-toggle .ct-chev{color:var(--muted2);font-size:15px;transition:transform .2s}
+  .cat-toggle.open .ct-chev{transform:rotate(180deg)}
+  .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 6px;padding:10px 0 10px;margin-top:8px;border-top:1px solid var(--line)}
   .cat-grid .cat-pick{width:auto;padding:0 2px;border:none;background:none}
   .cat-grid .cat-pick .ce{width:46px;height:46px;border-radius:50%;font-size:22px}
   .cat-grid .cat-pick .cl{font-size:11px}
@@ -1008,7 +1015,12 @@
     <div class="display"><span class="cur" id="dispCur">€</span><span class="num" id="dispNum">0</span></div>
     <div id="catBlock">
       <div class="sheet-label">Категория</div>
-      <div class="cat-grid" id="catStrip"></div>
+      <button class="cat-toggle" id="catToggle" type="button">
+        <span class="ct-ic" id="catToggleIc">🍔</span>
+        <span class="ct-nm" id="catToggleNm">Выбрать категорию</span>
+        <span class="ct-chev" id="catToggleChev">▾</span>
+      </button>
+      <div class="cat-grid" id="catStrip" style="display:none"></div>
     </div>
     <div id="subcatBlock">
       <div class="sheet-label">Подкатегория <span style="font-weight:400;color:var(--muted2)">— необязательно</span></div>
@@ -3008,9 +3020,21 @@ function setType(t,keepCat){
   $$('#catStrip .cat-pick').forEach(el=>el.onclick=()=>{
     aCat=el.dataset.cat;aSubcat=null;
     $$('#catStrip .cat-pick').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');
+    updateCatToggle();setCatOpen(false); // выбрали → свернуть
     renderSubcats();
   });
+  setCatOpen(false); // по умолчанию свёрнуто
+  updateCatToggle();
   renderSubcats();
+}
+function updateCatToggle(){
+  const c=catById(aCat);if(!c)return;
+  $('#catToggleIc').textContent=c.emoji;$('#catToggleIc').style.background=(c.color||'#6d5df6')+'22';
+  $('#catToggleNm').textContent=c.name;
+}
+function setCatOpen(open){
+  $('#catStrip').style.display=open?'grid':'none';
+  $('#catToggle').classList.toggle('open',open);
 }
 function renderSubcats(){
   if(aType==='transfer')return;
@@ -3383,6 +3407,7 @@ $('#segInc').onclick=()=>setType('income');
 $('#segTrans').onclick=()=>setType('transfer');
 $('#saveBtn').onclick=saveTx;
 $('#delBtn').onclick=delTx;
+$('#catToggle').onclick=()=>setCatOpen($('#catStrip').style.display==='none');
 $$('.keypad button[data-k]').forEach(b=>{const k=b.dataset.k;if(k&&k!=='back-hold')b.onclick=()=>key(k);});
 
 $('#periods').querySelectorAll('button').forEach(b=>b.onclick=()=>{
