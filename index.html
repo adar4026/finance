@@ -1217,6 +1217,7 @@
       <button class="drawer-row" id="drNotif"><span class="dr-ic">🔔</span>Уведомления<span class="prof-badge" id="drNotifBadge"></span></button>
       <button class="drawer-row" id="drGoals"><span class="dr-ic">🎯</span>Цели</button>
       <button class="drawer-row" id="drCalendar"><span class="dr-ic">📅</span>Календарь</button>
+      <button class="drawer-row" id="drRecur"><span class="dr-ic">🔁</span>Регулярные платежи</button>
       <button class="drawer-row" id="drHealth"><span class="dr-ic">❤️</span>Финансовое здоровье</button>
       <button class="drawer-row" id="drStats"><span class="dr-ic">📊</span>Статистика</button>
       <div class="drawer-sep"></div>
@@ -1336,6 +1337,16 @@
     <div class="field"><label>Категория (необязательно)</label><div class="cat-strip" id="remCatStrip"></div></div>
     <button class="btn-primary" id="remSave">Сохранить</button>
     <button class="btn-del" id="remDelete" style="display:none">Удалить напоминание</button>
+  </div>
+</div>
+
+<!-- Регулярные платежи (повторяющиеся напоминания) -->
+<div class="overlay" id="recurOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top"><div class="nm">🔁 Регулярные платежи</div><button class="iconbtn" id="recurClose">×</button></div>
+    <div id="recurList" style="margin-top:8px"></div>
+    <button class="set-btn" id="addRecurBtn" style="border-style:dashed;color:var(--accent);justify-content:center"><span>＋ Добавить платёж</span></button>
+    <div style="height:24px"></div>
   </div>
 </div>
 
@@ -2374,6 +2385,15 @@ function eventRow(r,d){
     <span class="ev-amt ${r.type==='income'?'inc':'exp'}">${r.type==='income'?'+':'−'}${num(r.amount)}</span>
   </div>`;
 }
+function recurringReminders(){return activeReminders().filter(r=>(r.repeatType||'none')!=='none');}
+function openRecurring(){renderRecurring();$('#recurOverlay').classList.add('show');}
+function renderRecurring(){
+  const el=$('#recurList');if(!el)return;
+  const t=todayStart();
+  const items=recurringReminders().map(r=>({r,d:AF.Services.Forecast.nextOccurrence(r,t)||new Date(r.dueDate)})).sort((a,b)=>a.d-b.d);
+  el.innerHTML=items.length?items.map(({r,d})=>eventRow(r,d)).join(''):`<div class="cal-empty">Пока нет регулярных платежей.<br>Добавьте подписку, аренду или зарплату — они будут повторяться автоматически.</div>`;
+  $$('#recurList .ev-row').forEach(x=>x.onclick=()=>openReminderEdit(x.dataset.rem));
+}
 function markReminderDone(id){const r=(state.reminders||[]).find(x=>x.id===id);if(!r)return;r.done=true;save();renderCalendar();toast('Отмечено выполненным ✓');}
 function openReminderEdit(id){
   remEdit=id||null;
@@ -2401,12 +2421,12 @@ function saveReminder(){
   const data={title,amount:Math.round(amount*100)/100,type:remType,dueDate:$('#remDate').value||new Date().toISOString().slice(0,10),repeatType:$('#remRepeat').value,categoryId:remCat||null,isActive:true};
   if(remEdit){const r=state.reminders.find(x=>x.id===remEdit);Object.assign(r,data);if(r.repeatType!=='none')r.done=false;}
   else state.reminders.push(Object.assign({id:'r'+Date.now().toString(36),done:false,createdAt:Date.now()},data));
-  save();$('#reminderEditOverlay').classList.remove('show');renderCalendar();renderHeader();toast('Напоминание сохранено ✓');
+  save();$('#reminderEditOverlay').classList.remove('show');renderCalendar();renderRecurring();renderHeader();toast('Напоминание сохранено ✓');
 }
 function deleteReminder(){
   if(!remEdit)return;
   state.reminders=state.reminders.filter(r=>r.id!==remEdit);
-  save();$('#reminderEditOverlay').classList.remove('show');renderCalendar();toast('Напоминание удалено');
+  save();$('#reminderEditOverlay').classList.remove('show');renderCalendar();renderRecurring();toast('Напоминание удалено');
 }
 
 /* ============ Финансовое здоровье (Screen 9) ============ */
@@ -3489,6 +3509,10 @@ const drGo=fn=>()=>{closeDrawer();fn();};
 $('#drNotif').onclick=drGo(openNotif);
 $('#drGoals').onclick=drGo(openGoals);
 $('#drCalendar').onclick=drGo(openCalendar);
+$('#drRecur').onclick=drGo(openRecurring);
+$('#recurClose').onclick=()=>$('#recurOverlay').classList.remove('show');
+$('#recurOverlay').onclick=e=>{if(e.target.id==='recurOverlay')$('#recurOverlay').classList.remove('show');};
+$('#addRecurBtn').onclick=()=>openReminderEdit(null);
 $('#drHealth').onclick=drGo(openHealth);
 $('#drStats').onclick=drGo(openStats);
 $('#drSecurity').onclick=drGo(openSecurity);
@@ -3544,7 +3568,7 @@ $('#budgetEditOverlay').onclick=e=>{if(e.target.id==='budgetEditOverlay')$('#bud
 $('#budSave').onclick=saveBudget;
 $('#budDelete').onclick=deleteBudget;
 $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay','#recurOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Statistics (Screen 14) ============ */
 let statsPeriod='year'; // 'month'|'year'|'all'
