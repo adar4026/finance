@@ -178,6 +178,23 @@
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);display:none;
     align-items:flex-end;justify-content:center;z-index:60}
   .overlay.show{display:flex}
+  /* ===== Боковая выезжающая панель (drawer) ===== */
+  .overlay.drawer-ov{align-items:stretch;justify-content:flex-start}
+  .drawer{background:var(--bg);width:84%;max-width:330px;height:100%;display:flex;flex-direction:column;
+    overflow-y:auto;box-shadow:0 0 40px rgba(0,0,0,.3);animation:slideR .26s cubic-bezier(.22,.61,.36,1)}
+  @keyframes slideR{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+  .drawer-head{background:var(--cap-grad);color:#fff;padding:max(22px,env(safe-area-inset-top)) 20px 20px;
+    display:flex;align-items:center;gap:14px;cursor:pointer}
+  .drawer-head .avatar{width:54px;height:54px;font-size:21px;border:2px solid rgba(255,255,255,.5)}
+  .drawer-head .dh-name{font-size:19px;font-weight:700;line-height:1.2}
+  .drawer-head .dh-sub{font-size:12px;opacity:.85;margin-top:2px}
+  .drawer-list{padding:8px 0 20px;flex:1}
+  .drawer-row{display:flex;align-items:center;gap:16px;width:100%;padding:14px 22px;border:none;background:none;
+    color:var(--text);font-size:16px;font-weight:600;font-family:inherit;text-align:left;cursor:pointer}
+  .drawer-row:active{background:var(--card2)}
+  .drawer-row .dr-ic{font-size:20px;width:26px;text-align:center;flex-shrink:0}
+  .drawer-row .prof-badge{margin-left:auto}
+  .drawer-sep{height:1px;background:var(--line);margin:8px 22px}
   .sheet{background:var(--bg);width:100%;max-width:560px;border-radius:26px 26px 0 0;
     padding:16px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:var(--shadow);
     animation:up .25s ease;max-height:96vh;overflow-y:auto}
@@ -1186,6 +1203,31 @@
   </div>
 </div>
 
+<!-- Боковая панель (drawer) — выезжает по гамбургеру -->
+<div class="overlay drawer-ov" id="drawerOverlay">
+  <div class="drawer">
+    <div class="drawer-head" id="drawerHead">
+      <div class="avatar lg" id="drawerAvatar"></div>
+      <div>
+        <div class="dh-name" id="drawerName">Профиль</div>
+        <div class="dh-sub">Нажмите, чтобы изменить</div>
+      </div>
+    </div>
+    <div class="drawer-list">
+      <button class="drawer-row" id="drNotif"><span class="dr-ic">🔔</span>Уведомления<span class="prof-badge" id="drNotifBadge"></span></button>
+      <button class="drawer-row" id="drGoals"><span class="dr-ic">🎯</span>Цели</button>
+      <button class="drawer-row" id="drCalendar"><span class="dr-ic">📅</span>Календарь</button>
+      <button class="drawer-row" id="drHealth"><span class="dr-ic">❤️</span>Финансовое здоровье</button>
+      <button class="drawer-row" id="drStats"><span class="dr-ic">📊</span>Статистика</button>
+      <div class="drawer-sep"></div>
+      <button class="drawer-row" id="drSecurity"><span class="dr-ic">🔐</span>Безопасность</button>
+      <button class="drawer-row" id="drTheme"><span class="dr-ic" id="drThemeIc">🌙</span><span id="drThemeLbl">Тёмная тема</span></button>
+      <button class="drawer-row" id="drExport"><span class="dr-ic">📤</span>Экспорт и копии</button>
+      <button class="drawer-row" id="drMore"><span class="dr-ic">⚙️</span>Все настройки</button>
+    </div>
+  </div>
+</div>
+
 <!-- Меню добавления (из кнопки +) -->
 <div class="overlay" id="addMenu">
   <div class="sheet add-menu">
@@ -1600,6 +1642,15 @@ function openProfile(){
   $('#profThemeLbl').textContent=themeLabel();
   $('#profOverlay').classList.add('show');
 }
+function openDrawer(){
+  $('#drawerAvatar').style.cssText=avatarStyle();$('#drawerAvatar').textContent=avatarInner();
+  $('#drawerName').textContent=state.profileName||'Профиль';
+  const lbl=themeLabel();$('#drThemeIc').textContent=lbl.split(' ')[0];$('#drThemeLbl').textContent=lbl.replace(/^\S+\s/,'');
+  const n=notifications().length,b=$('#drNotifBadge');
+  if(n){b.textContent=n>9?'9+':n;b.style.display='inline-block';}else b.style.display='none';
+  $('#drawerOverlay').classList.add('show');
+}
+function closeDrawer(){$('#drawerOverlay').classList.remove('show');}
 
 /* ============ Период ============ */
 function periodRange(){
@@ -3431,7 +3482,19 @@ $('#securityOverlay').onclick=e=>{if(e.target.id==='securityOverlay')$('#securit
 $$('#pinPad button[data-k]').forEach(b=>b.onclick=()=>pinKey(b.dataset.k));
 $('#pinCancel').onclick=()=>{if(pinState.mode!=='unlock')closePin();};
 $('#capEye').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();render();updateEye();};
-$('#capDots').onclick=openProfile;
+$('#capDots').onclick=openDrawer;
+$('#drawerOverlay').onclick=e=>{if(e.target.id==='drawerOverlay')closeDrawer();};
+$('#drawerHead').onclick=()=>{closeDrawer();openProfile();};
+const drGo=fn=>()=>{closeDrawer();fn();};
+$('#drNotif').onclick=drGo(openNotif);
+$('#drGoals').onclick=drGo(openGoals);
+$('#drCalendar').onclick=drGo(openCalendar);
+$('#drHealth').onclick=drGo(openHealth);
+$('#drStats').onclick=drGo(openStats);
+$('#drSecurity').onclick=drGo(openSecurity);
+$('#drExport').onclick=drGo(openExport);
+$('#drMore').onclick=()=>{closeDrawer();showScreen('scrMore');};
+$('#drTheme').onclick=()=>{toggleTheme();const lbl=themeLabel();$('#drThemeIc').textContent=lbl.split(' ')[0];$('#drThemeLbl').textContent=lbl.replace(/^\S+\s/,'');};
 $('#capEye2').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();render();updateEye();};
 // Финздоровье
 $('#profHealth').onclick=openHealth;
@@ -3481,7 +3544,7 @@ $('#budgetEditOverlay').onclick=e=>{if(e.target.id==='budgetEditOverlay')$('#bud
 $('#budSave').onclick=saveBudget;
 $('#budDelete').onclick=deleteBudget;
 $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Statistics (Screen 14) ============ */
 let statsPeriod='year'; // 'month'|'year'|'all'
