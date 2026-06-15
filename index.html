@@ -851,13 +851,7 @@
     <div class="capital">
       <div class="cap-top">
         <div class="cap-deco" aria-hidden="true">
-          <svg viewBox="0 0 400 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#fff">
-            <path d="M0,70 C80,30 150,95 230,55 C300,20 360,80 400,50" stroke-opacity=".5" stroke-width="1"/>
-            <path d="M0,85 C70,55 160,100 240,70 C310,45 370,90 400,68" stroke-opacity=".35" stroke-width="1"/>
-            <path d="M0,55 C90,20 140,75 220,40 C300,5 350,60 400,35" stroke-opacity=".3" stroke-width=".8"/>
-            <path d="M0,98 C80,75 150,108 250,85 C320,68 370,100 400,82" stroke-opacity=".25" stroke-width=".8"/>
-            <path d="M0,42 C100,12 160,58 240,28 C310,2 360,45 400,22" stroke-opacity=".2" stroke-width=".7"/>
-          </svg>
+          <svg id="capWaveSvg" viewBox="0 0 400 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
           <span class="cap-brand">Al Finance</span>
         </div>
         <div class="cap-head">
@@ -4013,6 +4007,33 @@ function buildAchievements(){
 }
 
 /* ============ Старт ============ */
+// Декоративные текучие волны на карточке капитала (плотный пучок тонких нитей — как на референсе)
+function buildCapWaves(){
+  const svg=document.getElementById('capWaveSvg');if(!svg)return;
+  const W=400,H=120,N=60;let p='';
+  for(let i=0;i<N;i++){
+    const t=i/(N-1);                              // 0..1 поперёк пучка
+    const spread=(t-0.5)*2;                       // -1..1 смещение от центральной линии
+    const amp=10+22*Math.cos(spread*1.2);         // нити у центра выгибаются сильнее
+    const freq=0.020+0.006*Math.sin(t*7);
+    const phase=spread*1.6+t*1.2;
+    const slope=18*spread;                         // лёгкий наклон ленты
+    let d='';
+    for(let x=0;x<=W;x+=6){
+      const xn=x/W;
+      const env=Math.sin(xn*Math.PI);             // лента раздувается к центру по ширине
+      const cy=H*0.52 + slope*xn*0.6;             // центральная линия плавно поднимается
+      const y=cy + (amp*env)*Math.sin(x*freq+phase) + 5*Math.sin(x*0.012+t*5);
+      d+=(x===0?'M':'L')+x+','+y.toFixed(1)+' ';
+    }
+    const bright=Math.pow(Math.cos(spread*1.4),2);// ярче у центральной линии
+    const op=(0.06+0.30*bright).toFixed(3);
+    const sw=(0.4+0.6*bright).toFixed(2);
+    p+=`<path d="${d}" fill="none" stroke="#fff" stroke-opacity="${op}" stroke-width="${sw}"/>`;
+  }
+  svg.innerHTML=p;
+}
+buildCapWaves();
 load();
 showScreen('scrRecords');
 updateEye();
