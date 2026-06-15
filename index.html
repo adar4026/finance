@@ -356,6 +356,11 @@
   .cat-row .cr-nm{font-size:15.5px;font-weight:600}
   .cat-row .cr-sub{font-size:12px;color:var(--muted);margin-top:2px}
   .cat-row .chev{color:var(--muted2);font-size:18px}
+  .cat-row.cat-lift{border:2px solid var(--accent)!important;box-shadow:0 26px 54px rgba(0,0,0,.28)}
+  .cat-handle{display:inline-flex;flex-direction:column;justify-content:center;gap:4px;padding:8px 6px;cursor:grab;touch-action:none;flex-shrink:0}
+  .cat-handle span{display:block;width:22px;height:2.5px;background:var(--muted2);border-radius:2px}
+  .cat-ph{border:2px dashed var(--accent);background:var(--accent-soft);border-radius:15px;margin-bottom:10px;transition:height .15s ease}
+  .catmgr-title{text-align:center;flex:1;font-size:20px;font-weight:800;color:var(--muted)}
   .subcat-edit{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:18px;border:1px solid var(--line);
     background:var(--card);font-size:13.5px;color:var(--text);margin:0 8px 8px 0}
   .subcat-edit .ren{cursor:pointer}
@@ -1457,7 +1462,8 @@
 <div class="overlay" id="catMgrOverlay" style="align-items:flex-start">
   <div class="detail-sheet">
     <div class="detail-top">
-      <div class="nm">Категории</div>
+      <span style="width:42px;flex-shrink:0"></span>
+      <div class="catmgr-title">Категории</div>
       <button class="iconbtn" id="catMgrClose">×</button>
     </div>
     <div class="seg-ie" id="catMgrSeg" style="margin-top:10px">
@@ -3102,9 +3108,71 @@ function renderCatMgr(){
     return `<div class="cat-row" data-cat="${c.id}">
       <div class="cr-ic" style="background:${(c.color||'#6d5df6')}22">${c.emoji}</div>
       <div style="flex:1"><div class="cr-nm">${esc(c.name)}</div>${sub?`<div class="cr-sub">${sub}</div>`:''}</div>
-      <span class="chev">›</span></div>`;
+      <span class="cat-handle" data-handle="${c.id}"><span></span><span></span><span></span></span></div>`;
   }).join('');
   $$('#catMgrList .cat-row').forEach(r=>r.onclick=()=>openCatEdit(r.dataset.cat));
+  setupCatSort();
+}
+let catDrag=null;
+function setupCatSort(){
+  $$('#catMgrList .cat-handle').forEach(h=>{
+    h.addEventListener('pointerdown',e=>{
+      if(catDrag||(e.pointerType==='mouse'&&e.button!==0))return;
+      e.preventDefault();e.stopPropagation();
+      const card=h.closest('.cat-row');if(card)liftCatCard(card,e.clientX,e.clientY);
+    });
+  });
+}
+function liftCatCard(card,sx,sy){
+  if(navigator.vibrate)navigator.vibrate(16);
+  const list=$('#catMgrList');
+  const rect=card.getBoundingClientRect(),offX=sx-rect.left,offY=sy-rect.top;
+  const ph=document.createElement('div');ph.className='cat-ph';ph.style.height=rect.height+'px';
+  card.parentNode.insertBefore(ph,card);
+  card.style.width=rect.width+'px';card.style.height=rect.height+'px';card.style.margin='0';
+  card.style.position='fixed';card.style.left='0';card.style.top='0';card.style.zIndex='9999';card.style.pointerEvents='none';
+  card.classList.add('cat-lift');document.body.appendChild(card);
+  let cx=rect.left,cy=rect.top,tx=rect.left,ty=rect.top,raf;
+  const draw=()=>card.style.transform=`translate(${cx}px,${cy}px) scale(1.04) rotate(1deg)`;
+  draw();
+  const loop=()=>{cx+=(tx-cx)*0.4;cy+=(ty-cy)*0.4;draw();raf=requestAnimationFrame(loop);};
+  loop();catDrag={card,ph};
+  function move(ev){
+    tx=ev.clientX-offX;ty=ev.clientY-offY;
+    card.style.visibility='hidden';
+    const under=document.elementFromPoint(ev.clientX,ev.clientY);
+    card.style.visibility='';
+    const over=under&&under.closest?under.closest('.cat-row'):null;
+    if(over&&over!==card){const r=over.getBoundingClientRect();list.insertBefore(ph,(ev.clientY<r.top+r.height/2)?over:over.nextSibling);}
+    const m=90,sc=document.scrollingElement||document.documentElement;
+    if(ev.clientY<m)sc.scrollTop-=Math.ceil((m-ev.clientY)/5);
+    else if(ev.clientY>innerHeight-m)sc.scrollTop+=Math.ceil((ev.clientY-(innerHeight-m))/5);
+  }
+  function up(){
+    cancelAnimationFrame(raf);
+    window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);
+    const kill=ev=>{ev.stopPropagation();ev.preventDefault();};
+    window.addEventListener('click',kill,true);setTimeout(()=>window.removeEventListener('click',kill,true),400);
+    const r=ph.getBoundingClientRect();
+    card.style.transition='transform .2s cubic-bezier(.2,.8,.25,1)';
+    card.style.transform=`translate(${r.left}px,${r.top}px) scale(1) rotate(0deg)`;
+    setTimeout(()=>{
+      ph.parentNode.insertBefore(card,ph);ph.remove();card.classList.remove('cat-lift');
+      ['width','height','position','left','top','margin','zIndex','pointerEvents','transform','transition','visibility'].forEach(p=>card.style[p]='');
+      catDrag=null;commitCatOrder();
+    },205);
+  }
+  window.addEventListener('pointermove',move,{passive:true});
+  window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
+}
+function commitCatOrder(){
+  const seq=$$('#catMgrList .cat-row').map(r=>r.dataset.cat);
+  const orig=state.cats.slice();
+  // новый порядок для текущего типа; категории другого типа сохраняют свои позиции
+  const reordered=seq.map(id=>orig.find(c=>c.id===id)).filter(Boolean);
+  let k=0;
+  state.cats=orig.map(c=>c.type===catMgrType?reordered[k++]:c);
+  save();
 }
 function openCatEdit(id){
   catEdit=id||null;
