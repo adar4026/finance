@@ -796,6 +796,18 @@
       <div class="chart-box tall"><canvas id="barChart"></canvas></div>
     </div>
     <div class="panel">
+      <h3>Динамика капитала</h3>
+      <div class="ranges" id="capRanges">
+        <button data-r="7d">7Д</button>
+        <button data-r="1m" class="on">1М</button>
+        <button data-r="3m">3М</button>
+        <button data-r="6m">6М</button>
+        <button data-r="1y">1Г</button>
+        <button data-r="all">Всё</button>
+      </div>
+      <div class="chart-box tall"><canvas id="capChart"></canvas></div>
+    </div>
+    <div class="panel">
       <div class="seg-ie ana-cat-seg" id="anaCatSeg">
         <button class="on" data-t="expense">Расходы</button>
         <button data-t="income">Доходы</button>
@@ -1759,7 +1771,7 @@ function renderAnalytics(){
   if(Math.abs(preNet)>0.5){const d=Math.round((net-preNet)/Math.abs(preNet)*100);chg.textContent=(d>=0?'▲ ':'▼ ')+Math.abs(d)+'% к пред.';chg.style.display='';}
   else chg.style.display='none';
   $('#anaBarHint').textContent='6 '+({day:'дней',week:'недель',month:'мес.',year:'лет',custom:'периодов'}[period]||'мес.');
-  renderAnaBar();renderAnaPie(cur,pre);renderAnaCompare(cur,pre);
+  renderAnaBar();renderAnaPie(cur,pre);renderAnaCompare(cur,pre);renderCapChart();
 }
 function renderAnaBar(){
   const A=AF.Services.Analytics,labels=[],incD=[],expD=[];
@@ -2972,6 +2984,9 @@ $$('.nav button[data-s]').forEach(b=>b.onclick=()=>showScreen(b.dataset.s));
 // Вкладки Расходы/Доходы в блоке «Категории» — перерисовывают только кольцо+список
 $$('#anaCatSeg button').forEach(b=>b.onclick=()=>{anaCatType=b.dataset.t;
   $$('#anaCatSeg button').forEach(x=>x.classList.toggle('on',x===b));renderAnaPie(anaCur,anaPre);});
+// Диапазоны графика «Динамика капитала»
+$$('#capRanges button').forEach(b=>b.onclick=()=>{homeRange=b.dataset.r;
+  $$('#capRanges button').forEach(x=>x.classList.toggle('on',x===b));renderCapChart();});
 // Главная: Quick Actions
 $('#allTxClose').onclick=()=>$('#allTxOverlay').classList.remove('show');
 $('#allTxOverlay').onclick=e=>{if(e.target.id==='allTxOverlay')$('#allTxOverlay').classList.remove('show');};
