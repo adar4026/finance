@@ -3349,17 +3349,29 @@ function deleteCat(){
 /* ============ Прочее ============ */
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1700);}
 function loadDemo(){
+  if(!confirm('Загрузить демо-данные? Текущие операции, бюджеты, цели и напоминания будут заменены примерными.'))return;
   const today=new Date(),tx=[],rnd=(a,b)=>Math.round(a+Math.random()*(b-a));
   const accs=state.accounts.map(a=>a.id);
+  const sub=(cat,i)=>'s_'+cat+'_'+i; // id подкатегории как в seedCategories
   for(let m=0;m<3;m++){
     const base=new Date(today.getFullYear(),today.getMonth()-m,1);
-    tx.push({id:Date.now()+Math.random(),type:'income',amount:rnd(2200,2600),cat:'salary',account:accs[0],date:dstr(base,5),note:'Зарплата'});
-    tx.push({id:Date.now()+Math.random(),type:'income',amount:rnd(200,500),cat:'freelance',account:accs[1]||accs[0],date:dstr(base,18),note:''});
-    [['food',rnd(280,420)],['transport',rnd(60,140)],['home',rnd(600,800)],['cafe',rnd(80,200)],
-     ['shopping',rnd(100,350)],['fun',rnd(40,160)],['bills',rnd(90,180)],['health',rnd(20,120)]]
-      .forEach((e,i)=>tx.push({id:Date.now()+Math.random()+i,type:'expense',amount:e[1],cat:e[0],account:accs[i%accs.length],date:dstr(base,3+i*3),note:''}));
+    // доходы
+    tx.push({id:Date.now()+Math.random(),type:'income',amount:rnd(1800,2200),cat:'realty',subcategoryId:sub('realty',0),account:accs[0],date:dstr(base,5),note:'Inmo Digital'});
+    tx.push({id:Date.now()+Math.random(),type:'income',amount:rnd(150,400),cat:'income_main',account:accs[1]||accs[0],date:dstr(base,18),note:''});
+    // расходы: [категория, индекс подкатегории|null, сумма]
+    [['products',2,rnd(280,420)],      // Mercadona
+     ['prius',4,rnd(60,140)],          // Бензин
+     ['flat',0,rnd(90,150)],           // Comunidad
+     ['health',2,rnd(20,120)],         // Аптека
+     ['clothes',3,rnd(40,160)],        // Одежда Алекс
+     ['beauty',2,rnd(20,60)],          // Парикмахерская
+     ['tech',3,rnd(30,300)],           // Электроника
+     ['subscriptions',null,rnd(10,40)],
+     ['home',1,rnd(20,90)]             // Бытовые
+    ].forEach((e,i)=>tx.push({id:Date.now()+Math.random()+i,type:'expense',amount:e[2],cat:e[0],subcategoryId:e[1]!=null?sub(e[0],e[1]):null,account:accs[i%accs.length],date:dstr(base,3+i*3),note:''}));
   }
-  state.tx=tx;state.budgets={food:400,transport:150,fun:200,cafe:150};
+  state.tx=tx;
+  state.budgets={products:400,prius:200,subscriptions:50,beauty:80};
   const dl=new Date();dl.setMonth(dl.getMonth()+8);
   state.goals=[
     {id:'g1',name:'Подушка безопасности',targetAmount:10000,savedAmount:3908,currency:'€',deadline:dl.toISOString().slice(0,10),color:'#6d5df6',status:'active',createdAt:Date.now()},
@@ -3367,10 +3379,10 @@ function loadDemo(){
   ];
   const ym=(d)=>`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   state.reminders=[
-    {id:'r1',title:'Аренда квартиры',amount:1200,type:'expense',dueDate:ym(17),repeatType:'monthly',categoryId:'home',isActive:true,done:false,createdAt:Date.now()},
-    {id:'r2',title:'Netflix',amount:15,type:'expense',dueDate:ym(20),repeatType:'monthly',categoryId:'subs',isActive:true,done:false,createdAt:Date.now()},
-    {id:'r3',title:'Зарплата',amount:2500,type:'income',dueDate:ym(25),repeatType:'monthly',categoryId:'salary',isActive:true,done:false,createdAt:Date.now()},
-    {id:'r4',title:'Оплатить налог',amount:300,type:'expense',dueDate:ym(3),repeatType:'none',categoryId:'bills',isActive:true,done:false,createdAt:Date.now()},
+    {id:'r1',title:'Квартира — Comunidad',amount:95,type:'expense',dueDate:ym(17),repeatType:'monthly',categoryId:'flat',isActive:true,done:false,createdAt:Date.now()},
+    {id:'r2',title:'Подписки',amount:15,type:'expense',dueDate:ym(20),repeatType:'monthly',categoryId:'subscriptions',isActive:true,done:false,createdAt:Date.now()},
+    {id:'r3',title:'Доход',amount:2000,type:'income',dueDate:ym(5),repeatType:'monthly',categoryId:'income_main',isActive:true,done:false,createdAt:Date.now()},
+    {id:'r4',title:'IBI годовой налог',amount:300,type:'expense',dueDate:ym(3),repeatType:'none',categoryId:'flat',isActive:true,done:false,createdAt:Date.now()},
   ];
   state.healthHistory=[];for(let i=5;i>=1;i--){const d=new Date(today.getFullYear(),today.getMonth()-i,1);state.healthHistory.push({date:d.toISOString().slice(0,10),total:70+(5-i)*4});}
   save();anchor=new Date();render();toast('Демо-данные загружены');
