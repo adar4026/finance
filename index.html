@@ -1556,38 +1556,32 @@
 <script>
 /* ============ Категории ============ */
 // Production-таксономия (источник для сидирования; подкатегории — стартовые).
-const TAXONOMY_VERSION=3;
+// Персональная таксономия (перенесена из Money Flow пользователя — имена, порядок, подкатегории).
+const TAXONOMY_VERSION=4;
 const CATS = {
   expense: [
-    {id:'food',name:'Еда',emoji:'🍔',color:'#ff6b6b',subs:['Продукты','Доставка','Перекусы']},
-    {id:'cafe',name:'Кафе и рестораны',emoji:'☕',color:'#f783ac',subs:['Кафе','Рестораны','Фастфуд','Кофе']},
-    {id:'transport',name:'Транспорт',emoji:'🚗',color:'#ffa94d',subs:['Топливо','Такси','Общественный','Парковка']},
-    {id:'home',name:'Жильё',emoji:'🏠',color:'#ffd43b',subs:['Аренда','Ипотека','Ремонт','Мебель']},
-    {id:'bills',name:'Счета и связь',emoji:'💡',color:'#4dabf7',subs:['Электричество','Вода/Газ','Интернет','Моб. связь']},
-    {id:'shopping',name:'Покупки',emoji:'🛍️',color:'#da77f2',subs:['Одежда','Обувь','Электроника','Для дома']},
-    {id:'health',name:'Здоровье',emoji:'💊',color:'#ff8787',subs:['Аптека','Врачи','Стоматология','Фитнес']},
-    {id:'fun',name:'Развлечения',emoji:'🎮',color:'#9775fa',subs:['Кино','Игры','Хобби','Концерты']},
-    {id:'subs',name:'Подписки',emoji:'📺',color:'#5c7cfa',subs:['Стриминг','Музыка','Приложения','Облако']},
-    {id:'travel',name:'Путешествия',emoji:'✈️',color:'#3bc9db',subs:['Билеты','Отели','Экскурсии','Виза']},
-    {id:'edu',name:'Образование',emoji:'🎓',color:'#69db7c',subs:['Курсы','Книги','Репетитор']},
-    {id:'pets',name:'Питомцы',emoji:'🐾',color:'#a9e34b',subs:['Корм','Ветеринар','Аксессуары']},
-    {id:'kids',name:'Дети',emoji:'👶',color:'#ffa8a8',subs:['Сад/Школа','Игрушки','Кружки','Одежда']},
-    {id:'care',name:'Уход за собой',emoji:'💆',color:'#faa2c1',subs:['Парикмахер','Косметика','Спа']},
-    {id:'sport',name:'Спорт',emoji:'🏋️',color:'#ff922b',subs:['Зал','Инвентарь','Секции']},
-    {id:'taxes',name:'Налоги и сборы',emoji:'🏛️',color:'#748ffc',subs:['Налоги','Штрафы','Комиссии']},
-    {id:'gifts_e',name:'Подарки',emoji:'🎁',color:'#f06595',subs:['Подарки','Праздники','Цветы']},
-    {id:'other_e',name:'Другое',emoji:'📦',color:'#868e96',subs:[]},
+    {id:'home',name:'Для дома',emoji:'💰',color:'#fa5252',subs:['IKEA','Бытовые','Китайский']},
+    {id:'products',name:'Продукты',emoji:'🛒',color:'#40c057',subs:['Alimerka','Lidl','Mercadona','Алькампо','Кафе обед','Русский магазин','Рынок']},
+    {id:'prius',name:'Prius',emoji:'🚗',color:'#4263eb',subs:['ITV Техосмотр','Автоаксессуары','Автосервис','Автостраховка','Бензин','Запчасти','Мойка авто','Налог за дороги','Парковка','Платные дороги','Штрафы']},
+    {id:'clothes',name:'Одежда и обувь',emoji:'👕',color:'#12b886',subs:['Аксессуары','Обувь Алекс','Обувь Снежа','Одежда Алекс','Одежда Снежа']},
+    {id:'flat',name:'Квартира Сотрондио',emoji:'🏡',color:'#f59e0b',subs:['Comunidad','IBI годовой налог','Вода','Интернет, Связь','Коммунальные','Мебель','Разное','Ремонт','Электричество']},
+    {id:'health',name:'Здоровье',emoji:'🏥',color:'#f06595',subs:['Iherb','Sanitas Snesa','Аптека','БАДы','Мед. страховка','Медицинские услуги','Стоматология']},
+    {id:'cat',name:'Кошка',emoji:'🐱',color:'#b08968',subs:['Здоровье животных','Корм','Песок']},
+    {id:'beauty',name:'Красота и уход',emoji:'🌸',color:'#faa2c1',subs:['Косметика','Ногти','Парикмахерская']},
+    {id:'tech',name:'Техника',emoji:'💻',color:'#7048e8',subs:['Аксессуары','Бытовая техника','Электроинструмент','Электроника']},
+    {id:'donations',name:'Пожертвования',emoji:'💝',color:'#e64980',subs:['Всемирное','Местные']},
+    {id:'subscriptions',name:'Подписки',emoji:'🍎',color:'#fa5252',subs:[]},
+    {id:'other_e',name:'Другое',emoji:'⭕',color:'#868e96',subs:[]},
+    {id:'knitting',name:'Снежа вязание',emoji:'🧶',color:'#d6336c',subs:[]},
   ],
   income: [
-    {id:'salary',name:'Зарплата',emoji:'💼',color:'#3ecf8e',subs:['Оклад','Премия','Аванс']},
-    {id:'freelance',name:'Фриланс',emoji:'🧑‍💻',color:'#38d9a9',subs:['Проекты','Консультации']},
-    {id:'business',name:'Бизнес',emoji:'💰',color:'#20c997',subs:['Выручка','Прибыль']},
-    {id:'invest',name:'Инвестиции',emoji:'📈',color:'#0ca678',subs:['Дивиденды','Проценты','Продажа активов']},
-    {id:'rent',name:'Аренда',emoji:'🔑',color:'#63e6be',subs:['Аренда жилья']},
-    {id:'gift',name:'Подарки',emoji:'🎁',color:'#82c91e',subs:['Подарок','Кэшбэк']},
-    {id:'cashback',name:'Кэшбэк и возвраты',emoji:'💳',color:'#66d9e8',subs:['Кэшбэк','Возврат','Бонусы']},
-    {id:'benefits',name:'Пособия',emoji:'🏦',color:'#3bc9db',subs:['Пенсия','Стипендия','Соцвыплаты']},
-    {id:'other_i',name:'Прочее',emoji:'💵',color:'#94d82d',subs:[]},
+    {id:'income_main',name:'Доход',emoji:'🧑‍💼',color:'#4dabf7',subs:[]},
+    {id:'other_i',name:'Другое',emoji:'💼',color:'#da77f2',subs:[]},
+    {id:'realty',name:'Недвижка',emoji:'🏠',color:'#f59e0b',subs:['Inmo Digital зарплата','Услуги']},
+    {id:'tg_ads',name:'Telegram реклама',emoji:'📣',color:'#228be6',subs:[]},
+    {id:'tiktok',name:'ТитТок',emoji:'🎵',color:'#40c057',subs:[]},
+    {id:'cleaning',name:'Клининг',emoji:'🧹',color:'#fd7e14',subs:[]},
+    {id:'snowtoys',name:'Снежа игрушки',emoji:'🧸',color:'#f06595',subs:[]},
   ]
 };
 // Категории data-driven: всё в state.cats (дефолтные сидируются в migrate с isSystem). Flutter → таблица categories.
@@ -3613,6 +3607,21 @@ function ensureCat(name,type){
      emoji:EMOJI_POOL[n%EMOJI_POOL.length], color:COLOR_POOL[n%COLOR_POOL.length]};
   state.cats.push(c);return c.id;
 }
+// Импорт: распознаём, является ли значение категорией или подкатегорией (восстановление иерархии Money Flow)
+function resolveCatSub(name,type){
+  const norm=(name||'').trim().toLowerCase();
+  if(norm){
+    // 1) совпадение с категорией
+    const c=catsFor(type).find(x=>x.name.trim().toLowerCase()===norm);
+    if(c)return {cat:c.id,sub:null};
+    // 2) совпадение с подкатегорией (в пределах типа) → родитель + подкатегория
+    const catIds=new Set(catsFor(type).map(x=>x.id));
+    const s=(state.subcats||[]).find(x=>catIds.has(x.categoryId)&&x.name.trim().toLowerCase()===norm);
+    if(s)return {cat:s.categoryId,sub:s.id};
+  }
+  // 3) не нашли — создаём категорию по имени
+  return {cat:ensureCat(name,type),sub:null};
+}
 function ensureAcc(name,currency){
   name=(name||'').trim();
   if(!name)return state.accounts[0].id;
@@ -3686,8 +3695,9 @@ function importCSV(text){
       else{skipped++;continue;}
     }
     if(!amount||amount<=0){skipped++;continue;}
+    const rc=resolveCatSub(get(r,iCat),type);
     added.push({id:Date.now()+Math.random()+k,type,amount:Math.round(amount*100)/100,
-      cat:ensureCat(get(r,iCat),type),account:ensureAcc(get(r,iAcc),get(r,iCur)),date,note});
+      cat:rc.cat,subcategoryId:rc.sub,account:ensureAcc(get(r,iAcc),get(r,iCur)),date,note});
   }
   if(!added.length){toast('Не удалось распознать операции');return;}
   const nT=added.filter(t=>t.type==='transfer').length, nIE=added.length-nT;
