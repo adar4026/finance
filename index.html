@@ -2308,7 +2308,7 @@ function goalForecast(g){
     const dl=new Date(g.deadline), now=new Date();
     if(dl<now)return 'Срок прошёл · осталось '+num(left);
     const months=Math.max(1,Math.round((dl-now)/(1000*60*60*24*30)));
-    return 'до '+dl.toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'2-digit'})+' · нужно '+num(left/months)+'/мес';
+    return 'до '+dl.toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'})+' · нужно '+num(left/months)+'/мес';
   }
   return 'Осталось '+num(left);
 }
