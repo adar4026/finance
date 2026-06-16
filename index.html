@@ -3712,7 +3712,13 @@ function importCSV(text){
   toast(`Импортировано ${added.length} операций ✓`);
 }
 $('#demoBtn').onclick=loadDemo;
-$('#clearBtn').onclick=()=>{if(confirm('Удалить все операции?')){state.tx=[];state.budgets={};save();render();toast('Данные удалены');}};
+$('#clearBtn').onclick=()=>{
+  if(!confirm('Удалить ВСЁ: операции, бюджеты, напоминания и сбросить категории к стандартному набору?\n\nСчета и настройки останутся.'))return;
+  state.tx=[];state.budgets={};state.reminders=[];state.goals=[];
+  // сброс категорий/подкатегорий к чистой таксономии
+  state.cats=[];state.subcats=[];state.taxonomyVersion=0;seedCategories();
+  save();render();toast('Всё очищено, категории сброшены ✓');
+};
 // Безопасность
 $('#profSecurity').onclick=openSecurity;
 $('#securityClose').onclick=()=>$('#securityOverlay').classList.remove('show');
