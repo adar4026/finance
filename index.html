@@ -2982,9 +2982,10 @@ function showScreen(id){
   $$('.nav button[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
   const titles={scrRecords:'Главная',scrCharts:'Аналитика',scrAccounts:'Счета',scrBudgets:'Бюджет',scrMore:'Настройки'};
   $('#screenTitle').textContent=titles[id];
-  // глобальный период не нужен на «Счета» и «Настройки»; на «Главной» и «Аналитике» — есть
+  // глобальный период не нужен на «Счета»/«Настройки»; на «Бюджетах» — только навигация по месяцам
   const noPeriod=(id==='scrMore'||id==='scrAccounts');
-  $('.periods').style.display=noPeriod?'none':'flex';
+  if(id==='scrBudgets')period='month'; // бюджеты всегда месячные → навигация по месяцам
+  $('.periods').style.display=(noPeriod||id==='scrBudgets')?'none':'flex';
   $('#navrow').style.display=(noPeriod||period==='all')?'none':'flex';
   render();
 }
