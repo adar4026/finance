@@ -432,6 +432,11 @@
   .type-card .te{font-size:23px}
   .type-card .tl{font-size:11.5px;color:var(--muted);font-weight:600;text-align:center}
   .type-card.sel .tl{color:var(--accent)}
+  .cur-chips{display:flex;gap:8px;flex-wrap:wrap}
+  .cur-chips button{flex:0 0 auto;min-width:66px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+  .cur-chips button .cc-sym{font-size:17px}
+  .cur-chips button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .cur-chips button:active{transform:scale(.95)}
   .color-row{display:flex;gap:10px;flex-wrap:wrap}
   .color-sw{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:.12s}
   .color-sw:active{transform:scale(.92)}
@@ -1121,14 +1126,10 @@
         <input type="number" id="accStart" placeholder="0" inputmode="decimal" step="0.01" min="0">
         <div class="err" id="accStartErr">Баланс не может быть отрицательным</div>
       </div>
-      <div class="field">
-        <label>Валюта</label>
-        <select id="accCurrency">
-          <option value="€">€ EUR</option><option value="$">$ USD</option>
-          <option value="₽">₽ RUB</option><option value="£">£ GBP</option>
-          <option value="₸">₸ KZT</option><option value="₴">₴ UAH</option>
-        </select>
-      </div>
+    </div>
+    <div class="field">
+      <label>Валюта</label>
+      <div class="cur-chips" id="accCurChips"></div>
     </div>
 
     <div class="field">
@@ -3219,20 +3220,27 @@ function delTx(){
 }
 
 /* ============ Счета ============ */
+let accCur='€';
+const ACC_CURRENCIES=[['€','EUR'],['$','USD'],['₽','RUB'],['£','GBP'],['₸','KZT'],['₴','UAH']];
+function renderAccCur(){
+  $('#accCurChips').innerHTML=ACC_CURRENCIES.map(([sym,code])=>
+    `<button type="button" class="${sym===accCur?'on':''}" data-cur="${sym}"><span class="cc-sym">${sym}</span>${code}</button>`).join('');
+  $$('#accCurChips button').forEach(b=>b.onclick=()=>{accCur=b.dataset.cur;renderAccCur();});
+}
 function openAcc(id){
   accEdit=id||null;
   if(id){
     const a=state.accounts.find(x=>x.id===id);
     accEmoji=a.emoji; accColor=a.color||'#6d5df6'; accType=a.type||'bank';
     $('#accName').value=a.name; $('#accStart').value=(a.start||a.start===0)?a.start:'';
-    $('#accCurrency').value=curSymbol(a.currency||state.currency);
+    accCur=curSymbol(a.currency||state.currency);
     $('#accTitle').textContent=a.isArchived?'Счёт в архиве':'Редактировать счёт';
     $('#delAcc').style.display=state.accounts.length>1?'block':'none';
     $('#archiveAcc').style.display='block';
     $('#archiveAccLbl').textContent=a.isArchived?'♻️ Восстановить из архива':'📦 Переместить в архив';
   }else{
     accType='bank'; const t=ACC_TYPES[0]; accEmoji=t.emoji; accColor=t.color;
-    $('#accName').value=''; $('#accStart').value=''; $('#accCurrency').value=state.currency;
+    $('#accName').value=''; $('#accStart').value=''; accCur=state.currency;
     $('#accTitle').textContent='Новый счёт'; $('#delAcc').style.display='none'; $('#archiveAcc').style.display='none';
   }
   // выбор группы (перемещение счёта между группами)
@@ -3240,7 +3248,7 @@ function openAcc(id){
   $('#accGroup').innerHTML='<option value="">Без группы</option>'+accGroups().map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('');
   $('#accGroup').value = id ? (state.accounts.find(x=>x.id===id).groupId||'') : (accGroups()[0]?accGroups()[0].id:'');
   clearAccErrors();
-  renderAccType(); renderAccColors(); renderAccEmoji();
+  renderAccType(); renderAccColors(); renderAccEmoji(); renderAccCur();
   $('#accOverlay').classList.add('show');
   setTimeout(()=>{if(!id)$('#accName').focus();},250);
 }
@@ -3274,7 +3282,7 @@ function saveAcc(){
   if(!name){$('#accNameErr').classList.add('show');$('#accName').classList.add('invalid');$('#accName').focus();return;}
   // Валидация: баланс >= 0
   if(isNaN(start)||start<0){$('#accStartErr').classList.add('show');$('#accStart').classList.add('invalid');$('#accStart').focus();return;}
-  const currency=$('#accCurrency').value;
+  const currency=accCur;
   const groupId=$('#accGroup').value||null;
   if(accEdit){
     const a=state.accounts.find(x=>x.id===accEdit);
