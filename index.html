@@ -126,6 +126,9 @@
   .catrow{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer;border-radius:9px;margin:0 -6px;padding:3px 6px;transition:background .12s}
   .catrow:active{background:var(--accent-soft)}
   .cat-tx-sum{font-size:13.5px;color:var(--muted);font-weight:600;margin-top:2px}
+  .cat-avg{display:flex;gap:8px;margin:10px 0 4px}
+  .cat-avg .ca-i{flex:1;background:var(--card2);border-radius:12px;padding:10px 8px;text-align:center;font-size:15px;font-weight:800;color:var(--text);display:flex;flex-direction:column;gap:2px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cat-avg .ca-i i{font-size:10.5px;font-weight:600;color:var(--muted2);font-style:normal}
   .catrow .cdot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
   .catrow .cname{flex:1;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .catrow .cval{font-weight:700;font-size:13px;white-space:nowrap}
@@ -1255,6 +1258,7 @@
     </div>
     <div class="navrow" id="catTxNav" style="margin:2px 0 6px"><button id="catTxPrev">‹</button><div class="lbl" id="catTxNavLbl">—</div><button id="catTxNext">›</button></div>
     <div class="cat-tx-sum" id="catTxSum"></div>
+    <div class="cat-avg" id="catTxAvg"></div>
     <div id="catTxList" style="margin-top:8px"></div>
   </div>
 </div>
@@ -2164,6 +2168,19 @@ function renderCatTx(){
   $('#catTxNavLbl').textContent=r.lbl;
   $('#catTxNav').style.visibility=catTxMode==='all'?'hidden':'visible';
   $('#catTxSum').textContent='Всего: '+(ty==='income'?'+':'−')+num(sum)+' · '+list.length+' '+plural(list.length,'операция','операции','операций');
+  // Средние по всей истории категории (стабильные, не зависят от выбранного периода)
+  const allList=state.tx.filter(t=>t.type===ty&&catTxIds.includes(t.cat));
+  if(allList.length){
+    const dates=allList.map(t=>new Date(t.date));
+    const min=new Date(Math.min(...dates)), max=new Date(Math.max(...dates));
+    const months=Math.max(1,(max.getFullYear()-min.getFullYear())*12+(max.getMonth()-min.getMonth())+1);
+    const total=allList.reduce((s,t)=>s+t.amount,0);
+    const avgM=total/months, avgY=avgM*12;
+    $('#catTxAvg').innerHTML='<span class="ca-i">📅 '+num(avgM)+'<i>/мес</i></span>'
+      +'<span class="ca-i">📈 '+num(avgY)+'<i>/год</i></span>'
+      +'<span class="ca-i">Σ '+num(total)+'<i>всего</i></span>';
+    $('#catTxAvg').style.display='flex';
+  } else $('#catTxAvg').style.display='none';
   $('#catTxList').innerHTML=groupedTxHtml(list);
   $$('#catTxList .tx').forEach(x=>x.onclick=()=>openSheet(x.dataset.id));
 }
