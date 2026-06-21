@@ -1256,8 +1256,14 @@
       <button data-m="month" class="on">Месяц</button>
       <button data-m="year">Год</button>
       <button data-m="all">Всё</button>
+      <button data-m="custom">Период</button>
     </div>
     <div class="navrow" id="catTxNav" style="margin:2px 0 6px"><button id="catTxPrev">‹</button><div class="lbl" id="catTxNavLbl">—</div><button id="catTxNext">›</button></div>
+    <div id="catTxCustom" style="display:none;align-items:center;gap:8px;margin:2px 0 6px">
+      <input type="date" id="catTxFrom" style="flex:1">
+      <span style="color:var(--muted)">—</span>
+      <input type="date" id="catTxTo" style="flex:1">
+    </div>
     <div class="cat-tx-sum" id="catTxSum"></div>
     <div class="cat-avg" id="catTxAvg"></div>
     <div id="catTxList" style="margin-top:8px"></div>
@@ -2145,11 +2151,13 @@ const pieLabels={id:'pieLabels',afterDatasetsDraw(chart){
   ctx.restore();
 }};
 // Операции выбранной категории за период (по умолчанию — расходы текущего периода Аналитики)
-let catTxIds=[],catTxType='expense',catTxName='',catTxMode='month',catTxAnchor=new Date();
+let catTxIds=[],catTxType='expense',catTxName='',catTxMode='month',catTxAnchor=new Date(),catTxFrom=null,catTxTo=null;
 function openCatTx(catIds,label,range,rangeLabel,type){
   catTxIds=catIds;catTxType=type||'expense';catTxName=label;
   catTxMode='month';
   catTxAnchor=(range&&range.from)?new Date(range.from):new Date();
+  // дефолтный произвольный период — последние 3 месяца
+  const now=new Date();catTxTo=now;catTxFrom=new Date(now.getFullYear(),now.getMonth()-2,1);
   $$('#catTxSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m==='month'));
   renderCatTx();
   $('#catTxOverlay').classList.add('show');
@@ -2157,9 +2165,25 @@ function openCatTx(catIds,label,range,rangeLabel,type){
 function catTxRange(){
   const a=catTxAnchor,y=a.getFullYear(),m=a.getMonth();
   if(catTxMode==='year')return {from:new Date(y,0,1),to:new Date(y,11,31,23,59,59),lbl:String(y)};
-  if(catTxMode==='all')return {from:new Date(2000,0,1),to:new Date(2999,0,1),lbl:'Всё время'};
+  if(catTxMode==='all'){
+    const ds=state.tx.map(t=>new Date(t.date));
+    const from=ds.length?new Date(Math.min(...ds)):new Date(2000,0,1);
+    return {from:new Date(from.getFullYear(),from.getMonth(),1),to:new Date(2999,0,1),lbl:'Всё время'};
+  }
+  if(catTxMode==='custom'){
+    const f=catTxFrom||new Date(),t=catTxTo||new Date();
+    const ff=new Date(f);ff.setHours(0,0,0,0);const tt=new Date(t);tt.setHours(23,59,59,999);
+    const fmt=d=>d.toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
+    return {from:ff,to:tt,lbl:fmt(ff)+' — '+fmt(tt)};
+  }
   const lbl=a.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
   return {from:new Date(y,m,1),to:new Date(y,m+1,0,23,59,59),lbl:lbl.charAt(0).toUpperCase()+lbl.slice(1)};
+}
+// число месяцев в диапазоне (до сегодня, чтобы не делить на будущие месяцы)
+function monthsInRange(from,to){
+  const today=new Date();const end=to<today?to:today;
+  if(end<from)return 1;
+  return Math.max(1,(end.getFullYear()-from.getFullYear())*12+(end.getMonth()-from.getMonth())+1);
 }
 function renderCatTx(){
   const r=catTxRange(),ty=catTxType;
@@ -2167,21 +2191,17 @@ function renderCatTx(){
   const sum=list.reduce((s,t)=>s+t.amount,0);
   $('#catTxTitle').textContent=catTxName;
   $('#catTxNavLbl').textContent=r.lbl;
-  $('#catTxNav').style.visibility=catTxMode==='all'?'hidden':'visible';
+  // навигация стрелками только для Месяц/Год; для Всё/Период — другое
+  $('#catTxNav').style.display=(catTxMode==='month'||catTxMode==='year')?'flex':'none';
+  $('#catTxCustom').style.display=catTxMode==='custom'?'flex':'none';
   $('#catTxSum').textContent='Всего: '+(ty==='income'?'+':'−')+num(sum)+' · '+list.length+' '+plural(list.length,'операция','операции','операций');
-  // Средние по всей истории категории (стабильные, не зависят от выбранного периода)
-  const allList=state.tx.filter(t=>t.type===ty&&catTxIds.includes(t.cat));
-  if(allList.length){
-    const dates=allList.map(t=>new Date(t.date));
-    const min=new Date(Math.min(...dates)), max=new Date(Math.max(...dates));
-    const months=Math.max(1,(max.getFullYear()-min.getFullYear())*12+(max.getMonth()-min.getMonth())+1);
-    const total=allList.reduce((s,t)=>s+t.amount,0);
-    const avgM=total/months, avgY=avgM*12;
-    $('#catTxAvg').innerHTML='<span class="ca-i">📅 '+num(avgM)+'<i>/мес</i></span>'
-      +'<span class="ca-i">📈 '+num(avgY)+'<i>/год</i></span>'
-      +'<span class="ca-i">Σ '+num(total)+'<i>всего</i></span>';
-    $('#catTxAvg').style.display='flex';
-  } else $('#catTxAvg').style.display='none';
+  // Средние по ВЫБРАННОМУ периоду
+  const months=monthsInRange(r.from, r.to);
+  const avgM=sum/months, avgY=avgM*12;
+  $('#catTxAvg').innerHTML='<span class="ca-i">📅 '+num(avgM)+'<i>/мес</i></span>'
+    +'<span class="ca-i">📈 '+num(avgY)+'<i>/год</i></span>'
+    +'<span class="ca-i">Σ '+num(sum)+'<i>за период</i></span>';
+  $('#catTxAvg').style.display='flex';
   $('#catTxList').innerHTML=groupedTxHtml(list);
   $$('#catTxList .tx').forEach(x=>x.onclick=()=>openSheet(x.dataset.id));
 }
@@ -3489,9 +3509,14 @@ $('#searchInput').oninput=e=>runSearch(e.target.value);
 $('#searchClear').onclick=()=>{$('#searchInput').value='';runSearch('');$('#searchInput').focus();};
 $('#catTxClose').onclick=()=>$('#catTxOverlay').classList.remove('show');
 $('#catTxOverlay').onclick=e=>{if(e.target.id==='catTxOverlay')$('#catTxOverlay').classList.remove('show');};
-$('#catTxSeg').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;catTxMode=b.dataset.m;$$('#catTxSeg button').forEach(x=>x.classList.toggle('on',x===b));renderCatTx();};
+$('#catTxSeg').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;catTxMode=b.dataset.m;
+  $$('#catTxSeg button').forEach(x=>x.classList.toggle('on',x===b));
+  if(catTxMode==='custom'){$('#catTxFrom').value=isoDate(catTxFrom);$('#catTxTo').value=isoDate(catTxTo);}
+  renderCatTx();};
 $('#catTxPrev').onclick=()=>catTxShift(-1);
 $('#catTxNext').onclick=()=>catTxShift(1);
+$('#catTxFrom').onchange=()=>{if($('#catTxFrom').value){catTxFrom=new Date($('#catTxFrom').value);renderCatTx();}};
+$('#catTxTo').onchange=()=>{if($('#catTxTo').value){catTxTo=new Date($('#catTxTo').value);renderCatTx();}};
 // Кнопка + открывает меню добавления (Расход/Доход/Перевод/Чек встроены сюда)
 $('#addBtn').onclick=()=>$('#addMenu').classList.add('show');
 $('#addMenuClose').onclick=()=>$('#addMenu').classList.remove('show');
