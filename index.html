@@ -265,6 +265,16 @@
   .metarow .m{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;min-height:58px;display:flex;flex-direction:column;justify-content:center}
   .metarow .m label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:5px}
   .metarow .m input,.metarow .m select{width:100%;border:none;background:none;color:var(--text);font-size:15.5px;font-weight:500;font-family:inherit;outline:none}
+  .keypad-dock{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:560px;margin:0 auto;background:var(--bg);
+    border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:10px 14px calc(12px + env(safe-area-inset-bottom));
+    box-shadow:0 -12px 40px rgba(0,0,0,.22);transform:translateY(115%);transition:transform .26s cubic-bezier(.22,.61,.36,1)}
+  .keypad-dock.show{transform:translateY(0)}
+  .kd-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px}
+  .kd-amount{font-size:24px;font-weight:800;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kd-done{border:none;background:var(--accent);color:#fff;font-size:14.5px;font-weight:700;padding:9px 18px;border-radius:11px;cursor:pointer;font-family:inherit;flex-shrink:0}
+  .kd-done:active{transform:scale(.95)}
+  .display{cursor:pointer}
+  .display.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
   .keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
   .keypad button{min-height:60px;padding:0;border-radius:16px;border:1px solid var(--line);background:var(--card);
     color:var(--text);font-size:24px;font-weight:700;cursor:pointer;transition:transform .07s ease, background .07s ease;
@@ -1061,6 +1071,15 @@
       <div id="receiptArea"></div>
       <input type="file" id="receiptInput" accept="image/*" hidden>
     </div>
+    <button class="btn-del" id="delBtn" style="display:none">Удалить операцию</button>
+    <button class="x" id="closeSheet" style="position:absolute;top:calc(env(safe-area-inset-top) + 8px);right:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--line);border-radius:50%;font-size:24px;line-height:1;color:var(--text);cursor:pointer;z-index:40;padding:0">×</button>
+  </div>
+  <!-- Выезжающий циферблат (по тапу на сумму) -->
+  <div class="keypad-dock" id="keypadDock">
+    <div class="kd-bar">
+      <span class="kd-amount" id="kdAmount">0 €</span>
+      <button class="kd-done" id="kdDone">Готово</button>
+    </div>
     <div class="keypad">
       <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button class="op" data-k="÷">÷</button>
       <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button class="op" data-k="×">×</button>
@@ -1068,8 +1087,6 @@
       <button data-k=".">.</button><button data-k="0">0</button><button data-k="back">⌫</button><button class="op" data-k="+">+</button>
       <button class="op" data-k="clear">C</button><button data-k="back-hold" style="visibility:hidden"></button><button class="save" id="saveBtn">✓</button>
     </div>
-    <button class="btn-del" id="delBtn" style="display:none">Удалить операцию</button>
-    <button class="x" id="closeSheet" style="position:absolute;top:calc(env(safe-area-inset-top) + 8px);right:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--line);border-radius:50%;font-size:24px;line-height:1;color:var(--text);cursor:pointer;z-index:40;padding:0">×</button>
   </div>
 </div>
 
@@ -3007,6 +3024,7 @@ function showScreen(id){
 /* ============ Калькулятор / лист добавления ============ */
 function openSheet(id){
   editId=id||null;
+  closeKeypad();
   buildAccountSelect();
   if(id){
     const t=state.tx.find(x=>x.id==id);
@@ -3025,7 +3043,7 @@ function openSheet(id){
   updateDisplay();
   $('#overlay').classList.add('show');
 }
-function closeSheet(){$('#overlay').classList.remove('show');}
+function closeSheet(){$('#overlay').classList.remove('show');closeKeypad();}
 function buildAccountSelect(){
   const opts=state.accounts.map(a=>`<option value="${a.id}">${a.emoji} ${esc(a.name)}</option>`).join('');
   $('#fAccount').innerHTML=opts;$('#fFrom').innerHTML=opts;$('#fTo').innerHTML=opts;
@@ -3111,12 +3129,16 @@ function updateDisplay(){
   const cls=aType==='income'?'inc':aType==='expense'?'exp':'';
   const sign=aType==='income'?'+':aType==='expense'?'−':'';
   const numStr=isNaN(val)?'0':val.toLocaleString('ru-RU',{maximumFractionDigits:2});
+  const amt=(val>0?sign:'')+numStr;
   const m=$('#dispMain'); m.className='disp-main '+cls;
-  m.innerHTML=((val>0?sign:'')+numStr)+' <span class="disp-cur" id="dispCur">'+sym+'</span>';
+  m.innerHTML=amt+' <span class="disp-cur" id="dispCur">'+sym+'</span>';
+  const kd=$('#kdAmount'); if(kd)kd.textContent=amt+' '+sym; // зеркало суммы в циферблате
   // строка ввода: видно, что именно набираешь
   const raw=aExpr.replace(/\*/g,'×').replace(/\//g,'÷').replace(/\./g,',');
   $('#dispSub').textContent=aExpr==='0'?'':raw;
 }
+function openKeypad(){$('#keypadDock').classList.add('show');$('.display').classList.add('active');}
+function closeKeypad(){$('#keypadDock').classList.remove('show');$('.display').classList.remove('active');}
 function evalExpr(e){
   let s=e.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');
   if(!/^[0-9+\-*/.\s]+$/.test(s))return NaN;
@@ -3475,6 +3497,8 @@ $('#segInc').onclick=()=>setType('income');
 $('#segTrans').onclick=()=>setType('transfer');
 $('#saveBtn').onclick=saveTx;
 $('#delBtn').onclick=delTx;
+$('.display').onclick=openKeypad;
+$('#kdDone').onclick=closeKeypad;
 $('#catToggle').onclick=()=>setCatOpen($('#catStrip').style.display==='none');
 $$('.keypad button[data-k]').forEach(b=>{const k=b.dataset.k;if(k&&k!=='back-hold')b.onclick=()=>key(k);});
 
