@@ -211,11 +211,12 @@
   .seg button.on-exp{background:var(--expense);color:#fff}
   .seg button.on-inc{background:var(--income);color:#fff}
   .seg button.on-trans{background:var(--accent);color:#fff}
-  .display{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:18px 18px;margin-bottom:16px;
-    display:flex;align-items:center;justify-content:center;gap:6px;min-height:84px}
-  .display .cur{font-size:28px;color:var(--muted);font-weight:700}
-  .display .num{font-size:44px;font-weight:800;letter-spacing:-1px;text-align:center;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1}
+  .display{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px;
+    display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:3px;min-height:88px}
+  .disp-main{font-size:40px;font-weight:800;letter-spacing:-1px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;transition:color .15s}
+  .disp-main.exp{color:var(--expense)} .disp-main.inc{color:var(--income)}
+  .disp-main .disp-cur{font-size:26px;font-weight:700;margin-left:3px;opacity:.85}
+  .disp-sub{font-size:15px;color:var(--muted);font-weight:600;min-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
   .sheet-label{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:9px}
   .receipt-add{width:100%;padding:16px;border:1.5px dashed var(--line);border-radius:14px;background:none;color:var(--muted);
     font-size:14.5px;cursor:pointer;font-family:inherit;min-height:54px}
@@ -264,11 +265,14 @@
   .metarow .m{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;min-height:58px;display:flex;flex-direction:column;justify-content:center}
   .metarow .m label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:5px}
   .metarow .m input,.metarow .m select{width:100%;border:none;background:none;color:var(--text);font-size:15.5px;font-weight:500;font-family:inherit;outline:none}
-  .keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .keypad button{padding:16px 0;border-radius:14px;border:1px solid var(--line);background:var(--card);
-    color:var(--text);font-size:21px;font-weight:600;cursor:pointer;transition:.1s}
-  .keypad button:active{background:var(--card2)}
-  .keypad button.op{color:var(--accent);font-weight:700}
+  .keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .keypad button{min-height:60px;padding:0;border-radius:16px;border:1px solid var(--line);background:var(--card);
+    color:var(--text);font-size:24px;font-weight:700;cursor:pointer;transition:transform .07s ease, background .07s ease;
+    -webkit-user-select:none;user-select:none;touch-action:manipulation}
+  .keypad button:active{background:var(--accent-soft);transform:scale(.9)}
+  .keypad button.flash{background:var(--accent-soft);transform:scale(.9)}
+  .keypad button.op{color:var(--accent);font-weight:800}
+  .keypad button.op:active{background:var(--accent);color:#fff}
   .keypad button.save{grid-row:span 2;background:var(--accent);color:#fff;border:none;font-size:16px;font-weight:700}
   .keypad button.wide{grid-column:span 1}
   .sheet h2{font-size:17px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
@@ -1012,7 +1016,10 @@
       <button id="segInc">Доход</button>
       <button id="segTrans">Перевод</button>
     </div>
-    <div class="display"><span class="cur" id="dispCur">€</span><span class="num" id="dispNum">0</span></div>
+    <div class="display">
+      <div class="disp-main" id="dispMain">0 <span class="disp-cur" id="dispCur">€</span></div>
+      <div class="disp-sub" id="dispSub"></div>
+    </div>
     <div id="catBlock">
       <div class="sheet-label">Категория</div>
       <button class="cat-toggle" id="catToggle" type="button">
@@ -3036,6 +3043,7 @@ function setType(t,keepCat){
   $('#receiptBlock').style.display=isT?'none':'block';
   $('#scheduleBlock').style.display=isT?'none':'block';
   $('#accField').style.display=isT?'none':'block';
+  updateDisplay(); // обновить цвет/знак суммы под тип
   if(isT)return;
   renderReceipt();
   const cats=catsFor(t);
@@ -3098,7 +3106,17 @@ function renderReceipt(){
   }
 }
 function openReceiptViewer(src){$('#receiptViewerImg').src=src;$('#receiptViewer').classList.add('show');}
-function updateDisplay(){$('#dispNum').textContent=aExpr;}
+function updateDisplay(){
+  const val=evalExpr(aExpr), sym=state.currency;
+  const cls=aType==='income'?'inc':aType==='expense'?'exp':'';
+  const sign=aType==='income'?'+':aType==='expense'?'−':'';
+  const numStr=isNaN(val)?'0':val.toLocaleString('ru-RU',{maximumFractionDigits:2});
+  const m=$('#dispMain'); m.className='disp-main '+cls;
+  m.innerHTML=((val>0?sign:'')+numStr)+' <span class="disp-cur" id="dispCur">'+sym+'</span>';
+  // строка ввода: видно, что именно набираешь
+  const raw=aExpr.replace(/\*/g,'×').replace(/\//g,'÷').replace(/\./g,',');
+  $('#dispSub').textContent=aExpr==='0'?'':raw;
+}
 function evalExpr(e){
   let s=e.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');
   if(!/^[0-9+\-*/.\s]+$/.test(s))return NaN;
@@ -3119,6 +3137,7 @@ function key(k){
   else{ // digit
     if(aExpr==='0')aExpr=k; else aExpr+=k;
   }
+  if(navigator.vibrate)navigator.vibrate(8); // тактильный отклик (Android; iOS web игнорирует)
   updateDisplay();
 }
 function saveTx(){
