@@ -220,6 +220,14 @@
   .disp-main.exp{color:var(--expense)} .disp-main.inc{color:var(--income)}
   .disp-main .disp-cur{font-size:26px;font-weight:700;margin-left:3px;opacity:.85}
   .disp-sub{font-size:15px;color:var(--muted);font-weight:600;min-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  /* Карточка перевода: со счёта → на счёт, каждая в своей валюте */
+  .trans-display{display:flex;align-items:stretch;background:var(--card2);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:16px;min-height:88px}
+  .td-side{flex:1;min-width:0;padding:13px 14px;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:7px}
+  .td-side.active{background:var(--accent-soft)}
+  .td-acc{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .td-amt{font-size:21px;font-weight:800;letter-spacing:-.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .td-side.from .td-amt{color:var(--expense)} .td-side.to .td-amt{color:var(--income)}
+  .td-arrow{display:flex;align-items:center;color:var(--muted2);font-size:22px;padding:0 2px}
   .sheet-label{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:9px}
   .receipt-add{width:100%;padding:16px;border:1.5px dashed var(--line);border-radius:14px;background:none;color:var(--muted);
     font-size:14.5px;cursor:pointer;font-family:inherit;min-height:54px}
@@ -1038,6 +1046,17 @@
       <div class="disp-main" id="dispMain">0 <span class="disp-cur" id="dispCur">€</span></div>
       <div class="disp-sub" id="dispSub"></div>
     </div>
+    <div class="trans-display" id="transDisplay" style="display:none">
+      <div class="td-side from" id="tdFrom">
+        <div class="td-acc"><span id="tdFromIc">💳</span><span id="tdFromNm">—</span></div>
+        <div class="td-amt" id="tdFromAmt">−0 €</div>
+      </div>
+      <div class="td-arrow">›</div>
+      <div class="td-side to" id="tdTo">
+        <div class="td-acc"><span id="tdToIc">💳</span><span id="tdToNm">—</span></div>
+        <div class="td-amt" id="tdToAmt">+0 €</div>
+      </div>
+    </div>
     <div id="catBlock">
       <div class="sheet-label">Категория</div>
       <button class="cat-toggle" id="catToggle" type="button">
@@ -1659,6 +1678,7 @@ let anaCur=[], anaPre=[];   // tx текущего/прошлого период
 let curScreen='scrRecords';
 // add-sheet state
 let aType='expense', aCat='food', aSubcat=null, aReceipt=null, aExpr='0', editId=null;
+let aToExpr='0', transFocus='from'; // перевод: сумма «на счёт» и активная сторона
 const subcatById=id=>(state.subcats||[]).find(s=>s.id===id);
 // account editor
 let accEdit=null, accEmoji='💳', accColor='#6d5df6', accType='bank';
@@ -3067,12 +3087,13 @@ function openSheet(id){
   if(id){
     const t=state.tx.find(x=>x.id==id);
     aType=t.type;aExpr=String(t.amount);aCat=t.cat||CATS.expense[0].id;aSubcat=t.subcategoryId||null;aReceipt=t.receiptPath||null;
+    aToExpr=String(t.toAmount||t.amount);transFocus='from';
     $('#fDate').value=t.date.slice(0,10);$('#fNote').value=t.note||'';
     if(t.type==='transfer'){$('#fFrom').value=t.from;$('#fTo').value=t.to;}
     else $('#fAccount').value=t.account;
     $('#delBtn').style.display='block';
   }else{
-    aType='expense';aExpr='0';aCat=CATS.expense[0].id;aSubcat=null;aReceipt=null;
+    aType='expense';aExpr='0';aToExpr='0';transFocus='from';aCat=CATS.expense[0].id;aSubcat=null;aReceipt=null;
     $('#fDate').value=new Date().toISOString().slice(0,10);$('#fNote').value='';
     $('#delBtn').style.display='none';
   }
@@ -3099,7 +3120,10 @@ function setType(t,keepCat){
   $('#receiptBlock').style.display=isT?'none':'block';
   $('#scheduleBlock').style.display=isT?'none':'block';
   $('#accField').style.display=isT?'none':'block';
-  updateDisplay(); // обновить цвет/знак суммы под тип
+  $('.display').style.display=isT?'none':'flex'; // перевод → двусторонняя карточка
+  $('#transDisplay').style.display=isT?'flex':'none';
+  if(isT)transFocus='from';
+  updateDisplay(); // обновить суммы/цвета под тип
   if(isT)return;
   renderReceipt();
   const cats=catsFor(t);
@@ -3162,7 +3186,24 @@ function renderReceipt(){
   }
 }
 function openReceiptViewer(src){$('#receiptViewerImg').src=src;$('#receiptViewer').classList.add('show');}
+function curOfAcc(id){const a=state.accounts.find(x=>x.id===id);return a?(a.currency||state.currency):state.currency;}
+function sameTransCur(){return curOfAcc($('#fFrom').value)===curOfAcc($('#fTo').value);}
+function fmtNum(v){return isNaN(v)?'0':v.toLocaleString('ru-RU',{maximumFractionDigits:2});}
+function updateTransDisplay(){
+  const fId=$('#fFrom').value,tId=$('#fTo').value;
+  const fa=state.accounts.find(x=>x.id===fId),ta=state.accounts.find(x=>x.id===tId);
+  const fcur=curOfAcc(fId),tcur=curOfAcc(tId);
+  const fv=evalExpr(aExpr),tv=evalExpr(aToExpr);
+  $('#tdFromIc').textContent=fa?fa.emoji:'💳';$('#tdFromNm').textContent=fa?fa.name:'—';
+  $('#tdToIc').textContent=ta?ta.emoji:'💳';$('#tdToNm').textContent=ta?ta.name:'—';
+  $('#tdFromAmt').textContent='−'+fmtNum(fv)+' '+fcur;
+  $('#tdToAmt').textContent='+'+fmtNum(tv)+' '+tcur;
+  $('#tdFrom').classList.toggle('active',transFocus==='from');
+  $('#tdTo').classList.toggle('active',transFocus==='to');
+  const kd=$('#kdAmount');if(kd){const v=transFocus==='to'?tv:fv,c=transFocus==='to'?tcur:fcur,s=transFocus==='to'?'+':'−';kd.textContent=s+fmtNum(v)+' '+c;}
+}
 function updateDisplay(){
+  if(aType==='transfer'){updateTransDisplay();return;}
   const val=evalExpr(aExpr), sym=state.currency;
   const cls=aType==='income'?'inc':aType==='expense'?'exp':'';
   const sign=aType==='income'?'+':aType==='expense'?'−':'';
@@ -3183,19 +3224,19 @@ function evalExpr(e){
   s=s.replace(/[+\-*/.]$/,'');
   try{const r=Function('"use strict";return('+s+')')();return isFinite(r)?Math.round(r*100)/100:NaN;}catch(e){return NaN;}
 }
+function applyKey(e,k){
+  if(k==='clear')return '0';
+  if(k==='back')return e.length>1?e.slice(0,-1):'0';
+  if('+−×÷'.includes(k))return '+−×÷'.includes(e.slice(-1))?e.slice(0,-1)+k:e+k;
+  if(k==='.'){const last=e.split(/[+\-−×÷]/).pop();return last.includes('.')?e:e+'.';}
+  return e==='0'?k:e+k; // цифра
+}
 function key(k){
-  if(k==='clear'){aExpr='0';}
-  else if(k==='back'){aExpr=aExpr.length>1?aExpr.slice(0,-1):'0';}
-  else if('+−×÷'.includes(k)){
-    if('+−×÷'.includes(aExpr.slice(-1)))aExpr=aExpr.slice(0,-1)+k;
-    else aExpr+=k;
-  }
-  else if(k==='.'){
-    const last=aExpr.split(/[+\-−×÷]/).pop();
-    if(!last.includes('.'))aExpr+='.';
-  }
-  else{ // digit
-    if(aExpr==='0')aExpr=k; else aExpr+=k;
+  if(aType==='transfer'){
+    if(transFocus==='to'){aToExpr=applyKey(aToExpr,k);}
+    else{aExpr=applyKey(aExpr,k); if(sameTransCur())aToExpr=aExpr;} // одинаковая валюта → зеркалим
+  } else {
+    aExpr=applyKey(aExpr,k);
   }
   if(navigator.vibrate)navigator.vibrate(8); // тактильный отклик (Android; iOS web игнорирует)
   updateDisplay();
@@ -3210,10 +3251,12 @@ function saveTx(){
   if(aType==='transfer'){
     const from=$('#fFrom').value, to=$('#fTo').value;
     if(from===to){toast('Выберите разные счета');return;}
+    // сумма «на счёт»: своя для разных валют, иначе = сумме списания
+    const toVal=sameTransCur()?val:(evalExpr(aToExpr)||val);
     if(editId){const t=state.tx.find(x=>x.id==editId);
       delete t.cat;delete t.account;
-      Object.assign(t,{type:'transfer',from,to,amount:val,toAmount:val,date,note});}
-    else state.tx.push({id:Date.now(),type:'transfer',from,to,amount:val,toAmount:val,date,note});
+      Object.assign(t,{type:'transfer',from,to,amount:val,toAmount:toVal,date,note});}
+    else state.tx.push({id:Date.now(),type:'transfer',from,to,amount:val,toAmount:toVal,date,note});
   }else if(editId){
     const t=state.tx.find(x=>x.id==editId);
     delete t.from;delete t.to;delete t.toAmount;
@@ -3548,6 +3591,10 @@ $('#segTrans').onclick=()=>setType('transfer');
 $('#saveBtn').onclick=saveTx;
 $('#delBtn').onclick=delTx;
 $('.display').onclick=openKeypad;
+$('#tdFrom').onclick=()=>{transFocus='from';updateDisplay();openKeypad();};
+$('#tdTo').onclick=()=>{transFocus='to';updateDisplay();openKeypad();};
+$('#fFrom').onchange=()=>{if(sameTransCur())aToExpr=aExpr;updateDisplay();};
+$('#fTo').onchange=()=>{if(sameTransCur())aToExpr=aExpr;updateDisplay();};
 $('#kdDone').onclick=closeKeypad;
 $('#catToggle').onclick=()=>setCatOpen($('#catStrip').style.display==='none');
 $$('.keypad button[data-k]').forEach(b=>{const k=b.dataset.k;if(k&&k!=='back-hold')b.onclick=()=>key(k);});
