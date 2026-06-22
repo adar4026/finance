@@ -3206,8 +3206,11 @@ function renderReceipt(){
 function openReceiptViewer(src){$('#receiptViewerImg').src=src;$('#receiptViewer').classList.add('show');}
 // Курсы валют: сколько единиц валюты за 1 € (база — евро). Редактируются в Настройках.
 const DEFAULT_RATES={'€':1,'$':1.08,'₽':100,'£':0.85,'₸':500,'₴':44};
-function rate(cur){if(cur==='€')return 1;return (state.rates&&state.rates[cur])||DEFAULT_RATES[cur]||1;}
-function convertCur(amt,from,to){if(from===to)return Math.round(amt*100)/100;const eur=amt/rate(from);return Math.round(eur*rate(to)*100)/100;}
+// нормализация валюты к символу-ключу (коды из импорта USD/EUR/… → $/€/…)
+const _CURMAP={EUR:'€',USD:'$',RUB:'₽',GBP:'£',KZT:'₸',UAH:'₴','US$':'$','€':'€','$':'$','₽':'₽','£':'£','₸':'₸','₴':'₴'};
+function curKey(c){return _CURMAP[c]||AF.Services.Currency.SYM[c]||c;}
+function rate(cur){const k=curKey(cur);if(k==='€')return 1;return (state.rates&&state.rates[k])||DEFAULT_RATES[k]||1;}
+function convertCur(amt,from,to){if(curKey(from)===curKey(to))return Math.round(amt*100)/100;const eur=amt/rate(from);return Math.round(eur*rate(to)*100)/100;}
 function openRates(){
   const list=['$','₽','£','₸','₴'];
   $('#ratesList').innerHTML=list.map(c=>`<div class="field"><label>1 € = … ${c}</label><input type="number" step="0.0001" min="0" data-cur="${c}" value="${rate(c)}"></div>`).join('');
@@ -3219,12 +3222,12 @@ function saveRates(){
   save();$('#ratesOverlay').classList.remove('show');toast('Курсы сохранены ✓');
 }
 function curOfAcc(id){const a=state.accounts.find(x=>x.id===id);return a?(a.currency||state.currency):state.currency;}
-function sameTransCur(){return curOfAcc($('#fFrom').value)===curOfAcc($('#fTo').value);}
+function sameTransCur(){return curKey(curOfAcc($('#fFrom').value))===curKey(curOfAcc($('#fTo').value));}
 function fmtNum(v){return isNaN(v)?'0':v.toLocaleString('ru-RU',{maximumFractionDigits:2});}
 function updateTransDisplay(){
   const fId=$('#fFrom').value,tId=$('#fTo').value;
   const fa=state.accounts.find(x=>x.id===fId),ta=state.accounts.find(x=>x.id===tId);
-  const fcur=curOfAcc(fId),tcur=curOfAcc(tId);
+  const fcur=curKey(curOfAcc(fId)),tcur=curKey(curOfAcc(tId));
   const fv=evalExpr(aExpr),tv=evalExpr(aToExpr);
   $('#tdFromIc').textContent=fa?fa.emoji:'💳';$('#tdFromNm').textContent=fa?fa.name:'—';
   $('#tdToIc').textContent=ta?ta.emoji:'💳';$('#tdToNm').textContent=ta?ta.name:'—';
