@@ -281,7 +281,11 @@
     box-shadow:0 -12px 40px rgba(0,0,0,.22);transform:translateY(115%);transition:transform .26s cubic-bezier(.22,.61,.36,1)}
   .keypad-dock.show{transform:translateY(0)}
   .kd-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px}
-  .kd-amount{font-size:24px;font-weight:800;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kd-amount{font-size:24px;font-weight:800;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px;min-width:0}
+  .kd-side{font-size:18px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 8px;border-radius:9px}
+  .kd-side.from{color:var(--expense)} .kd-side.to{color:var(--income)}
+  .kd-side.kd-act{background:var(--accent-soft)}
+  .kd-arr{color:var(--muted2);font-size:16px;flex-shrink:0}
   .kd-done{border:none;background:var(--accent);color:#fff;font-size:14.5px;font-weight:700;padding:9px 18px;border-radius:11px;cursor:pointer;font-family:inherit;flex-shrink:0}
   .kd-done:active{transform:scale(.95)}
   .display{cursor:pointer}
@@ -3228,7 +3232,13 @@ function updateTransDisplay(){
   $('#tdToAmt').textContent='+'+fmtNum(tv)+' '+tcur;
   $('#tdFrom').classList.toggle('active',transFocus==='from');
   $('#tdTo').classList.toggle('active',transFocus==='to');
-  const kd=$('#kdAmount');if(kd){const v=transFocus==='to'?tv:fv,c=transFocus==='to'?tcur:fcur,s=transFocus==='to'?'+':'−';kd.textContent=s+fmtNum(v)+' '+c;}
+  // в шапке циферблата — обе стороны перевода (видно при наборе)
+  const kd=$('#kdAmount');if(kd){
+    const fa2=transFocus==='from'?' kd-act':'', ta2=transFocus==='to'?' kd-act':'';
+    kd.innerHTML='<span class="kd-side from'+fa2+'">−'+fmtNum(fv)+' '+fcur+'</span>'
+      +'<span class="kd-arr">›</span>'
+      +'<span class="kd-side to'+ta2+'">+'+fmtNum(tv)+' '+tcur+'</span>';
+  }
   // подсказка курса для разных валют
   const hint=$('#transRate');if(hint){
     if(fcur!==tcur){hint.textContent='≈ курс 1 '+fcur+' = '+convertCur(1,fcur,tcur)+' '+tcur+' · можно изменить сумму вручную';hint.style.display='block';}
@@ -3632,6 +3642,7 @@ $('#delBtn').onclick=delTx;
 $('.display').onclick=openKeypad;
 $('#tdFrom').onclick=()=>{transFocus='from';updateDisplay();openKeypad();};
 $('#tdTo').onclick=()=>{transFocus='to';updateDisplay();openKeypad();};
+$('#kdAmount').onclick=e=>{const s=e.target.closest('.kd-side');if(!s||aType!=='transfer')return;transFocus=s.classList.contains('to')?'to':'from';updateDisplay();};
 function syncTransTo(){const v=evalExpr(aExpr);if(sameTransCur())aToExpr=aExpr;else aToExpr=isNaN(v)?'0':String(convertCur(v,curOfAcc($('#fFrom').value),curOfAcc($('#fTo').value)));}
 $('#fFrom').onchange=()=>{syncTransTo();updateDisplay();};
 $('#fTo').onchange=()=>{syncTransTo();updateDisplay();};
