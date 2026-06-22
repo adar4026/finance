@@ -1014,6 +1014,7 @@
         <option value="₸">₸ Тенге</option><option value="₴">₴ Гривна</option>
       </select>
     </div>
+    <div class="setrow"><span>Курсы валют</span><button id="ratesBtn">Настроить</button></div>
     <div class="setrow"><span>Категории</span><button id="catMgrBtn">Управлять</button></div>
     <div class="setrow"><span>Экспорт данных</span><button id="exportBtn">Скачать JSON</button></div>
     <div class="setrow"><span>Импорт (JSON / CSV)</span><button id="importBtn">Загрузить файл</button>
@@ -1057,6 +1058,7 @@
         <div class="td-amt" id="tdToAmt">+0 €</div>
       </div>
     </div>
+    <div id="transRate" style="display:none;font-size:12px;color:var(--muted);margin:-8px 0 14px;padding:0 2px"></div>
     <div id="catBlock">
       <div class="sheet-label">Категория</div>
       <button class="cat-toggle" id="catToggle" type="button">
@@ -1603,6 +1605,17 @@
 <div class="overlay receipt-viewer" id="receiptViewer">
   <button class="rv-close" id="receiptViewerClose">×</button>
   <img id="receiptViewerImg" alt="Чек">
+</div>
+
+<!-- Курсы валют -->
+<div class="overlay" id="ratesOverlay">
+  <div class="sheet" style="max-width:440px">
+    <div class="grab"></div>
+    <h2><span>Курсы валют</span><span class="x" id="ratesClose">×</span></h2>
+    <p style="font-size:12.5px;color:var(--muted);margin:-4px 0 14px">Сколько единиц валюты за 1 €. Используется для авто-конвертации переводов между счетами в разных валютах.</p>
+    <div id="ratesList"></div>
+    <button class="btn-primary" id="ratesSave">Сохранить</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -3122,6 +3135,7 @@ function setType(t,keepCat){
   $('#accField').style.display=isT?'none':'block';
   $('.display').style.display=isT?'none':'flex'; // перевод → двусторонняя карточка
   $('#transDisplay').style.display=isT?'flex':'none';
+  if(!isT)$('#transRate').style.display='none';
   if(isT)transFocus='from';
   updateDisplay(); // обновить суммы/цвета под тип
   if(isT)return;
@@ -3186,6 +3200,20 @@ function renderReceipt(){
   }
 }
 function openReceiptViewer(src){$('#receiptViewerImg').src=src;$('#receiptViewer').classList.add('show');}
+// Курсы валют: сколько единиц валюты за 1 € (база — евро). Редактируются в Настройках.
+const DEFAULT_RATES={'€':1,'$':1.08,'₽':100,'£':0.85,'₸':500,'₴':44};
+function rate(cur){if(cur==='€')return 1;return (state.rates&&state.rates[cur])||DEFAULT_RATES[cur]||1;}
+function convertCur(amt,from,to){if(from===to)return Math.round(amt*100)/100;const eur=amt/rate(from);return Math.round(eur*rate(to)*100)/100;}
+function openRates(){
+  const list=['$','₽','£','₸','₴'];
+  $('#ratesList').innerHTML=list.map(c=>`<div class="field"><label>1 € = … ${c}</label><input type="number" step="0.0001" min="0" data-cur="${c}" value="${rate(c)}"></div>`).join('');
+  $('#ratesOverlay').classList.add('show');
+}
+function saveRates(){
+  state.rates=state.rates||{};
+  $$('#ratesList input[data-cur]').forEach(i=>{const v=parseFloat(i.value);if(v>0)state.rates[i.dataset.cur]=v;});
+  save();$('#ratesOverlay').classList.remove('show');toast('Курсы сохранены ✓');
+}
 function curOfAcc(id){const a=state.accounts.find(x=>x.id===id);return a?(a.currency||state.currency):state.currency;}
 function sameTransCur(){return curOfAcc($('#fFrom').value)===curOfAcc($('#fTo').value);}
 function fmtNum(v){return isNaN(v)?'0':v.toLocaleString('ru-RU',{maximumFractionDigits:2});}
@@ -3201,6 +3229,11 @@ function updateTransDisplay(){
   $('#tdFrom').classList.toggle('active',transFocus==='from');
   $('#tdTo').classList.toggle('active',transFocus==='to');
   const kd=$('#kdAmount');if(kd){const v=transFocus==='to'?tv:fv,c=transFocus==='to'?tcur:fcur,s=transFocus==='to'?'+':'−';kd.textContent=s+fmtNum(v)+' '+c;}
+  // подсказка курса для разных валют
+  const hint=$('#transRate');if(hint){
+    if(fcur!==tcur){hint.textContent='≈ курс 1 '+fcur+' = '+convertCur(1,fcur,tcur)+' '+tcur+' · можно изменить сумму вручную';hint.style.display='block';}
+    else hint.style.display='none';
+  }
 }
 function updateDisplay(){
   if(aType==='transfer'){updateTransDisplay();return;}
@@ -3234,7 +3267,11 @@ function applyKey(e,k){
 function key(k){
   if(aType==='transfer'){
     if(transFocus==='to'){aToExpr=applyKey(aToExpr,k);}
-    else{aExpr=applyKey(aExpr,k); if(sameTransCur())aToExpr=aExpr;} // одинаковая валюта → зеркалим
+    else{
+      aExpr=applyKey(aExpr,k);
+      if(sameTransCur())aToExpr=aExpr; // одинаковая валюта → зеркалим
+      else{const v=evalExpr(aExpr);aToExpr=isNaN(v)?'0':String(convertCur(v,curOfAcc($('#fFrom').value),curOfAcc($('#fTo').value)));} // авто-конвертация по курсу
+    }
   } else {
     aExpr=applyKey(aExpr,k);
   }
@@ -3595,8 +3632,9 @@ $('#delBtn').onclick=delTx;
 $('.display').onclick=openKeypad;
 $('#tdFrom').onclick=()=>{transFocus='from';updateDisplay();openKeypad();};
 $('#tdTo').onclick=()=>{transFocus='to';updateDisplay();openKeypad();};
-$('#fFrom').onchange=()=>{if(sameTransCur())aToExpr=aExpr;else if(aToExpr===aExpr)aToExpr='0';updateDisplay();};
-$('#fTo').onchange=()=>{if(sameTransCur())aToExpr=aExpr;else if(aToExpr===aExpr)aToExpr='0';updateDisplay();};
+function syncTransTo(){const v=evalExpr(aExpr);if(sameTransCur())aToExpr=aExpr;else aToExpr=isNaN(v)?'0':String(convertCur(v,curOfAcc($('#fFrom').value),curOfAcc($('#fTo').value)));}
+$('#fFrom').onchange=()=>{syncTransTo();updateDisplay();};
+$('#fTo').onchange=()=>{syncTransTo();updateDisplay();};
 $('#kdDone').onclick=closeKeypad;
 $('#catToggle').onclick=()=>setCatOpen($('#catStrip').style.display==='none');
 $$('.keypad button[data-k]').forEach(b=>{const k=b.dataset.k;if(k&&k!=='back-hold')b.onclick=()=>key(k);});
@@ -3650,6 +3688,10 @@ $('#photoInput').onchange=e=>{const f=e.target.files[0];if(!f)return;
 
 $('#curSelect').onchange=e=>{state.currency=e.target.value;save();render();};
 // Управление категориями
+$('#ratesBtn').onclick=openRates;
+$('#ratesClose').onclick=()=>$('#ratesOverlay').classList.remove('show');
+$('#ratesOverlay').onclick=e=>{if(e.target.id==='ratesOverlay')$('#ratesOverlay').classList.remove('show');};
+$('#ratesSave').onclick=saveRates;
 $('#catMgrBtn').onclick=openCatMgr;
 $('#catMgrClose').onclick=()=>$('#catMgrOverlay').classList.remove('show');
 $$('#catMgrSeg button').forEach(b=>b.onclick=()=>{catMgrType=b.dataset.t;$$('#catMgrSeg button').forEach(x=>x.classList.toggle('on',x===b));renderCatMgr();});
@@ -3963,7 +4005,7 @@ $('#budgetEditOverlay').onclick=e=>{if(e.target.id==='budgetEditOverlay')$('#bud
 $('#budSave').onclick=saveBudget;
 $('#budDelete').onclick=deleteBudget;
 $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay','#recurOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay','#recurOverlay','#ratesOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Statistics (Screen 14) ============ */
 let statsPeriod='year'; // 'month'|'year'|'all'
