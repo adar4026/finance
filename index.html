@@ -3251,8 +3251,10 @@ function saveTx(){
   if(aType==='transfer'){
     const from=$('#fFrom').value, to=$('#fTo').value;
     if(from===to){toast('Выберите разные счета');return;}
-    // сумма «на счёт»: своя для разных валют, иначе = сумме списания
-    const toVal=sameTransCur()?val:(evalExpr(aToExpr)||val);
+    // сумма «на счёт»: при одинаковой валюте = сумме списания; при разных — вводится явно (без курса 1:1)
+    const diffCur=!sameTransCur();
+    const toVal=diffCur?evalExpr(aToExpr):val;
+    if(diffCur&&(!toVal||toVal<=0)){toast('Укажите сумму зачисления');transFocus='to';updateDisplay();openKeypad();return;}
     if(editId){const t=state.tx.find(x=>x.id==editId);
       delete t.cat;delete t.account;
       Object.assign(t,{type:'transfer',from,to,amount:val,toAmount:toVal,date,note});}
@@ -3593,8 +3595,8 @@ $('#delBtn').onclick=delTx;
 $('.display').onclick=openKeypad;
 $('#tdFrom').onclick=()=>{transFocus='from';updateDisplay();openKeypad();};
 $('#tdTo').onclick=()=>{transFocus='to';updateDisplay();openKeypad();};
-$('#fFrom').onchange=()=>{if(sameTransCur())aToExpr=aExpr;updateDisplay();};
-$('#fTo').onchange=()=>{if(sameTransCur())aToExpr=aExpr;updateDisplay();};
+$('#fFrom').onchange=()=>{if(sameTransCur())aToExpr=aExpr;else if(aToExpr===aExpr)aToExpr='0';updateDisplay();};
+$('#fTo').onchange=()=>{if(sameTransCur())aToExpr=aExpr;else if(aToExpr===aExpr)aToExpr='0';updateDisplay();};
 $('#kdDone').onclick=closeKeypad;
 $('#catToggle').onclick=()=>setCatOpen($('#catStrip').style.display==='none');
 $$('.keypad button[data-k]').forEach(b=>{const k=b.dataset.k;if(k&&k!=='back-hold')b.onclick=()=>key(k);});
