@@ -1917,20 +1917,6 @@ function updateHome(list,inc,exp){
   renderRecent(list);
 }
 // Budget Card (используется на экране «Бюджет»; на Home убран в v2)
-function renderBudgetHome(){
-  const el=$('#budgetHome'); if(!el)return;
-  const {limit,spent}=budgetTotals();   // тот же расчёт, что на экране «Бюджет» (траты по категориям с лимитом)
-  if(!limit){
-    el.innerHTML=`<div class="bh-head"><span class="bh-title">Бюджет месяца</span></div><div class="bh-empty">Лимиты не заданы — нажмите, чтобы настроить</div>`;
-    el.onclick=()=>showScreen('scrBudgets');return;
-  }
-  const rawPct=spent/limit*100, pct=Math.min(100,rawPct), over=spent>limit;
-  const col=over?'var(--expense)':rawPct>=80?'var(--warn)':'var(--income)';
-  el.innerHTML=`<div class="bh-head"><span class="bh-title">Бюджет месяца</span><span class="bh-sub">${num(spent)} / ${num(limit)}</span></div>
-    <div class="bh-bar"><div class="bh-fill" style="width:${pct}%;background:${col}"></div></div>
-    <div class="bh-foot"><span>Потрачено ${Math.round(rawPct)}%</span><span>${over?'Превышен на '+num(spent-limit):'Осталось '+num(limit-spent)}</span></div>`;
-  el.onclick=()=>showScreen('scrBudgets');
-}
 function renderRecent(list){
   // все операции за выбранный период, сгруппированы по дням (прокручиваются на странице)
   const items=[...list].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
@@ -1938,16 +1924,6 @@ function renderRecent(list){
   if(!items.length){el.innerHTML=`<div class="daycard"><div class="empty"><div class="big">🗒️</div><p>Нет операций за период.<br>Нажмите «+», чтобы добавить.</p></div></div>`;return;}
   el.innerHTML=groupedTxHtml(items);
   $$('#recentList .tx').forEach(r=>r.onclick=()=>openSheet(r.dataset.id));
-}
-function renderAccStrip(){
-  $('#accStrip').innerHTML=state.accounts.map((a,i)=>{
-    const bal=accBalance(a.id),cur=a.currency||state.currency,col=COLOR_POOL[i%COLOR_POOL.length];
-    return `<div class="acc-card" data-acc="${a.id}">
-      <div class="ac-ic" style="background:${col}22">${a.emoji}</div>
-      <div class="ac-nm">${esc(a.name)}</div>
-      <div class="ac-bal" style="color:${bal<0?'var(--expense)':'var(--text)'}">${(bal<0?'−':'')+fmtCur(Math.abs(bal),cur)}</div>
-    </div>`;}).join('');
-  $$('#accStrip .acc-card').forEach(c=>c.onclick=()=>openAccountGraph(c.dataset.acc));
 }
 function capPoints(range){
   // конец графика = позже из (сегодня, последняя операция) — чтобы пузырёк совпадал с капиталом
@@ -2040,23 +2016,6 @@ function openAllTx(){
   $('#allTxOverlay').classList.add('show');
 }
 
-function renderTx(list){
-  const el=$('#txList');
-  if(!list.length){el.innerHTML=`<div class="empty"><div class="big">🗒️</div><p>Нет операций за этот период.<br>Нажмите «+», чтобы добавить.</p></div>`;return;}
-  const byDay={};
-  list.forEach(t=>{(byDay[t.date.slice(0,10)]=byDay[t.date.slice(0,10)]||[]).push(t);});
-  const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
-  el.innerHTML=days.map(day=>{
-    const items=byDay[day].sort((a,b)=>b.id-a.id);
-    const net=items.reduce((s,t)=>s+(t.type==='transfer'?0:(t.type==='income'?t.amount:-t.amount)),0);
-    return `<div class="daygroup">
-      <div class="dayhead"><span class="dl">${dayLabelFull(day)}</span>
-        <span class="dr" style="color:${net>=0?'var(--income)':'var(--expense)'}">${(net>=0?'+':'−')+num(Math.abs(net))}</span></div>
-      <div class="daycard">${items.map(txRow).join('')}</div>
-    </div>`;
-  }).join('');
-  $$('#txList .tx').forEach(r=>r.onclick=()=>openSheet(r.dataset.id));
-}
 function txRow(t){
   if(t.type==='transfer'){
     const from=state.accounts.find(a=>a.id===t.from), to=state.accounts.find(a=>a.id===t.to);
@@ -3253,7 +3212,10 @@ function convertCur(amt,from,to){return AF.Services.Currency.conv(state,amt,from
 function curOfTx(t){const a=state.accounts.find(x=>x.id===t.account);return a?(a.currency||state.currency):state.currency;}
 function txBase(t){return AF.Services.Currency.toBase(state,t.amount,curOfTx(t));}
 function openRates(){
-  const list=['$','₽','£','₸','₴'];
+  // базовый набор + любые валюты, реально используемые счетами (кроме евро-базы)
+  const base=['$','₽','£','₸','₴'];
+  const used=(state.accounts||[]).map(a=>curKey(a.currency||state.currency));
+  const list=[...new Set([...base,...used])].filter(c=>c&&c!=='€');
   $('#ratesList').innerHTML=list.map(c=>`<div class="field"><label>1 € = … ${c}</label><input type="number" step="0.0001" min="0" data-cur="${c}" value="${rate(c)}"></div>`).join('');
   $('#ratesOverlay').classList.add('show');
 }
