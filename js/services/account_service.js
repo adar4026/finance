@@ -22,16 +22,22 @@ AF.Services.Account = {
   // Активные счета (не в архиве)
   active(state) { return state.accounts.filter(a => !a.isArchived); },
 
-  // Общий капитал = сумма балансов активных счетов
+  // Общий капитал = сумма балансов активных счетов, приведённых к базовой валюте
   totalCapital(state, endDate) {
-    return this.active(state).reduce((s, a) => s + this.balance(state, a.id, endDate), 0);
+    const C = AF.Services.Currency;
+    return this.active(state).reduce((s, a) =>
+      s + C.toBase(state, this.balance(state, a.id, endDate), a.currency || state.currency), 0);
   },
 
-  // Распределение капитала по счетам с долей (%)
+  // Распределение капитала по счетам с долей (%); доля считается по базовой валюте
   distribution(state) {
-    const items = this.active(state).map(a => ({ account: a, balance: this.balance(state, a.id) }));
-    const total = items.reduce((s, i) => s + Math.max(0, i.balance), 0) || 1;
-    return items.map(i => ({ ...i, share: Math.max(0, i.balance) / total * 100 }));
+    const C = AF.Services.Currency;
+    const items = this.active(state).map(a => {
+      const balance = this.balance(state, a.id);
+      return { account: a, balance, base: C.toBase(state, balance, a.currency || state.currency) };
+    });
+    const total = items.reduce((s, i) => s + Math.max(0, i.base), 0) || 1;
+    return items.map(i => ({ ...i, share: Math.max(0, i.base) / total * 100 }));
   },
 
   share(state, accId) {

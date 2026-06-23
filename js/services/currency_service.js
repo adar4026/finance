@@ -30,4 +30,27 @@ AF.Services.Currency = {
   },
 
   convert(amount, exchangeRate) { return amount * exchangeRate; },
+
+  // ===== Конвертация между валютами (база — евро) =====
+  // Курсы: сколько единиц валюты за 1 €. Редактируются пользователем (state.rates), иначе дефолт.
+  DEFAULT_RATES: { '€':1, '$':1.08, '₽':100, '£':0.85, '₸':500, '₴':44 },
+  _NORM: { EUR:'€', USD:'$', RUB:'₽', GBP:'£', KZT:'₸', UAH:'₴', 'US$':'$' },
+  // привести код/символ валюты к символу-ключу
+  norm(c) { return this._NORM[c] || c; },
+  // единиц валюты c за 1 €
+  perEur(state, c) {
+    const k = this.norm(c);
+    if (k === '€') return 1;
+    return (state && state.rates && state.rates[k]) || this.DEFAULT_RATES[k] || 1;
+  },
+  // сумма amount в валюте from → в валюту to (через € как опору)
+  conv(state, amount, from, to) {
+    if (this.norm(from) === this.norm(to)) return Math.round(amount * 100) / 100;
+    const eur = amount / this.perEur(state, from);
+    return Math.round(eur * this.perEur(state, to) * 100) / 100;
+  },
+  // сумма amount в валюте cur → в базовую валюту (state.currency, по умолчанию €)
+  toBase(state, amount, cur) {
+    return this.conv(state, amount, cur, (state && state.currency) || '€');
+  },
 };

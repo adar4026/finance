@@ -1760,7 +1760,7 @@ function notifications(){
   const list=[];
   // превышение бюджетов в текущем месяце
   const now=new Date();const from=new Date(now.getFullYear(),now.getMonth(),1),to=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59);
-  const spent={};state.tx.forEach(t=>{const d=new Date(t.date);if(t.type==='expense'&&d>=from&&d<=to)spent[t.cat]=(spent[t.cat]||0)+t.amount;});
+  const spent={};state.tx.forEach(t=>{const d=new Date(t.date);if(t.type==='expense'&&d>=from&&d<=to)spent[t.cat]=(spent[t.cat]||0)+txBase(t);});
   Object.keys(state.budgets||{}).forEach(cid=>{const lim=state.budgets[cid],sp=spent[cid]||0;
     if(lim&&sp>lim){const c=catById(cid);list.push({ic:'⚠️',bg:'var(--expense-soft)',t1:'Превышен бюджет: '+c.name,t2:`Потрачено ${num(sp)} из ${num(lim)} (+${num(sp-lim)})`});}
     else if(lim&&sp>=lim*0.85){const c=catById(cid);list.push({ic:'🟠',bg:'#ffa94d22',t1:'Бюджет почти исчерпан: '+c.name,t2:`${num(sp)} из ${num(lim)} — осталось ${num(lim-sp)}`});}
@@ -1879,8 +1879,8 @@ function render(){
   $('#dispCur').textContent=state.currency;
 
   const list=state.tx.filter(inPeriod);
-  const inc=list.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const exp=list.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const inc=list.filter(t=>t.type==='income').reduce((s,t)=>s+txBase(t),0);
+  const exp=list.filter(t=>t.type==='expense').reduce((s,t)=>s+txBase(t),0);
 
   updateHome(list,inc,exp);
   renderAnalytics();
@@ -2098,8 +2098,8 @@ function renderAnalytics(){
   const range=periodRange(), prev=rangeBack(1);   // глобальный период + предыдущий
   const cur=state.tx.filter(t=>inAnaRange(t,range)), pre=state.tx.filter(t=>inAnaRange(t,prev));
   anaCur=cur; anaPre=pre;
-  const inc=A.income(cur),exp=A.expense(cur),net=inc-exp;
-  const preNet=A.income(pre)-A.expense(pre);
+  const inc=A.income(cur,state),exp=A.expense(cur,state),net=inc-exp;
+  const preNet=A.income(pre,state)-A.expense(pre,state);
   $('#anaInc').textContent='+'+num(inc);
   $('#anaExp').textContent='−'+num(exp);
   $('#anaNet').textContent=(net>=0?'+':'−')+num(Math.abs(net));
@@ -2114,7 +2114,7 @@ function renderAnalytics(){
 function renderAnaBar(){
   const A=AF.Services.Analytics,labels=[],incD=[],expD=[];
   for(let i=5;i>=0;i--){const r=rangeBack(i);labels.push(r.label);
-    const list=state.tx.filter(t=>inAnaRange(t,r));incD.push(A.income(list));expD.push(A.expense(list));}
+    const list=state.tx.filter(t=>inAnaRange(t,r));incD.push(A.income(list,state));expD.push(A.expense(list,state));}
   const css=getComputedStyle(document.documentElement),muted=css.getPropertyValue('--muted').trim(),grid=css.getPropertyValue('--line').trim();
   if(barChart)barChart.destroy();
   barChart=new Chart($('#barChart'),{type:'bar',
@@ -2139,8 +2139,8 @@ function catChangeBadge(curV,prevV,type){
 function renderAnaPie(cur,pre){
   const ty=anaCatType;
   $('#pieTotalLbl').textContent=ty==='income'?'Доходы':'Расходы';
-  const sel=cur.filter(t=>t.type===ty);const byCat={};sel.forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+t.amount);
-  const byCatPrev={};(pre||[]).filter(t=>t.type===ty).forEach(t=>byCatPrev[t.cat]=(byCatPrev[t.cat]||0)+t.amount);
+  const sel=cur.filter(t=>t.type===ty);const byCat={};sel.forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+txBase(t));
+  const byCatPrev={};(pre||[]).filter(t=>t.type===ty).forEach(t=>byCatPrev[t.cat]=(byCatPrev[t.cat]||0)+txBase(t));
   const entries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);const total=entries.reduce((s,e)=>s+e[1],0);
   $('#pieTotal').textContent=num(total);
   // строка категории: иконка-эмодзи · имя + Δ% к прошлому · сумма + прошлая сумма (как в Money Flow)
@@ -2227,7 +2227,7 @@ function monthsInRange(from,to){
 function renderCatTx(){
   const r=catTxRange(),ty=catTxType;
   const list=state.tx.filter(t=>t.type===ty&&catTxIds.includes(t.cat)&&inAnaRange(t,r));
-  const sum=list.reduce((s,t)=>s+t.amount,0);
+  const sum=list.reduce((s,t)=>s+txBase(t),0);
   $('#catTxTitle').textContent=catTxName;
   $('#catTxNavLbl').textContent=r.lbl;
   // навигация стрелками только для Месяц/Год; для Всё/Период — другое
@@ -2283,8 +2283,8 @@ function runSearch(q){
   if(!res.length){hint.style.display='block';hint.textContent='Ничего не найдено по запросу «'+q+'».';list.innerHTML='';return;}
   hint.style.display='none';
   // общая сумма найденных (доходы − расходы, переводы не учитываются)
-  const inc=res.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const exp=res.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const inc=res.filter(t=>t.type==='income').reduce((s,t)=>s+txBase(t),0);
+  const exp=res.filter(t=>t.type==='expense').reduce((s,t)=>s+txBase(t),0);
   const net=inc-exp;
   const sumBlock=`<div class="search-sum">
     <div class="ss-l">Найдено: ${res.length} ${plural(res.length,'операция','операции','операций')}</div>
@@ -2295,9 +2295,9 @@ function runSearch(q){
 }
 function renderAnaCompare(cur,pre){
   const A=AF.Services.Analytics;
-  const rows=[{l:'Доходы',c:A.income(cur),p:A.income(pre),good:'up'},
-    {l:'Расходы',c:A.expense(cur),p:A.expense(pre),good:'down'},
-    {l:'Результат',c:A.cashFlow(cur),p:A.cashFlow(pre),good:'up'}];
+  const rows=[{l:'Доходы',c:A.income(cur,state),p:A.income(pre,state),good:'up'},
+    {l:'Расходы',c:A.expense(cur,state),p:A.expense(pre,state),good:'down'},
+    {l:'Результат',c:A.cashFlow(cur,state),p:A.cashFlow(pre,state),good:'up'}];
   $('#anaCompare').innerHTML=rows.map(r=>{
     const d=r.p?Math.round((r.c-r.p)/Math.abs(r.p)*100):0;
     const up=r.c>=r.p, better=(r.good==='up')?up:!up;
@@ -2323,7 +2323,7 @@ function inRange(t,r){const d=new Date(t.date);return d>=r.from&&d<=r.to;}
 // ==== Бюджеты (месячные) ====
 function budgetMonthRange(){const a=new Date(anchor);return {from:new Date(a.getFullYear(),a.getMonth(),1),to:new Date(a.getFullYear(),a.getMonth()+1,0,23,59,59)};}
 function budgetSpent(catId){const {from,to}=budgetMonthRange();
-  return state.tx.filter(t=>t.type==='expense'&&t.cat===catId&&new Date(t.date)>=from&&new Date(t.date)<=to).reduce((s,t)=>s+t.amount,0);}
+  return state.tx.filter(t=>t.type==='expense'&&t.cat===catId&&new Date(t.date)>=from&&new Date(t.date)<=to).reduce((s,t)=>s+txBase(t),0);}
 function budgetIds(){return Object.keys(state.budgets||{}).filter(c=>(+state.budgets[c]||0)>0);}
 function budgetTotals(){let limit=0,spent=0;budgetIds().forEach(c=>{limit+=+state.budgets[c];spent+=budgetSpent(c);});return {limit,spent};}
 // уровень алёрта по проценту: ok | warning(>=80) | critical(>=100)
@@ -3216,12 +3216,14 @@ function renderReceipt(){
 }
 function openReceiptViewer(src){$('#receiptViewerImg').src=src;$('#receiptViewer').classList.add('show');}
 // Курсы валют: сколько единиц валюты за 1 € (база — евро). Редактируются в Настройках.
-const DEFAULT_RATES={'€':1,'$':1.08,'₽':100,'£':0.85,'₸':500,'₴':44};
-// нормализация валюты к символу-ключу (коды из импорта USD/EUR/… → $/€/…)
-const _CURMAP={EUR:'€',USD:'$',RUB:'₽',GBP:'£',KZT:'₸',UAH:'₴','US$':'$','€':'€','$':'$','₽':'₽','£':'£','₸':'₸','₴':'₴'};
-function curKey(c){return _CURMAP[c]||AF.Services.Currency.SYM[c]||c;}
-function rate(cur){const k=curKey(cur);if(k==='€')return 1;return (state.rates&&state.rates[k])||DEFAULT_RATES[k]||1;}
-function convertCur(amt,from,to){if(curKey(from)===curKey(to))return Math.round(amt*100)/100;const eur=amt/rate(from);return Math.round(eur*rate(to)*100)/100;}
+// Курсы и конвертация — централизованы в AF.Services.Currency (база — state.currency)
+const DEFAULT_RATES=AF.Services.Currency.DEFAULT_RATES;
+function curKey(c){return AF.Services.Currency.norm(c);}
+function rate(cur){return AF.Services.Currency.perEur(state,cur);} // единиц за 1 €
+function convertCur(amt,from,to){return AF.Services.Currency.conv(state,amt,from,to);}
+// валюта операции (по её счёту) и сумма в базовой валюте — для агрегатов
+function curOfTx(t){const a=state.accounts.find(x=>x.id===t.account);return a?(a.currency||state.currency):state.currency;}
+function txBase(t){return AF.Services.Currency.toBase(state,t.amount,curOfTx(t));}
 function openRates(){
   const list=['$','₽','£','₸','₴'];
   $('#ratesList').innerHTML=list.map(c=>`<div class="field"><label>1 € = … ${c}</label><input type="number" step="0.0001" min="0" data-cur="${c}" value="${rate(c)}"></div>`).join('');
@@ -4080,8 +4082,8 @@ function openStats(){
 
 function renderStatsHero(){
   const txs=statsTxInRange();
-  const inc=txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const exp=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const inc=txs.filter(t=>t.type==='income').reduce((s,t)=>s+txBase(t),0);
+  const exp=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+txBase(t),0);
   const turnover=inc+exp;
   const flow=inc-exp;
   $('#statsTurnover').textContent=fmtCur(turnover);
@@ -4103,7 +4105,7 @@ function renderStatsBody(){
 function buildStatsOverview(){
   const txs=statsTxInRange();
   const expTxs=txs.filter(t=>t.type==='expense');
-  const totalExp=expTxs.reduce((s,t)=>s+t.amount,0);
+  const totalExp=expTxs.reduce((s,t)=>s+txBase(t),0);
 
   // KPI
   const [from,to]=statsRange();
@@ -4117,7 +4119,7 @@ function buildStatsOverview(){
 
   // best/worst expense day
   const byDay={};
-  expTxs.forEach(t=>{const d=t.date.slice(0,10);byDay[d]=(byDay[d]||0)+t.amount;});
+  expTxs.forEach(t=>{const d=t.date.slice(0,10);byDay[d]=(byDay[d]||0)+txBase(t);});
   const dayEntries=Object.entries(byDay);
   let worstDay=null,worstAmt=0,bestDay=null,bestAmt=Infinity;
   dayEntries.forEach(([d,a])=>{
@@ -4134,7 +4136,7 @@ function buildStatsOverview(){
     const dt=new Date(y,m,1);
     const key=dt.toISOString().slice(0,7);
     const lbl=dt.toLocaleDateString('ru',{month:'short'});
-    const val=(state.tx||[]).filter(t=>t.type==='expense'&&t.date.startsWith(key)).reduce((s,t)=>s+t.amount,0);
+    const val=(state.tx||[]).filter(t=>t.type==='expense'&&t.date.startsWith(key)).reduce((s,t)=>s+txBase(t),0);
     months.push({lbl,val,key});
   }
   const maxM=Math.max(...months.map(m=>m.val),1);
@@ -4146,7 +4148,7 @@ function buildStatsOverview(){
 
   // top 5 expense categories
   const byCat={};
-  expTxs.forEach(t=>{if(t.categoryId)byCat[t.categoryId]=(byCat[t.categoryId]||0)+t.amount;});
+  expTxs.forEach(t=>{if(t.categoryId)byCat[t.categoryId]=(byCat[t.categoryId]||0)+txBase(t);});
   const catEntries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const rankHtml=catEntries.length ? catEntries.map(([cid,amt],i)=>{
     const cat=catById(cid)||{name:'Другое',icon:'📦',color:'#888'};
@@ -4238,14 +4240,14 @@ function buildStatsRecords(){
 
   // days
   const byDay={};
-  expTxs.forEach(t=>{const d=t.date.slice(0,10);byDay[d]=(byDay[d]||0)+t.amount;});
+  expTxs.forEach(t=>{const d=t.date.slice(0,10);byDay[d]=(byDay[d]||0)+txBase(t);});
   const dayEntries=Object.entries(byDay).sort((a,b)=>b[1]-a[1]);
   const worstDay=dayEntries[0];
   const bestDay=dayEntries[dayEntries.length-1];
 
   // monthly totals
   const byMonth={};
-  expTxs.forEach(t=>{const m=t.date.slice(0,7);byMonth[m]=(byMonth[m]||0)+t.amount;});
+  expTxs.forEach(t=>{const m=t.date.slice(0,7);byMonth[m]=(byMonth[m]||0)+txBase(t);});
   const monthEntries=Object.entries(byMonth).sort((a,b)=>b[1]-a[1]);
   const worstMonth=monthEntries[0];
   const bestMonth=monthEntries[monthEntries.length-1];
@@ -4286,7 +4288,7 @@ function buildStatsHabits(){
   // day of week with most spending
   const byDow=[0,0,0,0,0,0,0];
   const byDowCnt=[0,0,0,0,0,0,0];
-  expAll.forEach(t=>{const dow=(new Date(t.date+'T12:00:00').getDay()+6)%7;byDow[dow]+=t.amount;byDowCnt[dow]++;});
+  expAll.forEach(t=>{const dow=(new Date(t.date+'T12:00:00').getDay()+6)%7;byDow[dow]+=txBase(t);byDowCnt[dow]++;});
   const dowNames=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
   const peakDow=byDow.indexOf(Math.max(...byDow));
 
@@ -4309,8 +4311,8 @@ function buildStatsHabits(){
   const topCat=topCatId?catById(topCatId[0]):null;
 
   // weekend vs weekday
-  const weekendExp=expAll.filter(t=>{const d=(new Date(t.date+'T12:00:00').getDay()+6)%7;return d>=5;}).reduce((s,t)=>s+t.amount,0);
-  const weekdayExp=expAll.filter(t=>{const d=(new Date(t.date+'T12:00:00').getDay()+6)%7;return d<5;}).reduce((s,t)=>s+t.amount,0);
+  const weekendExp=expAll.filter(t=>{const d=(new Date(t.date+'T12:00:00').getDay()+6)%7;return d>=5;}).reduce((s,t)=>s+txBase(t),0);
+  const weekdayExp=expAll.filter(t=>{const d=(new Date(t.date+'T12:00:00').getDay()+6)%7;return d<5;}).reduce((s,t)=>s+txBase(t),0);
   const weekendShare=weekdayExp+weekendExp>0?Math.round(weekendExp/(weekdayExp+weekendExp)*100):0;
 
   return `<div class="panel" style="margin-bottom:14px">
@@ -4349,7 +4351,7 @@ function buildAchievements(){
     for(let i=0;i<30;i++){
       const d=new Date();d.setDate(d.getDate()-i);
       const ds=d.toISOString().slice(0,10);
-      const dayExp=expTx.filter(t=>t.date.startsWith(ds)).reduce((s,t)=>s+t.amount,0);
+      const dayExp=expTx.filter(t=>t.date.startsWith(ds)).reduce((s,t)=>s+txBase(t),0);
       // simplified: "in budget" = daily spend < totalBudgetLimit/30
       const monthLimit=Object.values(bud).reduce((s,b)=>s+(b.limit||0),0);
       const dailyLimit=monthLimit/30;
@@ -4363,7 +4365,7 @@ function buildAchievements(){
   tx.filter(t=>t.type!=='transfer').forEach(t=>{
     const m=t.date.slice(0,7);
     if(!byMonth[m])byMonth[m]={inc:0,exp:0};
-    if(t.type==='income')byMonth[m].inc+=t.amount; else byMonth[m].exp+=t.amount;
+    if(t.type==='income')byMonth[m].inc+=txBase(t); else byMonth[m].exp+=txBase(t);
   });
   const posMonths=Object.values(byMonth).filter(m=>m.inc>m.exp).length;
 
