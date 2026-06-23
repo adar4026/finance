@@ -1048,7 +1048,7 @@
 </div>
 
 <!-- Add / edit sheet -->
-<div class="overlay" id="overlay">
+<div class="overlay" id="overlay" style="z-index:90">
   <div class="sheet">
     <div class="grab"></div>
     <div class="seg">
@@ -3365,12 +3365,13 @@ function saveTx(){
   }
   save();closeSheet();
   anchor=new Date(date);render();buildAccountSelect();
+  if($('#catTxOverlay').classList.contains('show'))renderCatTx(); // обновить drill-down, если открыт
   const repToast=(!editId&&aType!=='transfer'&&rep!=='none')?' · повтор задан 🔁':'';
   toast((editId?'Сохранено ✓':(aType==='transfer'?'Перевод добавлен ✓':aType==='income'?'Доход добавлен ✓':'Расход добавлен ✓'))+repToast);
 }
 function delTx(){
   if(!editId)return;
-  if(confirm('Удалить операцию?')){state.tx=state.tx.filter(t=>t.id!=editId);save();closeSheet();render();toast('Удалено');}
+  if(confirm('Удалить операцию?')){state.tx=state.tx.filter(t=>t.id!=editId);save();closeSheet();render();if($('#catTxOverlay').classList.contains('show'))renderCatTx();toast('Удалено');}
 }
 
 /* ============ Счета ============ */
