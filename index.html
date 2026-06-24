@@ -1113,6 +1113,7 @@
       <div id="receiptArea"></div>
       <input type="file" id="receiptInput" accept="image/*" hidden>
     </div>
+    <button class="btn-primary" id="saveBtn2">Сохранить</button>
     <button class="btn-del" id="delBtn" style="display:none">Удалить операцию</button>
     <button class="x" id="closeSheet" style="position:absolute;top:calc(env(safe-area-inset-top) + 8px);right:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--line);border-radius:50%;font-size:24px;line-height:1;color:var(--text);cursor:pointer;z-index:40;padding:0">×</button>
   </div>
@@ -3681,6 +3682,7 @@ $('#segExp').onclick=()=>setType('expense');
 $('#segInc').onclick=()=>setType('income');
 $('#segTrans').onclick=()=>setType('transfer');
 $('#saveBtn').onclick=saveTx;
+$('#saveBtn2').onclick=saveTx;
 $('#delBtn').onclick=delTx;
 $('.display').onclick=openKeypad;
 $('#tdFrom').onclick=()=>{transFocus='from';updateDisplay();openKeypad();};
