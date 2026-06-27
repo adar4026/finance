@@ -64,6 +64,9 @@
   .topbar h1{font-size:19px;font-weight:700;letter-spacing:-.3px;display:flex;align-items:center;gap:9px}
   .topbar h1 .lg{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));
     display:flex;align-items:center;justify-content:center;font-size:15px}
+  .topbar h1 .brand-menu{flex-direction:column;gap:3.5px;border:none;cursor:pointer;padding:0;transition:.15s}
+  .topbar h1 .brand-menu:active{transform:scale(.92)}
+  .topbar h1 .brand-menu span{display:block;width:14px;height:2px;background:#fff;border-radius:2px}
   .topbar .acts{display:flex;gap:7px}
   .iconbtn{width:42px;height:42px;border:none;border-radius:12px;background:var(--card);color:var(--text);
     cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);transition:.15s}
@@ -886,7 +889,7 @@
   <div class="topbar">
     <div class="row1">
       <div class="brand">
-        <h1><span class="lg">💰</span><span id="screenTitle">Главная</span></h1>
+        <h1><button class="lg brand-menu" id="capDots" aria-label="Меню"><span></span><span></span><span></span></button><span id="screenTitle">Главная</span></h1>
         <div class="subtitle" id="updSub"></div>
       </div>
       <div class="acts">
@@ -918,7 +921,6 @@
       <div class="cap-top">
         <div class="cap-head">
           <span class="cap-l">Общий капитал <span id="capEye" style="cursor:pointer">👁</span></span>
-          <button class="cap-menu" id="capDots" aria-label="Меню"><span></span><span></span><span></span></button>
         </div>
         <div class="cap-val" id="capVal">€0</div>
       </div>
