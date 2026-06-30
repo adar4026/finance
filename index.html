@@ -38,6 +38,7 @@
     --income:#22c55e; --income-soft:#22c55e14;
     --expense:#ef4444; --expense-soft:#ef444414;
     --warn:#f59e0b; --warn-soft:#f59e0b1f;
+    --info:#4dabf7; --info-soft:#4dabf71f;
     --shadow:0 8px 30px rgba(40,50,120,.08);
     --radius:20px; --navh:64px;
   }
@@ -48,6 +49,7 @@
     --income:#22c55e; --income-soft:#22c55e1f;
     --expense:#ef4444; --expense-soft:#ef44441f;
     --warn:#f59e0b; --warn-soft:#f59e0b22;
+    --info:#4dabf7; --info-soft:#4dabf733;
     --shadow:0 8px 30px rgba(0,0,0,.35);
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -324,7 +326,9 @@
   .keypad button.save{grid-row:span 2;background:var(--accent);color:#fff;border:none;font-size:16px;font-weight:700}
   .keypad button.wide{grid-column:span 1}
   .sheet h2{font-size:17px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
-  .sheet h2 .x{cursor:pointer;color:var(--muted);font-size:26px;line-height:1}
+  .sheet h2 .x{cursor:pointer;color:var(--muted);font-size:26px;line-height:1;display:flex;align-items:center;
+    justify-content:center;width:40px;height:40px;margin:-8px -8px -8px 0;border-radius:50%;flex-shrink:0;transition:background .15s}
+  .sheet h2 .x:active{background:var(--card2)}
   .field{margin-bottom:13px}
   .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
   .field input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);
@@ -1391,7 +1395,7 @@
     <button class="am-item" data-add="expense"><span class="am-ic" style="background:var(--expense-soft)">💸</span>Расход</button>
     <button class="am-item" data-add="income"><span class="am-ic" style="background:var(--income-soft)">💰</span>Доход</button>
     <button class="am-item" data-add="transfer"><span class="am-ic" style="background:var(--accent-soft)">🔄</span>Перевод</button>
-    <button class="am-item" data-add="receipt"><span class="am-ic" style="background:#4dabf71f">🧾</span>Чек</button>
+    <button class="am-item" data-add="receipt"><span class="am-ic" style="background:var(--info-soft)">🧾</span>Чек</button>
   </div>
 </div>
 
@@ -1427,12 +1431,12 @@
     <div class="sec-head" style="margin-top:10px"><span>Экспорт</span></div>
     <div class="exp-period"><span>Период</span>
       <select id="expPeriod"><option value="month">Текущий месяц</option><option value="year">Текущий год</option><option value="all">Всё время</option></select></div>
-    <button class="exp-row" id="expPdf"><span class="exp-ic" style="background:#ef444414">📄</span><span class="exp-tx"><b>PDF-отчёт</b><i>Сводка за период + операции</i></span><span class="chev">›</span></button>
-    <button class="exp-row" id="expXls"><span class="exp-ic" style="background:#22c55e14">📊</span><span class="exp-tx"><b>Excel (.xls)</b><i>Таблица операций</i></span><span class="chev">›</span></button>
-    <button class="exp-row" id="expCsv"><span class="exp-ic" style="background:#4dabf71f">📋</span><span class="exp-tx"><b>CSV</b><i>Для импорта в другие приложения</i></span><span class="chev">›</span></button>
+    <button class="exp-row" id="expPdf"><span class="exp-ic" style="background:var(--expense-soft)">📄</span><span class="exp-tx"><b>PDF-отчёт</b><i>Сводка за период + операции</i></span><span class="chev">›</span></button>
+    <button class="exp-row" id="expXls"><span class="exp-ic" style="background:var(--income-soft)">📊</span><span class="exp-tx"><b>Excel (.xls)</b><i>Таблица операций</i></span><span class="chev">›</span></button>
+    <button class="exp-row" id="expCsv"><span class="exp-ic" style="background:var(--info-soft)">📋</span><span class="exp-tx"><b>CSV</b><i>Для импорта в другие приложения</i></span><span class="chev">›</span></button>
     <div class="sec-head" style="margin-top:18px"><span>Резервные копии</span></div>
     <button class="exp-row" id="bkpCreate"><span class="exp-ic" style="background:var(--accent-soft)">💾</span><span class="exp-tx"><b>Создать копию</b><i>Файл alex_finance_backup.afb</i></span><span class="chev">›</span></button>
-    <button class="exp-row" id="bkpRestore"><span class="exp-ic" style="background:#f59e0b22">♻️</span><span class="exp-tx"><b>Восстановить из копии</b><i>Загрузить .afb — заменит данные</i></span><span class="chev">›</span></button>
+    <button class="exp-row" id="bkpRestore"><span class="exp-ic" style="background:var(--warn-soft)">♻️</span><span class="exp-tx"><b>Восстановить из копии</b><i>Загрузить .afb — заменит данные</i></span><span class="chev">›</span></button>
     <input type="file" id="bkpFile" accept=".afb,application/json,.json" hidden>
     <div id="bkpLast" style="font-size:11.5px;color:var(--muted2);text-align:center;margin-top:12px"></div>
     <div style="height:24px"></div>
@@ -3947,7 +3951,7 @@ function importCSV(text){
   const iTCur=H.findIndex(h=>isTrans(h)&&/валюта|currency|moneda/.test(h));
   if(iDate<0||(iAmt<0&&iIncome<0&&iExpense<0)){
     toast('Не нашёл колонки даты/суммы. Пришли файл — настрою.');
-    console.warn('CSV header:',H);return;
+    return;
   }
   const get=(r,i)=>i>=0&&i<r.length?r[i].trim():'';
   const noteOf=r=>[get(r,iPayee),get(r,iPlace),get(r,iNote)].filter(Boolean).join(' · ');
