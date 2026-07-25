@@ -13,10 +13,6 @@ AF.Services.FinanceCard = {
     };
   },
 
-  daysInMonth(monthDate) {
-    return new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
-  },
-
   // Первое число месяца, сдвинутого на n месяцев от monthDate (n может быть отрицательным).
   addMonths(monthDate, n) {
     return new Date(monthDate.getFullYear(), monthDate.getMonth() + n, 1);
@@ -74,30 +70,5 @@ AF.Services.FinanceCard = {
     const change = endCapital - startCapital;
     const pct = Math.abs(startCapital) > 0.5 ? (change / Math.abs(startCapital)) * 100 : null;
     return { change, pct, startCapital, endCapital };
-  },
-
-  // Накопительные ряды доходов/расходов по календарным дням месяца.
-  // День без операций продолжает накопленное значение предыдущего дня (не сбрасывается в 0).
-  cumulativeSeries(state, monthDate, txBaseFn) {
-    const days = this.daysInMonth(monthDate);
-    const incByDay = new Array(days + 1).fill(0);
-    const expByDay = new Array(days + 1).fill(0);
-    this.txForMonth(state, monthDate).forEach(t => {
-      const d = new Date(t.date).getDate();
-      const v = txBaseFn(t);
-      if (t.type === 'income') incByDay[d] += v; else expByDay[d] += v;
-    });
-    const out = [];
-    let incCum = 0, expCum = 0;
-    for (let day = 1; day <= days; day++) {
-      incCum += incByDay[day]; expCum += expByDay[day];
-      out.push({
-        day,
-        date: new Date(monthDate.getFullYear(), monthDate.getMonth(), day),
-        income: Math.round(incCum * 100) / 100,
-        expense: Math.round(expCum * 100) / 100,
-      });
-    }
-    return out;
   },
 };

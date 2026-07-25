@@ -14,24 +14,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Main finance card redesign** (`TASK_003`) on the Home screen: a white
-  card (no more purple gradient), with total capital + eye button, a
-  month-over-month change line, a two-line Chart.js graph (solid green
-  cumulative income, dashed red cumulative expense, right-side money scale,
-  soft grid, end-of-line markers/labels, tap/click tooltip with date/income/
-  expense/difference), and the three existing income/expense/flow stats.
-  A compact independent month switcher (`‹ Июль 2026 г. ›`) sits directly
-  above the card, with its own state, local calendar month boundaries,
-  44×44px hit areas, `aria-label`s, disabled future-month navigation, and a
-  light direction-aware label animation that respects
-  `prefers-reduced-motion`. The Home screen background is now a light
+- **Main finance card redesign** (`TASK_003`) on the Home screen: a compact
+  white card (no more purple gradient) with total capital + eye button, a
+  month-over-month change line (amount + %, colored by sign), and the three
+  income/expense/flow stats (now colored green/red/neutral by sign, with
+  thin dividers between them). A compact independent month switcher
+  (`‹ Июль 2026 г. ›`) sits directly above the card — its own state, local
+  calendar month boundaries, 44×44px hit areas, `aria-label`s, disabled
+  future-month navigation, and a light direction-aware label animation that
+  respects `prefers-reduced-motion`. The generic period switcher (day/week/
+  month/year/custom) that used to also show above the Home card is now
+  hidden there (it stays unchanged on Analytics/Budgets) to avoid showing
+  two month indicators at once. The Home screen background is now a light
   grouped `#F2F2F7` (`--home-bg` token, dark theme reuses `--bg2`). New pure
   calculation module `js/services/finance_card_service.js` (month bounds,
-  totals, capital-at-month-end, cumulative series) with a Node unit test
-  suite (`tests/finance_card_service.test.js`). The existing privacy toggle
-  (`state.hideAmounts`) now also masks the card's chart labels, money scale
-  and tooltip via a new `#fcEye` button kept in sync with the existing
-  `#capEye2` (Accounts screen). The existing period switcher, transaction
+  totals, capital-at-month-end) with a Node unit test suite
+  (`tests/finance_card_service.test.js`). The existing privacy toggle
+  (`state.hideAmounts`) masks all of the card's money values via a new
+  `#fcEye` button kept in sync with the existing `#capEye2` (Accounts
+  screen). The existing period switcher, transaction
   list, Analytics and Budgets screens are unchanged.
 - **Collapsing sticky header** on the Home screen. The top row (avatar,
   search, analytics) stays pinned; the period switcher and the month/year

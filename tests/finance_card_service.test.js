@@ -134,9 +134,6 @@ function tx(id, type, amount, isoDate) {
   assertClose(t.income, 0, '11. пустой месяц — доходы 0');
   assertClose(t.expense, 0, '11b. пустой месяц — расходы 0');
   assertClose(t.flow, 0, '11c. пустой месяц — поток 0');
-  const series = FC.cumulativeSeries(state, new Date(2026, 6, 1), base);
-  assertEqual(series.length, 31, '11d. пустой месяц — 31 точка (июль), все нулевые');
-  assertTrue(series.every(p => p.income === 0 && p.expense === 0), '11e. пустой месяц — накопленные значения все нулевые');
 }
 
 // ---- 12. Одна операция ----
@@ -144,10 +141,7 @@ function tx(id, type, amount, isoDate) {
   const state = { tx: [tx(1, 'income', 250, '2026-07-10T12:00:00')] };
   const t = FC.totals(state, new Date(2026, 6, 1), base);
   assertClose(t.income, 250, '12. одна операция — сумма верна');
-  const series = FC.cumulativeSeries(state, new Date(2026, 6, 1), base);
-  assertClose(series[8].income, 0, '12b. до операции (день 9) накопленный доход 0');
-  assertClose(series[9].income, 250, '12c. в день операции (день 10) накопленный доход = 250');
-  assertClose(series[30].income, 250, '12d. в конце месяца накопленный доход держится на 250');
+  assertEqual(t.incomeCount, 1, '12b. одна операция — счётчик операций верен');
 }
 
 // ---- 13. Несколько операций в один день ----
@@ -157,36 +151,9 @@ function tx(id, type, amount, isoDate) {
     tx(2, 'expense', 15, '2026-07-05T18:00:00'),
     tx(3, 'expense', 5, '2026-07-05T23:00:00'),
   ] };
-  const series = FC.cumulativeSeries(state, new Date(2026, 6, 1), base);
-  assertClose(series[4].expense, 30, '13. три операции одного дня суммируются в одну точку графика');
-}
-
-// ---- 14/15. Построение накопительных значений + перенос предыдущего значения ----
-{
-  const state = { tx: [
-    tx(1, 'income', 100, '2026-07-01T10:00:00'),
-    tx(2, 'income', 50, '2026-07-10T10:00:00'),
-  ] };
-  const series = FC.cumulativeSeries(state, new Date(2026, 6, 1), base);
-  assertClose(series[0].income, 100, '14. день 1 — накопленный доход 100');
-  assertClose(series[4].income, 100, '15. день 5 (без операций) — доход держится на 100, не сбрасывается');
-  assertClose(series[9].income, 150, '14b. день 10 — накопленный доход 150');
-  assertClose(series[30].income, 150, '15b. последний день месяца — доход держится на 150');
-}
-
-// ---- 16. Конечные значения линий совпадают с итогами показателей ----
-{
-  const state = { tx: [
-    tx(1, 'income', 700, '2026-07-03T10:00:00'),
-    tx(2, 'income', 300, '2026-07-22T10:00:00'),
-    tx(3, 'expense', 400, '2026-07-15T10:00:00'),
-  ] };
-  const monthDate = new Date(2026, 6, 1);
-  const t = FC.totals(state, monthDate, base);
-  const series = FC.cumulativeSeries(state, monthDate, base);
-  const last = series[series.length - 1];
-  assertClose(last.income, t.income, '16. последняя точка линии доходов = итог "Доходы"');
-  assertClose(last.expense, t.expense, '16b. последняя точка линии расходов = итог "Расходы"');
+  const t = FC.totals(state, new Date(2026, 6, 1), base);
+  assertClose(t.expense, 30, '13. три операции одного дня суммируются верно');
+  assertEqual(t.expenseCount, 3, '13b. три операции одного дня — счётчик верен');
 }
 
 // ---- Капитал на конец месяца / изменение за месяц (счета) ----
