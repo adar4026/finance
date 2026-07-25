@@ -39,6 +39,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   labels scale down on narrow screens so they never collide.
 - Bottom safe-area handling for the floating navigation: content padding and
   the accounts FAB were raised accordingly.
+- **Bottom navigation, follow-up pass** against the Ministry reference layout:
+  taller capsule (`--navh` 64→76px, single token drives nav height, content
+  padding and the accounts FAB together), wider side margins (12→16px), a
+  visibly tinted active-tab pill (new `--nav-active-bg` token, ~15% purple
+  instead of the near-invisible `--accent-soft`), and a larger central "+"
+  button (54→60px) with a softer, larger shadow. Tab label sizing tightened
+  (min font, letter-spacing, tab margins) so all five labels stay on one line
+  without truncation from 320px up.
 
 ### Planned / candidate items
 
