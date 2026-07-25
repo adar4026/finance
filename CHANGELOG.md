@@ -66,6 +66,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   a home-indicator safe area. Still fully respects the safe-area inset on
   notched iPhones; content clearance above the panel is unaffected (~50px on
   the longest scrolled list).
+- **Bottom navigation, real-device fix**: the previous pass only reduced the
+  *additional* offset (12→6px) but still added it on top of
+  `env(safe-area-inset-bottom)`, which is ~34pt on notched iPhones — so on an
+  actual device (as opposed to a desktop browser, where that inset is always
+  0) the panel still floated ~40pt above the edge and looked too high, which
+  is what testing on a real phone caught. Changed to
+  `bottom:max(6px, env(safe-area-inset-bottom))` — the panel now sits flush
+  with the safe-area boundary on notched phones (no extra stacked padding),
+  while still keeping a 6px minimum breathing gap on devices/browsers that
+  report no safe area at all.
 
 ### Planned / candidate items
 
