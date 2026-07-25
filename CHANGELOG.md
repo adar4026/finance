@@ -22,10 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   (`‹ Июль 2026 г. ›`) sits directly above the card — its own state, local
   calendar month boundaries, 44×44px hit areas, `aria-label`s, disabled
   future-month navigation, and a light direction-aware label animation that
-  respects `prefers-reduced-motion`. The generic period switcher (day/week/
-  month/year/custom) that used to also show above the Home card is now
-  hidden there (it stays unchanged on Analytics/Budgets) to avoid showing
-  two month indicators at once. The Home screen background is now a light
+  respects `prefers-reduced-motion`. The day/week/month/year/period tabs
+  above the Home screen stay as before (they still filter the transaction
+  list); only their own duplicate "‹ Month Year ›" row is hidden on Home now
+  (unchanged on Analytics/Budgets), so it doesn't repeat the new card
+  switcher. The Home screen background is now a light
   grouped `#F2F2F7` (`--home-bg` token, dark theme reuses `--bg2`). New pure
   calculation module `js/services/finance_card_service.js` (month bounds,
   totals, capital-at-month-end) with a Node unit test suite

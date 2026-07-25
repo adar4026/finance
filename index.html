@@ -3355,12 +3355,14 @@ function showScreen(id){
   $$('.screen').forEach(s=>s.classList.toggle('active',s.id===id));
   $$('.nav button[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
   moveNavIndicator();
-  // глобальный период не нужен на «Счета»/«Настройки»; на «Главной» — свой независимый переключатель месяца
-  // над карточкой (TASK_003), общий subhead там дублировал бы его; на «Бюджетах» — только навигация по месяцам
-  const noPeriod=(id==='scrMore'||id==='scrAccounts'||id==='scrRecords');
+  // глобальный период не нужен на «Счета»/«Настройки»; на «Бюджетах» — только навигация по месяцам
+  const noPeriod=(id==='scrMore'||id==='scrAccounts');
   if(id==='scrBudgets')period='month'; // бюджеты всегда месячные → навигация по месяцам
   $('.periods').style.display=(noPeriod||id==='scrBudgets')?'none':'flex';
-  $('#navrow').style.display=(noPeriod||period==='all')?'none':'flex';
+  // На «Главной» строка «‹ Месяц Год ›» общего subhead скрыта — над финансовой карточкой уже есть
+  // свой независимый переключатель месяца (#fcMonthSwitch, TASK_003), общий дублировал бы его.
+  // Вкладки День/Неделя/Месяц/Год/Период остаются — они фильтруют список операций ниже карточки.
+  $('#navrow').style.display=(noPeriod||period==='all'||id==='scrRecords')?'none':'flex';
   // сворачиваемая часть шапки целиком скрывается, когда в ней нечего показывать
   $('#subhead').style.display=noPeriod?'none':'block';
   render();
