@@ -41,6 +41,9 @@
     --info:#4dabf7; --info-soft:#4dabf71f;
     --shadow:0 8px 30px rgba(40,50,120,.08);
     --radius:20px; --navh:64px;
+    /* полупрозрачный фон закреплённой шапки (material-эффект при прокрутке) */
+    --bg-blur:rgba(255,255,255,.82);
+    --nav-shadow:0 8px 28px rgba(40,50,120,.14);
   }
   [data-theme="dark"]{
     --bg:#0f1115; --bg2:#171a21; --card:#1c2029; --card2:#232834;
@@ -51,6 +54,8 @@
     --warn:#f59e0b; --warn-soft:#f59e0b22;
     --info:#4dabf7; --info-soft:#4dabf733;
     --shadow:0 8px 30px rgba(0,0,0,.35);
+    --bg-blur:rgba(15,17,21,.82);
+    --nav-shadow:0 8px 28px rgba(0,0,0,.45);
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   body{
@@ -58,21 +63,39 @@
     background:var(--bg);color:var(--text);min-height:100vh;
     -webkit-font-smoothing:antialiased;transition:background .3s}
   .app{max-width:560px;margin:0 auto;min-height:100vh;position:relative;
-    padding-bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 12px)}
+    padding-bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 26px)}
 
-  /* ===== Top bar ===== */
+  /* ===== Top bar (collapsing sticky header) =====
+     Закреплённой остаётся только .topbar (аватар → поиск → аналитика).
+     Выбор периода и навигация по месяцам живут в .subhead — обычном потоке,
+     поэтому при прокрутке они естественно уходят вверх без JS-анимаций. */
   .topbar{position:sticky;top:0;z-index:20;background:var(--bg);
-    padding:max(14px,env(safe-area-inset-top)) 16px 8px}
-  .topbar .row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-  .topbar h1{font-size:19px;font-weight:700;letter-spacing:-.3px;display:flex;align-items:center;gap:9px}
-  .topbar h1 .lg{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));
-    display:flex;align-items:center;justify-content:center;font-size:15px}
-  .topbar h1 .brand-menu{width:46px;height:46px;border-radius:15px;background:var(--card);
-    box-shadow:0 4px 14px rgba(40,50,120,.10);border:1px solid var(--line);
-    flex-direction:column;gap:4.5px;cursor:pointer;padding:0;transition:.15s}
-  .topbar h1 .brand-menu:active{transform:scale(.92)}
-  .topbar h1 .brand-menu span{display:block;width:20px;height:2.8px;background:var(--accent);border-radius:2px}
-  .topbar .acts{display:flex;gap:7px}
+    padding:max(10px,env(safe-area-inset-top)) 16px 10px;
+    transition:background .2s,box-shadow .2s}
+  .topbar.scrolled{background:var(--bg-blur);box-shadow:0 .5px 0 var(--line);
+    -webkit-backdrop-filter:saturate(180%) blur(16px);backdrop-filter:saturate(180%) blur(16px)}
+  .topbar .row1{display:flex;align-items:center;gap:10px;min-width:0}
+  /* аватар пользователя — строго круглый, без дополнительной карточки */
+  .topbar .avatar-wrap{flex:0 0 auto}
+  .topbar .avatar{width:44px;height:44px;font-size:18px}
+  /* строка поиска — светло-серая капсула, занимает всё свободное место */
+  .hdr-search{flex:1 1 auto;min-width:0;height:44px;display:flex;align-items:center;gap:8px;
+    padding:0 14px;border-radius:22px;background:var(--card2);border:1px solid var(--line);
+    color:var(--muted);font-size:15px;font-family:inherit;cursor:pointer;transition:.15s;text-align:left}
+  .hdr-search:active{transform:scale(.985);filter:brightness(.97)}
+  .hdr-search svg{flex:0 0 auto;width:17px;height:17px;stroke:var(--muted);fill:none;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .hdr-search .hs-ph{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* кнопка «Аналитика» — круглая, визуально согласована с поиском */
+  .hdr-ana{flex:0 0 44px;width:44px;height:44px;border-radius:50%;background:var(--card2);
+    border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;transition:.15s}
+  .hdr-ana:active{transform:scale(.92)}
+  .hdr-ana svg{width:20px;height:20px;stroke:var(--text);fill:none;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
+
+  /* сворачиваемая часть шапки: период + навигация по месяцам */
+  .subhead{padding:12px 16px 0}
   .iconbtn{width:42px;height:42px;border:none;border-radius:12px;background:var(--card);color:var(--text);
     cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);transition:.15s}
   .iconbtn:active{transform:scale(.92)}
@@ -171,18 +194,30 @@
     color:var(--text);font-size:13.5px;cursor:pointer;font-family:inherit}
   .setrow button.danger{color:var(--expense);border-color:var(--expense)}
 
-  /* ===== Bottom nav ===== */
-  .nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--card);border-top:1px solid var(--line);
-    display:flex;align-items:center;justify-content:space-around;height:var(--navh);
-    padding-bottom:env(safe-area-inset-bottom);max-width:560px;margin:0 auto}
-  .nav button{background:none;border:none;color:var(--muted2);display:flex;flex-direction:column;align-items:center;gap:3px;
-    cursor:pointer;font-size:10.5px;flex:1;padding:6px 0;transition:.15s}
-  .nav button .ic{font-size:20px}
-  .nav button.on{color:var(--accent)}
-  .nav .addbtn{flex:0 0 auto}
-  .nav .addbtn .plus{width:54px;height:54px;border-radius:18px;background:linear-gradient(135deg,var(--accent),var(--accent2));
-    color:#fff;font-size:30px;display:flex;align-items:center;justify-content:center;margin-top:-22px;
-    box-shadow:0 8px 22px rgba(124,92,255,.5);transition:.15s}
+  /* ===== Bottom nav — светлая плавающая капсула ===== */
+  .nav{position:fixed;left:50%;transform:translateX(-50%);
+    bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:30;
+    width:calc(100% - 24px);max-width:536px;height:var(--navh);
+    display:flex;align-items:stretch;padding:0 6px;
+    background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--nav-shadow)}
+  .nav button{background:none;border:none;color:var(--muted2);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:3px;
+    cursor:pointer;font-size:clamp(8.5px,2.75vw,10.5px);font-weight:600;flex:1 1 0;min-width:0;padding:0 1px;transition:.15s}
+  .nav button[data-s]{margin:7px 2px;border-radius:16px}
+  .nav button .lb{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nav button .ic{display:flex;align-items:center;justify-content:center;height:22px}
+  .nav button .ic svg{width:22px;height:22px;stroke:currentColor;fill:none;
+    stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .nav button[data-s]:active{transform:scale(.94)}
+  /* активная вкладка — фиолетовая, на мягкой светло-фиолетовой плашке */
+  .nav button.on{color:var(--accent);background:var(--accent-soft)}
+  /* центральная кнопка добавления: круг выступает примерно наполовину над капсулой */
+  .nav .addbtn{position:relative;flex:0 0 60px;justify-content:flex-end;padding-bottom:9px}
+  .nav .addbtn .plus{position:absolute;top:-27px;left:50%;margin-left:-27px;
+    width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#fff;font-size:30px;line-height:1;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 22px rgba(109,93,246,.45);transition:.15s}
+  .nav .addbtn .lb{color:var(--muted2)}
   .nav .addbtn:active .plus{transform:scale(.92)}
 
   /* ===== Add sheet ===== */
@@ -417,7 +452,7 @@
   .acc2-right{text-align:right;flex-shrink:0}
   .acc2-bal{font-size:25px;font-weight:800;white-space:nowrap;letter-spacing:-.5px;line-height:1.1}
   .acc2-cur{font-size:11.5px;color:var(--muted2);margin-top:5px;font-weight:600;letter-spacing:.3px}
-  .fab-account{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 18px);
+  .fab-account{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 30px);
     width:62px;height:62px;border-radius:20px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));
     color:#fff;font-size:32px;cursor:pointer;box-shadow:0 10px 28px rgba(109,93,246,.5);z-index:25;
     display:flex;align-items:center;justify-content:center;transition:.15s}
@@ -482,9 +517,6 @@
   .color-sw.sel{border-color:var(--text);transform:scale(1.06)}
 
   /* ===== Шапка: аватар + уведомления ===== */
-  .brand{display:flex;flex-direction:column;gap:1px;min-width:0}
-  .subtitle{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;padding-left:1px}
-  .subtitle .live{width:6px;height:6px;border-radius:50%;background:var(--income);flex-shrink:0}
   .iconbtn.bell{position:relative}
   .iconbtn.bell .dot{position:absolute;top:1px;right:1px;min-width:16px;height:16px;border-radius:8px;background:var(--accent);
     color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--card)}
@@ -900,22 +932,25 @@
 </head>
 <body>
 <div class="app">
-  <!-- Top bar -->
-  <div class="topbar">
+  <!-- Top bar — закреплённая строка: Аватар → Поиск → Аналитика -->
+  <div class="topbar" id="topbar">
     <div class="row1">
-      <div class="brand">
-        <h1><button class="lg brand-menu" id="capDots" aria-label="Меню"><span></span><span></span><span></span></button><span id="screenTitle">Главная</span></h1>
-        <div class="subtitle" id="updSub"></div>
+      <div class="avatar-wrap">
+        <button class="avatar" id="avatarBtn" aria-label="Профиль и меню"></button>
+        <span class="av-dot" id="avatarDot" style="display:none"></span>
       </div>
-      <div class="acts">
-        <button class="iconbtn" id="searchTop" title="Поиск операций">🔍</button>
-        <button class="iconbtn" id="exportTop" title="Экспорт данных (JSON)">⬇️</button>
-        <div class="avatar-wrap">
-          <button class="avatar" id="avatarBtn" title="Профиль"></button>
-          <span class="av-dot" id="avatarDot" style="display:none"></span>
-        </div>
-      </div>
+      <button class="hdr-search" id="searchTop" aria-label="Поиск операций">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+        <span class="hs-ph">Поиск</span>
+      </button>
+      <button class="hdr-ana" id="anaTop" aria-label="Аналитика">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V11"/><path d="M12 19V5"/><path d="M19 19v-6"/></svg>
+      </button>
     </div>
+  </div>
+
+  <!-- Сворачиваемая часть шапки: период + выбор месяца (уходят вверх при прокрутке) -->
+  <div class="subhead" id="subhead">
     <div class="periods" id="periods">
       <button data-p="day">День</button>
       <button data-p="week">Неделя</button>
@@ -1057,11 +1092,11 @@
 
 <!-- Bottom nav -->
 <div class="nav">
-  <button class="on" data-s="scrRecords"><span class="ic">🏠</span>Главная</button>
-  <button data-s="scrCharts"><span class="ic">📊</span>Аналитика</button>
-  <button class="addbtn" id="addBtn" title="Добавить операцию"><span class="plus">+</span></button>
-  <button data-s="scrAccounts"><span class="ic">💳</span>Счета</button>
-  <button data-s="scrBudgets"><span class="ic">🎯</span>Бюджет</button>
+  <button class="on" data-s="scrRecords"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 10v9h12v-9"/></svg></span><span class="lb">Главная</span></button>
+  <button data-s="scrCharts"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V11"/><path d="M12 19V5"/><path d="M19 19v-6"/></svg></span><span class="lb">Аналитика</span></button>
+  <button class="addbtn" id="addBtn" aria-label="Добавить операцию"><span class="plus">+</span><span class="lb">Добавить</span></button>
+  <button data-s="scrAccounts"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10.5h18"/></svg></span><span class="lb">Счета</span></button>
+  <button data-s="scrBudgets"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/></svg></span><span class="lb">Бюджеты</span></button>
 </div>
 
 <!-- Add / edit sheet -->
@@ -1825,9 +1860,6 @@ function renderHeader(){
   const n=notifications().length;
   const ad=$('#avatarDot');if(ad){if(n){ad.textContent=n>9?'9+':n;ad.style.display='flex';}else ad.style.display='none';}
   const pb=$('#profNotifBadge');if(pb){if(n){pb.textContent=n;pb.style.display='inline-block';}else pb.style.display='none';}
-  const sub=$('#updSub');
-  if(curScreen==='scrRecords'){sub.innerHTML=`<span class="live"></span>Обновлено ${relTime(state.updatedAt)}`;sub.style.display='flex';}
-  else sub.style.display='none';
 }
 function openNotif(){
   $('#profOverlay').classList.remove('show');
@@ -3135,13 +3167,13 @@ function showScreen(id){
   curScreen=id;
   $$('.screen').forEach(s=>s.classList.toggle('active',s.id===id));
   $$('.nav button[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
-  const titles={scrRecords:'Главная',scrCharts:'Аналитика',scrAccounts:'Счета',scrBudgets:'Бюджет',scrMore:'Настройки'};
-  $('#screenTitle').textContent=titles[id];
   // глобальный период не нужен на «Счета»/«Настройки»; на «Бюджетах» — только навигация по месяцам
   const noPeriod=(id==='scrMore'||id==='scrAccounts');
   if(id==='scrBudgets')period='month'; // бюджеты всегда месячные → навигация по месяцам
   $('.periods').style.display=(noPeriod||id==='scrBudgets')?'none':'flex';
   $('#navrow').style.display=(noPeriod||period==='all')?'none':'flex';
+  // сворачиваемая часть шапки целиком скрывается, когда в ней нечего показывать
+  $('#subhead').style.display=noPeriod?'none':'block';
   render();
 }
 
@@ -3667,6 +3699,7 @@ $$('#capRanges button').forEach(b=>b.onclick=()=>{homeRange=b.dataset.r;
 $('#allTxClose').onclick=()=>$('#allTxOverlay').classList.remove('show');
 $('#allTxOverlay').onclick=e=>{if(e.target.id==='allTxOverlay')$('#allTxOverlay').classList.remove('show');};
 $('#searchTop').onclick=openSearch;
+$('#anaTop').onclick=()=>showScreen('scrCharts');
 $('#searchClose').onclick=()=>$('#searchOverlay').classList.remove('show');
 $('#searchOverlay').onclick=e=>{if(e.target.id==='searchOverlay')$('#searchOverlay').classList.remove('show');};
 $('#searchInput').oninput=e=>runSearch(e.target.value);
@@ -3750,7 +3783,6 @@ function themeLabel(){return {light:'☀️ Светлая тема',dark:'🌙 
 $('#profNotif').onclick=openNotif;
 $('#notifClose').onclick=()=>$('#notifOverlay').classList.remove('show');
 $('#notifOverlay').onclick=e=>{if(e.target.id==='notifOverlay')$('#notifOverlay').classList.remove('show');};
-$('#avatarBtn').onclick=openProfile;
 $('#profClose').onclick=()=>$('#profOverlay').classList.remove('show');
 $('#profOverlay').onclick=e=>{if(e.target.id==='profOverlay')$('#profOverlay').classList.remove('show');};
 $('#profName').oninput=e=>{state.profileName=e.target.value;};
@@ -3846,7 +3878,6 @@ function exportData(){
   toast('Файл сохранён ✓');
 }
 $('#exportBtn').onclick=exportData;
-$('#exportTop').onclick=openExport;
 // Экспорт и резервные копии
 $('#exportClose').onclick=()=>$('#exportOverlay').classList.remove('show');
 $('#expPdf').onclick=doExportPdf;
@@ -4022,7 +4053,8 @@ $('#securityOverlay').onclick=e=>{if(e.target.id==='securityOverlay')$('#securit
 $$('#pinPad button[data-k]').forEach(b=>b.onclick=()=>pinKey(b.dataset.k));
 $('#pinCancel').onclick=()=>{if(pinState.mode!=='unlock')closePin();};
 $('#capEye').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();render();updateEye();};
-$('#capDots').onclick=openDrawer;
+// Аватар в шапке — единственный вход в профиль и боковую панель (шторку)
+$('#avatarBtn').onclick=openDrawer;
 $('#drawerOverlay').onclick=e=>{if(e.target.id==='drawerOverlay')closeDrawer();};
 $('#drawerHead').onclick=()=>{closeDrawer();openProfile();};
 const drGo=fn=>()=>{closeDrawer();fn();};
@@ -4094,6 +4126,14 @@ $('#budgetEditOverlay').onclick=e=>{if(e.target.id==='budgetEditOverlay')$('#bud
 $('#budSave').onclick=saveBudget;
 $('#budDelete').onclick=deleteBudget;
 $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
+/* Collapsing sticky header: тонкий разделитель + material-фон появляются после начала прокрутки.
+   Сама «сворачиваемость» — чисто CSS (subhead в потоке уходит под закреплённый topbar). */
+(function(){
+  const tb=$('#topbar');if(!tb)return;
+  const sync=()=>tb.classList.toggle('scrolled',(window.scrollY||0)>4); // idempotent, без layout-запросов
+  addEventListener('scroll',sync,{passive:true});
+  sync();
+})();
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay','#recurOverlay','#ratesOverlay','#goalContribOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Statistics (Screen 14) ============ */

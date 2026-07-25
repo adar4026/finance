@@ -9,9 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased] — Version 1.1.0 (in development)
 
-> Version 1.1.0 is the active development milestone. No features have been
-> implemented yet — the project is prepared for the next development phase
-> on top of the stable 1.0.0 foundation.
+> Version 1.1.0 is the active development milestone, built on top of the
+> stable 1.0.0 foundation.
+
+### Added
+
+- **Collapsing sticky header** on the Home screen. The top row (avatar,
+  search, analytics) stays pinned; the period switcher and the month/year
+  navigation live in a new `.subhead` block in normal flow, so they scroll
+  away naturally without any scroll-driven animation. A hairline divider and
+  a light translucent material appear on the pinned bar once scrolling starts
+  (`--bg-blur` token, `.topbar.scrolled`).
+- New header row: **Avatar → Search → Analytics**. The search capsule fills
+  all free space, all three controls have a 44×44 pt minimum hit area.
+
+### Changed
+
+- The three-line menu button was removed from the header. The avatar is now
+  the single entry point to the side drawer (which still opens the profile
+  from its header row). The JSON-export icon left the header — it stays
+  available in the drawer and in Settings.
+- The screen title and the "updated N min ago" subtitle were removed from the
+  header (they were part of the old brand block).
+- **Bottom navigation** redesigned as a light floating capsule: four tabs
+  (Home · Analytics — Accounts · Budgets), monochrome stroke icons instead of
+  emoji, muted grey when inactive, accent purple on a soft purple pill when
+  active. The central add button is now a circle that overhangs the capsule by
+  about half its height, with an "Добавить" caption inside the panel. Tab
+  labels scale down on narrow screens so they never collide.
+- Bottom safe-area handling for the floating navigation: content padding and
+  the accounts FAB were raised accordingly.
 
 ### Planned / candidate items
 
