@@ -47,6 +47,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   button (54→60px) with a softer, larger shadow. Tab label sizing tightened
   (min font, letter-spacing, tab margins) so all five labels stay on one line
   without truncation from 320px up.
+- **Bottom navigation, blue accent pass** matching the Ministry reference
+  exactly: the central "+" button and the active-tab state (icon, label,
+  pill) now use a dedicated blue (`--nav-blue`/`--nav-blue2`/`--nav-blue-soft`
+  tokens, scoped to the bottom nav only — the rest of the app keeps the
+  purple `--accent` brand color). The "+" glyph changed from a text character
+  to a symmetric SVG cross so it sits perfectly centered in the circle at any
+  size. Inactive tab icons/labels switched from light grey (`--muted2`) to
+  `var(--text)` at font-weight 700 for a bolder, darker look in both themes.
 
 ### Planned / candidate items
 
