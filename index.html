@@ -47,6 +47,10 @@
     /* нижняя навигация: синий акцент по референсу Ministry (отдельно от фирменного фиолетового --accent) */
     --nav-blue:#4f7df0; --nav-blue2:#3f6eea; --nav-blue-soft:rgba(79,125,240,.15);
     --nav-active-bg:var(--nav-blue-soft);
+    /* Liquid Glass индикатор активной вкладки (TASK_002) — светлое прозрачное стекло с сине-фиолетовым оттенком */
+    --nav-glass-bg:linear-gradient(180deg,rgba(255,255,255,.68),rgba(255,255,255,.30)),var(--nav-active-bg);
+    --nav-glass-border:rgba(255,255,255,.75);
+    --nav-glass-shadow:0 6px 16px rgba(79,125,240,.22),inset 0 1px 0 rgba(255,255,255,.65),inset 0 -8px 10px -8px rgba(79,125,240,.18);
   }
   [data-theme="dark"]{
     --bg:#0f1115; --bg2:#171a21; --card:#1c2029; --card2:#232834;
@@ -61,6 +65,10 @@
     --nav-shadow:0 10px 30px rgba(0,0,0,.4);
     --nav-blue:#5b8bff; --nav-blue2:#4a78f0; --nav-blue-soft:rgba(91,139,255,.22);
     --nav-active-bg:var(--nav-blue-soft);
+    /* Liquid Glass индикатор — тёмная тема: не инверсия светлой, а отдельное тёмное стекло с видимой границей */
+    --nav-glass-bg:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04)),var(--nav-active-bg);
+    --nav-glass-border:rgba(255,255,255,.20);
+    --nav-glass-shadow:0 6px 18px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -8px 10px -8px rgba(91,139,255,.16);
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   body{
@@ -207,7 +215,7 @@
     width:calc(100% - 32px);max-width:500px;height:var(--navh);
     display:flex;align-items:stretch;padding:0 6px;
     background:var(--card);border:1px solid var(--line);border-radius:30px;box-shadow:var(--nav-shadow)}
-  .nav button{background:none;border:none;color:var(--text);display:flex;flex-direction:column;
+  .nav button{position:relative;z-index:1;background:none;border:none;color:var(--text);display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:4px;
     cursor:pointer;font-size:clamp(8px,2.7vw,11px);font-weight:700;letter-spacing:-.2px;flex:1 1 0;min-width:0;padding:0 1px;transition:.15s}
   .nav button[data-s]{margin:9px 1px;border-radius:18px}
@@ -216,8 +224,20 @@
   .nav button .ic svg{width:23px;height:23px;stroke:currentColor;fill:none;
     stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
   .nav button[data-s]:active{transform:scale(.94)}
-  /* активная вкладка — синяя, по референсу Ministry (--nav-blue, отдельно от фирменного фиолетового --accent) */
-  .nav button.on{color:var(--nav-blue);background:var(--nav-active-bg)}
+  /* активная вкладка — синяя, по референсу Ministry (--nav-blue, отдельно от фирменного фиолетового --accent); заливку теперь несёт .nav-indicator */
+  .nav button.on{color:var(--nav-blue)}
+  /* ===== Liquid Glass — общий перемещающийся индикатор активной вкладки (TASK_002) =====
+     Позиционируется через JS (moveNavIndicator) по фактической geometry активной кнопки:
+     .nav — position:fixed, поэтому служит offsetParent для .nav-indicator (position:absolute). */
+  .nav-indicator{position:absolute;top:0;left:0;z-index:0;width:0;height:0;
+    border-radius:18px;pointer-events:none;opacity:0;
+    background:var(--nav-glass-bg);border:1px solid var(--nav-glass-border);box-shadow:var(--nav-glass-shadow);
+    -webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);
+    transition:opacity .18s ease,width .2s ease,height .2s ease,background .2s ease,border-color .2s ease}
+  .nav-indicator.ready{opacity:1}
+  @media (prefers-reduced-motion: reduce){
+    .nav-indicator{transition:width .01s,height .01s,background .2s ease,border-color .2s ease}
+  }
   /* центральная кнопка добавления: отдельный крупный круг, выступает над капсулой и опущен ближе к подписи «Добавить» (референс Ministry) */
   .nav .addbtn{position:relative;flex:0 0 68px;justify-content:flex-end;padding-bottom:7px}
   .nav .addbtn .plus{position:absolute;top:-16px;left:50%;margin-left:-30px;
@@ -1100,6 +1120,7 @@
 
 <!-- Bottom nav -->
 <div class="nav">
+  <div class="nav-indicator" id="navIndicator" aria-hidden="true"></div>
   <button class="on" data-s="scrRecords"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 10v9h12v-9"/></svg></span><span class="lb">Главная</span></button>
   <button data-s="scrCharts"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V11"/><path d="M12 19V5"/><path d="M19 19v-6"/></svg></span><span class="lb">Аналитика</span></button>
   <button class="addbtn" id="addBtn" aria-label="Добавить операцию"><span class="plus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="lb">Добавить</span></button>
@@ -3171,10 +3192,77 @@ function renderDetail(){
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
 /* ============ Экраны ============ */
+/* ============ Liquid Glass — индикатор активной вкладки (TASK_002) ============
+   Один общий элемент .nav-indicator скользит между кнопками .nav button[data-s].
+   Позиция берётся из фактической geometry активной кнопки (не из фиксированных
+   координат), поэтому корректна на любой ширине экрана и после ресайза. */
+function moveNavIndicator(instant){
+  const ind=$('#navIndicator');
+  const nav=$('.nav');
+  if(!ind||!nav)return;
+  const activeBtn=nav.querySelector('button[data-s].on');
+  if(!activeBtn){ind.classList.remove('ready');return;} // напр. экран scrMore — вкладки нет
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const navRect=nav.getBoundingClientRect();
+  const btnRect=activeBtn.getBoundingClientRect();
+  const toX=btnRect.left-navRect.left, toY=btnRect.top-navRect.top;
+  const toW=btnRect.width, toH=btnRect.height;
+  const wasReady=ind.classList.contains('ready');
+  const canAnimate=typeof ind.animate==='function';
+  // геометрию текущего (возможно, ещё анимирующегося) положения читаем ДО cancel(),
+  // иначе canel() откатит рендер к старой inline-позиции и вызовет видимый скачок
+  const fromRect=ind.getBoundingClientRect();
+  if(canAnimate&&typeof ind.getAnimations==='function')ind.getAnimations().forEach(a=>a.cancel());
+  if(instant||reduced||!wasReady||!canAnimate){
+    // ресайз/смена ориентации/первая загрузка — переносим мгновенно, без CSS-transition
+    // на width/height, иначе капсула на миг «отстаёт» шириной от новой geometry панели
+    // и может визуально выйти за её пределы во время transition
+    ind.style.transition='none';
+    ind.style.width=toW+'px';
+    ind.style.height=toH+'px';
+    ind.style.transform=`translate(${toX}px,${toY}px)`;
+    ind.classList.add('ready');
+    void ind.offsetWidth; // форсируем reflow, чтобы transition:none применился до возврата стилей
+    ind.style.transition='';
+    return;
+  }
+  ind.style.width=toW+'px';
+  ind.style.height=toH+'px';
+  ind.classList.add('ready');
+  const fromX=fromRect.left-navRect.left, fromY=fromRect.top-navRect.top;
+  if(Math.abs(fromX-toX)<0.5&&Math.abs(fromY-toY)<0.5){
+    ind.style.transform=`translate(${toX}px,${toY}px)`;
+    return;
+  }
+  const dir=toX>fromX?1:-1;
+  const stretch=Math.min(1.16,1+Math.abs(toX-fromX)/(toW*3));
+  ind.style.transformOrigin=dir>0?'left center':'right center';
+  ind.animate([
+    {transform:`translate(${fromX}px,${fromY}px) scaleX(1)`},
+    {transform:`translate(${(fromX+toX)/2}px,${(fromY+toY)/2}px) scaleX(${stretch})`,offset:.55},
+    {transform:`translate(${toX}px,${toY}px) scaleX(1)`}
+  ],{duration:270,easing:'cubic-bezier(.34,1.1,.4,1)',fill:'forwards'});
+  ind.style.transform=`translate(${toX}px,${toY}px)`; // конечное состояние после завершения анимации
+}
+let navIndicatorResizeTimer=null;
+window.addEventListener('resize',()=>{
+  clearTimeout(navIndicatorResizeTimer);
+  navIndicatorResizeTimer=setTimeout(()=>moveNavIndicator(true),80);
+});
+window.addEventListener('orientationchange',()=>setTimeout(()=>moveNavIndicator(true),120));
+// ResizeObserver — основной надёжный триггер: реагирует на любое изменение фактических
+// размеров самой панели (ресайз окна, поворот, системный масштаб), не полагаясь только
+// на событие window resize
+if('ResizeObserver' in window){
+  const nav=$('.nav');
+  if(nav)new ResizeObserver(()=>moveNavIndicator(true)).observe(nav);
+}
+
 function showScreen(id){
   curScreen=id;
   $$('.screen').forEach(s=>s.classList.toggle('active',s.id===id));
   $$('.nav button[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
+  moveNavIndicator();
   // глобальный период не нужен на «Счета»/«Настройки»; на «Бюджетах» — только навигация по месяцам
   const noPeriod=(id==='scrMore'||id==='scrAccounts');
   if(id==='scrBudgets')period='month'; // бюджеты всегда месячные → навигация по месяцам

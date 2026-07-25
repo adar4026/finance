@@ -22,6 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   (`--bg-blur` token, `.topbar.scrolled`).
 - New header row: **Avatar → Search → Analytics**. The search capsule fills
   all free space, all three controls have a 44×44 pt minimum hit area.
+- **Liquid Glass tab indicator** (`TASK_002`) in the bottom navigation: a
+  single translucent glass capsule now glides behind the active tab's icon
+  and label instead of a flat per-button fill. Position/size are computed
+  from the active button's live geometry (not fixed coordinates), so it
+  stays correct at 320–430px widths, after resize/orientation change and
+  across themes. Movement uses the Web Animations API with a soft spring
+  easing and a subtle direction-aware stretch; respects
+  `prefers-reduced-motion` (instant, no animation). The central "Добавить"
+  button is not a tab and never receives the indicator.
 
 ### Changed
 
