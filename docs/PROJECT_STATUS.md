@@ -16,30 +16,34 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_002_LIQUID_GLASS_TAB_INDICATOR`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md)
+- **Задача:** [`TASK_003_MAIN_FINANCE_CARD`](tasks/TASK_003_MAIN_FINANCE_CARD.md)
 - **Статус:** `DONE`
-- Ранее завершённая задача: [`TASK_001_HOME_NAVIGATION`](tasks/TASK_001_HOME_NAVIGATION.md) — `DONE`.
+- Ранее завершённые задачи: [`TASK_002_LIQUID_GLASS_TAB_INDICATOR`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
+  [`TASK_001_HOME_NAVIGATION`](tasks/TASK_001_HOME_NAVIGATION.md) — `DONE`.
 
 ## Активная задача
 
-Нет.
+Нет. `TASK_002A` (полноценный визуально заметный Liquid Glass) остаётся
+отложенной, следующая задача не начата.
 
 ## Следующие этапы
 
-1. `TASK_003_MAIN_FINANCE_CARD` — статус `PLANNED`.
-
-Реализация `TASK_003` не начиналась и не будет начата без отдельного
-TASK-файла.
+Следующая задача не определена и не начата.
 
 ## Изменение кода приложения после baseline
 
 `TASK_002` добавила в нижнюю навигацию Liquid Glass индикатор активной
 вкладки (только `index.html`, только `.nav`/`.nav-indicator`) поверх
-baseline-коммита `126943a`. Раздел «Baseline» выше описывает состояние
-**до** TASK-системы и не переписывается под каждую задачу (см.
-[`AGENTS.md`](../AGENTS.md), п. 6) — актуальный HEAD-коммит с учётом
-`TASK_002` фиксируется в самом
-[`docs/tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md).
+baseline-коммита `126943a`. `TASK_003` заменила главную финансовую карточку
+на Главной (`#scrRecords`) — белая карточка, переключатель месяца,
+двухлинейный график, приватный режим — новый файл
+`js/services/finance_card_service.js`, версия кэша `sw.js` поднята до
+`finance-v139`. Раздел «Baseline» выше описывает состояние **до**
+TASK-системы и не переписывается под каждую задачу (см.
+[`AGENTS.md`](../AGENTS.md), п. 6) — подробности каждой задачи фиксируются в
+её собственном TASK-файле
+([`TASK_002`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
+[`TASK_003`](tasks/TASK_003_MAIN_FINANCE_CARD.md)).
 
 ---
 
