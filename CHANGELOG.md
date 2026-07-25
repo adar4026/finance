@@ -55,6 +55,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   to a symmetric SVG cross so it sits perfectly centered in the circle at any
   size. Inactive tab icons/labels switched from light grey (`--muted2`) to
   `var(--text)` at font-weight 700 for a bolder, darker look in both themes.
+- **Bottom navigation, "+" vertical position**: lowered the central button
+  toward the "Добавить" caption to match the tighter cluster look of the
+  Ministry reference (overhang above the capsule 29→15px, gap to the caption
+  21→11px). The button still clears both neighboring tabs by 5px on every
+  tested width.
 
 ### Planned / candidate items
 
