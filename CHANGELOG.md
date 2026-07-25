@@ -60,6 +60,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   Ministry reference (overhang above the capsule 29→15px, gap to the caption
   21→11px). The button still clears both neighboring tabs by 5px on every
   tested width.
+- **Bottom navigation, capsule position**: lowered the whole floating panel
+  closer to the bottom edge (offset above `env(safe-area-inset-bottom)`
+  12→6px) — it was sitting too high above the screen edge on devices without
+  a home-indicator safe area. Still fully respects the safe-area inset on
+  notched iPhones; content clearance above the panel is unaffected (~50px on
+  the longest scrolled list).
 
 ### Planned / candidate items
 
