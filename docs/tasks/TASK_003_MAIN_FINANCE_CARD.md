@@ -338,6 +338,20 @@ localStorage), проверены вручную в браузере (см. «П
 
 ## Статус публикации
 
-_Заполняется после коммита и push._
+Опубликовано на GitHub Pages. Коммит `02f5cc9a238eaf5b9a6e9c0abf5d8841206b96dc`
+(`feat(TASK_003): redesign main finance card with month switch and two-line
+chart`) запушен в `origin/main` (`885c0b6..02f5cc9`). GitHub Pages build для
+этого коммита завершён (`status: built`, подтверждено `gh api
+repos/adar4026/finance/pages/builds/latest`). Production
+(https://adar4026.github.io/finance/) после деплоя проверен:
+
+- `sw.js` отдаёт `CACHE = 'finance-v139'`.
+- `index.html` содержит новую разметку (`fcMonthSwitch`, `fincard`) и
+  подключение `finance_card_service.js`.
+- Визуальная проверка в браузере (375px, реальный production-аккаунт без
+  операций) — карточка белая, без фиолетового градиента, месяц над карточкой,
+  пустой месяц отрабатывает корректно («Нет операций за месяц», нулевые
+  показатели, без горизонтальной прокрутки), нижняя навигация не задета,
+  ошибок в консоли нет.
 
 **Статус:** `DONE`
