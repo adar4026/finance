@@ -14,6 +14,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **White gap under the bottom nav on the Home screen — actual root
+  cause** (`TASK_009`): `TASK_007`/`TASK_008` fixed the wrong layer (the
+  `html`/`body` viewport height/positioning) — they didn't touch the real
+  cause, which is why the user still saw the gap on a real iPhone after
+  both. The actual issue: the space reserved for the floating bottom nav
+  is `padding-bottom` on `#scrollArea` (added in `TASK_006`), which sits
+  outside `#scrRecords`'s own box — and `#scrRecords{background:
+  var(--home-bg)}` (`TASK_003`) only paints its own box, not that
+  padding. `#scrollArea` itself never had a background, so that reserved
+  strip (including the safe-area zone under the nav) fell through to
+  `body`'s plain background instead of continuing the Home screen's own
+  light-gray tint. Fixed with one pure-CSS rule —
+  `.scroll-area:has(>#scrRecords.active){background:var(--home-bg)}` —
+  which paints `#scrollArea`'s background (padding included) to match the
+  Home screen whenever it's active, and leaves it transparent (unchanged
+  behavior) on every other screen. No JS or screen logic touched; reacts
+  to the existing `.active` class already toggled by `showScreen()`.
 - **Bottom nav pushed up with a wider white gap below it** (`TASK_008`):
   `TASK_007`'s `position:fixed` + `100dvh` fix for the white line (below)
   turned out to make things worse on a real iPhone — the fixed `body`'s

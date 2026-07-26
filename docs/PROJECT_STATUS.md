@@ -16,9 +16,10 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md)
+- **Задача:** [`TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md)
 - **Статус:** `DONE`
-- Ранее завершённые задачи: [`TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX`](tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md),
+- Ранее завершённые задачи: [`TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md),
+  [`TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX`](tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md),
   [`TASK_006_FIXED_HEADER_SCROLL_ISOLATION`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md),
   [`TASK_005_MONTH_SWITCH_CIRCLE_ARROWS`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md),
   [`TASK_004_HOME_TX_LIST_IOS_LIGHT`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md),
@@ -110,10 +111,24 @@ CSS которой не менялась ни разу с `TASK_004` — под�
 не возникал, и одновременно `.nav` снова корректно прилегает к истинному
 нижнему краю экрана через `env(safe-area-inset-bottom)`, как было исходно.
 `background:var(--bg)` на `html` оставлен как безобидная подстраховка.
-Версия кэша `sw.js` поднята до `finance-v149`. Раздел «Baseline» выше
-описывает состояние **до** TASK-системы и не переписывается под каждую
-задачу (см. [`AGENTS.md`](../AGENTS.md), п. 6) — подробности каждой задачи
-фиксируются в её собственном TASK-файле
+Версия кэша `sw.js` поднята до `finance-v149`. `TASK_009` нашла настоящую
+причину «белого зазора под навигацией», которую `TASK_007`/`TASK_008` не
+устранили (они чинили не тот слой — высоту `html`/`body`, а не цвет
+фона): у `.scroll-area` никогда не было своего фона, а резерв под
+плавающую `.nav` — это `padding-bottom` именно на `.scroll-area`
+(`TASK_006`), лежащий вне собственного бокса `#scrRecords{background:
+var(--home-bg)}` (`TASK_003`) — там просвечивал прозрачный `.app` → белый
+`body`. Добавлено CSS-правило `.scroll-area:has(>#scrRecords.active)
+{background:var(--home-bg)}` — чистый CSS, без изменений JS/логики
+экранов (реагирует на существующий класс `.active`, переключаемый уже
+существующей `showScreen()`); фон `.scroll-area` (включая её
+`padding-bottom`, т.е. зону под навигацией и `env(safe-area-inset-bottom)`)
+теперь совпадает с фоном экрана Главной, пока она активна, и остаётся
+прозрачным (как раньше) на остальных экранах. Версия кэша `sw.js`
+поднята до `finance-v150`. Раздел «Baseline» выше описывает состояние
+**до** TASK-системы и не переписывается под каждую задачу (см.
+[`AGENTS.md`](../AGENTS.md), п. 6) — подробности каждой задачи фиксируются
+в её собственном TASK-файле
 ([`TASK_002`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
 [`TASK_003`](tasks/TASK_003_MAIN_FINANCE_CARD.md),
 [`TASK_003A`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md),
@@ -121,7 +136,8 @@ CSS которой не менялась ни разу с `TASK_004` — под�
 [`TASK_005`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md),
 [`TASK_006`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md),
 [`TASK_007`](tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md),
-[`TASK_008`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md)).
+[`TASK_008`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md),
+[`TASK_009`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md)).
 
 ---
 

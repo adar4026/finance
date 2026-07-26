@@ -915,6 +915,13 @@
 
   /* ===== Главная финансовая карточка (TASK_003) ===== */
   #scrRecords{background:var(--home-bg)}
+  /* TASK_009: фон #scrRecords покрывает только собственный бокс экрана — резерв под
+     плавающую .nav (padding-bottom на .scroll-area, включает env(safe-area-inset-bottom))
+     лежит уже вне #scrRecords и просвечивал белым фоном body/.app. Пока активна Главная,
+     .scroll-area сама получает --home-bg (background-origin по умолчанию — padding-box,
+     фон покрывает и padding-bottom, т.е. и зону под навигацией). На остальных экранах
+     (без переопределения фона) правило не действует — там как и раньше просвечивает --bg. */
+  .scroll-area:has(>#scrRecords.active){background:var(--home-bg)}
   /* Компактный переключатель месяца — над карточкой */
   .month-switch{display:flex;align-items:center;justify-content:center;gap:2px;margin-bottom:10px}
   /* TASK_005: только SVG-шеврон, без круга/фона/обводки — системный синий (активна) /

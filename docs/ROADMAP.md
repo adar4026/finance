@@ -48,6 +48,14 @@
     `.nav` снова прилегает к истинному нижнему краю через
     `env(safe-area-inset-bottom)`, как было исходно. См.
     [`docs/tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md).
+11. **TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV** — `DONE`. Нашла настоящую
+    причину «белого зазора под навигацией» на Главной (не устранённую
+    `TASK_007`/`TASK_008`): резерв под плавающую `.nav` — это
+    `padding-bottom` на `.scroll-area`, у которой никогда не было своего
+    фона, вне бокса `#scrRecords{background:var(--home-bg)}`. Добавлено
+    чистое CSS-правило `.scroll-area:has(>#scrRecords.active){background:
+    var(--home-bg)}` — без изменений JS/логики экранов. См.
+    [`docs/tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md).
 
 ## Пояснения
 
