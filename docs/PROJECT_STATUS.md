@@ -16,9 +16,10 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX`](tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md)
+- **Задача:** [`TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS`](tasks/TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS.md)
 - **Статус:** `DONE`
-- Ранее завершённые задачи: [`TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md),
+- Ранее завершённые задачи: [`TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX`](tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md),
+  [`TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md),
   [`TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md),
   [`TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX`](tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md),
   [`TASK_006_FIXED_HEADER_SCROLL_ISOLATION`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md),
@@ -142,7 +143,25 @@ var(--home-bg)}` (`TASK_003`) — там просвечивал прозрачн
 (гарантированно включает safe-area при `viewport-fit=cover`), а не из
 потенциально короткого явного значения; `.app{height:100%}` наследует
 эту корректную высоту. Версия кэша `sw.js` поднята до `finance-v151`.
-Раздел «Baseline» выше описывает состояние **до** TASK-системы и не
+`TASK_011` — диагностика доказала, что `TASK_006`–`TASK_010` правили не
+тот слой: реальная причина «белой полосы под всем приложением» — это
+`<meta name="apple-mobile-web-app-status-bar-style" content=
+"black-translucent">`, из-за которого веб-вью в standalone-режиме занимало
+только `экран − статус-бар` (на устройстве пользователя: `812 − 53 = 759`
+из физических `812`), начинаясь от `y=0` — низ страницы физически не
+достигал края экрана, и iOS закрашивала оставшуюся полосу фоном документа
+(поэтому она меняла цвет вместе с темой). Все внутренние слои
+(`html`/`body`/`.app`/`#scrollArea`) при этом покрывали свой (урезанный)
+вьюпорт на 100% без единого пикселя расхождения — отсюда бесплодность
+пяти предыдущих попыток. Диагностирована временной debug-сборкой
+(`debug-safearea.js` — контрастные фоны корневых слоёв + панель с живыми
+замерами `innerHeight`/`clientHeight`/`visualViewport`/`env(safe-area-
+inset-*)`/`getBoundingClientRect()`), снята на реальном iPhone
+пользователя и полностью удалена сразу после получения данных. Исправлено
+изменением `status-bar-style` на `default` — веб-вью теперь занимает весь
+физический экран. Версия кэша `sw.js`: `finance-v151` → `finance-v152-debug`
+(временная сборка) → `finance-v152` (финальная, без суффикса). Раздел
+«Baseline» выше описывает состояние **до** TASK-системы и не
 переписывается под каждую задачу (см. [`AGENTS.md`](../AGENTS.md), п. 6) —
 подробности каждой задачи фиксируются в её собственном TASK-файле
 ([`TASK_002`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
@@ -154,7 +173,8 @@ var(--home-bg)}` (`TASK_003`) — там просвечивал прозрачн
 [`TASK_007`](tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md),
 [`TASK_008`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md),
 [`TASK_009`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md),
-[`TASK_010`](tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md)).
+[`TASK_010`](tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md),
+[`TASK_011`](tasks/TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS.md)).
 
 ---
 

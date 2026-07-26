@@ -68,6 +68,16 @@
     явной `width`/`height`, высота вычисляется из привязки к четырём
     истинным краям вьюпорта. См.
     [`docs/tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md`](tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md).
+13. **TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS** — `DONE`. Доказала, что
+    `TASK_006`–`TASK_010` правили не тот слой: настоящая причина —
+    `apple-mobile-web-app-status-bar-style: black-translucent`, из-за
+    которого standalone-вьюпорт был короче физического экрана ровно на
+    высоту статус-бара (на устройстве пользователя `812 → 759`, разница
+    `53px` = `inset-top`). Диагностировано временной debug-сборкой
+    (контрастные фоны слоёв + панель живых замеров) на реальном iPhone,
+    сборка полностью удалена после получения данных. Исправлено сменой
+    стиля статус-бара на `default`. См.
+    [`docs/tasks/TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS.md`](tasks/TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS.md).
 
 ## Пояснения
 

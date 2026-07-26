@@ -11,7 +11,10 @@
 <link rel="icon" href="favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- TASK_011: "black-translucent" сдвигал standalone-вьюпорт вверх под статус-бар, оставляя
+     физическую дыру той же высоты (env(safe-area-inset-top)) внизу экрана — веб-вью занимало
+     0…(экран - inset-top) вместо 0…экран. "default" убирает это смещение. -->
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Финансы">
 <meta name="mobile-web-app-capable" content="yes">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -4856,7 +4859,5 @@ if('serviceWorker' in navigator){
 <!-- Cloudflare Web Analytics -->
 <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "df17b65d25774f4faf879bb4b72b166e"}'></script>
 <!-- End Cloudflare Web Analytics -->
-<!-- ВРЕМЕННО (диагностика TASK_011, standalone safe-area) — удалить вместе с debug-safearea.js -->
-<script src="debug-safearea.js"></script>
 </body>
 </html>

@@ -14,6 +14,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **White/dark strip below the entire app in standalone PWA — the real
+  root cause, finally** (`TASK_011`): five previous attempts
+  (`TASK_006`–`TASK_010`) tried fixing this by adjusting `html`/`body`/
+  `.app` sizing and positioning, none of which worked because they were
+  all fixing the wrong layer. Built a temporary debug build (contrasting
+  background colors per root layer, plus a live on-screen panel reading
+  `innerHeight`, `document.documentElement.clientHeight`,
+  `visualViewport`, real `env(safe-area-inset-*)`, and
+  `getBoundingClientRect()` for every root element) and measured it on the
+  user's real iPhone in standalone mode. The data was conclusive:
+  `html`/`body`/`.app`/`#scrollArea` all covered their viewport perfectly
+  (bottom = 759 on every one of them, no discrepancy) — but the device's
+  physical screen was 812px tall. The 53px gap matched
+  `env(safe-area-inset-top)` exactly. Cause:
+  `<meta name="apple-mobile-web-app-status-bar-style"
+  content="black-translucent">` — in standalone mode this makes the
+  WebView's own viewport *shorter* than the physical screen by exactly the
+  status-bar height (content draws under a translucent status bar at the
+  top, but the viewport itself doesn't extend to the true bottom edge), so
+  no amount of CSS inside the page could ever paint that region — it's
+  physically outside the page's viewport, and iOS was filling it with the
+  document's background color (which is why it changed with the theme).
+  Fixed by changing the status bar style to `default`, which makes the
+  WebView occupy the full physical screen. The temporary debug build
+  (`debug-safearea.js` and its include line) was fully removed afterward.
+  Re-adding the PWA icon to the home screen is required to see the fix,
+  since iOS caches this meta tag's effect at install time.
 - **White strip below the entire app, down to the true screen edge —
   actual root cause** (`TASK_010`): `TASK_009` fixed the background
   inside `#scrollArea` (under the Home screen specifically), but the user
