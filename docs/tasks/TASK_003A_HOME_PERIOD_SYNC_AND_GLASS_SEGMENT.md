@@ -281,8 +281,44 @@ translateX()` + `width` с CSS `transition`; `@media
 
 ## Связанные коммиты
 
-См. раздел «Статус публикации» — заполняется после коммита/пуша.
+- `d7ddbb2401193558d6e140bfc041e1b6cec5052` — `feat(TASK_003A): sync Home
+  period switcher with finance card, glass segment indicator` (код + этот
+  TASK-файл + `CHANGELOG.md`/`docs/PROJECT_STATUS.md`/`docs/ROADMAP.md`,
+  одним коммитом, по формату `AGENTS.md`).
 
 ## Статус публикации
 
-Заполняется после `git push` и проверки production.
+Опубликовано на GitHub Pages. `git push origin main` выполнен
+(`c1fc4a1..d7ddbb2 main -> main`). GitHub Pages build для этого коммита
+завершён (`status: built`, подтверждено `gh api
+repos/adar4026/finance/pages/builds/latest`, `commit: d7ddbb2...`).
+Production (https://adar4026.github.io/finance/) после деплоя проверен:
+
+- `sw.js` отдаёт `CACHE = 'finance-v142'`.
+- `index.html`/`js/services/period_service.js` раздаются напрямую с новым
+  кодом (`fcMonthSwitch`, `periodsIndicator`, `period_service.js` в разметке
+  и precache подтверждены через `curl`).
+- Визуальная проверка в браузере (375px, мобильная ширина, реальный
+  production-аккаунт без операций): переключение «Месяц» → «Год» —
+  карточка и график пересчитываются немедленно (капитал/показатели `€0`,
+  пустой график с «Нет операций за <режим>», стабильная высота, без
+  фиктивных данных); активная капсула — стеклянная (не сплошной
+  сиреневый), плавно перемещается; нижняя навигация не задета; ошибок в
+  консоли нет (`read_console_messages`, включая `onlyErrors`).
+
+**Статус:** `DONE`.
+
+## Что проверить вручную в установленной iPhone PWA
+
+- Обновление до `finance-v142` подтягивается автоматически (network-first
+  стратегия `sw.js`, сеть в приоритете) — открыть установленное приложение
+  online хотя бы один раз для обновления кэша.
+- Плавность стеклянного индикатора и `backdrop-filter` на реальном
+  Safari/WebKit (в этой сессии проверено только в браузере предпросмотра и
+  headless-проверке production, не на физическом устройстве).
+- Тап по графику карточки (кастомный tooltip) — в этой сессии корректность
+  содержимого подтверждена через Chart.js API, реальный тап на устройстве не
+  проверялся.
+- Поведение `prefers-reduced-motion` на реальном iOS (уважается на уровне
+  CSS `@media`, не проверено на устройстве с включённой настройкой
+  «Уменьшение движения»).
