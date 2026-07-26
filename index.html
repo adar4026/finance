@@ -900,13 +900,14 @@
   #scrRecords{background:var(--home-bg)}
   /* Компактный переключатель месяца — над карточкой */
   .month-switch{display:flex;align-items:center;justify-content:center;gap:2px;margin-bottom:10px}
-  /* TASK_005: круглая кнопка со шевроном (референс — outline-круг + `‹`/`›` как в iOS) вместо плоской текстовой стрелки */
-  .month-switch .m-arrow{width:38px;height:38px;flex:0 0 38px;border:1.6px solid var(--text);background:none;color:var(--text);
-    border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+  /* TASK_005: только SVG-шеврон, без круга/фона/обводки — системный синий (активна) /
+     светло-серый с пониженной прозрачностью (disabled), зона нажатия та же (38×38) */
+  .month-switch .m-arrow{width:38px;height:38px;flex:0 0 38px;border:none;background:none;color:var(--nav-blue);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
   .month-switch .m-arrow svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
-  .month-switch .m-arrow:active{background:var(--card2)}
+  .month-switch .m-arrow:active{opacity:.55}
   .month-switch .m-arrow:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-  .month-switch .m-arrow:disabled{opacity:.3;cursor:default;pointer-events:none}
+  .month-switch .m-arrow:disabled{color:var(--muted2);opacity:.5;cursor:default;pointer-events:none}
   .month-switch .m-label{min-width:0;font-size:15.5px;font-weight:700;color:var(--text);padding:0 4px;
     text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   @media (prefers-reduced-motion:no-preference){
