@@ -20,6 +20,11 @@
    заливки строк; только визуальные изменения, данные/сортировка/
    обработчики/расчёты не тронуты. См.
    [`docs/tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md).
+7. **TASK_005_MONTH_SWITCH_CIRCLE_ARROWS** — `DONE`. Стрелки переключателя
+   месяца финансовой карточки (`#fcMonthPrev`/`#fcMonthNext`) переоформлены
+   в круглые кнопки с тонкой обводкой и SVG-шевроном (референс — круглая
+   кнопка «Назад» iOS); поведение/обработчики не изменены. См.
+   [`docs/tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md).
 
 ## Пояснения
 

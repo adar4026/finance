@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Month switch — circular chevron arrows** (`TASK_005`): the Home
+  screen's finance-card month switcher (`#fcMonthPrev`/`#fcMonthNext`) now
+  uses round, thin-outline buttons with a vector chevron icon instead of
+  a plain, borderless `‹`/`›` glyph — matching the user's reference (a
+  standard iOS-style circular back button). Reuses the existing
+  `var(--text)` token for both the outline and the icon so it adapts to
+  light/dark themes automatically, with no new color constants. Purely a
+  restyle of the two buttons: click handlers, the disabled/hidden state
+  for the current/custom period, and aria-labels are unchanged.
 - **Home transaction list — iOS light redesign** (`TASK_004`): the recent-
   transactions block on the Home screen (`#recentList`) is now a light,
   minimalist iOS-style list — neutral gray screen background (already

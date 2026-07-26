@@ -16,9 +16,10 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_004_HOME_TX_LIST_IOS_LIGHT`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md)
+- **Задача:** [`TASK_005_MONTH_SWITCH_CIRCLE_ARROWS`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md)
 - **Статус:** `DONE`
-- Ранее завершённые задачи: [`TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md),
+- Ранее завершённые задачи: [`TASK_004_HOME_TX_LIST_IOS_LIGHT`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md),
+  [`TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md),
   [`TASK_003_MAIN_FINANCE_CARD`](tasks/TASK_003_MAIN_FINANCE_CARD.md),
   [`TASK_002_LIQUID_GLASS_TAB_INDICATOR`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
   [`TASK_001_HOME_NAVIGATION`](tasks/TASK_001_HOME_NAVIGATION.md) — `DONE`.
@@ -60,14 +61,22 @@ baseline-коммита `126943a`. `TASK_003` заменила главную ф
 — не затрагивают общие `groupedTxHtml()`/`txRow()`/`.tx`/`.daycard`,
 используемые экранами «Все операции», категория, счёт, бюджет. Финансовая
 карточка (`TASK_003`/`TASK_003A`) не изменена. Версия кэша `sw.js` поднята
-до `finance-v145`. Раздел «Baseline» выше описывает состояние **до**
-TASK-системы и не переписывается под каждую задачу (см.
+до `finance-v145`. `TASK_005` заменила плоские текстовые стрелки `‹`/`›`
+переключателя месяца финансовой карточки (`#fcMonthPrev`/`#fcMonthNext`)
+на круглые кнопки с тонкой обводкой и векторным SVG-шевроном внутри (по
+референс-скриншоту пользователя, стиль стандартной круглой кнопки «Назад»
+iOS) — используется существующий токен `var(--text)` для цвета обводки/
+иконки, адаптируется под тему без новых констант; disabled/visibility/
+aria-label-логика и обработчики клика не изменены. Версия кэша `sw.js`
+поднята до `finance-v146`. Раздел «Baseline» выше описывает состояние
+**до** TASK-системы и не переписывается под каждую задачу (см.
 [`AGENTS.md`](../AGENTS.md), п. 6) — подробности каждой задачи фиксируются в
 её собственном TASK-файле
 ([`TASK_002`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
 [`TASK_003`](tasks/TASK_003_MAIN_FINANCE_CARD.md),
 [`TASK_003A`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md),
-[`TASK_004`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md)).
+[`TASK_004`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md),
+[`TASK_005`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md)).
 
 ---
 

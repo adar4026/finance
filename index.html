@@ -900,8 +900,10 @@
   #scrRecords{background:var(--home-bg)}
   /* Компактный переключатель месяца — над карточкой */
   .month-switch{display:flex;align-items:center;justify-content:center;gap:2px;margin-bottom:10px}
-  .month-switch .m-arrow{width:44px;height:44px;flex:0 0 44px;border:none;background:none;color:var(--text);
-    font-size:19px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+  /* TASK_005: круглая кнопка со шевроном (референс — outline-круг + `‹`/`›` как в iOS) вместо плоской текстовой стрелки */
+  .month-switch .m-arrow{width:38px;height:38px;flex:0 0 38px;border:1.6px solid var(--text);background:none;color:var(--text);
+    border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .month-switch .m-arrow svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
   .month-switch .m-arrow:active{background:var(--card2)}
   .month-switch .m-arrow:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
   .month-switch .m-arrow:disabled{opacity:.3;cursor:default;pointer-events:none}
@@ -1071,9 +1073,9 @@
   <!-- Screen: Home dashboard (Product Book Screen 1) -->
   <div class="screen active" id="scrRecords">
     <div class="month-switch" id="fcMonthSwitch">
-      <button type="button" class="m-arrow" id="fcMonthPrev" aria-label="Назад">‹</button>
+      <button type="button" class="m-arrow" id="fcMonthPrev" aria-label="Назад"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
       <div class="m-label" id="fcMonthLabel" aria-live="polite">—</div>
-      <button type="button" class="m-arrow" id="fcMonthNext" aria-label="Вперёд">›</button>
+      <button type="button" class="m-arrow" id="fcMonthNext" aria-label="Вперёд"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
 
     <div class="fincard" id="finCard">
