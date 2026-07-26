@@ -10,6 +10,10 @@
    См. [`docs/tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md).
 4. **TASK_003_MAIN_FINANCE_CARD** — `DONE`.
    См. [`docs/tasks/TASK_003_MAIN_FINANCE_CARD.md`](tasks/TASK_003_MAIN_FINANCE_CARD.md).
+5. **TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT** — `DONE`. Корректирующая
+   задача к `TASK_003` (синхронизация переключателя периода с финансовой
+   карточкой, стеклянный индикатор) — не занимает номер `TASK_004`. См.
+   [`docs/tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md).
 
 ## Пояснения
 

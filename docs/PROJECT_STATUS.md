@@ -1,6 +1,6 @@
 # PROJECT_STATUS — A-Lex Finance
 
-**Обновлено:** 2026-07-25
+**Обновлено:** 2026-07-26
 
 ## Состояние приложения
 
@@ -16,9 +16,10 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_003_MAIN_FINANCE_CARD`](tasks/TASK_003_MAIN_FINANCE_CARD.md)
+- **Задача:** [`TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md)
 - **Статус:** `DONE`
-- Ранее завершённые задачи: [`TASK_002_LIQUID_GLASS_TAB_INDICATOR`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
+- Ранее завершённые задачи: [`TASK_003_MAIN_FINANCE_CARD`](tasks/TASK_003_MAIN_FINANCE_CARD.md),
+  [`TASK_002_LIQUID_GLASS_TAB_INDICATOR`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
   [`TASK_001_HOME_NAVIGATION`](tasks/TASK_001_HOME_NAVIGATION.md) — `DONE`.
 
 ## Активная задача
@@ -38,12 +39,21 @@ baseline-коммита `126943a`. `TASK_003` заменила главную ф
 на Главной (`#scrRecords`) — белая карточка, переключатель месяца,
 двухлинейный график, приватный режим — новый файл
 `js/services/finance_card_service.js`, версия кэша `sw.js` поднята до
-`finance-v139`. Раздел «Baseline» выше описывает состояние **до**
+`finance-v139` (позже `finance-v141` в рамках доработок той же задачи).
+`TASK_003A` устранила рассинхронизацию между общим переключателем
+День/Неделя/Месяц/Год/Период и финансовой карточкой (карточка использовала
+изолированное состояние `cardMonth`, теперь удалённое, — карточка работает
+от общего `period`/`anchor`), вернула и обобщила график карточки на все
+пять режимов, заменила сплошную сиреневую заливку активной вкладки на
+стеклянный индикатор (токены `TASK_002`). Новый файл
+`js/services/period_service.js` (`AF.Services.Period`), версия кэша `sw.js`
+поднята до `finance-v142`. Раздел «Baseline» выше описывает состояние **до**
 TASK-системы и не переписывается под каждую задачу (см.
 [`AGENTS.md`](../AGENTS.md), п. 6) — подробности каждой задачи фиксируются в
 её собственном TASK-файле
 ([`TASK_002`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
-[`TASK_003`](tasks/TASK_003_MAIN_FINANCE_CARD.md)).
+[`TASK_003`](tasks/TASK_003_MAIN_FINANCE_CARD.md),
+[`TASK_003A`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md)).
 
 ---
 
