@@ -34,6 +34,11 @@
    новый внутренний контейнер `.scroll-area`; шапка физически вне него.
    См.
    [`docs/tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md).
+9. **TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX** — `DONE`. Устранена белая
+   линия внизу экрана на iPhone/PWA (следствие `TASK_006`) — `100%` →
+   `100dvh` на `html`/`body` + фон на `html` для подстраховки; фикс
+   неподвижной шапки не затронут. См.
+   [`docs/tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md`](tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md).
 
 ## Пояснения
 

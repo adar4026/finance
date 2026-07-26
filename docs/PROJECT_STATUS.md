@@ -16,9 +16,10 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_006_FIXED_HEADER_SCROLL_ISOLATION`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md)
+- **Задача:** [`TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX`](tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md)
 - **Статус:** `DONE`
-- Ранее завершённые задачи: [`TASK_005_MONTH_SWITCH_CIRCLE_ARROWS`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md),
+- Ранее завершённые задачи: [`TASK_006_FIXED_HEADER_SCROLL_ISOLATION`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md),
+  [`TASK_005_MONTH_SWITCH_CIRCLE_ARROWS`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md),
   [`TASK_004_HOME_TX_LIST_IOS_LIGHT`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md),
   [`TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md),
   [`TASK_003_MAIN_FINANCE_CARD`](tasks/TASK_003_MAIN_FINANCE_CARD.md),
@@ -85,8 +86,19 @@ flex-рамка на весь экран, а прокручивается тол
 `#topbar.scrolled` (теперь по `#scrollArea.scrollTop`, было
 `window.scrollY`) и автопрокрутка при drag-and-drop счетов/категорий
 (теперь `#scrollArea`, было `document.scrollingElement`). Версия кэша
-`sw.js` поднята до `finance-v147`. Раздел «Baseline» выше описывает
-состояние **до** TASK-системы и не переписывается под каждую задачу (см.
+`sw.js` поднята до `finance-v147`. `TASK_007` устранила замеченную
+пользователем на реальном iPhone/PWA белую линию внизу экрана —
+последствие `TASK_006`: `html`/`body` получили `height:100%` без фона на
+`html`, а на iOS layout-viewport (`100%`/`100vh`) не всегда совпадает с
+реальной видимой областью при показе/скрытии панели Safari, из-за чего
+зафиксированный `body` мог не дотягиваться до низа экрана, обнажая белый
+фон `html` по умолчанию. Исправлено: `height:100vh;height:100dvh` (вместо
+`100%`) на `html`/`body` — `dvh` отслеживает реальную видимую область
+живьём; плюс `background:var(--bg)` на `html` как подстраховка на случай
+остаточного зазора (теперь в цвет темы, а не белый). Фикс `TASK_006`
+(неподвижная шапка) не затронут. Версия кэша `sw.js` поднята до
+`finance-v148`. Раздел «Baseline» выше описывает состояние **до**
+TASK-системы и не переписывается под каждую задачу (см.
 [`AGENTS.md`](../AGENTS.md), п. 6) — подробности каждой задачи фиксируются в
 её собственном TASK-файле
 ([`TASK_002`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
@@ -94,7 +106,8 @@ flex-рамка на весь экран, а прокручивается тол
 [`TASK_003A`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md),
 [`TASK_004`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md),
 [`TASK_005`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md),
-[`TASK_006`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md)).
+[`TASK_006`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md),
+[`TASK_007`](tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md)).
 
 ---
 

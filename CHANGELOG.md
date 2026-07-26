@@ -14,6 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **White line at the bottom of the screen on iPhone/PWA** (`TASK_007`):
+  a side effect of `TASK_006`'s fixed `html`/`body` — their height was set
+  to `100%` with no background color on `html`. On iOS Safari the layout
+  viewport height (`100%`/`100vh`) doesn't always match the actual visible
+  area when the Safari toolbar shows/hides, so the fixed `body` could fall
+  short of the true bottom edge, exposing `html`'s default white
+  background as a thin line. Fixed by switching `html`/`body` height to
+  `100dvh` (with a `100vh` fallback) — `dvh` tracks the real visible area
+  live — and giving `html` a `background:var(--bg)` as a safety net so any
+  residual gap blends into the theme instead of showing white. The
+  `TASK_006` fixed-header behavior itself is unaffected.
 - **Header no longer moves during iOS rubber-band overscroll** (`TASK_006`):
   the top bar (avatar/search/analytics) used to visibly slide down along
   with the content during pull-down/elastic overscroll on iOS/PWA, even
