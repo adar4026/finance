@@ -14,6 +14,12 @@
    задача к `TASK_003` (синхронизация переключателя периода с финансовой
    карточкой, стеклянный индикатор) — не занимает номер `TASK_004`. См.
    [`docs/tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md).
+6. **TASK_004_HOME_TX_LIST_IOS_LIGHT** — `DONE`. Редизайн блока записей на
+   Главной (`#recentList`) в светлом минималистичном стиле iOS — белые
+   карточки-дни на сером фоне, тонкий разделитель от аватарки, без цветной
+   заливки строк; только визуальные изменения, данные/сортировка/
+   обработчики/расчёты не тронуты. См.
+   [`docs/tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md).
 
 ## Пояснения
 

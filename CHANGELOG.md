@@ -14,6 +14,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Home transaction list — iOS light redesign** (`TASK_004`): the recent-
+  transactions block on the Home screen (`#recentList`) is now a light,
+  minimalist iOS-style list — neutral gray screen background (already
+  `var(--home-bg)`), each day grouped into its own pure-white rounded card,
+  rows separated by a thin hairline that starts after the left avatar
+  rather than running under it. Per row: the existing category/account
+  avatar stays on the left untouched; the operation title (category +
+  subcategory) is bold and dark in the center, with any extra detail (note,
+  receipt icon) in smaller gray text below it; the account name with its
+  own avatar sits in small gray text above the amount on the right; the
+  amount is calm red for expenses, calm green for income, neutral gray for
+  transfers. The previous full-row category-tinted background wash is
+  removed — no bright gradients, heavy shadows, full-row color fills, or
+  thick borders. Purely visual: implemented via new, isolated
+  `homeGroupedTxHtml()`/`homeTxRow()` functions and `.home-*` CSS classes
+  that reuse the same underlying data and helpers (`catById`, `subcatById`,
+  `fmtCur`, `signed`, `dayLabelFull`, …) as before — the shared
+  `groupedTxHtml()`/`txRow()` and `.tx`/`.daycard` styles used by "All
+  transactions", category, account, and budget screens are untouched, so
+  those screens look exactly as before. Sorting, grouping-by-day, period
+  filtering, calculations, and the row tap-to-edit handler (`openSheet`)
+  are all unchanged. The main finance card (`TASK_003`/`TASK_003A`) was not
+  touched.
 - **Home period sync & glass segment** (`TASK_003A`): the Day/Week/Month/
   Year/Period tabs above the Home screen now drive the same finance card
   introduced in `TASK_003` — switching tabs recalculates capital, change,

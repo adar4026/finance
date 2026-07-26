@@ -16,9 +16,10 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md)
+- **Задача:** [`TASK_004_HOME_TX_LIST_IOS_LIGHT`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md)
 - **Статус:** `DONE`
-- Ранее завершённые задачи: [`TASK_003_MAIN_FINANCE_CARD`](tasks/TASK_003_MAIN_FINANCE_CARD.md),
+- Ранее завершённые задачи: [`TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md),
+  [`TASK_003_MAIN_FINANCE_CARD`](tasks/TASK_003_MAIN_FINANCE_CARD.md),
   [`TASK_002_LIQUID_GLASS_TAB_INDICATOR`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
   [`TASK_001_HOME_NAVIGATION`](tasks/TASK_001_HOME_NAVIGATION.md) — `DONE`.
 
@@ -47,13 +48,26 @@ baseline-коммита `126943a`. `TASK_003` заменила главную ф
 пять режимов, заменила сплошную сиреневую заливку активной вкладки на
 стеклянный индикатор (токены `TASK_002`). Новый файл
 `js/services/period_service.js` (`AF.Services.Period`), версия кэша `sw.js`
-поднята до `finance-v142`. Раздел «Baseline» выше описывает состояние **до**
+поднята до `finance-v142` (позже `finance-v144` в рамках доработок той же
+задачи — см. её TASK-файл). `TASK_004` переоформила список операций на
+Главной (`#recentList`) в светлом минималистичном стиле iOS: белые
+карточки-дни на нейтральном сером фоне экрана (уже существовавший
+`var(--home-bg)`), тонкий разделитель строки от края аватарки, название
+операции полужирным сверху и доп. информация мельче под ним, счёт с
+аватаркой мелким серым над суммой, сумма красная/зелёная/нейтральная по
+типу — без цветной заливки всей строки. Новые изолированные функции
+`homeGroupedTxHtml()`/`homeTxRow()` и CSS-классы `.home-*` в `index.html`
+— не затрагивают общие `groupedTxHtml()`/`txRow()`/`.tx`/`.daycard`,
+используемые экранами «Все операции», категория, счёт, бюджет. Финансовая
+карточка (`TASK_003`/`TASK_003A`) не изменена. Версия кэша `sw.js` поднята
+до `finance-v145`. Раздел «Baseline» выше описывает состояние **до**
 TASK-системы и не переписывается под каждую задачу (см.
 [`AGENTS.md`](../AGENTS.md), п. 6) — подробности каждой задачи фиксируются в
 её собственном TASK-файле
 ([`TASK_002`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
 [`TASK_003`](tasks/TASK_003_MAIN_FINANCE_CARD.md),
-[`TASK_003A`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md)).
+[`TASK_003A`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md),
+[`TASK_004`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md)).
 
 ---
 

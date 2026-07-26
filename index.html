@@ -180,6 +180,24 @@
   .tx .amt{font-weight:700;font-size:15px;white-space:nowrap}
   .tx .amt.inc{color:var(--income)} .tx .amt.exp{color:var(--text)}
 
+  /* TASK_004: Главная — отдельные классы для списка операций (iOS light, минимализм).
+     Не переиспользуют .tx/.daycard, чтобы не задеть «Все операции»/категорию/счёт/бюджет. */
+  .home-daycard{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .home-tx{display:flex;align-items:center;gap:12px;padding:0 14px;cursor:pointer;transition:background .12s}
+  .home-tx:active{background:var(--bg2)}
+  .home-tx .home-em{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .home-tx .home-body{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0;border-bottom:1px solid var(--line)}
+  .home-tx:last-child .home-body{border-bottom:none}
+  .home-tx .home-main{min-width:0;flex:1}
+  .home-tx .home-title{font-size:14.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .home-tx .home-sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .home-tx .home-side{text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .home-tx .home-acc{font-size:11.5px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:3px}
+  .home-tx .home-amt{font-size:15px;font-weight:700;white-space:nowrap;color:var(--text)}
+  .home-tx .home-amt.inc{color:var(--income)}
+  .home-tx .home-amt.exp{color:var(--expense)}
+  .home-tx .home-amt.trf{color:var(--muted)}
+
   .empty{text-align:center;padding:56px 16px;color:var(--muted2)}
   .empty .big{font-size:44px;margin-bottom:12px}
   .empty p{font-size:13.5px;line-height:1.5}
@@ -2076,9 +2094,61 @@ function renderRecent(list){
   // все операции за выбранный период, сгруппированы по дням (прокручиваются на странице)
   const items=[...list].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
   const el=$('#recentList');
-  if(!items.length){el.innerHTML=`<div class="daycard"><div class="empty"><div class="big">🗒️</div><p>Нет операций за период.<br>Нажмите «+», чтобы добавить.</p></div></div>`;return;}
-  el.innerHTML=groupedTxHtml(items);
-  $$('#recentList .tx').forEach(r=>r.onclick=()=>openSheet(r.dataset.id));
+  if(!items.length){el.innerHTML=`<div class="home-daycard"><div class="empty"><div class="big">🗒️</div><p>Нет операций за период.<br>Нажмите «+», чтобы добавить.</p></div></div>`;return;}
+  el.innerHTML=homeGroupedTxHtml(items);
+  $$('#recentList .home-tx').forEach(r=>r.onclick=()=>openSheet(r.dataset.id));
+}
+// TASK_004: разметка списка операций только для Главной (iOS light) — отдельно от
+// groupedTxHtml()/txRow(), которые остаются без изменений для остальных экранов
+// («Все операции», категория, счёт, бюджет). Данные/логика те же, меняется только вёрстка.
+function homeGroupedTxHtml(list){
+  if(!list.length)return `<div class="home-daycard"><div class="empty"><div class="big">🗒️</div><p>Нет операций за период.</p></div></div>`;
+  const byDay={};list.forEach(t=>{(byDay[t.date.slice(0,10)]=byDay[t.date.slice(0,10)]||[]).push(t);});
+  const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
+  return days.map(day=>{
+    const items=byDay[day].sort((a,b)=>b.id-a.id);
+    const net=items.reduce((s,t)=>s+(t.type==='transfer'?0:(t.type==='income'?t.amount:-t.amount)),0);
+    return `<div class="daygroup"><div class="dayhead"><span class="dl">${dayLabelFull(day)}</span>
+      <span class="dr" style="color:${net>=0?'var(--income)':'var(--expense)'}">${(net>=0?'+':'−')+num(Math.abs(net))}</span></div>
+      <div class="home-daycard">${items.map(homeTxRow).join('')}</div></div>`;
+  }).join('');
+}
+function homeTxRow(t){
+  if(t.type==='transfer'){
+    const from=state.accounts.find(a=>a.id===t.from), to=state.accounts.find(a=>a.id===t.to);
+    const fc=(from&&from.currency)||state.currency, tc=(to&&to.currency)||state.currency;
+    const cross=(t.toAmount!=null&&Math.abs(t.toAmount-t.amount)>0.001)||fc!==tc;
+    const amtTxt=cross
+      ? fmtCur(t.amount,fc)+' → '+fmtCur(t.toAmount!=null?t.toAmount:t.amount,tc)
+      : fmtCur(t.amount,fc);
+    return `<div class="home-tx" data-id="${t.id}">
+      <div class="home-em" style="background:var(--accent-soft)">🔄</div>
+      <div class="home-body">
+        <div class="home-main">
+          <div class="home-title">Перевод</div>
+          <div class="home-sub">${from?esc(from.name):'?'} → ${to?esc(to.name):'?'}${t.note?' · '+esc(t.note):''}</div>
+        </div>
+        <div class="home-side"><div class="home-amt trf">${amtTxt}</div></div>
+      </div>
+    </div>`;
+  }
+  const c=catById(t.cat);
+  const acc=state.accounts.find(a=>a.id===t.account);
+  const sub=t.subcategoryId?subcatById(t.subcategoryId):null;
+  const extra=[sub?sub.name:null,t.note?t.note:null].filter(Boolean).map(esc).join(' · ');
+  return `<div class="home-tx" data-id="${t.id}">
+    <div class="home-em" style="background:${c.color}2e">${c.emoji}</div>
+    <div class="home-body">
+      <div class="home-main">
+        <div class="home-title">${esc(c.name)}${t.receiptPath?' <span style="font-size:11px">🧾</span>':''}</div>
+        ${extra?`<div class="home-sub">${extra}</div>`:''}
+      </div>
+      <div class="home-side">
+        ${acc?`<div class="home-acc">${acc.emoji} ${esc(acc.name)}</div>`:''}
+        <div class="home-amt ${t.type==='income'?'inc':'exp'}">${signed(t.amount,t.type)}</div>
+      </div>
+    </div>
+  </div>`;
 }
 
 /* ============ Главная финансовая карточка (TASK_003, диапазон обобщён в TASK_003A) ============ */
