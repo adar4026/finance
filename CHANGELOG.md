@@ -17,22 +17,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Home period sync & glass segment** (`TASK_003A`): the Day/Week/Month/
   Year/Period tabs above the Home screen now drive the same finance card
   introduced in `TASK_003` — switching tabs recalculates capital, change,
-  income/expense/flow, and a newly re-added two-line chart (cumulative
-  income/expense, right-side scale, tap tooltip, end-of-line totals) for the
-  selected range. Root cause: the card previously used its own isolated
-  `cardMonth` state, never connected to the shared tab switcher. Fixed by
-  removing `cardMonth` and routing the card through the same shared
-  `period`/`anchor` used by the transaction list, Analytics and Budgets; the
-  range math itself was extracted from inline code into a new pure module
-  `js/services/period_service.js` (`AF.Services.Period`) so Day/Week/Month/
-  Year/Period boundaries are unit-tested (local time, Monday-start week,
-  midnight-safe). Chart granularity adapts per mode (hourly for Day, daily
-  for Week/Month, monthly for Year, daily-or-monthly for Period depending on
-  length). The arrows above the card now move the shared anchor and disable
-  the "next" arrow once the range would be fully in the future. The active
-  segment capsule (`День/Неделя/Месяц/Год/Период`) no longer uses a solid
-  purple fill — it now reuses the bottom tab bar's Liquid Glass tokens
-  (`TASK_002`) with a geometry-driven sliding indicator, in both themes.
+  and income/expense/flow for the selected range. Root cause: the card
+  previously used its own isolated `cardMonth` state, never connected to
+  the shared tab switcher. Fixed by removing `cardMonth` and routing the
+  card through the same shared `period`/`anchor` used by the transaction
+  list, Analytics and Budgets; the range math itself was extracted from
+  inline code into a new pure module `js/services/period_service.js`
+  (`AF.Services.Period`) so Day/Week/Month/Year/Period boundaries are
+  unit-tested (local time, Monday-start week, midnight-safe). The arrows
+  above the card now move the shared anchor and disable the "next" arrow
+  once the range would be fully in the future. The active segment capsule
+  (`День/Неделя/Месяц/Год/Период`) no longer uses a solid purple fill — it
+  now reuses the bottom tab bar's Liquid Glass tokens (`TASK_002`) with a
+  geometry-driven sliding indicator, in both themes. The card's capital
+  figure is now noticeably smaller (no longer visually dominating the
+  card) and the card stays compact (no chart — tried again per this
+  task's spec, dropped again after review, same call as `TASK_003`).
   Analytics and Budgets are unaffected (unchanged `navrow`/purple capital
   card).
 - **Main finance card redesign** (`TASK_003`) on the Home screen: a compact

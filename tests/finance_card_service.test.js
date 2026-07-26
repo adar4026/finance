@@ -147,8 +147,6 @@ function rangeFor(period, anchor, cf, ct) { return P.range(period, anchor, cf, c
   assertClose(t.income, 0, '11. пустой диапазон — доходы 0');
   assertClose(t.expense, 0, '11b. пустой диапазон — расходы 0');
   assertClose(t.flow, 0, '11c. пустой диапазон — поток 0');
-  const series = FC.cumulativeSeries(state, from, to, 'day', base);
-  assertTrue(series.every(p => p.income === 0 && p.expense === 0), '11d. пустой диапазон — график без фиктивных линий (все точки нулевые)');
 }
 
 // ---- 12. Одна операция ----
@@ -171,9 +169,6 @@ function rangeFor(period, anchor, cf, ct) { return P.range(period, anchor, cf, c
   const t = FC.totals(state, from, to, base);
   assertClose(t.expense, 30, '13. три операции одного дня суммируются верно');
   assertEqual(t.expenseCount, 3, '13b. три операции одного дня — счётчик верен');
-  const series = FC.cumulativeSeries(state, from, to, 'day', base);
-  const day5 = series[4]; // 5 июля — индекс 4 (буккеты с 1 июля)
-  assertClose(day5.expense, 30, '13c. бакет 5 июля агрегирует все три операции дня');
 }
 
 // ---- Капитал на конец диапазона / изменение (счета) ----
@@ -232,66 +227,6 @@ function rangeFor(period, anchor, cf, ct) { return P.range(period, anchor, cf, c
   const { from, to } = rangeFor('custom', new Date(2026, 5, 1), new Date(2026, 4, 5), new Date(2026, 4, 25));
   const t = FC.totals(state, from, to, base);
   assertClose(t.income, 300, 'Период: учитывает обе границы, операция за пределами диапазона исключена');
-}
-
-// ---- Гранулярность графика по режиму ----
-{
-  const anchor = new Date(2026, 6, 15);
-  assertEqual(FC.granularityFor('day', ...Object.values(rangeFor('day', anchor))), 'hour', 'День → часовые бакеты');
-  assertEqual(FC.granularityFor('week', ...Object.values(rangeFor('week', anchor))), 'day', 'Неделя → дневные бакеты');
-  assertEqual(FC.granularityFor('month', ...Object.values(rangeFor('month', anchor))), 'day', 'Месяц → дневные бакеты');
-  assertEqual(FC.granularityFor('year', ...Object.values(rangeFor('year', anchor))), 'month', 'Год → месячные бакеты');
-  const shortCustom = rangeFor('custom', anchor, new Date(2026, 6, 1), new Date(2026, 6, 10));
-  assertEqual(FC.granularityFor('custom', shortCustom.from, shortCustom.to), 'day', 'Короткий период (≤62 дня) → дневные бакеты');
-  const longCustom = rangeFor('custom', anchor, new Date(2025, 0, 1), new Date(2026, 6, 15));
-  assertEqual(FC.granularityFor('custom', longCustom.from, longCustom.to), 'month', 'Длинный период (>62 дней) → месячные бакеты (агрегация)');
-}
-
-// ---- Часовые бакеты (День): количество и покрытие суток ----
-{
-  const { from, to } = rangeFor('day', new Date(2026, 6, 26));
-  const buckets = FC.gridBuckets(from, to, 'hour');
-  assertEqual(buckets.length, 24, 'День: 24 часовых бакета');
-  assertEqual(buckets[0].from.getHours(), 0, 'Первый бакет — 00:00');
-  assertEqual(buckets[23].to.getHours(), 23, 'Последний бакет заканчивается в 23-м часу');
-}
-
-// ---- Месячные бакеты (Год): 12 бакетов, границы годовые ----
-{
-  const { from, to } = rangeFor('year', new Date(2026, 6, 26));
-  const buckets = FC.gridBuckets(from, to, 'month');
-  assertEqual(buckets.length, 12, 'Год: 12 месячных бакетов');
-  assertEqual(buckets[0].from.getMonth(), 0, 'Первый бакет — январь');
-  assertEqual(buckets[11].from.getMonth(), 11, 'Последний бакет — декабрь');
-}
-
-// ---- Итоговые значения графика совпадают с показателями карточки ----
-{
-  const state = { tx: [
-    tx(1, 'income', 1000, '2026-07-05T10:00:00'),
-    tx(2, 'income', 500, '2026-07-20T10:00:00'),
-    tx(3, 'expense', 300, '2026-07-06T10:00:00'),
-    tx(4, 'expense', 45.5, '2026-07-25T10:00:00'),
-  ] };
-  const { from, to } = rangeFor('month', new Date(2026, 6, 1));
-  const totals = FC.totals(state, from, to, base);
-  const series = FC.cumulativeSeries(state, from, to, 'day', base);
-  const last = series[series.length - 1];
-  assertClose(last.income, totals.income, 'Конечная точка линии доходов совпадает с итогом «Доходы»');
-  assertClose(last.expense, totals.expense, 'Конечная точка линии расходов совпадает с итогом «Расходы»');
-}
-{
-  // та же проверка для годовой (месячной) детализации
-  const state = { tx: [
-    tx(1, 'income', 700, '2026-02-05T10:00:00'),
-    tx(2, 'expense', 120, '2026-11-06T10:00:00'),
-  ] };
-  const { from, to } = rangeFor('year', new Date(2026, 6, 1));
-  const totals = FC.totals(state, from, to, base);
-  const series = FC.cumulativeSeries(state, from, to, 'month', base);
-  const last = series[series.length - 1];
-  assertClose(last.income, totals.income, 'Год: конечная точка линии доходов совпадает с итогом');
-  assertClose(last.expense, totals.expense, 'Год: конечная точка линии расходов совпадает с итогом');
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

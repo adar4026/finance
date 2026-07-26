@@ -902,26 +902,12 @@
     font-size:17px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
   .fc-eye:active{background:var(--card2)}
   .fc-eye:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-  .fc-val{font-size:32px;font-weight:800;letter-spacing:-.7px;line-height:1.18;color:var(--text);
+  .fc-val{font-size:13px;font-weight:800;letter-spacing:-.2px;line-height:1.18;color:var(--text);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
   .fc-chg{font-size:13.5px;font-weight:600;color:var(--muted);margin-top:5px;min-height:18px}
   .fc-chg.pos{color:var(--income)} .fc-chg.neg{color:var(--expense)}
 
-  .fc-chart-wrap{position:relative;height:150px;padding:6px 4px 0;touch-action:pan-y}
-  .fc-tooltip{position:absolute;pointer-events:none;z-index:2;background:var(--text);color:var(--card);
-    border-radius:10px;padding:8px 11px;font-size:12px;line-height:1.5;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.18);
-    opacity:0;transform:translate(-50%,-100%) translateY(-8px);transition:opacity .1s ease;top:0;left:0}
-  .fc-tooltip.show{opacity:1}
-  .fc-tooltip b{font-weight:700}
-  .fc-tooltip .ft-row{display:flex;align-items:center;gap:6px}
-  .fc-tooltip .ft-dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
-  .fc-tooltip .ft-dot.inc{background:var(--income)} .fc-tooltip .ft-dot.exp{background:var(--expense)}
-
-  .fc-empty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
-    text-align:center;color:var(--muted);font-size:13px;pointer-events:none}
-  .fc-empty.show{display:flex}
-
-  .fc-bottom{background:var(--card);display:flex;padding:14px 2px 17px;border-top:1px solid var(--line);margin-top:8px}
+  .fc-bottom{background:var(--card);display:flex;padding:14px 2px 17px;border-top:1px solid var(--line);margin-top:14px}
   .fc-bottom .ci2-v.inc{color:var(--income)} .fc-bottom .ci2-v.exp{color:var(--expense)}
   .fc-bottom .ci2-v.flow-pos{color:var(--income)} .fc-bottom .ci2-v.flow-neg{color:var(--expense)}
 
@@ -1080,11 +1066,6 @@
         </div>
         <div class="fc-val" id="fcVal">€0</div>
         <div class="fc-chg" id="fcChg"></div>
-      </div>
-      <div class="fc-chart-wrap" id="fcChartWrap">
-        <canvas id="fcChart" role="img" aria-label="График накопленных доходов и расходов за выбранный период"></canvas>
-        <div class="fc-tooltip" id="fcTooltip"></div>
-        <div class="fc-empty" id="fcEmptyMsg">Нет операций за период</div>
       </div>
       <div class="fc-bottom">
         <div class="cib2"><span class="ci2-ic inc">↗</span><div class="ci2-l">Доходы</div><div class="ci2-v inc" id="fcInc">+€0</div><div class="ci2-s" id="fcIncN">0 операций</div></div>
@@ -2166,110 +2147,6 @@ function renderFinanceCard(){
   $('#fcIncN').textContent=totals.incomeCount+' '+plural(totals.incomeCount,'операция','операции','операций');
   $('#fcExpN').textContent=totals.expenseCount+' '+plural(totals.expenseCount,'операция','операции','операций');
   $('#fcFlowN').textContent=suf;
-
-  renderFcChart(from,to);
-}
-// Кастомный плагин Chart.js — цветные маркеры + компактные подписи итогов на концах обеих линий
-// (тот же приём, что уже используется в Аналитике для capBubble/renderCapChart — переиспользуем roundRect()).
-const fcEndMarkers={id:'fcEndMarkers',afterDatasetsDraw(chart){
-  const metaInc=chart.getDatasetMeta(0), metaExp=chart.getDatasetMeta(1);
-  if(!metaInc||!metaInc.data.length)return;
-  const lastInc=metaInc.data[metaInc.data.length-1], lastExp=metaExp.data[metaExp.data.length-1];
-  const vInc=chart.data.datasets[0].data.slice(-1)[0], vExp=chart.data.datasets[1].data.slice(-1)[0];
-  const ctx=chart.ctx, css=getComputedStyle(document.documentElement);
-  const incColor=css.getPropertyValue('--income').trim(), expColor=css.getPropertyValue('--expense').trim();
-  const cardBg=css.getPropertyValue('--card').trim();
-  const txt=v=>state.hideAmounts?'••••':num(v);
-  const drawBubble=(point,value,color,above)=>{
-    if(!point)return;
-    const label=txt(value);
-    ctx.save();
-    ctx.font='700 11px -apple-system,system-ui,sans-serif';
-    const w=ctx.measureText(label).width+16,h=22;
-    let x=point.x-w/2, y=above?point.y-h-10:point.y+10;
-    x=Math.max(2,Math.min(x,chart.width-w-2));
-    if(y<2)y=point.y+10; if(y+h>chart.height-2)y=point.y-h-10;
-    roundRect(ctx,x,y,w,h,8);ctx.fillStyle=color;ctx.fill();
-    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,x+w/2,y+h/2);
-    ctx.beginPath();ctx.arc(point.x,point.y,5,0,7);ctx.fillStyle=cardBg;ctx.fill();
-    ctx.lineWidth=2.5;ctx.strokeStyle=color;ctx.stroke();
-    ctx.restore();
-  };
-  const incAbove=!lastExp||lastInc.y<=lastExp.y; // меньше y = выше на экране
-  drawBubble(lastInc,vInc,incColor,incAbove);
-  drawBubble(lastExp,vExp,expColor,!incAbove);
-}};
-// Дата точки графика для оси/tooltip — формат зависит от детализации (час/день/месяц, раздел 9).
-function fcAxisLabel(pt){
-  if(fcGranularity==='hour')return pt.label.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  if(fcGranularity==='day')return pt.label.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
-  return fcCapFirst(pt.label.toLocaleDateString('ru-RU',{month:'short'}));
-}
-function fcTooltipDate(pt){
-  if(fcGranularity==='hour')return pt.label.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})+', '+pt.label.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  if(fcGranularity==='day')return pt.label.toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
-  return fcCapFirst(pt.label.toLocaleDateString('ru-RU',{month:'long',year:'numeric'}));
-}
-// Кастомный tooltip Chart.js, рисующий в собственный #fcTooltip (единый визуальный стиль карточки)
-function fcTooltipHandler(context){
-  const {tooltip}=context;
-  const el=$('#fcTooltip');
-  if(!tooltip||tooltip.opacity===0){el.classList.remove('show');return;}
-  const dp=tooltip.dataPoints;
-  if(!dp||!dp.length||!fcSeries){el.classList.remove('show');return;}
-  const pt=fcSeries[dp[0].dataIndex];
-  if(!pt){el.classList.remove('show');return;}
-  const diff=pt.income-pt.expense;
-  const dateTxt=fcTooltipDate(pt);
-  const mv=v=>state.hideAmounts?maskAmt(state.currency):num(v);
-  const diffTxt=state.hideAmounts?maskAmt(state.currency):(diff>=0?'+':'−')+num(Math.abs(diff));
-  el.innerHTML=`<b>${esc(dateTxt)}</b>`
-    +`<div class="ft-row"><span class="ft-dot inc"></span>Доходы: ${mv(pt.income)}</div>`
-    +`<div class="ft-row"><span class="ft-dot exp"></span>Расходы: ${mv(pt.expense)}</div>`
-    +`<div class="ft-row">Разница: ${diffTxt}</div>`;
-  const wrap=$('#fcChartWrap'), canvasEl=$('#fcChart');
-  const x=canvasEl.offsetLeft+tooltip.caretX, y=canvasEl.offsetTop+tooltip.caretY;
-  el.style.left=Math.max(46,Math.min(x,wrap.clientWidth-46))+'px';
-  el.style.top=Math.max(12,y)+'px';
-  el.classList.add('show');
-}
-let fcChart=null, fcSeries=null, fcGranularity='day';
-function renderFcChart(from,to){
-  const FC=AF.Services.FinanceCard;
-  fcGranularity=FC.granularityFor(period,from,to);
-  fcSeries=FC.cumulativeSeries(state,from,to,fcGranularity,txBase);
-  const empty=fcSeries.every(p=>p.income===0&&p.expense===0);
-  $('#fcEmptyMsg').textContent='Нет операций '+(FC_SUFFIX[period]||'за период');
-  $('#fcEmptyMsg').classList.toggle('show',empty);
-  const css=getComputedStyle(document.documentElement);
-  const incColor=css.getPropertyValue('--income').trim(), expColor=css.getPropertyValue('--expense').trim();
-  const muted=css.getPropertyValue('--muted2').trim(), grid=css.getPropertyValue('--line').trim();
-  if(fcChart)fcChart.destroy();
-  const cv=$('#fcChart');
-  const labels=fcSeries.map(fcAxisLabel);
-  fcChart=new Chart(cv,{type:'line',
-    data:{labels,datasets:[
-      {data:fcSeries.map(p=>p.income),borderColor:incColor,borderWidth:2.5,tension:.35,fill:'origin',
-        backgroundColor:incColor+'1f',pointRadius:0,pointHoverRadius:0,borderCapStyle:'round',borderJoinStyle:'round'},
-      {data:fcSeries.map(p=>p.expense),borderColor:expColor,borderWidth:2.5,borderDash:[6,4],tension:.35,fill:false,
-        pointRadius:0,pointHoverRadius:0,borderCapStyle:'round',borderJoinStyle:'round'},
-    ]},
-    options:{
-      maintainAspectRatio:false,
-      layout:{padding:{top:26,right:8,left:2,bottom:2}},
-      interaction:{intersect:false,mode:'index'},
-      animation:{duration:200},
-      plugins:{legend:{display:false},tooltip:{enabled:false,external:fcTooltipHandler}},
-      scales:{
-        x:{grid:{display:false},border:{display:false},
-          ticks:{color:muted,font:{size:11},maxTicksLimit:5,maxRotation:0,autoSkip:true,padding:6}},
-        y:{position:'right',border:{display:false},
-          grid:{color:grid,drawTicks:false,lineWidth:1,borderDash:[4,4]},
-          ticks:{color:muted,font:{size:11},maxTicksLimit:4,padding:8,
-            callback:v=>state.hideAmounts?'':(Math.abs(v)>=1000?(Math.round(v/100)/10)+'k':v)}}
-      }
-    },
-    plugins:[fcEndMarkers]});
 }
 function capPoints(range){
   // конец графика = позже из (сегодня, последняя операция) — чтобы пузырёк совпадал с капиталом
