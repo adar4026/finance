@@ -56,6 +56,18 @@
     чистое CSS-правило `.scroll-area:has(>#scrRecords.active){background:
     var(--home-bg)}` — без изменений JS/логики экранов. См.
     [`docs/tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md).
+12. **TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX** — `DONE`. Нашла настоящую
+    причину «белой полосы под всем приложением» (не устранённую
+    `TASK_009`, которая чинила только фон внутри `#scrollArea`):
+    `TASK_006`/`TASK_007` задавали `body` `position:fixed;inset:0`
+    одновременно с явной `height` — конфликтующая комбинация могла
+    обрезать `body` короче реальной safe-area-покрытой области экрана;
+    `TASK_008` убрала `fixed` совсем, что тоже не гарантирует растяжение.
+    `viewport-fit=cover` в `<meta viewport>` был на месте всё это время
+    (не терялся). Исправлено: `body` — `position:fixed;inset:0` без
+    явной `width`/`height`, высота вычисляется из привязки к четырём
+    истинным краям вьюпорта. См.
+    [`docs/tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md`](tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md).
 
 ## Пояснения
 

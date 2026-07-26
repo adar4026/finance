@@ -14,6 +14,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **White strip below the entire app, down to the true screen edge —
+  actual root cause** (`TASK_010`): `TASK_009` fixed the background
+  inside `#scrollArea` (under the Home screen specifically), but the user
+  reported the real gap sits *outside* the whole `.app`, extending to the
+  iPhone's true bottom edge — a safe-area coverage problem, not a Home-
+  screen background problem. Confirmed the `<meta viewport>`
+  `viewport-fit=cover` was present and unmodified the whole time (not the
+  cause). The actual cause: `TASK_006`/`TASK_007` set `body` to
+  `position:fixed;inset:0` while *also* giving it an explicit `height`
+  (`100%`/`100vh`/`100dvh`) — an explicit height conflicts with (and wins
+  over) the implicit sizing `inset:0` alone would produce from anchoring
+  to all four true viewport edges, and on some iOS states that explicit
+  height computed shorter than the real safe-area-covered screen, clipping
+  `body` short of the true bottom edge (explaining why `TASK_007` made the
+  gap *worse*, not better). `TASK_008` removed `position:fixed` entirely
+  instead, which also doesn't reliably guarantee coverage under
+  `env(safe-area-inset-bottom)`. Fixed by keeping `position:fixed;inset:0`
+  but dropping the conflicting explicit `width`/`height` — the box is now
+  sized purely by its anchor to the four true viewport edges, which
+  `viewport-fit=cover` guarantees includes the safe area. `.app` inherits
+  the now-correct full height. `TASK_006`'s fixed header and `TASK_009`'s
+  Home-screen background fix are both unaffected.
 - **White gap under the bottom nav on the Home screen — actual root
   cause** (`TASK_009`): `TASK_007`/`TASK_008` fixed the wrong layer (the
   `html`/`body` viewport height/positioning) — they didn't touch the real

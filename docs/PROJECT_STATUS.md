@@ -16,9 +16,10 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md)
+- **Задача:** [`TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX`](tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md)
 - **Статус:** `DONE`
-- Ранее завершённые задачи: [`TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md),
+- Ранее завершённые задачи: [`TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md),
+  [`TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md),
   [`TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX`](tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md),
   [`TASK_006_FIXED_HEADER_SCROLL_ISOLATION`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md),
   [`TASK_005_MONTH_SWITCH_CIRCLE_ARROWS`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md),
@@ -125,10 +126,25 @@ var(--home-bg)}` (`TASK_003`) — там просвечивал прозрачн
 `padding-bottom`, т.е. зону под навигацией и `env(safe-area-inset-bottom)`)
 теперь совпадает с фоном экрана Главной, пока она активна, и остаётся
 прозрачным (как раньше) на остальных экранах. Версия кэша `sw.js`
-поднята до `finance-v150`. Раздел «Baseline» выше описывает состояние
-**до** TASK-системы и не переписывается под каждую задачу (см.
-[`AGENTS.md`](../AGENTS.md), п. 6) — подробности каждой задачи фиксируются
-в её собственном TASK-файле
+поднята до `finance-v150`. `TASK_010` нашла настоящий корень «белой
+полосы под всем приложением», которую `TASK_009` не устраняла (та чинила
+фон только внутри `#scrollArea`, а полоса была снаружи, ниже всей
+`.app`): `TASK_006`/`TASK_007` задавали `body` `position:fixed;inset:0`
+**одновременно** с явной `height` (`100%`/`100vh`/`100dvh`) — явная
+`height` конфликтует с расчётом от `inset:0` и может оказаться короче
+реальной safe-area-покрытой области экрана, обрезая `body` раньше
+истинного нижнего края; `TASK_008` убрала `fixed` целиком, что тоже не
+гарантирует растяжение под `env(safe-area-inset-bottom)`. Проверено:
+`<meta name="viewport">` с `viewport-fit=cover` присутствовал с самого
+начала, не был потерян/переопределён ни на одном этапе. Исправлено:
+`body` — `position:fixed;inset:0` **без** явной `width`/`height` — высота
+вычисляется браузером из привязки к четырём истинным краям вьюпорта
+(гарантированно включает safe-area при `viewport-fit=cover`), а не из
+потенциально короткого явного значения; `.app{height:100%}` наследует
+эту корректную высоту. Версия кэша `sw.js` поднята до `finance-v151`.
+Раздел «Baseline» выше описывает состояние **до** TASK-системы и не
+переписывается под каждую задачу (см. [`AGENTS.md`](../AGENTS.md), п. 6) —
+подробности каждой задачи фиксируются в её собственном TASK-файле
 ([`TASK_002`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
 [`TASK_003`](tasks/TASK_003_MAIN_FINANCE_CARD.md),
 [`TASK_003A`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md),
@@ -137,7 +153,8 @@ var(--home-bg)}` (`TASK_003`) — там просвечивал прозрачн
 [`TASK_006`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md),
 [`TASK_007`](tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md),
 [`TASK_008`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md),
-[`TASK_009`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md)).
+[`TASK_009`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md),
+[`TASK_010`](tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md)).
 
 ---
 
