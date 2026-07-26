@@ -29,12 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   once the range would be fully in the future. The active segment capsule
   (`День/Неделя/Месяц/Год/Период`) no longer uses a solid purple fill — it
   now reuses the bottom tab bar's Liquid Glass tokens (`TASK_002`) with a
-  geometry-driven sliding indicator, in both themes. The card's capital
-  figure is now noticeably smaller (no longer visually dominating the
-  card) and the card stays compact (no chart — tried again per this
-  task's spec, dropped again after review, same call as `TASK_003`).
-  Analytics and Budgets are unaffected (unchanged `navrow`/purple capital
-  card).
+  geometry-driven sliding indicator, in both themes. The card stays compact
+  (no chart — tried again per this task's spec, dropped again after review,
+  same call as `TASK_003`); its label is now "Общий баланс" (was "Общий
+  капитал"), and the balance figure is smaller than the original design and
+  colored with the app's existing blue accent (`--nav-blue`, reused from
+  the bottom tab bar / active segment text) instead of the default text
+  color. Analytics and Budgets are unaffected (unchanged `navrow`/purple
+  capital card).
 - **Main finance card redesign** (`TASK_003`) on the Home screen: a compact
   white card (no more purple gradient) with total capital + eye button, a
   month-over-month change line (amount + %, colored by sign), and the three
