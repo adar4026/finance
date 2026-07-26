@@ -14,6 +14,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Bottom nav pushed up with a wider white gap below it** (`TASK_008`):
+  `TASK_007`'s `position:fixed` + `100dvh` fix for the white line (below)
+  turned out to make things worse on a real iPhone — the fixed `body`'s
+  computed height came out shorter than the actual visible area, so the
+  bottom nav (unchanged since `TASK_004`, confirmed via `git diff`)
+  visually sat higher than usual, with a wider blank gap below it down to
+  the true screen edge. Since all real overflow was already isolated
+  inside `#scrollArea` (`TASK_006`), `body` never actually has content
+  taller than itself — so plain `overflow:hidden` (no `position:fixed`, no
+  `dvh` sizing trick) is enough to prevent any scroll/rubber-band on it.
+  Reverted `body`/`html` to normal in-flow `height:100%` — the bottom nav
+  (`position:fixed`, anchored via `env(safe-area-inset-bottom)`) once
+  again sits flush with the true bottom edge as it did originally. The
+  `TASK_006` fixed-header behavior is unaffected.
 - **White line at the bottom of the screen on iPhone/PWA** (`TASK_007`):
   a side effect of `TASK_006`'s fixed `html`/`body` — their height was set
   to `100%` with no background color on `html`. On iOS Safari the layout

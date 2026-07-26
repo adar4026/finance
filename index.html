@@ -79,18 +79,21 @@
     --fincard-shadow:0 10px 26px rgba(0,0,0,.32);
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  /* TASK_006: html/body зафиксированы (position:fixed) и не скроллятся вообще — это устраняет
-     iOS-баг, при котором sticky/fixed-элементы сдвигаются вниз вместе с документом во время
-     elastic overscroll/rubber-band. Единственная область прокрутки — .scroll-area ниже.
-     TASK_007: 100dvh (с фолбэком 100vh) вместо 100%/100vh — на iOS высота layout-viewport
-     (100vh) не всегда совпадает с реальной видимой областью при показе/скрытии панели Safari,
-     из-за чего снизу мог быть виден белый фон html. background на html — доп. подстраховка,
-     чтобы даже остаточный зазор был в цвет темы, а не белым. */
-  html{height:100vh;height:100dvh;overflow:hidden;background:var(--bg)}
+  /* TASK_006: html/body не скроллятся сами — вся прокручиваемая высота (.scroll-area) уже
+     ограничена внутри .app, поэтому у html/body просто нет лишнего содержимого для скролла/
+     rubber-band (overflow:hidden здесь достаточен без искусственной фиксации через
+     position:fixed). Единственная область прокрутки — .scroll-area ниже.
+     TASK_008: position:fixed + 100dvh на body (введено в TASK_007) откатили — на части
+     устройств расчётная высота 100dvh у зафиксированного body оказывалась меньше реальной
+     видимой области, из-за чего нижняя навигация «поднималась» и под ней оставалась белая
+     полоса. Обычный поток (height:100%, без fixed) не привязан к отдельному расчёту вьюпорта —
+     сама навигация (.nav, position:fixed) по-прежнему стоит у истинного нижнего края экрана
+     через env(safe-area-inset-bottom), как было исходно. background на html оставлен —
+     подстраховка на случай остаточного зазора (в цвет темы, а не белый). */
+  html{height:100%;overflow:hidden;background:var(--bg)}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
-    background:var(--bg);color:var(--text);
-    position:fixed;inset:0;width:100%;height:100vh;height:100dvh;overflow:hidden;
+    background:var(--bg);color:var(--text);height:100%;overflow:hidden;
     -webkit-font-smoothing:antialiased;transition:background .3s}
   .app{max-width:560px;margin:0 auto;height:100%;position:relative;
     display:flex;flex-direction:column;overflow:hidden}

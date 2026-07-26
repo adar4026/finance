@@ -39,6 +39,15 @@
    `100dvh` на `html`/`body` + фон на `html` для подстраховки; фикс
    неподвижной шапки не затронут. См.
    [`docs/tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md`](tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md).
+10. **TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION** — `DONE`. Откачен
+    `position:fixed`+`dvh` на `body` из `TASK_007` — на реальном iPhone он
+    давал более широкую белую полосу и поднимал нижнюю навигацию над её
+    обычным местом. `body` вернулась к обычному потоку
+    (`overflow:hidden`, без `position:fixed`) — этого достаточно, т.к.
+    весь реальный скролл уже изолирован в `.scroll-area` (`TASK_006`);
+    `.nav` снова прилегает к истинному нижнему краю через
+    `env(safe-area-inset-bottom)`, как было исходно. См.
+    [`docs/tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md).
 
 ## Пояснения
 
