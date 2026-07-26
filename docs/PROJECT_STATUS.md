@@ -16,9 +16,10 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_005_MONTH_SWITCH_CIRCLE_ARROWS`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md)
+- **Задача:** [`TASK_006_FIXED_HEADER_SCROLL_ISOLATION`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md)
 - **Статус:** `DONE`
-- Ранее завершённые задачи: [`TASK_004_HOME_TX_LIST_IOS_LIGHT`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md),
+- Ранее завершённые задачи: [`TASK_005_MONTH_SWITCH_CIRCLE_ARROWS`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md),
+  [`TASK_004_HOME_TX_LIST_IOS_LIGHT`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md),
   [`TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md),
   [`TASK_003_MAIN_FINANCE_CARD`](tasks/TASK_003_MAIN_FINANCE_CARD.md),
   [`TASK_002_LIQUID_GLASS_TAB_INDICATOR`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
@@ -63,20 +64,37 @@ baseline-коммита `126943a`. `TASK_003` заменила главную ф
 карточка (`TASK_003`/`TASK_003A`) не изменена. Версия кэша `sw.js` поднята
 до `finance-v145`. `TASK_005` заменила плоские текстовые стрелки `‹`/`›`
 переключателя месяца финансовой карточки (`#fcMonthPrev`/`#fcMonthNext`)
-на круглые кнопки с тонкой обводкой и векторным SVG-шевроном внутри (по
-референс-скриншоту пользователя, стиль стандартной круглой кнопки «Назад»
-iOS) — используется существующий токен `var(--text)` для цвета обводки/
-иконки, адаптируется под тему без новых констант; disabled/visibility/
-aria-label-логика и обработчики клика не изменены. Версия кэша `sw.js`
-поднята до `finance-v146`. Раздел «Baseline» выше описывает состояние
-**до** TASK-системы и не переписывается под каждую задачу (см.
+на векторный SVG-шеврон (по референс-скриншоту пользователя, стиль
+стандартной кнопки «Назад» iOS); первая итерация добавляла круглую обводку
+вокруг шеврона, но по дополнительной правке пользователя круг/фон/обводка
+убраны — остался только сам шеврон: активная стрелка окрашена
+существующим токеном «системного синего» `var(--nav-blue)` (тот же, что у
+активной вкладки нижней навигации), отключённая — `var(--muted2)` с
+пониженной прозрачностью; disabled/visibility/aria-label-логика и
+обработчики клика не изменены. Версия кэша `sw.js` поднята до
+`finance-v146` (первая итерация), затем `finance-v147` вместе с
+`TASK_006` (упрощение шеврона попало в тот же `index.html` перед
+публикацией). `TASK_006` устранила баг iOS/PWA, при котором
+верхняя шапка (`#topbar`) сдвигалась вниз вместе с контентом при
+overscroll/rubber-band: `html`/`body` теперь зафиксированы
+(`position:fixed`, не скроллятся вообще), `.app` — нескроллящаяся
+flex-рамка на весь экран, а прокручивается только новый внутренний
+контейнер `.scroll-area` (`#subhead` + все `.screen`), физически
+расположенный ниже шапки — она не может сдвинуться при rubber-band внутри
+него ни при каких обстоятельствах. Обновлены: слушатель
+`#topbar.scrolled` (теперь по `#scrollArea.scrollTop`, было
+`window.scrollY`) и автопрокрутка при drag-and-drop счетов/категорий
+(теперь `#scrollArea`, было `document.scrollingElement`). Версия кэша
+`sw.js` поднята до `finance-v147`. Раздел «Baseline» выше описывает
+состояние **до** TASK-системы и не переписывается под каждую задачу (см.
 [`AGENTS.md`](../AGENTS.md), п. 6) — подробности каждой задачи фиксируются в
 её собственном TASK-файле
 ([`TASK_002`](tasks/TASK_002_LIQUID_GLASS_TAB_INDICATOR.md),
 [`TASK_003`](tasks/TASK_003_MAIN_FINANCE_CARD.md),
 [`TASK_003A`](tasks/TASK_003A_HOME_PERIOD_SYNC_AND_GLASS_SEGMENT.md),
 [`TASK_004`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md),
-[`TASK_005`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md)).
+[`TASK_005`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md),
+[`TASK_006`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md)).
 
 ---
 

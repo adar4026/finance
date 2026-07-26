@@ -22,9 +22,18 @@
    [`docs/tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md`](tasks/TASK_004_HOME_TX_LIST_IOS_LIGHT.md).
 7. **TASK_005_MONTH_SWITCH_CIRCLE_ARROWS** — `DONE`. Стрелки переключателя
    месяца финансовой карточки (`#fcMonthPrev`/`#fcMonthNext`) переоформлены
-   в круглые кнопки с тонкой обводкой и SVG-шевроном (референс — круглая
-   кнопка «Назад» iOS); поведение/обработчики не изменены. См.
+   в SVG-шеврон (референс — шеврон «Назад» iOS); первая итерация — круглая
+   кнопка с обводкой, по доработке упрощена до чистого шеврона без
+   круга/фона/обводки (активная стрелка — системный синий `var(--nav-blue)`,
+   отключённая — светло-серая `var(--muted2)` с пониженной прозрачностью);
+   поведение/обработчики не изменены. См.
    [`docs/tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md`](tasks/TASK_005_MONTH_SWITCH_CIRCLE_ARROWS.md).
+8. **TASK_006_FIXED_HEADER_SCROLL_ISOLATION** — `DONE`. Исправлен баг iOS/
+   PWA: верхняя шапка сдвигалась вниз при overscroll/rubber-band.
+   `html`/`body` зафиксированы и не скроллятся, прокручивается только
+   новый внутренний контейнер `.scroll-area`; шапка физически вне него.
+   См.
+   [`docs/tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md`](tasks/TASK_006_FIXED_HEADER_SCROLL_ISOLATION.md).
 
 ## Пояснения
 

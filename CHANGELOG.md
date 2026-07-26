@@ -12,15 +12,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > Version 1.1.0 is the active development milestone, built on top of the
 > stable 1.0.0 foundation.
 
-### Added
+### Fixed
 
-- **Month switch — circular chevron arrows** (`TASK_005`): the Home
-  screen's finance-card month switcher (`#fcMonthPrev`/`#fcMonthNext`) now
-  uses round, thin-outline buttons with a vector chevron icon instead of
-  a plain, borderless `‹`/`›` glyph — matching the user's reference (a
-  standard iOS-style circular back button). Reuses the existing
-  `var(--text)` token for both the outline and the icon so it adapts to
-  light/dark themes automatically, with no new color constants. Purely a
+- **Header no longer moves during iOS rubber-band overscroll** (`TASK_006`):
+  the top bar (avatar/search/analytics) used to visibly slide down along
+  with the content during pull-down/elastic overscroll on iOS/PWA, even
+  though it used `position:sticky`. Root cause: the whole document
+  (`html`/`body`) was the scrolling element, and WebKit shifts
+  sticky/fixed elements along with the rest of the layout viewport during
+  elastic bounce of the document itself. Fixed by making `html`/`body`
+  non-scrollable (`position:fixed`, full viewport) and introducing a
+  single dedicated scroll container (`#scrollArea`, wrapping the period/
+  month sub-header and all screens) below the header — the header is now
+  physically outside the scrolling region, so it cannot move regardless
+  of rubber-band inside it. Updated the collapsing-header "scrolled"
+  material-background listener and the account/category drag-and-drop
+  auto-scroll-at-edge logic to target `#scrollArea` instead of
+  `window`/`document.scrollingElement`, since that's now the real
+  scrolling element. Bottom nav, safe-area insets, light/dark theme, and
+  all overlays/sheets (already independent, fixed-position elements)
+  are unaffected.
+- **Month switch — plain chevron arrows** (`TASK_005`): the Home screen's
+  finance-card month switcher (`#fcMonthPrev`/`#fcMonthNext`) now uses a
+  vector chevron icon instead of a plain, borderless `‹`/`›` glyph —
+  matching the user's reference (a standard iOS-style back chevron). An
+  initial iteration added a round thin-outline button around the chevron;
+  a follow-up simplified it further by request — no circle, background, or
+  outline, just the chevron itself, same tap target. The active arrow uses
+  the existing `var(--nav-blue)` "system blue" token (same one used for
+  the bottom nav's active tab); the disabled arrow uses `var(--muted2)`
+  with reduced opacity — both reused tokens, no new colors. Purely a
   restyle of the two buttons: click handlers, the disabled/hidden state
   for the current/custom period, and aria-labels are unchanged.
 - **Home transaction list — iOS light redesign** (`TASK_004`): the recent-
