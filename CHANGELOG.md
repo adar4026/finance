@@ -320,6 +320,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Navigation drawer — premium redesign (Apple Wallet / Liquid Glass)**
+  (`TASK_017`): the side menu opened from the avatar was visually reworked
+  end to end — architecture, navigation and business logic are unchanged,
+  only the CSS/markup/rendering of this one component. The header is now
+  a wallet-style card (a soft lilac-to-blue gradient, 24px corners, a
+  light glass effect) showing the avatar, name and "Personal profile"
+  caption with a trailing chevron — the whole header is a single button
+  that still opens the profile screen, as before. Menu rows are grouped
+  into three white cards ("Planning", "Analytics", "App") with uppercase
+  section titles instead of one long flat list. Every emoji icon was
+  replaced with an SF-Symbols-style inline SVG in its own colour chip
+  (11 icons total, reusing the same stroke-based style as the bottom nav
+  icons). The notification badge got its own isolated CSS class so the
+  shared badge style used by the Profile screen is untouched. Dividers
+  are now a hairline `rgba(0,0,0,.06)`. While the drawer is open, the
+  main screen and bottom nav behind it dim, blur (`blur(6px)`) and scale
+  down slightly (`scale(.98)`) via a `body.drawer-open` class toggled in
+  `openDrawer()`/`closeDrawer()` (and the Escape-key handler). Animations
+  — drawer slide, header fade-in, staggered card entrance — are short and
+  unobtrusive. The total-capital card (balance + sparkline) is kept as an
+  existing feature, restyled to match. The footer was trimmed to just the
+  app name and version — the "Released …" line is gone. Cache version
+  bumped `finance-v158` → `finance-v159`. All 534 existing tests still
+  pass unchanged, since no service or business logic was touched.
+
 - **Transaction page — premium iOS redesign** (`TASK_014`): the full-screen
   add/edit transaction page introduced in `TASK_013` was reworked visually.
   Three design concepts were prototyped first (Apple Minimal / Apple Liquid

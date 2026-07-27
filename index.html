@@ -362,37 +362,64 @@
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);display:none;
     align-items:flex-end;justify-content:center;z-index:60}
   .overlay.show{display:flex}
-  /* ===== Боковая выезжающая панель (drawer) ===== */
-  .overlay.drawer-ov{align-items:stretch;justify-content:flex-start}
-  .drawer{background:var(--bg);width:84%;max-width:330px;height:100%;display:flex;flex-direction:column;
-    overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 0 40px rgba(0,0,0,.3);animation:slideR .26s cubic-bezier(.22,.61,.36,1)}
-  @keyframes slideR{from{transform:translateX(-100%)}to{transform:translateX(0)}}
-  .drawer-head{background:var(--cap-grad);color:#fff;padding:max(22px,env(safe-area-inset-top)) 20px 20px;
-    display:flex;align-items:center;gap:14px;cursor:pointer}
-  .drawer-head .avatar{width:54px;height:54px;font-size:21px;border:2px solid rgba(255,255,255,.5)}
-  .drawer-head .dh-name{font-size:19px;font-weight:700;line-height:1.2}
-  .drawer-head .dh-sub{font-size:12px;opacity:.85;margin-top:2px}
-  .drawer-list{padding:8px 0 20px}
-  .drawer-row{display:flex;align-items:center;gap:16px;width:100%;padding:14px 22px;border:none;background:none;
-    color:var(--text);font-size:16px;font-weight:600;font-family:inherit;text-align:left;cursor:pointer}
+  /* ===== Боковая выезжающая панель (drawer) — TASK_017 Premium Navigation Drawer ===== */
+  .overlay.drawer-ov{align-items:stretch;justify-content:flex-start;
+    background:rgba(20,22,34,.30);-webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%)}
+  /* Главный экран позади drawer — лёгкое затемнение/blur/уменьшение масштаба, включается через body.drawer-open (см. openDrawer/closeDrawer) */
+  .app,.nav{transition:filter .28s cubic-bezier(.22,.61,.36,1),transform .28s cubic-bezier(.22,.61,.36,1)}
+  body.drawer-open .app,body.drawer-open .nav{filter:blur(6px) brightness(.92);transform:scale(.98)}
+  .drawer{background:var(--home-bg);width:86%;max-width:360px;height:100%;display:flex;flex-direction:column;
+    border-radius:0 28px 28px 0;overflow:hidden;
+    box-shadow:0 20px 60px rgba(20,25,55,.30);animation:drawerSlide .3s cubic-bezier(.22,.61,.36,1)}
+  @keyframes drawerSlide{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+  .drawer-scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}
+  .drawer-head{background:linear-gradient(135deg,#a79cf7 0%,#8fb0f6 55%,#8fdde3 100%);color:#fff;
+    margin:max(14px,env(safe-area-inset-top)) 14px 4px;padding:18px;border-radius:24px;border:none;width:auto;
+    display:flex;align-items:center;gap:14px;cursor:pointer;font-family:inherit;text-align:left;
+    box-shadow:0 12px 28px rgba(110,120,220,.28),inset 0 1px 0 rgba(255,255,255,.5);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);backdrop-filter:blur(20px) saturate(160%);
+    animation:drawerFadeIn .32s .06s cubic-bezier(.22,.61,.36,1) both}
+  .drawer-head .avatar{width:52px;height:52px;font-size:20px;border:2px solid rgba(255,255,255,.6);flex-shrink:0}
+  .dh-info{flex:1;min-width:0}
+  .drawer-head .dh-name{font-size:18px;font-weight:700;line-height:1.2;letter-spacing:-.2px}
+  .drawer-head .dh-sub{font-size:13px;font-weight:500;opacity:.85;margin-top:2px}
+  .dh-chev{width:9px;height:15px;stroke:rgba(255,255,255,.9);stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  @keyframes drawerFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .drawer-group{margin:14px 14px 0;animation:drawerCardIn .3s cubic-bezier(.22,.61,.36,1) both;
+    animation-delay:calc(.10s + var(--i,0) * .05s)}
+  @keyframes drawerCardIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .drawer-group-title{font-size:12px;font-weight:700;color:var(--muted2);text-transform:uppercase;
+    letter-spacing:.05em;padding:0 12px 6px}
+  .drawer-card{background:var(--card);border-radius:18px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(20,25,55,.04),0 8px 22px rgba(20,25,55,.05)}
+  .drawer-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:none;background:none;
+    color:var(--text);font-size:17px;font-weight:600;font-family:inherit;text-align:left;cursor:pointer;letter-spacing:-.1px}
   .drawer-row:active{background:var(--card2)}
-  .drawer-row .dr-ic{font-size:20px;width:26px;text-align:center;flex-shrink:0}
-  .drawer-row .prof-badge{margin-left:auto}
-  .drawer-sep{height:1px;background:var(--line);margin:8px 22px}
-  .drawer-cap{margin:8px 16px 18px;padding:16px 16px 0;border-radius:18px;background:linear-gradient(160deg,#1b2433,#16203a);position:relative;overflow:hidden;color:#fff}
+  .dr-ic{width:29px;height:29px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;background:var(--ic,var(--accent))}
+  .dr-ic svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .dr-lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dr-chev{width:7px;height:12px;stroke:var(--muted2);stroke-width:2.2;fill:none;stroke-linecap:round;
+    stroke-linejoin:round;flex-shrink:0;opacity:.7}
+  .drawer-sep{height:.5px;background:rgba(0,0,0,.06);margin-left:57px}
+  [data-theme="dark"] .drawer-sep{background:rgba(255,255,255,.08)}
+  .dr-badge{margin-left:auto;background:var(--expense);color:#fff;font-size:12px;font-weight:700;
+    min-width:20px;height:20px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+    padding:0 5px;flex-shrink:0;box-shadow:0 2px 6px rgba(239,68,68,.4)}
+  .drawer-cap{margin:8px 16px 18px;padding:16px 16px 0;border-radius:22px;background:linear-gradient(160deg,#1b2433,#16203a);position:relative;overflow:hidden;color:#fff;
+    box-shadow:0 10px 26px rgba(10,14,30,.25)}
   .drawer-cap .dc-l{font-size:13px;color:rgba(255,255,255,.7);font-weight:600}
   .drawer-cap .dc-v{font-size:27px;font-weight:800;letter-spacing:-.5px;margin-top:4px}
   .drawer-cap .dc-chg{font-size:13.5px;font-weight:700;color:#22c55e;margin-top:4px}
   .drawer-cap .dc-chg.neg{color:#f87171}
   .drawer-cap .dc-spark{display:block;width:100%;height:78px;margin-top:6px}
-  /* Release Information — низ drawer, прижат к нижнему краю (margin-top:auto в flex-колонке) */
-  .drawer-release{margin-top:auto;text-align:center;padding:26px 20px calc(22px + env(safe-area-inset-bottom));
-    color:var(--text);background:none;border:none;width:100%;font-family:inherit;-webkit-user-select:none;user-select:none}
-  .drawer-release .rel-name{font-size:15.5px;font-weight:600;letter-spacing:-.2px}
-  .drawer-release .rel-ver{font-size:12.5px;color:var(--muted);margin-top:16px}
-  .drawer-release .rel-date{font-size:11.5px;color:var(--muted2);margin-top:3px}
-  .drawer-release.tappable{cursor:pointer;transition:opacity .15s}
-  .drawer-release.tappable:active{opacity:.55}
+  /* Footer — компактный, прижат к низу (margin-top:auto в flex-колонке .drawer-scroll) */
+  .drawer-footer{margin-top:auto;text-align:center;padding:14px 20px calc(16px + env(safe-area-inset-bottom));
+    color:var(--muted2);background:none;border:none;width:100%;font-family:inherit;-webkit-user-select:none;user-select:none}
+  .drawer-footer .rel-name{font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:-.1px}
+  .drawer-footer .rel-ver{font-size:11.5px;margin-top:2px}
+  .drawer-footer.tappable{cursor:pointer;transition:opacity .15s}
+  .drawer-footer.tappable:active{opacity:.55}
   .sheet{background:var(--bg);width:100%;max-width:560px;border-radius:26px 26px 0 0;
     padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));box-shadow:var(--shadow);
     animation:up .25s ease;max-height:96vh;overflow-y:auto}
@@ -1985,38 +2012,111 @@
   </div>
 </div>
 
-<!-- Боковая панель (drawer) — выезжает по гамбургеру -->
+<!-- Боковая панель (drawer) — выезжает по гамбургеру (TASK_017 Premium Navigation Drawer) -->
 <div class="overlay drawer-ov" id="drawerOverlay">
   <div class="drawer">
-    <div class="drawer-head" id="drawerHead">
-      <div class="avatar lg" id="drawerAvatar"></div>
-      <div>
-        <div class="dh-name" id="drawerName">Профиль</div>
-        <div class="dh-sub">Нажмите, чтобы изменить</div>
+    <div class="drawer-scroll">
+      <button class="drawer-head" id="drawerHead">
+        <div class="avatar lg" id="drawerAvatar"></div>
+        <div class="dh-info">
+          <div class="dh-name" id="drawerName">Профиль</div>
+          <div class="dh-sub">Личный профиль</div>
+        </div>
+        <svg class="dh-chev" viewBox="0 0 8 14" aria-hidden="true"><path d="M1 1l6 6-6 6"/></svg>
+      </button>
+
+      <div class="drawer-group" style="--i:0">
+        <div class="drawer-group-title">Планирование</div>
+        <div class="drawer-card">
+          <button class="drawer-row" id="drCats">
+            <span class="dr-ic" style="--ic:#3b82f6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h3.6l1.8 2H18a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Z"/></svg></span>
+            <span class="dr-lbl">Категории</span>
+            <svg class="dr-chev" viewBox="0 0 7 12" aria-hidden="true"><path d="M1 1l5 5-5 5"/></svg>
+          </button>
+          <div class="drawer-sep"></div>
+          <button class="drawer-row" id="drGoals">
+            <span class="dr-ic" style="--ic:#34c759"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.2"/></svg></span>
+            <span class="dr-lbl">Цели</span>
+            <svg class="dr-chev" viewBox="0 0 7 12" aria-hidden="true"><path d="M1 1l5 5-5 5"/></svg>
+          </button>
+          <div class="drawer-sep"></div>
+          <button class="drawer-row" id="drCalendar">
+            <span class="dr-ic" style="--ic:#ff3b30"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M8 3v4M16 3v4"/></svg></span>
+            <span class="dr-lbl">Календарь</span>
+            <svg class="dr-chev" viewBox="0 0 7 12" aria-hidden="true"><path d="M1 1l5 5-5 5"/></svg>
+          </button>
+          <div class="drawer-sep"></div>
+          <button class="drawer-row" id="drRecur">
+            <span class="dr-ic" style="--ic:#af52de"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8a6 6 0 0 1 10-4.2M20 8V4m0 4h-4"/><path d="M20 16a6 6 0 0 1-10 4.2M4 16v4m0-4h4"/></svg></span>
+            <span class="dr-lbl">Регулярные платежи</span>
+            <svg class="dr-chev" viewBox="0 0 7 12" aria-hidden="true"><path d="M1 1l5 5-5 5"/></svg>
+          </button>
+        </div>
       </div>
+
+      <div class="drawer-group" style="--i:1">
+        <div class="drawer-group-title">Аналитика</div>
+        <div class="drawer-card">
+          <button class="drawer-row" id="drHealth">
+            <span class="dr-ic" style="--ic:#ff2d55"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 5c-2.5 4.6-9.5 9-9.5 9Z"/></svg></span>
+            <span class="dr-lbl">Финансовое здоровье</span>
+            <svg class="dr-chev" viewBox="0 0 7 12" aria-hidden="true"><path d="M1 1l5 5-5 5"/></svg>
+          </button>
+          <div class="drawer-sep"></div>
+          <button class="drawer-row" id="drStats">
+            <span class="dr-ic" style="--ic:#5856d6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V11"/><path d="M12 19V5"/><path d="M19 19v-6"/></svg></span>
+            <span class="dr-lbl">Статистика</span>
+            <svg class="dr-chev" viewBox="0 0 7 12" aria-hidden="true"><path d="M1 1l5 5-5 5"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="drawer-group" style="--i:2">
+        <div class="drawer-group-title">Приложение</div>
+        <div class="drawer-card">
+          <button class="drawer-row" id="drNotif">
+            <span class="dr-ic" style="--ic:#ff9500"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 3.4 1 5.2 1.6 6.2a1 1 0 0 1-.9 1.5H5.3a1 1 0 0 1-.9-1.5C5 13.2 6 11.4 6 8Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></span>
+            <span class="dr-lbl">Уведомления</span>
+            <span class="dr-badge" id="drNotifBadge"></span>
+          </button>
+          <div class="drawer-sep"></div>
+          <button class="drawer-row" id="drSecurity">
+            <span class="dr-ic" style="--ic:#30b0c7"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 5-3 7.5-7 9-4-1.5-7-4-7-9V6l7-3Z"/></svg></span>
+            <span class="dr-lbl">Безопасность</span>
+            <svg class="dr-chev" viewBox="0 0 7 12" aria-hidden="true"><path d="M1 1l5 5-5 5"/></svg>
+          </button>
+          <div class="drawer-sep"></div>
+          <button class="drawer-row" id="drTheme">
+            <span class="dr-ic" id="drThemeIc" style="--ic:#5ac8fa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 0 3.4 15.3c-1.2-.2-2-1.1-2-2.2 0-1.2.9-2.1 2.1-2.2h1A3.6 3.6 0 0 0 20 11.5 8 8 0 0 0 12 4Z"/><circle cx="9" cy="10" r="1" fill="#fff" stroke="none"/><circle cx="13" cy="8.2" r="1" fill="#fff" stroke="none"/><circle cx="15.6" cy="12" r="1" fill="#fff" stroke="none"/></svg></span>
+            <span class="dr-lbl" id="drThemeLbl">Тёмная тема</span>
+          </button>
+          <div class="drawer-sep"></div>
+          <button class="drawer-row" id="drExport">
+            <span class="dr-ic" style="--ic:#00c7be"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg></span>
+            <span class="dr-lbl">Экспорт и копии</span>
+            <svg class="dr-chev" viewBox="0 0 7 12" aria-hidden="true"><path d="M1 1l5 5-5 5"/></svg>
+          </button>
+          <div class="drawer-sep"></div>
+          <button class="drawer-row" id="drMore">
+            <span class="dr-ic" style="--ic:#8e8e93"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.4 7.4 0 0 0 0-3l2-1.4-2-3.4-2.3.8a7.6 7.6 0 0 0-2.6-1.5L14 2.6h-4l-.5 2.4a7.6 7.6 0 0 0-2.6 1.5l-2.3-.8-2 3.4 2 1.4a7.4 7.4 0 0 0 0 3l-2 1.4 2 3.4 2.3-.8a7.6 7.6 0 0 0 2.6 1.5l.5 2.4h4l.5-2.4a7.6 7.6 0 0 0 2.6-1.5l2.3.8 2-3.4-2-1.4Z"/></svg></span>
+            <span class="dr-lbl">Все настройки</span>
+            <svg class="dr-chev" viewBox="0 0 7 12" aria-hidden="true"><path d="M1 1l5 5-5 5"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="drawer-group" style="--i:3">
+        <div class="drawer-cap" id="drawerCap">
+          <div class="dc-l">Общий капитал</div>
+          <div class="dc-v" id="dcVal">€0</div>
+          <div class="dc-chg" id="dcChg"></div>
+          <svg class="dc-spark" id="dcSpark" viewBox="0 0 300 90" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+
+      <!-- Release Information (ReleaseInfo) — наполняется из AF.AppInfo в renderReleaseInfo() -->
+      <div class="drawer-footer" id="drawerRelease"></div>
     </div>
-    <div class="drawer-list">
-      <button class="drawer-row" id="drNotif"><span class="dr-ic">🔔</span>Уведомления<span class="prof-badge" id="drNotifBadge"></span></button>
-      <button class="drawer-row" id="drCats"><span class="dr-ic">🗂️</span>Категории</button>
-      <button class="drawer-row" id="drGoals"><span class="dr-ic">🎯</span>Цели</button>
-      <button class="drawer-row" id="drCalendar"><span class="dr-ic">📅</span>Календарь</button>
-      <button class="drawer-row" id="drRecur"><span class="dr-ic">🔁</span>Регулярные платежи</button>
-      <button class="drawer-row" id="drHealth"><span class="dr-ic">❤️</span>Финансовое здоровье</button>
-      <button class="drawer-row" id="drStats"><span class="dr-ic">📊</span>Статистика</button>
-      <div class="drawer-sep"></div>
-      <button class="drawer-row" id="drSecurity"><span class="dr-ic">🔐</span>Безопасность</button>
-      <button class="drawer-row" id="drTheme"><span class="dr-ic" id="drThemeIc">🌙</span><span id="drThemeLbl">Тёмная тема</span></button>
-      <button class="drawer-row" id="drExport"><span class="dr-ic">📤</span>Экспорт и копии</button>
-      <button class="drawer-row" id="drMore"><span class="dr-ic">⚙️</span>Все настройки</button>
-    </div>
-    <div class="drawer-cap" id="drawerCap">
-      <div class="dc-l">Общий капитал</div>
-      <div class="dc-v" id="dcVal">€0</div>
-      <div class="dc-chg" id="dcChg"></div>
-      <svg class="dc-spark" id="dcSpark" viewBox="0 0 300 90" preserveAspectRatio="none"></svg>
-    </div>
-    <!-- Release Information (ReleaseInfo) — наполняется из AF.AppInfo в renderReleaseInfo() -->
-    <div class="drawer-release" id="drawerRelease"></div>
   </div>
 </div>
 
@@ -2477,10 +2577,11 @@ function openProfile(){
 function openDrawer(){
   $('#drawerAvatar').style.cssText=avatarStyle();$('#drawerAvatar').textContent=avatarInner();
   $('#drawerName').textContent=state.profileName||'Профиль';
-  const lbl=themeLabel();$('#drThemeIc').textContent=lbl.split(' ')[0];$('#drThemeLbl').textContent=lbl.replace(/^\S+\s/,'');
+  $('#drThemeLbl').textContent=themeLabel().replace(/^\S+\s/,'');
   const n=notifications().length,b=$('#drNotifBadge');
-  if(n){b.textContent=n>9?'9+':n;b.style.display='inline-block';}else b.style.display='none';
+  if(n){b.textContent=n>9?'9+':n;b.style.display='flex';}else b.style.display='none';
   renderDrawerCap();
+  document.body.classList.add('drawer-open');
   $('#drawerOverlay').classList.add('show');
 }
 function renderDrawerCap(){
@@ -2506,13 +2607,12 @@ function renderDrawerCap(){
     +'<path d="'+area+'" fill="url(#dcGrad)"/>'
     +'<path d="'+line+'" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
 }
-function closeDrawer(){$('#drawerOverlay').classList.remove('show');}
+function closeDrawer(){$('#drawerOverlay').classList.remove('show');document.body.classList.remove('drawer-open');}
 /* ReleaseInfo — блок версии внизу drawer. Источник истины: AF.AppInfo (единственное место правок). */
 function renderReleaseInfo(){
   const a=AF.AppInfo,el=$('#drawerRelease');if(!el)return;
   el.innerHTML=`<div class="rel-name">${a.name}</div>`
-    +`<div class="rel-ver">Version ${a.version}</div>`
-    +`<div class="rel-date">Released ${a.releaseDate}</div>`;
+    +`<div class="rel-ver">Version ${a.version}</div>`;
   // Future-proof: появятся заметки релиза → блок станет тапабельным «Что нового» без правок вёрстки.
   if(a.releaseNotes){ el.classList.add('tappable'); el.onclick=()=>openWhatsNew&&openWhatsNew(); }
 }
@@ -5221,7 +5321,7 @@ $('#drStats').onclick=drGo(openStats);
 $('#drSecurity').onclick=drGo(openSecurity);
 $('#drExport').onclick=drGo(openExport);
 $('#drMore').onclick=()=>{closeDrawer();showScreen('scrMore');};
-$('#drTheme').onclick=()=>{toggleTheme();const lbl=themeLabel();$('#drThemeIc').textContent=lbl.split(' ')[0];$('#drThemeLbl').textContent=lbl.replace(/^\S+\s/,'');};
+$('#drTheme').onclick=()=>{toggleTheme();$('#drThemeLbl').textContent=themeLabel().replace(/^\S+\s/,'');};
 $('#capEye2').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();render();updateEye();updateFcEye();};
 // Финздоровье
 $('#profHealth').onclick=openHealth;
@@ -5285,7 +5385,7 @@ $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();})
   sa.addEventListener('scroll',sync,{passive:true});
   sync();
 })();
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay','#recurOverlay','#ratesOverlay','#goalContribOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay','#recurOverlay','#ratesOverlay','#goalContribOverlay'].forEach(s=>$(s).classList.remove('show'));document.body.classList.remove('drawer-open');}});
 
 /* ============ Statistics (Screen 14) ============ */
 let statsPeriod='year'; // 'month'|'year'|'all'

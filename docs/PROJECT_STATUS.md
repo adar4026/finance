@@ -1,6 +1,6 @@
 # PROJECT_STATUS — A-Lex Finance
 
-**Обновлено:** 2026-07-27
+**Обновлено:** 2026-07-27 (`TASK_017`)
 
 ## Состояние приложения
 
@@ -16,10 +16,12 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION`](tasks/TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION.md)
-- **Статус:** `DONE` (534 passed, 0 failed по всем 7 файлам тестов;
-  проверено в браузере — светлая/тёмная тема, мобильный viewport)
-- Ранее завершённые задачи: [`TASK_015_ADVANCED_TRANSACTION_METADATA`](tasks/TASK_015_ADVANCED_TRANSACTION_METADATA.md),
+- **Задача:** [`TASK_017_PREMIUM_NAVIGATION_DRAWER`](tasks/TASK_017_PREMIUM_NAVIGATION_DRAWER.md)
+- **Статус:** `DONE` (534 passed, 0 failed по всем 7 файлам тестов —
+  только визуальная переработка, логика не затронута; проверено в
+  браузере — мобильный/desktop viewport, светлая/тёмная тема)
+- Ранее завершённые задачи: [`TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION`](tasks/TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION.md),
+  [`TASK_015_ADVANCED_TRANSACTION_METADATA`](tasks/TASK_015_ADVANCED_TRANSACTION_METADATA.md),
   [`TASK_014_TX_PAGE_PREMIUM_REDESIGN`](tasks/TASK_014_TX_PAGE_PREMIUM_REDESIGN.md),
   [`TASK_013_FULLSCREEN_ADD_TRANSACTION`](tasks/TASK_013_FULLSCREEN_ADD_TRANSACTION.md),
   [`TASK_012_APP_ICON_PRODUCTION_ASSET`](tasks/TASK_012_APP_ICON_PRODUCTION_ASSET.md),
@@ -38,11 +40,43 @@
 
 ## Активная задача
 
-Нет. `TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION` — статус `DONE`,
-реализация выполнена, проверена в браузере и закоммичена. Ручная проверка
-`TASK_015` на реальном iPhone остаётся открытым пунктом (рекомендуется
-после очередного деплоя). `TASK_002A` (полноценный визуально заметный
-Liquid Glass) остаётся отложенной.
+Нет. `TASK_017_PREMIUM_NAVIGATION_DRAWER` — статус `DONE`, реализация
+выполнена и проверена в браузере (мобильный/desktop viewport, светлая/
+тёмная тема). Реальная проверка на iPhone Safari/PWA не выполнена —
+инструмент iOS-симулятора вернул ошибку (`stopped retrying after
+repeated crashes`), рекомендуется пользователю после деплоя. Ручная
+проверка `TASK_015` на реальном iPhone также остаётся открытым пунктом.
+`TASK_002A` (полноценный визуально заметный Liquid Glass) остаётся
+отложенной.
+
+## TASK_017 — Premium Navigation Drawer (Apple Wallet / Liquid Glass) (DONE)
+
+Полная визуальная переработка бокового меню (`#drawerOverlay`/`.drawer`)
+по референсу пользователя «Концепция 2 — Apple Wallet / Liquid Glass»:
+только CSS/разметка/JS-рендеринг этого блока, без изменений архитектуры,
+навигации и бизнес-логики. Header переоформлен в карточку-«кошелёк»
+(сиренево-голубой градиент, скругление 24px, glass, аватар/имя/подпись
+«Личный профиль»/chevron — весь header одна кнопка, ведёт в профиль как
+и раньше). Пункты меню сгруппированы в три белые карточки
+(«Планирование»/«Аналитика»/«Приложение») с uppercase-заголовками; emoji
+заменены на 11 SVG-иконок в едином stroke-based стиле (тот же приём, что
+иконки нижней навигации), у каждой свой цвет-чип. Badge уведомлений
+переведён на отдельный класс `.dr-badge` (общий `.prof-badge` экрана
+профиля не тронут). Разделители — тонкие `rgba(0,0,0,.06)`. Во время
+открытия/закрытия главный экран и нижняя навигация позади drawer
+затемняются, размываются (`blur(6px)`) и слегка уменьшаются в масштабе
+(`scale(.98)`) через `body.drawer-open` — управляется из
+`openDrawer()`/`closeDrawer()` и Escape-обработчика. Анимации: slide
+drawer, fade-in header, последовательное появление карточек
+(`animation-delay` по CSS-переменной `--i`). Footer — компактный (имя
+приложения + версия), строка «Released …» убрана. Карточка общего
+капитала (баланс + спарклайн) сохранена как существующая функция,
+визуально подстроена под новый стиль. Тема (`toggleTheme()`) и вся
+навигация между экранами не изменены. Версия кэша `sw.js` поднята
+`finance-v158` → `finance-v159`. Тесты: 534 passed, 0 failed (без
+изменений — сервисы/логика не затронуты). Реальная проверка на iPhone не
+выполнена — инструмент симулятора недоступен в этой сессии. См.
+[`TASK_017_PREMIUM_NAVIGATION_DRAWER`](tasks/TASK_017_PREMIUM_NAVIGATION_DRAWER.md).
 
 ## TASK_016 — Demo Data and Search Normalization Fixes (DONE)
 
