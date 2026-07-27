@@ -1206,8 +1206,6 @@
   .crow-chg.bad{color:var(--expense)}
   .crow-chg.good{color:var(--income)}
   .crow-chg.flat{color:var(--muted2)}
-  .ana-cat-seg{margin:0 0 14px}
-  .ana-cat-seg button.on{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
   .crow-r{text-align:right;flex-shrink:0;padding-left:8px}
   .crow-amt{font-size:16px;font-weight:800;white-space:nowrap;letter-spacing:-.2px}
   .crow-prev{font-size:13px;color:var(--muted2);margin-top:3px;white-space:nowrap}
@@ -1281,13 +1279,6 @@
   .ci2-l{font-size:11.5px;color:var(--muted);font-weight:600}
   .ci2-v{font-size:14.5px;font-weight:800;color:var(--text);letter-spacing:-.3px;margin-top:2px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ci2-s{font-size:9.5px;color:var(--muted2);margin-top:2px;white-space:nowrap}
-  /* Analytics «Результат» — узкая компактная карточка */
-  .cap-ana{max-width:440px;margin-left:auto;margin-right:auto}
-  .cap-ana .cap-top{padding:13px 16px 6px}
-  .cap-ana .cap-val{font-size:24px}
-  .cap-ana .cib2{flex-direction:row;align-items:center;justify-content:center;gap:9px;text-align:left}
-  .cap-ana .ci2-ic{margin-bottom:0}
-  .cap-ana .ci2-col{display:flex;flex-direction:column;min-width:0}
 
   /* ===== Главная финансовая карточка (TASK_003) ===== */
   #scrRecords{background:var(--home-bg)}
@@ -1298,6 +1289,13 @@
      фон покрывает и padding-bottom, т.е. и зону под навигацией). На остальных экранах
      (без переопределения фона) правило не действует — там как и раньше просвечивает --bg. */
   .scroll-area:has(>#scrRecords.active){background:var(--home-bg)}
+  /* TASK_019: тот же приём для «Аналитики» — фон экрана и зона под навигацией
+     приведены к единому светло-серому фону Главной; карточки .panel внутри
+     #scrCharts получают тень/радиус .fincard (scoped-override, глобальный
+     .panel на других экранах — бюджеты/счета/health score и т.д. — не тронут). */
+  #scrCharts{background:var(--home-bg)}
+  .scroll-area:has(>#scrCharts.active){background:var(--home-bg)}
+  #scrCharts .panel{border-radius:22px;box-shadow:var(--fincard-shadow)}
   /* Компактный переключатель месяца — над карточкой */
   .month-switch{display:flex;align-items:center;justify-content:center;gap:2px;margin-bottom:10px}
   /* TASK_005: только SVG-шеврон, без круга/фона/обводки — системный синий (активна) /
@@ -1502,22 +1500,30 @@
   </div>
 
   <!-- Screen: Analytics (Product Book Screen 2) -->
+  <!-- TASK_019: композиция экрана приведена к Apple-стилю Главной — единый
+       светло-серый фон (#scrCharts{background:var(--home-bg)}), карточки
+       .panel с тенью/радиусом .fincard (scoped #scrCharts .panel), верхняя
+       фиолетовая карточка результата (.capital.cap-ana) удалена из рендера
+       полностью. Общие переключатель периода (#periods) и строка навигации
+       (#navrow) — в #subhead выше, не дублируются здесь (TASK_002/003A). -->
   <div class="screen" id="scrCharts">
-    <div class="capital cap-ana">
-      <div class="cap-top">
-        <div class="cap-head">
-          <span class="cap-l"><span id="anaPeriodLbl">Июнь</span></span>
-          <span class="ah-chg" id="anaNetChg"></span>
+    <div class="panel">
+      <div class="periods" id="anaCatSeg" style="margin:0 0 14px">
+        <div class="periods-indicator" id="anaCatSegInd" aria-hidden="true"></div>
+        <button class="on" data-t="expense">Расходы</button>
+        <button data-t="income">Доходы</button>
+      </div>
+      <div class="cat-donut-top">
+        <div class="cat-donut"><canvas id="pieChart"></canvas>
+          <div class="donut-center"><div class="dc-l" id="pieTotalLbl">Расходы</div><div class="dc-v" id="pieTotal">€0</div></div>
         </div>
-        <div class="cap-val" id="anaNet">+€0</div>
       </div>
-      <svg class="cap-wave" viewBox="0 0 1200 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,22 C260,42 460,6 680,18 C900,30 1050,10 1200,22 L1200,40 L0,40 Z" fill="#fff"/></svg>
-      <div class="cap-bottom">
-        <div class="cib2"><span class="ci2-ic inc">↗</span><div class="ci2-col"><div class="ci2-l">Доходы</div><div class="ci2-v" id="anaInc">+€0</div></div></div>
-        <div class="cib2"><span class="ci2-ic exp">↘</span><div class="ci2-col"><div class="ci2-l">Расходы</div><div class="ci2-v" id="anaExp">−€0</div></div></div>
-      </div>
+      <div class="catlist2" id="catLegend"></div>
     </div>
-
+    <div class="panel">
+      <h3>Сравнение с прошлым периодом</h3>
+      <div id="anaCompare"></div>
+    </div>
     <div class="panel">
       <h3>Доходы и расходы <span class="hint" id="anaBarHint">6 периодов</span></h3>
       <div class="chart-box tall"><canvas id="barChart"></canvas></div>
@@ -1533,22 +1539,6 @@
         <button data-r="all">Всё</button>
       </div>
       <div class="chart-box cap"><canvas id="capChart"></canvas></div>
-    </div>
-    <div class="panel">
-      <div class="seg-ie ana-cat-seg" id="anaCatSeg">
-        <button class="on" data-t="expense">Расходы</button>
-        <button data-t="income">Доходы</button>
-      </div>
-      <div class="cat-donut-top">
-        <div class="cat-donut"><canvas id="pieChart"></canvas>
-          <div class="donut-center"><div class="dc-l" id="pieTotalLbl">Расходы</div><div class="dc-v" id="pieTotal">€0</div></div>
-        </div>
-      </div>
-      <div class="catlist2" id="catLegend"></div>
-    </div>
-    <div class="panel">
-      <h3>Сравнение с прошлым периодом</h3>
-      <div id="anaCompare"></div>
     </div>
   </div>
 
@@ -2916,22 +2906,12 @@ function anaHeroLabel(p,r){
 }
 const inAnaRange=(t,r)=>{const d=new Date(t.date);return d>=r.from&&d<=r.to;};
 function renderAnalytics(){
-  const A=AF.Services.Analytics;
   const range=periodRange(), prev=rangeBack(1);   // глобальный период + предыдущий
   const cur=state.tx.filter(t=>inAnaRange(t,range)), pre=state.tx.filter(t=>inAnaRange(t,prev));
   anaCur=cur; anaPre=pre;
-  const inc=A.income(cur,state),exp=A.expense(cur,state),net=inc-exp;
-  const preNet=A.income(pre,state)-A.expense(pre,state);
-  $('#anaInc').textContent='+'+num(inc);
-  $('#anaExp').textContent='−'+num(exp);
-  $('#anaNet').textContent=(net>=0?'+':'−')+num(Math.abs(net));
-  $('#anaPeriodLbl').textContent=(pl=>pl.charAt(0).toUpperCase()+pl.slice(1))(periodLabel());
-  // бейдж изменения результата к прошлому периоду
-  const chg=$('#anaNetChg');
-  if(Math.abs(preNet)>0.5){const d=Math.round((net-preNet)/Math.abs(preNet)*100);chg.textContent=(d>=0?'▲ ':'▼ ')+Math.abs(d)+'% к пред.';chg.style.display='';}
-  else chg.style.display='none';
   $('#anaBarHint').textContent='6 '+({day:'дней',week:'недель',month:'мес.',year:'лет',custom:'периодов'}[period]||'мес.');
   renderAnaBar();renderAnaPie(cur,pre);renderAnaCompare(cur,pre);renderCapChart();
+  moveAnaCatSegIndicator();
 }
 function renderAnaBar(){
   const A=AF.Services.Analytics,labels=[],incD=[],expD=[];
@@ -3985,9 +3965,9 @@ function moveNavIndicator(instant){
 let navIndicatorResizeTimer=null;
 window.addEventListener('resize',()=>{
   clearTimeout(navIndicatorResizeTimer);
-  navIndicatorResizeTimer=setTimeout(()=>{moveNavIndicator(true);movePeriodsIndicator(true);moveTxSegIndicator(true);moveCatMgrSegIndicator(true);fitAmount();},80);
+  navIndicatorResizeTimer=setTimeout(()=>{moveNavIndicator(true);movePeriodsIndicator(true);moveTxSegIndicator(true);moveCatMgrSegIndicator(true);moveAnaCatSegIndicator(true);fitAmount();},80);
 });
-window.addEventListener('orientationchange',()=>setTimeout(()=>{moveNavIndicator(true);movePeriodsIndicator(true);moveCatMgrSegIndicator(true);},120));
+window.addEventListener('orientationchange',()=>setTimeout(()=>{moveNavIndicator(true);movePeriodsIndicator(true);moveCatMgrSegIndicator(true);moveAnaCatSegIndicator(true);},120));
 // ResizeObserver — основной надёжный триггер: реагирует на любое изменение фактических
 // размеров самой панели (ресайз окна, поворот, системный масштаб), не полагаясь только
 // на событие window resize
@@ -3998,6 +3978,8 @@ if('ResizeObserver' in window){
   if(periodsEl)new ResizeObserver(()=>movePeriodsIndicator(true)).observe(periodsEl);
   const catMgrSegEl=$('#catMgrSeg');
   if(catMgrSegEl)new ResizeObserver(()=>moveCatMgrSegIndicator(true)).observe(catMgrSegEl);
+  const anaCatSegEl=$('#anaCatSeg');
+  if(anaCatSegEl)new ResizeObserver(()=>moveAnaCatSegIndicator(true)).observe(anaCatSegEl);
 }
 // ============ Стеклянный индикатор переключателя День/Неделя/Месяц/Год/Период (TASK_003A) ============
 // Тот же приём, что и moveNavIndicator() (TASK_002): позиция/ширина по фактической geometry
@@ -4193,6 +4175,33 @@ function moveTxSegIndicator(instant){
 // индикатора (#catMgrSegInd), т.к. #catMgrSeg — отдельный, не общий с #periods элемент.
 function moveCatMgrSegIndicator(instant){
   const ind=$('#catMgrSegInd'), wrap=$('#catMgrSeg');
+  if(!ind||!wrap)return;
+  const activeBtn=wrap.querySelector('button.on');
+  if(!activeBtn||wrap.offsetParent===null){ind.classList.remove('ready');return;}
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wrapRect=wrap.getBoundingClientRect(), btnRect=activeBtn.getBoundingClientRect();
+  const toX=btnRect.left-wrapRect.left, toW=btnRect.width;
+  const wasReady=ind.classList.contains('ready');
+  if(instant||reduced||!wasReady){
+    ind.style.transition='none';
+    ind.style.width=toW+'px';
+    ind.style.transform=`translateX(${toX}px)`;
+    ind.classList.add('ready');
+    void ind.offsetWidth;
+    ind.style.transition='';
+    return;
+  }
+  ind.style.width=toW+'px';
+  ind.style.transform=`translateX(${toX}px)`;
+  ind.classList.add('ready');
+}
+
+// TASK_019: тот же приём для переключателя Расходы/Доходы блока «Категории»
+// на экране «Аналитика» — переиспользует .periods/.periods-indicator (стиль/
+// токены Главной и #catMgrSeg), свой узел индикатора (#anaCatSegInd), т.к.
+// #anaCatSeg — отдельный, не общий с #periods элемент.
+function moveAnaCatSegIndicator(instant){
+  const ind=$('#anaCatSegInd'), wrap=$('#anaCatSeg');
   if(!ind||!wrap)return;
   const activeBtn=wrap.querySelector('button.on');
   if(!activeBtn||wrap.offsetParent===null){ind.classList.remove('ready');return;}
@@ -4908,7 +4917,7 @@ $$('.nav button[data-s]').forEach(b=>b.onclick=()=>showScreen(b.dataset.s));
 // Аналитика: селектор периода
 // Вкладки Расходы/Доходы в блоке «Категории» — перерисовывают только кольцо+список
 $$('#anaCatSeg button').forEach(b=>b.onclick=()=>{anaCatType=b.dataset.t;
-  $$('#anaCatSeg button').forEach(x=>x.classList.toggle('on',x===b));renderAnaPie(anaCur,anaPre);});
+  $$('#anaCatSeg button').forEach(x=>x.classList.toggle('on',x===b));moveAnaCatSegIndicator();renderAnaPie(anaCur,anaPre);});
 // Диапазоны графика «Динамика капитала»
 $$('#capRanges button').forEach(b=>b.onclick=()=>{homeRange=b.dataset.r;
   $$('#capRanges button').forEach(x=>x.classList.toggle('on',x===b));renderCapChart();});

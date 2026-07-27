@@ -1,6 +1,6 @@
 # PROJECT_STATUS — A-Lex Finance
 
-**Обновлено:** 2026-07-27 (`TASK_018`)
+**Обновлено:** 2026-07-27 (`TASK_019`)
 
 ## Состояние приложения
 
@@ -16,11 +16,14 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_018_CATEGORIES_APPLE_REDESIGN`](tasks/TASK_018_CATEGORIES_APPLE_REDESIGN.md)
-- **Статус:** `DONE` (534 passed, 0 failed по всем 7 файлам тестов;
-  проверено в браузере — фон/карточки/переключатель/drag&drop/иконка
-  ручки/тап по строке, светлая и тёмная тема, консоль без ошибок)
-- Ранее завершённые задачи: [`TASK_017A_DRAWER_REMOVE_CAPITAL_CARD`](tasks/TASK_017A_DRAWER_REMOVE_CAPITAL_CARD.md),
+- **Задача:** [`TASK_019_ANALYTICS_APPLE_REDESIGN`](tasks/TASK_019_ANALYTICS_APPLE_REDESIGN.md)
+- **Статус:** `DONE` (595 passed, 0 failed по всем 8 файлам тестов —
+  534 существующих без регрессий + 61 новый; проверено в браузере —
+  фон/карточки/переключатель Расходы-Доходы/сравнение с прошлым
+  периодом/графики, светлая и тёмная тема, мобильная ширина, консоль
+  без ошибок)
+- Ранее завершённые задачи: [`TASK_018_CATEGORIES_APPLE_REDESIGN`](tasks/TASK_018_CATEGORIES_APPLE_REDESIGN.md),
+  [`TASK_017A_DRAWER_REMOVE_CAPITAL_CARD`](tasks/TASK_017A_DRAWER_REMOVE_CAPITAL_CARD.md),
   [`TASK_017_PREMIUM_NAVIGATION_DRAWER`](tasks/TASK_017_PREMIUM_NAVIGATION_DRAWER.md),
   [`TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION`](tasks/TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION.md),
   [`TASK_015_ADVANCED_TRANSACTION_METADATA`](tasks/TASK_015_ADVANCED_TRANSACTION_METADATA.md),
@@ -42,7 +45,32 @@
 
 ## Активная задача
 
-Нет. `TASK_018_CATEGORIES_APPLE_REDESIGN` — статус `DONE`, полный
+Нет. `TASK_019_ANALYTICS_APPLE_REDESIGN` — статус `DONE`, полная
+переработка композиции экрана «Аналитика» (`#scrCharts`) под единый
+Apple-стиль Главной: светло-серый фон (`#scrCharts{background:
+var(--home-bg)}`, тот же приём, что `#scrRecords`), карточки `.panel`
+внутри экрана получили тень/радиус `.fincard` через scoped-override
+`#scrCharts .panel{...}` (глобальное правило `.panel`, используемое
+другими экранами, не тронуто). Верхняя фиолетовая карточка результата
+(`.capital.cap-ana`) удалена из рендера полностью (не скрыта через CSS).
+Переключатель Расходы/Доходы переведён с `.seg-ie` на тот же компонент
+`.periods`/`.periods-indicator`, что переключатель периода Главной и
+переключатель Категорий (новая `moveAnaCatSegIndicator()` по образцу
+`moveCatMgrSegIndicator()` из `TASK_018`). Блок «круговая диаграмма +
+категории» и блок «Сравнение с прошлым периодом» перенесены выше в DOM
+(сразу под переключателем), графики «Доходы и расходы» и «Динамика
+капитала» — ниже, в прежнем виде. Вся бизнес-логика расчётов
+(`renderAnaBar`/`renderAnaPie`/`renderAnaCompare`/`renderCapChart`/
+`rangeBack`/`catChangeBadge`) не изменена — менялась только DOM-позиция
+контейнеров и визуальный стиль карточек. Общие переключатель периода
+(`#periods`) и строка навигации периода (`#navrow`) — уже были общими
+для Главной и Аналитики (не дублировались), не потребовали изменений.
+Версия кэша `sw.js` поднята `finance-v161` → `finance-v162`. Тесты: 595
+passed, 0 failed (534 существующих без регрессий + 61 новый в новом
+`tests/analytics_screen.test.js` — юнит-тесты `AF.Services.Analytics.
+compare()` и статические проверки состава/порядка секций `index.html`).
+
+`TASK_018_CATEGORIES_APPLE_REDESIGN` — статус `DONE`, полный
 Apple-редизайн экрана «Категории» (`#catMgrOverlay`): фон, стиль карточек
 и переключатель Расходы/Доходы приведены к единому виду с Главной
 (переиспользован её же компонент `.periods`/`.periods-indicator` —
@@ -80,6 +108,62 @@ viewport не воспроизводит реальные safe-area-отступ
 `TASK_015` на реальном iPhone также остаётся открытым пунктом.
 `TASK_002A` (полноценный визуально заметный Liquid Glass) остаётся
 отложенной.
+
+## TASK_019 — Analytics Screen Apple Redesign (DONE)
+
+Полная переработка композиции экрана «Аналитика» (`#scrCharts`) под
+единый Apple-стиль Главной, с сохранением всех расчётов, реальных
+данных, выбора периодов и интерактивности. Фон экрана —
+`#scrCharts{background:var(--home-bg)}` +
+`.scroll-area:has(>#scrCharts.active){background:var(--home-bg)}` (тот
+же приём, что `#scrRecords`, `TASK_009`). Карточки `.panel` внутри
+`#scrCharts` получили тень/радиус `.fincard`
+(`border-radius:22px;box-shadow:var(--fincard-shadow)`) через
+**scoped**-override `#scrCharts .panel{...}` — глобальное правило
+`.panel`, используемое экранами «Бюджеты»/«Счета»/Health Score и др., не
+изменено. Верхняя фиолетовая карточка результата (`.capital.cap-ana`,
+содержавшая название месяца/итоговую сумму/% к прошлому периоду/блоки
+Доходы-Расходы) удалена из рендера полностью — не скрыта через CSS;
+связанный мёртвый код в `renderAnalytics()` (записи в `#anaInc`/
+`#anaExp`/`#anaNet`/`#anaPeriodLbl`/`#anaNetChg`) убран. Переключатель
+Расходы/Доходы (`#anaCatSeg`) переведён с `.seg-ie` (сплошная заливка,
+без сегодняшней анимации) на тот же компонент `.periods`/
+`.periods-indicator`, что переключатель периода Главной и переключатель
+Категорий (`TASK_018`) — новая функция `moveAnaCatSegIndicator()` по
+образцу `moveCatMgrSegIndicator()`, подключена к рендеру, клику по
+кнопкам, `resize`/`orientationchange` и `ResizeObserver`.
+
+Итоговый порядок секций внутри `#scrCharts`: переключатель
+Расходы/Доходы → круговая диаграмма + список категорий → «Сравнение с
+прошлым периодом» → «Доходы и расходы» (столбчатый график) → «Динамика
+капитала» (линейный график + диапазоны 7Д/1М/3М/6М/1Г/Всё). Блоки
+«категории» и «сравнение» перенесены выше в DOM (раньше шли последними,
+после обоих графиков). Вся бизнес-логика расчётов
+(`renderAnaBar()`/`renderAnaPie()`/`renderAnaCompare()`/
+`renderCapChart()`/`rangeBack()`/`catChangeBadge()`) не изменена —
+менялась только DOM-позиция контейнеров и визуальный стиль карточек;
+существующая безопасная защита от деления на ноль в
+`renderAnaCompare()` (`r.p?...:0`) сохранена как есть.
+`AF.Services.Analytics.compare()` (существовавшая, но не подключённая к
+UI чистая функция с такой же защитой) оставлена как есть и получила
+unit-тесты — замена ей проверенной `renderAnaCompare()` признана
+неоправданным риском вне границ задачи. Общие переключатель периода
+(`#periods`) и строка навигации периода (`#navrow`) уже были общими для
+Главной и Аналитики (не дублировались) — не потребовали изменений.
+Диапазон капитала (`#capRanges`/`homeRange`) — подтверждённая независимая
+от глобального периода архитектура, сохранена как есть. Версия кэша
+`sw.js` поднята `finance-v161` → `finance-v162`. Тесты: **595 passed, 0
+failed** (534 существующих без регрессий + 61 новый в
+`tests/analytics_screen.test.js` — юнит-тесты `compare()` для обычного
+случая/нулевого предыдущего периода/отсутствия данных, плюс статические
+regex-проверки `index.html`: отсутствие карточки, порядок секций,
+единственность обработчика клика, подключение индикатора к resize/
+orientationchange/ResizeObserver, отсутствие регресса `$$(...).map()`
+класса `TASK_018`). Проверено в браузере (демо-данные, светлая/тёмная
+тема, мобильная ширина 375px, прокрутка до последнего графика,
+перезагрузка страницы, переключение вкладок Главная↔Аналитика) —
+консоль без ошибок. См.
+[`TASK_019_ANALYTICS_APPLE_REDESIGN`](tasks/TASK_019_ANALYTICS_APPLE_REDESIGN.md).
 
 ## TASK_018 — Categories Screen Apple Redesign (DONE)
 

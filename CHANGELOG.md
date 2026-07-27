@@ -320,6 +320,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Analytics screen — Apple-style redesign** (`TASK_019`): the whole
+  composition of the Analytics screen (`#scrCharts`) was reworked to
+  match Home's visual language, while every calculation, real data
+  point, period selector and interaction stayed exactly as they were.
+  The screen background is now the same light-gray `var(--home-bg)` as
+  Home, and its cards picked up the same shadow/corner-radius as Home's
+  `.fincard` through a scoped override (`#scrCharts .panel{...}`) — the
+  global `.panel` rule other screens rely on (Budgets, Accounts, Health
+  Score) was left untouched. The large purple "result" hero card at the
+  top (month name, total, % vs. previous period, income/expense chips)
+  is gone from the render entirely, not just hidden. The Expense/Income
+  toggle was rebuilt on the same sliding "Liquid Glass" component Home's
+  period switcher and the Categories screen use
+  (`.periods`/`.periods-indicator`, new `moveAnaCatSegIndicator()`)
+  instead of its own solid-fill segmented control. The donut chart with
+  its category list, and the "Сравнение с прошлым периодом" (comparison
+  to previous period) card, both moved up in the DOM to sit right under
+  the toggle; the "Доходы и расходы" bar chart and the "Динамика
+  капитала" capital chart keep their existing calculations and their
+  order relative to each other, at the bottom. None of the rendering
+  functions that do the actual math
+  (`renderAnaBar`/`renderAnaPie`/`renderAnaCompare`/`renderCapChart`/
+  `rangeBack`/`catChangeBadge`) changed — only where their containers
+  sit in the page and how the cards are styled. The comparison card's
+  existing zero-previous-period guard was left as-is (already safe,
+  no `NaN`/`Infinity`); `AF.Services.Analytics.compare()`, a pure
+  function with the same guard that had never been wired into the UI,
+  was left untouched too and gained unit test coverage instead of
+  replacing the proven inline logic.
+
 - **Categories screen — Apple-style redesign** (`TASK_018`): the category
   manager (opened via drawer → "Категории" → "Управлять") now matches the
   Home screen's visual language end to end. The container background is
