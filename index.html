@@ -482,10 +482,10 @@
     color:var(--text);max-width:100%;
     font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
     transition:color .18s ease}
-  /* цветной только знак — цифры остаются основным цветом текста (концепция A) */
+  /* сумма целиком окрашена по типу операции — расход красным, доход зелёным */
   #overlay .disp-main .disp-sign{margin-right:2px}
-  #overlay .disp-main.exp .disp-sign{color:var(--tx-expense)}
-  #overlay .disp-main.inc .disp-sign{color:var(--tx-income)}
+  #overlay .disp-main.exp{color:var(--tx-expense)}
+  #overlay .disp-main.inc{color:var(--tx-income)}
   #overlay .disp-main.zero{color:var(--muted2)}
   #overlay .disp-main .disp-cur{font-size:.58em;font-weight:600;color:var(--muted2);
     margin-left:6px;opacity:1;letter-spacing:-1px}
