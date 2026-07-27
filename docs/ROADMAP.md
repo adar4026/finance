@@ -78,6 +78,14 @@
     сборка полностью удалена после получения данных. Исправлено сменой
     стиля статус-бара на `default`. См.
     [`docs/tasks/TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS.md`](tasks/TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS.md).
+14. **TASK_012_APP_ICON_PRODUCTION_ASSET** — `DONE`. Из предоставленного
+    пользователем референса (`IMG_2662.jpg`, 602×619) сгенерирован
+    production-качества набор иконок без изменения дизайна/композиции:
+    цвет приведён к sRGB, кадр дополнен до квадрата (без обрезки), рендер
+    в `icon-512.png`/`icon-192.png`/`apple-touch-icon.png`/
+    `favicon-32.png`. `manifest.json` правок не потребовал; версия кэша
+    `sw.js` поднята `finance-v152` → `finance-v153`. См.
+    [`docs/tasks/TASK_012_APP_ICON_PRODUCTION_ASSET.md`](tasks/TASK_012_APP_ICON_PRODUCTION_ASSET.md).
 
 ## Пояснения
 

@@ -222,6 +222,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **App icon** (`TASK_012`) regenerated in production quality from the
+  approved design reference: JPEG source color-managed (Display P3 →
+  sRGB), padded to a true square without cropping, and re-rendered at
+  512×512, 192×192, 180×180 (`apple-touch-icon`) and 32×32 (`favicon`).
+  Same composition/design as before — glossy white rounded-square card
+  with the green upward-trend glyph — only sharpness, proportions and
+  edge quality improved. `manifest.json` needed no changes (paths/sizes
+  already matched); the service-worker cache version was bumped so
+  installed PWAs pick up the new icon bytes.
 - The three-line menu button was removed from the header. The avatar is now
   the single entry point to the side drawer (which still opens the profile
   from its header row). The JSON-export icon left the header — it stays

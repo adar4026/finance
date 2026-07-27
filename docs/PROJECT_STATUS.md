@@ -16,9 +16,10 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS`](tasks/TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS.md)
+- **Задача:** [`TASK_012_APP_ICON_PRODUCTION_ASSET`](tasks/TASK_012_APP_ICON_PRODUCTION_ASSET.md)
 - **Статус:** `DONE`
-- Ранее завершённые задачи: [`TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX`](tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md),
+- Ранее завершённые задачи: [`TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS`](tasks/TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS.md),
+  [`TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX`](tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md),
   [`TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md),
   [`TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md),
   [`TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX`](tasks/TASK_007_FIXED_BODY_DVH_WHITE_LINE_FIX.md),
@@ -34,6 +35,23 @@
 
 Нет. `TASK_002A` (полноценный визуально заметный Liquid Glass) остаётся
 отложенной, следующая задача не начата.
+
+## TASK_012 — App Icon Production Asset
+
+Пользователь предоставил референс дизайна иконки — `IMG_2662.jpg`
+(602×619, JPEG, Display P3, скриншот). Из него сгенерирован
+production-качества квадратный набор PWA-иконок без изменения дизайна:
+цветовой профиль приведён к sRGB, кадр 602×619 дополнен белыми полями до
+квадрата 619×619 (без обрезки), далее рендер в `icon-512.png` (512×512),
+`icon-192.png` (192×192), `apple-touch-icon.png` (180×180) и
+`favicon-32.png` (32×32) с мягким unsharp-mask поверх Lanczos-ресайза.
+`manifest.json` правок не потребовал — пути и размеры уже совпадали.
+Версия кэша `sw.js` поднята `finance-v152` → `finance-v153`, чтобы уже
+установленные PWA получили новые байты иконок (имена файлов не менялись).
+Читаемость подтверждена визуально на 32px и на мокапе домашнего экрана
+iPhone. `IMG_2662.jpg` не изменён (проверено по SHA-256 до/после).
+`icon.svg` был удалён в рабочем дереве до начала этой задачи, нигде не
+используется кодом — оставлен как есть, вне границ задачи.
 
 ## Следующие этапы
 
