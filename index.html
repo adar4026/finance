@@ -24,6 +24,7 @@
 <script src="js/database/store.js"></script>
 <script src="js/services/currency_service.js"></script>
 <script src="js/services/account_service.js"></script>
+<script src="js/services/tx_form_service.js"></script>
 <script src="js/services/period_service.js"></script>
 <script src="js/services/finance_card_service.js"></script>
 <script src="js/services/analytics_service.js"></script>
@@ -355,6 +356,10 @@
     animation:up .25s ease;max-height:96vh;overflow-y:auto}
   @keyframes up{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
   .sheet .grab{width:40px;height:4px;border-radius:3px;background:var(--line);margin:0 auto 14px}
+  /* Полноэкранная страница добавления/редактирования операции (TASK_013) — тот же
+     паттерн, что и .detail-sheet у остальных полноэкранных экранов (allTxOverlay и т.д.),
+     но класс .sheet сохранён без изменений (на него завязаны $('.sheet') в openKeypad/closeKeypad). */
+  #overlay .sheet{height:100%;max-height:100vh;border-radius:0;animation:fade .2s}
   .modal{background:var(--bg);width:100%;max-width:560px;border-radius:26px 26px 0 0;
     padding:18px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -8px 40px rgba(0,0,0,.25);
     animation:up .25s ease;max-height:90vh;overflow-y:auto}
@@ -878,11 +883,6 @@
   .bh-fill{height:100%;border-radius:8px;transition:width .4s}
   .bh-foot{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted2)}
   .bh-empty{font-size:13.5px;color:var(--muted2);text-align:center;padding:4px 0}
-  .add-menu{max-width:480px}
-  .am-item{display:flex;align-items:center;gap:14px;width:100%;padding:15px 16px;border:1px solid var(--line);border-radius:15px;
-    background:var(--card);color:var(--text);font-size:16px;font-weight:600;cursor:pointer;margin-bottom:10px;font-family:inherit;text-align:left;min-height:60px}
-  .am-item:active{background:var(--card2)}
-  .am-ic{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
   .quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
   .qa{display:flex;flex-direction:column;align-items:center;gap:8px;border:none;background:none;cursor:pointer;padding:4px 0;font-family:inherit}
   .qa-ic{width:62px;height:62px;border-radius:19px;display:flex;align-items:center;justify-content:center;font-size:26px;transition:.12s}
@@ -1251,10 +1251,13 @@
   <button data-s="scrBudgets"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/></svg></span><span class="lb">Бюджеты</span></button>
 </div>
 
-<!-- Add / edit sheet -->
-<div class="overlay" id="overlay" style="z-index:90">
+<!-- Add / edit page (fullscreen, TASK_013) -->
+<div class="overlay" id="overlay" style="z-index:90;align-items:flex-start">
   <div class="sheet">
-    <div class="grab"></div>
+    <div class="detail-top">
+      <div class="nm" id="txSheetTitle">Новая операция</div>
+      <button class="iconbtn" id="closeSheet" aria-label="Закрыть">×</button>
+    </div>
     <div class="seg">
       <button id="segExp" class="on-exp">Расход</button>
       <button id="segInc">Доход</button>
@@ -1319,7 +1322,6 @@
     </div>
     <button class="btn-primary" id="saveBtn2">Сохранить</button>
     <button class="btn-del" id="delBtn" style="display:none">Удалить операцию</button>
-    <button class="x" id="closeSheet" style="position:absolute;top:calc(env(safe-area-inset-top) + 8px);right:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--line);border-radius:50%;font-size:24px;line-height:1;color:var(--text);cursor:pointer;z-index:40;padding:0">×</button>
   </div>
   <!-- Выезжающий циферблат (по тапу на сумму) -->
   <div class="keypad-dock" id="keypadDock">
@@ -1571,18 +1573,6 @@
     </div>
     <!-- Release Information (ReleaseInfo) — наполняется из AF.AppInfo в renderReleaseInfo() -->
     <div class="drawer-release" id="drawerRelease"></div>
-  </div>
-</div>
-
-<!-- Меню добавления (из кнопки +) -->
-<div class="overlay" id="addMenu">
-  <div class="sheet add-menu">
-    <div class="grab"></div>
-    <h2>Добавить<span class="x" id="addMenuClose">×</span></h2>
-    <button class="am-item" data-add="expense"><span class="am-ic" style="background:var(--expense-soft)">💸</span>Расход</button>
-    <button class="am-item" data-add="income"><span class="am-ic" style="background:var(--income-soft)">💰</span>Доход</button>
-    <button class="am-item" data-add="transfer"><span class="am-ic" style="background:var(--accent-soft)">🔄</span>Перевод</button>
-    <button class="am-item" data-add="receipt"><span class="am-ic" style="background:var(--info-soft)">🧾</span>Чек</button>
   </div>
 </div>
 
@@ -3515,7 +3505,8 @@ function showScreen(id){
   render();
 }
 
-/* ============ Калькулятор / лист добавления ============ */
+/* ============ Калькулятор / полноэкранная страница добавления (TASK_013) ============ */
+let sheetHistoryPushed=false;
 function openSheet(id){
   editId=id||null;
   closeKeypad();
@@ -3529,17 +3520,32 @@ function openSheet(id){
     else $('#fAccount').value=t.account;
     $('#delBtn').style.display='block';
   }else{
-    aType='expense';aExpr='0';aToExpr='0';transFocus='from';aCat=CATS.expense[0].id;aSubcat=null;aReceipt=null;
+    aType=AF.Services.TxForm.DEFAULT_TYPE;aExpr='0';aToExpr='0';transFocus='from';aCat=CATS.expense[0].id;aSubcat=null;aReceipt=null;
     $('#fDate').value=new Date().toISOString().slice(0,10);$('#fNote').value='';
     $('#delBtn').style.display='none';
   }
   $('#fRepeat').value='none';
+  $('#txSheetTitle').textContent=AF.Services.TxForm.titleFor(!!id);
   setType(aType,true);
   updateDisplay();
   updateAccBals();
   $('#overlay').classList.add('show');
+  // История — системный back/свайп назад закрывают страницу вместо ухода из приложения (TASK_013)
+  history.pushState({txSheet:true},'');
+  sheetHistoryPushed=true;
 }
-function closeSheet(){$('#overlay').classList.remove('show');closeKeypad();}
+function closeSheet(){
+  if(!$('#overlay').classList.contains('show'))return;
+  closeKeypad();
+  if(sheetHistoryPushed){sheetHistoryPushed=false;history.back();}
+  else $('#overlay').classList.remove('show');
+}
+window.addEventListener('popstate',()=>{
+  if($('#overlay').classList.contains('show')){
+    sheetHistoryPushed=false;
+    $('#overlay').classList.remove('show');closeKeypad();
+  }
+});
 function buildAccountSelect(){
   const opts=state.accounts.map(a=>`<option value="${a.id}">${a.emoji} ${esc(a.name)}</option>`).join('');
   $('#fAccount').innerHTML=opts;$('#fFrom').innerHTML=opts;$('#fTo').innerHTML=opts;
@@ -3564,14 +3570,15 @@ function setType(t,keepCat){
   $('#segInc').className=t==='income'?'on-inc':'';
   $('#segTrans').className=t==='transfer'?'on-trans':'';
   const isT=t==='transfer';
-  $('#transRow').style.display=isT?'flex':'none';
-  $('#catBlock').style.display=isT?'none':'block';
-  $('#subcatBlock').style.display=isT?'none':'block';
-  $('#receiptBlock').style.display=isT?'none':'block';
-  $('#scheduleBlock').style.display=isT?'none':'block';
-  $('#accField').style.display=isT?'none':'block';
-  $('.display').style.display=isT?'none':'flex'; // перевод → двусторонняя карточка
-  $('#transDisplay').style.display=isT?'flex':'none';
+  const vis=AF.Services.TxForm.visibilityFor(t);
+  $('#transRow').style.display=vis.transRow?'flex':'none';
+  $('#catBlock').style.display=vis.catBlock?'block':'none';
+  $('#subcatBlock').style.display=vis.subcatBlock?'block':'none';
+  $('#receiptBlock').style.display=vis.receiptBlock?'block':'none';
+  $('#scheduleBlock').style.display=vis.scheduleBlock?'block':'none';
+  $('#accField').style.display=vis.accField?'block':'none';
+  $('.display').style.display=vis.amountDisplay?'flex':'none'; // перевод → двусторонняя карточка
+  $('#transDisplay').style.display=vis.transDisplay?'flex':'none';
   if(!isT)$('#transRate').style.display='none';
   if(isT)transFocus='from';
   updateDisplay(); // обновить суммы/цвета под тип
@@ -4052,17 +4059,9 @@ $('#catTxPrev').onclick=()=>catTxShift(-1);
 $('#catTxNext').onclick=()=>catTxShift(1);
 $('#catTxFrom').onchange=()=>{if($('#catTxFrom').value){catTxFrom=new Date($('#catTxFrom').value);renderCatTx();}};
 $('#catTxTo').onchange=()=>{if($('#catTxTo').value){catTxTo=new Date($('#catTxTo').value);renderCatTx();}};
-// Кнопка + открывает меню добавления (Расход/Доход/Перевод/Чек встроены сюда)
-$('#addBtn').onclick=()=>$('#addMenu').classList.add('show');
-$('#addMenuClose').onclick=()=>$('#addMenu').classList.remove('show');
-$('#addMenu').onclick=e=>{if(e.target.id==='addMenu')$('#addMenu').classList.remove('show');};
-$$('#addMenu .am-item').forEach(b=>b.onclick=()=>{
-  $('#addMenu').classList.remove('show');
-  const isReceipt=b.dataset.add==='receipt';
-  const t=isReceipt?'expense':b.dataset.add;
-  openSheet(null); setType(t);
-  if(isReceipt)setTimeout(()=>$('#receiptInput').click(),300); // «Чек» сразу предлагает фото
-});
+// Кнопка + открывает полноэкранную страницу добавления сразу с типом «Расход» (TASK_013,
+// промежуточная шторка выбора типа убрана — переключение типа теперь происходит внутри страницы)
+$('#addBtn').onclick=()=>openSheet(null);
 // Фото чека: камера/галерея + сжатие (хранение локально, dataURL)
 $('#receiptInput').onchange=e=>{const f=e.target.files[0];if(!f){return;}
   const r=new FileReader();
@@ -4481,7 +4480,7 @@ $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();})
   sa.addEventListener('scroll',sync,{passive:true});
   sync();
 })();
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#addMenu','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay','#recurOverlay','#ratesOverlay','#goalContribOverlay'].forEach(s=>$(s).classList.remove('show'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay','#recurOverlay','#ratesOverlay','#goalContribOverlay'].forEach(s=>$(s).classList.remove('show'));}});
 
 /* ============ Statistics (Screen 14) ============ */
 let statsPeriod='year'; // 'month'|'year'|'all'

@@ -222,6 +222,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Add transaction — fullscreen page instead of a two-step sheet**
+  (`TASK_013`): tapping the central "+" button used to open a small bottom
+  sheet asking you to pick Expense/Income/Transfer/Receipt before showing
+  the actual form. That intermediate sheet is gone — "+" now opens the
+  transaction form directly, full-screen, with Expense pre-selected.
+  Switching between Income/Expense/Transfer happens inside the page via
+  the existing segmented control, with no extra sheet and no page
+  reload. The form itself (shared between adding and editing
+  transactions) was restyled from a bottom sheet into the same
+  full-screen page pattern already used elsewhere in the app (All
+  Transactions, category manager, etc.) — opaque background, full
+  height, safe-area padding, a proper header with a title and close
+  button instead of a drag handle and a floating "×". The receipt-photo
+  feature wasn't removed: it was already part of the expense/income
+  form and stays there — only its separate entry in the old picker sheet
+  is gone. The app had no browser-history handling at all before this;
+  opening the page now pushes a history entry so the system back button,
+  edge-swipe-back, and the in-app close button all close it the same
+  way, through a single `popstate` handler, instead of the close button
+  being the only thing that worked. Default type, per-type field
+  visibility and the page title were extracted into a new pure module
+  (`js/services/tx_form_service.js`, unit-tested) instead of being
+  duplicated inline. Save/delete/category/account/currency logic is
+  unchanged.
 - **App icon** (`TASK_012`) regenerated in production quality from the
   approved design reference: JPEG source color-managed (Display P3 →
   sRGB), padded to a true square without cropping, and re-rendered at

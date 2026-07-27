@@ -86,6 +86,18 @@
     `favicon-32.png`. `manifest.json` правок не потребовал; версия кэша
     `sw.js` поднята `finance-v152` → `finance-v153`. См.
     [`docs/tasks/TASK_012_APP_ICON_PRODUCTION_ASSET.md`](tasks/TASK_012_APP_ICON_PRODUCTION_ASSET.md).
+15. **TASK_013_FULLSCREEN_ADD_TRANSACTION** — `DONE`. Промежуточная шторка
+    «Добавить» (Расход/Доход/Перевод/Чек) убрана; кнопка «+» открывает
+    полноэкранную страницу создания операции (тип «Расход» по умолчанию,
+    переключатель типов внутри страницы, без закрытия/переоткрытия).
+    Форма (общая для добавления и редактирования) переоформлена в
+    существующий в проекте паттерн полноэкранной страницы; функция чека
+    сохранена внутри формы расхода/дохода. Системный back/свайп
+    назад/программное закрытие — через `history.pushState`/`popstate`.
+    Новый чистый сервис `js/services/tx_form_service.js` покрыт
+    Node-тестом. Версия кэша `sw.js` поднята `finance-v153` →
+    `finance-v154`. См.
+    [`docs/tasks/TASK_013_FULLSCREEN_ADD_TRANSACTION.md`](tasks/TASK_013_FULLSCREEN_ADD_TRANSACTION.md).
 
 ## Пояснения
 

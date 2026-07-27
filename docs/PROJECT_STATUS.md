@@ -1,6 +1,6 @@
 # PROJECT_STATUS — A-Lex Finance
 
-**Обновлено:** 2026-07-26
+**Обновлено:** 2026-07-27
 
 ## Состояние приложения
 
@@ -16,9 +16,10 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_012_APP_ICON_PRODUCTION_ASSET`](tasks/TASK_012_APP_ICON_PRODUCTION_ASSET.md)
+- **Задача:** [`TASK_013_FULLSCREEN_ADD_TRANSACTION`](tasks/TASK_013_FULLSCREEN_ADD_TRANSACTION.md)
 - **Статус:** `DONE`
-- Ранее завершённые задачи: [`TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS`](tasks/TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS.md),
+- Ранее завершённые задачи: [`TASK_012_APP_ICON_PRODUCTION_ASSET`](tasks/TASK_012_APP_ICON_PRODUCTION_ASSET.md),
+  [`TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS`](tasks/TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS.md),
   [`TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX`](tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md),
   [`TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md),
   [`TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION`](tasks/TASK_008_REVERT_FIXED_BODY_KEEP_NAV_POSITION.md),
@@ -35,6 +36,32 @@
 
 Нет. `TASK_002A` (полноценный визуально заметный Liquid Glass) остаётся
 отложенной, следующая задача не начата.
+
+## TASK_013 — Fullscreen Add Transaction
+
+Промежуточная нижняя шторка «Добавить» (Расход/Доход/Перевод/Чек),
+открывавшаяся по центральной кнопке «+», убрана полностью. «+» теперь сразу
+открывает полноэкранную страницу создания операции с типом «Расход» по
+умолчанию; переключатель Расход/Доход/Перевод — внутри страницы, без
+закрытия/переоткрытия. Форма (`#overlay`/`.sheet`) — та же, что раньше была
+bottom sheet для добавления и редактирования операций (общая для обоих
+случаев), переоформлена в уже существующий в проекте паттерн полноэкранной
+страницы (`align-items:flex-start` + `height:100%;border-radius:0`, как у
+«Все операции»/менеджера категорий), шапка — `.detail-top` с заголовком
+(«Новая операция» / «Редактировать операцию») и кнопкой закрытия вместо
+drag-хэндла и плавающей «×». Функция чека не удалена — кнопка «📷
+Прикрепить фото чека» была и остаётся частью формы расхода/дохода. Системный
+back/свайп назад/программное закрытие унифицированы через
+`history.pushState`/`popstate` вокруг `openSheet()`/`closeSheet()` — раньше
+в приложении истории не было вообще. Тип по умолчанию, видимость полей по
+типу и заголовок вынесены в новый чистый сервис
+`js/services/tx_form_service.js` (`AF.Services.TxForm`), покрытый Node-тестом
+(`tests/tx_form_service.test.js`, 15 проверок). Бизнес-логика сохранения/
+категорий/счетов/валют не изменена. Версия кэша `sw.js` поднята
+`finance-v153` → `finance-v154`. Ручная проверка на реальном iPhone (Safari
++ установленное PWA) не выполнена в рамках этой сессии — инструмент
+iOS-симулятора завершился крашем при подключении; см. TASK-файл, раздел
+«Известные ограничения».
 
 ## TASK_012 — App Icon Production Asset
 
