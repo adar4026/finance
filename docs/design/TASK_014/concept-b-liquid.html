@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TASK_014 · Концепция B — Apple Liquid Finance</title>
+<style>
+/* ================================================================
+   TASK_014 · Концепция B — «Apple Liquid Finance»
+   ВРЕМЕННЫЙ СТАТИЧЕСКИЙ ПРОТОТИП. Не подключён к sw.js, не часть
+   production-архитектуры. Только для оценки дизайна.
+   Стекло применяется ЛОКАЛЬНО: только header, segmented control и
+   футер основной кнопки. Карточки — непрозрачные.
+   ================================================================ */
+:root,[data-theme="light"]{
+  --page-bg:#f2f2f7;
+  --glow:rgba(110,145,255,.24);      /* холодное свечение сверху */
+  --card:#ffffff;
+  --line:#e6e6ea;
+  --sep:#e8e8ed;
+  --text:#16181f;
+  --muted:#6b7180;
+  --muted2:#9aa0b0;
+  --fill:rgba(120,120,128,.10);
+  --tx-expense:#f2564b;
+  --tx-income:#34c759;
+  --tx-transfer:#007aff;
+  /* локальное стекло — производная от --nav-glass-* проекта (TASK_002) */
+  --glass-bar:rgba(248,248,252,.72);
+  --glass-seg-track:rgba(255,255,255,.55);
+  --glass-seg-ind:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.72));
+  --glass-seg-border:rgba(255,255,255,.85);
+  --glass-seg-shadow:0 4px 12px rgba(40,60,140,.14),inset 0 1px 0 rgba(255,255,255,.9);
+  --hairline:rgba(60,60,67,.10);
+  --shadow-card:0 2px 10px rgba(30,41,80,.05);
+}
+[data-theme="dark"]{
+  --page-bg:#121317;
+  --glow:rgba(90,120,220,.18);
+  --card:#1c2029;
+  --line:#2a2f3a;
+  --sep:#2c313c;
+  --text:#e7ebf2;
+  --muted:#8b93a3;
+  --muted2:#5d6573;
+  --fill:rgba(120,120,128,.22);
+  --tx-expense:#ff6b60;
+  --tx-income:#32d74b;
+  --tx-transfer:#0a84ff;
+  --glass-bar:rgba(22,24,30,.72);
+  --glass-seg-track:rgba(255,255,255,.06);
+  --glass-seg-ind:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.06));
+  --glass-seg-border:rgba(255,255,255,.20);
+  --glass-seg-shadow:0 4px 14px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.16);
+  --hairline:rgba(255,255,255,.10);
+  --shadow-card:0 2px 12px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Inter,sans-serif;
+  background:var(--page-bg);color:var(--text);-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;overflow:hidden;position:relative;
+}
+/* едва заметное холодное свечение в верхней части — не градиентный «фон-конкурент» */
+body::before{
+  content:"";position:absolute;inset:0 0 auto;height:52%;pointer-events:none;z-index:0;
+  background:radial-gradient(120% 76% at 50% -8%,var(--glow) 0%,transparent 68%);
+}
+
+/* ---------- Header: локальное стекло ---------- */
+.hdr{
+  flex:0 0 auto;position:relative;z-index:6;
+  display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;
+  padding:calc(8px + env(safe-area-inset-top)) 16px 10px;
+  background:var(--glass-bar);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);
+  box-shadow:0 .5px 0 var(--hairline);
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .hdr{background:var(--page-bg)}
+}
+.hdr .ttl{text-align:center;font-size:17px;font-weight:600;letter-spacing:-.3px}
+.close{
+  width:32px;height:32px;border:none;border-radius:50%;background:var(--fill);
+  color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.close svg{width:13px;height:13px;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;fill:none}
+
+.body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:16px 16px 0;position:relative;z-index:1}
+
+/* ---------- Segmented control: стеклянный трек + стеклянный индикатор ---------- */
+.seg{
+  position:relative;display:flex;padding:3px;margin:0 0 28px;border-radius:12px;
+  background:var(--glass-seg-track);border:1px solid var(--hairline);
+  -webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);
+}
+.seg button{
+  position:relative;z-index:1;flex:1;border:none;background:none;padding:9px 4px;
+  font:600 14px/1.2 inherit;color:var(--muted);cursor:pointer;border-radius:9px;
+  transition:color .18s ease;
+}
+.seg .ind{
+  position:absolute;z-index:0;top:3px;left:3px;height:calc(100% - 6px);width:calc(33.333% - 4px);
+  border-radius:9px;background:var(--glass-seg-ind);border:1px solid var(--glass-seg-border);
+  box-shadow:var(--glass-seg-shadow);
+  -webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);
+  transition:transform .26s cubic-bezier(.34,1.05,.4,1);
+}
+.seg button.on{color:var(--tx-expense)}
+@media (prefers-reduced-motion:reduce){ .seg .ind{transition:none} }
+
+/* ---------- Сумма ---------- */
+.hero{text-align:center;padding:4px 0 30px}
+.hero .amt{
+  font-size:58px;font-weight:700;letter-spacing:-2.2px;line-height:1;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+  color:var(--tx-expense);white-space:nowrap;
+}
+.hero .amt .cur{font-size:34px;font-weight:600;opacity:.55;margin-left:6px;letter-spacing:-1px}
+.hero .cap{margin-top:11px;font-size:13px;font-weight:500;color:var(--muted)}
+
+/* ---------- Карточки: непрозрачные ---------- */
+.grp{margin-bottom:20px}
+.grp > .lbl{font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.2px;padding:0 6px 8px}
+.card{background:var(--card);border-radius:22px;box-shadow:var(--shadow-card);overflow:hidden}
+.row{
+  display:flex;align-items:center;gap:13px;width:100%;min-height:54px;padding:11px 16px;
+  border:none;background:none;font-family:inherit;text-align:left;cursor:pointer;position:relative;color:var(--text);
+  transition:background .12s ease;
+}
+.row:active{background:var(--fill)}
+.row + .row::before{content:"";position:absolute;left:53px;right:0;top:0;height:1px;background:var(--sep)}
+.row .ic{flex:0 0 30px;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.row .nm{flex:0 0 auto;font-size:16px;font-weight:400}
+.row .val{margin-left:auto;font-size:16px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56%;text-align:right}
+.row .val.sec{color:var(--muted);font-weight:400}
+.row .chev{flex:0 0 auto;margin-left:7px}
+.row .chev svg{display:block;width:8px;height:13px;stroke:var(--muted2);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;fill:none;opacity:.7}
+.row .dot{flex:0 0 9px;width:9px;height:9px;border-radius:50%;margin-left:auto}
+.row .dot + .val{margin-left:9px}
+.row.note{align-items:flex-start;padding-top:15px;padding-bottom:15px}
+.row.note .txt{font-size:16px}
+.row .thumb{margin-left:auto;width:34px;height:42px;border-radius:7px;background:linear-gradient(160deg,#e9e9ee,#dcdce2)}
+.more{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:14px;
+  border:none;background:none;font:600 15px/1 inherit;color:var(--tx-transfer);cursor:pointer;font-family:inherit}
+
+/* ---------- Футер: локальное стекло + основная кнопка ---------- */
+.footer{
+  flex:0 0 auto;position:relative;z-index:6;
+  padding:11px 16px calc(11px + env(safe-area-inset-bottom));
+  background:var(--glass-bar);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);
+  box-shadow:0 -.5px 0 var(--hairline);
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .footer{background:var(--page-bg)}
+}
+.cta{
+  width:100%;height:56px;border:none;border-radius:18px;background:var(--tx-expense);color:#fff;
+  font:700 17px/1 inherit;cursor:pointer;letter-spacing:-.2px;
+  box-shadow:0 6px 18px rgba(242,86,75,.28);
+  transition:transform .12s ease,filter .12s ease,box-shadow .12s ease;
+}
+.cta:active{transform:scale(.985);filter:brightness(.95);box-shadow:0 3px 10px rgba(242,86,75,.24)}
+.cta:disabled{background:var(--fill);color:var(--muted2);box-shadow:none;cursor:default}
+@media (prefers-reduced-motion:reduce){ .cta{transition:none} }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <button class="close" aria-label="Закрыть">
+    <svg viewBox="0 0 14 14"><path d="M1 1l12 12M13 1L1 13"/></svg>
+  </button>
+  <div class="ttl">Новая операция</div>
+  <span></span>
+</div>
+
+<div class="body">
+
+  <div class="seg">
+    <span class="ind" style="transform:translateX(0)"></span>
+    <button class="on">Расход</button>
+    <button>Доход</button>
+    <button>Перевод</button>
+  </div>
+
+  <div class="hero">
+    <div class="amt">−1 250<span class="cur">€</span></div>
+    <div class="cap">Нажмите, чтобы изменить сумму</div>
+  </div>
+
+  <div class="grp">
+    <div class="card">
+      <button class="row">
+        <span class="ic" style="background:#e6f6ec">🛒</span>
+        <span class="nm">Категория</span>
+        <span class="val">Продукты</span>
+        <span class="chev"><svg viewBox="0 0 8 13"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+      </button>
+      <button class="row">
+        <span class="ic" style="background:var(--fill)">＃</span>
+        <span class="nm">Подкатегория</span>
+        <span class="val sec">Супермаркет</span>
+        <span class="chev"><svg viewBox="0 0 8 13"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+      </button>
+      <button class="row">
+        <span class="ic" style="background:#fff2dd">💵</span>
+        <span class="nm">Счёт</span>
+        <span class="dot" style="background:#f5a524"></span>
+        <span class="val">Наличные</span>
+        <span class="chev"><svg viewBox="0 0 8 13"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+      </button>
+      <button class="row">
+        <span class="ic" style="background:#e8f0ff">📅</span>
+        <span class="nm">Дата</span>
+        <span class="val">Сегодня</span>
+        <span class="chev"><svg viewBox="0 0 8 13"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="card">
+      <div class="row note">
+        <span class="ic" style="background:var(--fill)">✏️</span>
+        <span class="txt">Продукты на неделю</span>
+      </div>
+      <button class="row">
+        <span class="ic" style="background:var(--fill)">🧾</span>
+        <span class="nm">Чек</span>
+        <span class="val sec">Добавить</span>
+        <span class="chev"><svg viewBox="0 0 8 13"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="card"><button class="more">Дополнительно</button></div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <button class="cta">Сохранить расход</button>
+</div>
+
+</body>
+</html>

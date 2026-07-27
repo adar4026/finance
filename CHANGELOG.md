@@ -222,6 +222,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Transaction page — premium iOS redesign** (`TASK_014`): the full-screen
+  add/edit transaction page introduced in `TASK_013` was reworked visually.
+  Three design concepts were prototyped first (Apple Minimal / Apple Liquid
+  Finance / Premium Banking); the chosen direction is a hybrid — the "Liquid
+  Finance" frame (the Home screen's grey grouped background plus a barely-there
+  cool glow at the top, glass used *locally* on the pinned header and footer
+  only, and a sliding glass segment indicator reusing the same technique as the
+  tab bar and period switcher) with "Apple Minimal" structure and typography
+  (opaque cards, the amount in the normal text colour with only the `−`/`+`
+  sign tinted). Structurally the sheet is no longer the scroll container: it is
+  a flex column of a pinned header, a single scrolling body, and a pinned
+  footer holding the primary button — which now respects the bottom safe area,
+  is labelled and coloured per transaction type, and is disabled until an
+  amount is entered. The solid red fill behind the active segment is gone. The
+  grey bordered amount box is gone too, and the amount now shrinks to fit, so
+  `−999 999 999,99 €` no longer gets cut off with an ellipsis. Fields are
+  grouped into three cards (main / details / collapsed "Additional"), with
+  separators drawn between the rows that are actually visible rather than
+  adjacent in the DOM. The native `<select>` and `<input type="date">` controls
+  were deliberately kept — they now sit as a transparent layer over each row,
+  so the system pickers and every existing handler behave exactly as before,
+  while the visible row shows a proper value ("Today"/"Yesterday"/"14 May"
+  instead of `27/07/2026`) and the account's colour and balance. Deleting a
+  transaction became a secondary text action instead of a full-width red button
+  competing with Save. When the calculator keypad slides up, the footer slides
+  away with it instead of being half-covered, and the keypad's accents moved
+  from the app's purple to the page's own semantics. New screen-scoped `--tx-*`
+  tokens were added for both themes; the global `--expense`/`--income`/
+  `--accent` tokens and every other screen are untouched. The transaction
+  model, `AF.Store`, `saveTx()`/`delTx()`, all money handling and the
+  `TASK_013` history behaviour are unchanged. Cache version bumped
+  `finance-v154` → `finance-v155`. Not verified on a real iPhone in this
+  session — see the task file for the full list of what was and wasn't checked.
+
 - **Add transaction — fullscreen page instead of a two-step sheet**
   (`TASK_013`): tapping the central "+" button used to open a small bottom
   sheet asking you to pick Expense/Income/Transfer/Receipt before showing

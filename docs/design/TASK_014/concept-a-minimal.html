@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TASK_014 · Концепция A — Apple Minimal</title>
+<style>
+/* ================================================================
+   TASK_014 · Концепция A — «Apple Minimal»
+   ВРЕМЕННЫЙ СТАТИЧЕСКИЙ ПРОТОТИП. Не подключён к sw.js, не часть
+   production-архитектуры. Только для оценки дизайна.
+   ================================================================ */
+:root{
+  /* база — существующие токены проекта */
+  --page-bg:#f2f2f7;              /* = --home-bg главного экрана */
+  --card:#ffffff;
+  --line:#e6e6ea;
+  --sep:#e5e5ea;                  /* системный iOS-разделитель */
+  --text:#16181f;
+  --muted:#6b7180;
+  --muted2:#9aa0b0;
+  --fill:rgba(120,120,128,.12);   /* iOS systemFill — трек сегмента */
+  /* семантика типа операции (мягкие системные) */
+  --tx-expense:#f2564b;
+  --tx-income:#34c759;
+  --tx-transfer:#007aff;
+  --shadow-card:0 1px 2px rgba(20,26,60,.04);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Inter,sans-serif;
+  background:var(--page-bg);color:var(--text);-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* ---------- Header: непрозрачный, закреплён ---------- */
+.hdr{
+  flex:0 0 auto;position:relative;z-index:5;
+  display:grid;grid-template-columns:44px 1fr 44px;align-items:center;
+  gap:8px;padding:calc(8px + env(safe-area-inset-top)) 16px 10px;
+  background:var(--page-bg);
+}
+.hdr .ttl{text-align:center;font-size:17px;font-weight:600;letter-spacing:-.3px}
+.close{
+  width:32px;height:32px;border:none;border-radius:50%;background:var(--fill);
+  color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.close svg{width:13px;height:13px;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;fill:none}
+
+/* ---------- Scroll body ---------- */
+.body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 16px}
+
+/* ---------- Segmented control: системный iOS ---------- */
+.seg{
+  position:relative;display:flex;background:var(--fill);border-radius:9px;padding:2px;margin:2px 0 26px;
+}
+.seg button{
+  position:relative;z-index:1;flex:1;border:none;background:none;padding:7px 4px;
+  font:600 13.5px/1.2 inherit;color:var(--text);cursor:pointer;border-radius:7px;
+}
+.seg .ind{
+  position:absolute;z-index:0;top:2px;left:2px;height:calc(100% - 4px);width:calc(33.333% - 3px);
+  background:#fff;border-radius:7px;box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04);
+  transition:transform .25s cubic-bezier(.34,1.05,.4,1);
+}
+.seg button.on{color:var(--tx-expense)}
+
+/* ---------- Сумма: главный элемент, без рамок ---------- */
+.hero{text-align:center;padding:6px 0 30px}
+.hero .amt{
+  font-size:56px;font-weight:700;letter-spacing:-2px;line-height:1;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+  color:var(--text);white-space:nowrap;
+}
+.hero .amt .sign{color:var(--tx-expense)}
+.hero .amt .cur{font-size:34px;font-weight:600;color:var(--muted2);margin-left:6px;letter-spacing:-1px}
+.hero .cap{margin-top:10px;font-size:13px;font-weight:500;color:var(--muted)}
+
+/* ---------- Карточки ---------- */
+.grp{margin-bottom:22px}
+.grp > .lbl{
+  font-size:12.5px;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.4px;padding:0 4px 8px;
+}
+.card{background:var(--card);border-radius:20px;box-shadow:var(--shadow-card);overflow:hidden}
+.row{
+  display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:11px 16px;
+  border:none;background:none;font-family:inherit;text-align:left;cursor:pointer;position:relative;color:var(--text);
+}
+.row:active{background:#f7f7fa}
+.row + .row::before{content:"";position:absolute;left:52px;right:0;top:0;height:1px;background:var(--sep)}
+.row .ic{
+  flex:0 0 28px;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;font-size:15px;
+}
+.row .nm{flex:0 0 auto;font-size:16px;font-weight:400}
+.row .val{
+  margin-left:auto;font-size:16px;font-weight:400;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58%;text-align:right;
+}
+.row .val.ph{color:var(--tx-transfer)}
+.row .chev{flex:0 0 auto;width:8px;height:13px;margin-left:6px}
+.row .chev svg{width:8px;height:13px;stroke:#c4c4c8;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.row .dot{flex:0 0 10px;width:10px;height:10px;border-radius:50%;margin-left:auto}
+.row .dot + .val{margin-left:8px}
+.row.note{align-items:flex-start;padding-top:14px;padding-bottom:14px}
+.row.note .txt{font-size:16px;color:var(--text)}
+.row.note .txt.empty{color:var(--muted2)}
+
+/* чек */
+.row .thumb{
+  margin-left:auto;width:34px;height:42px;border-radius:6px;object-fit:cover;
+  background:linear-gradient(160deg,#e9e9ee,#dcdce2);
+}
+
+/* «Дополнительно» */
+.more{
+  display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;
+  border:none;background:none;font:600 15px/1 inherit;color:var(--tx-transfer);cursor:pointer;
+}
+
+/* ---------- Закреплённая основная кнопка ---------- */
+.footer{
+  flex:0 0 auto;padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  background:var(--page-bg);box-shadow:0 -1px 0 rgba(0,0,0,.05);
+}
+.cta{
+  width:100%;height:56px;border:none;border-radius:18px;background:var(--tx-expense);color:#fff;
+  font:700 17px/1 inherit;cursor:pointer;letter-spacing:-.2px;
+  transition:transform .12s ease,filter .12s ease;
+}
+.cta:active{transform:scale(.985);filter:brightness(.95)}
+.cta:disabled{background:var(--fill);color:var(--muted2);cursor:default}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <button class="close" aria-label="Закрыть">
+    <svg viewBox="0 0 14 14"><path d="M1 1l12 12M13 1L1 13"/></svg>
+  </button>
+  <div class="ttl">Новая операция</div>
+  <span></span>
+</div>
+
+<div class="body">
+
+  <div class="seg">
+    <span class="ind" style="transform:translateX(0)"></span>
+    <button class="on">Расход</button>
+    <button>Доход</button>
+    <button>Перевод</button>
+  </div>
+
+  <div class="hero">
+    <div class="amt"><span class="sign">−</span>1 250<span class="cur">€</span></div>
+    <div class="cap">Нажмите, чтобы изменить сумму</div>
+  </div>
+
+  <div class="grp">
+    <div class="card">
+      <button class="row">
+        <span class="ic" style="background:#e8f6ec">🛒</span>
+        <span class="nm">Категория</span>
+        <span class="val" style="color:var(--text)">Продукты</span>
+        <span class="chev"><svg viewBox="0 0 8 13"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+      </button>
+      <button class="row">
+        <span class="ic" style="background:#eef0f6">＃</span>
+        <span class="nm">Подкатегория</span>
+        <span class="val">Супермаркет</span>
+        <span class="chev"><svg viewBox="0 0 8 13"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+      </button>
+      <button class="row">
+        <span class="ic" style="background:#fff4e0">💵</span>
+        <span class="nm">Счёт</span>
+        <span class="dot" style="background:#f5a524"></span>
+        <span class="val" style="color:var(--text)">Наличные</span>
+        <span class="chev"><svg viewBox="0 0 8 13"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+      </button>
+      <button class="row">
+        <span class="ic" style="background:#eaf1ff">📅</span>
+        <span class="nm">Дата</span>
+        <span class="val" style="color:var(--text)">Сегодня</span>
+        <span class="chev"><svg viewBox="0 0 8 13"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="card">
+      <div class="row note">
+        <span class="ic" style="background:#eef0f6">✏️</span>
+        <span class="txt">Продукты на неделю</span>
+      </div>
+      <button class="row">
+        <span class="ic" style="background:#eef0f6">🧾</span>
+        <span class="nm">Чек</span>
+        <span class="val">Добавить</span>
+        <span class="chev"><svg viewBox="0 0 8 13"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="card">
+      <button class="more">Дополнительно</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <button class="cta">Сохранить расход</button>
+</div>
+
+</body>
+</html>

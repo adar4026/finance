@@ -16,9 +16,10 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_013_FULLSCREEN_ADD_TRANSACTION`](tasks/TASK_013_FULLSCREEN_ADD_TRANSACTION.md)
+- **Задача:** [`TASK_014_TX_PAGE_PREMIUM_REDESIGN`](tasks/TASK_014_TX_PAGE_PREMIUM_REDESIGN.md)
 - **Статус:** `DONE`
-- Ранее завершённые задачи: [`TASK_012_APP_ICON_PRODUCTION_ASSET`](tasks/TASK_012_APP_ICON_PRODUCTION_ASSET.md),
+- Ранее завершённые задачи: [`TASK_013_FULLSCREEN_ADD_TRANSACTION`](tasks/TASK_013_FULLSCREEN_ADD_TRANSACTION.md),
+  [`TASK_012_APP_ICON_PRODUCTION_ASSET`](tasks/TASK_012_APP_ICON_PRODUCTION_ASSET.md),
   [`TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS`](tasks/TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS.md),
   [`TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX`](tasks/TASK_010_ROOT_SAFE_AREA_EDGE_TO_EDGE_FIX.md),
   [`TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV`](tasks/TASK_009_HOME_SCROLL_AREA_BG_UNDER_NAV.md),
@@ -36,6 +37,41 @@
 
 Нет. `TASK_002A` (полноценный визуально заметный Liquid Glass) остаётся
 отложенной, следующая задача не начата.
+
+## TASK_014 — Premium Redesign страницы операции
+
+Полноэкранная страница создания/редактирования операции (`#overlay`/`.sheet`
+из `TASK_013`) переоформлена в премиальный iOS-вид. Перед реализацией
+подготовлены три дизайн-концепции со статическими прототипами (Apple Minimal /
+Apple Liquid Finance / Premium Banking); пользователь выбрал **гибрид**:
+каркас «Liquid Finance» (серо-молочный фон `--home-bg` + едва заметное
+холодное свечение, стекло **только** на закреплённых шапке и футере,
+перемещающийся стеклянный индикатор сегмента) со структурой и типографикой
+«Apple Minimal» (непрозрачные карточки, сумма основным цветом текста —
+окрашен только знак `−`/`+`).
+
+Ключевое: `.sheet` больше не скролл-контейнер, а flex-колонка из закреплённой
+`.tx-hdr`, прокручиваемой `.tx-body` и закреплённой `.tx-footer` с основной
+кнопкой (bottom safe-area, подпись и цвет по типу операции, disabled до ввода
+суммы). Сплошная красная заливка сегмента заменена стеклянным индикатором
+(`moveTxSegIndicator()` — тот же приём, что `TASK_002`/`TASK_003A`). Серый
+бокс суммы убран; новая `fitAmount()` подбирает кегль 56→26px, поэтому
+`−999 999 999,99 €` больше не обрезается. Поля сгруппированы в три карточки,
+разделители расставляет `refreshCardSeps()` по фактически видимым строкам.
+Нативные `<select>`/`<input type=date>` **сохранены** — лежат прозрачным слоем
+поверх строк, поэтому системные picker'ы и все обработчики работают как
+раньше; дата показывается как «Сегодня»/«Вчера»/«14 мая». Удаление стало
+вторичным текстовым действием. Клавиатура: при её открытии футер синхронно
+уезжает вниз, акценты keypad переведены с фиолетового на семантику страницы.
+Добавлены локальные токены `--tx-*` в обеих темах; глобальные
+`--expense`/`--income`/`--accent` и остальные экраны **не тронуты**.
+Модель операции, `AF.Store`, `saveTx()`/`delTx()`, расчёты и история
+`TASK_013` не изменены. В `AF.Services.TxForm` добавлены чистые
+`saveLabelFor()`, `dateLabel()`, `shiftIsoDay()` (+19 проверок, тест
+15 → 34 passed). Версия кэша `sw.js` поднята `finance-v154` → `finance-v155`.
+Проверка на реальном iPhone (Safari + установленное PWA) в этой сессии **не
+выполнялась** — всё проверено в десктопном Chromium с эмуляцией размеров;
+см. TASK-файл, раздел «Известные ограничения».
 
 ## TASK_013 — Fullscreen Add Transaction
 

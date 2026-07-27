@@ -60,6 +60,25 @@
     /* Главная финансовая карточка (TASK_003) — системный светлый grouped-фон экрана и белая карточка */
     --home-bg:#f2f2f7;
     --fincard-shadow:0 10px 26px rgba(30,41,80,.08);
+    /* ===== Страница операции (TASK_014) — локальные семантические токены экрана.
+       Глобальные --expense/--income намеренно НЕ переопределяются: они управляют
+       цветом сумм в списках, на Главной и в аналитике и остаются как были. ===== */
+    --tx-page-bg:var(--home-bg);
+    --tx-glow:rgba(110,145,255,.20);      /* едва заметное холодное свечение сверху */
+    --tx-card:#ffffff;
+    --tx-sep:#e8e8ed;                     /* разделитель внутри карточки */
+    --tx-fill:rgba(120,120,128,.12);      /* iOS systemFill: трек сегмента, иконки, pressed */
+    --tx-hairline:rgba(60,60,67,.10);
+    --tx-card-shadow:0 2px 10px rgba(30,41,80,.05);
+    --tx-glass-bar:rgba(248,248,252,.72); /* стекло шапки и футера */
+    --tx-glass-ind:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.80));
+    --tx-glass-ind-border:rgba(255,255,255,.9);
+    --tx-glass-ind-shadow:0 3px 9px rgba(40,60,140,.14),inset 0 1px 0 rgba(255,255,255,.9);
+    /* акценты типа операции (текст/знак/индикатор) */
+    --tx-expense:#f2564b; --tx-income:#34c759; --tx-transfer:#007aff;
+    /* заливка основной кнопки — темнее акцента: белый текст 17px/700 на самом
+       акценте даёт 3.38:1 при требуемых 4.5:1 (17px не «крупный текст» по WCAG) */
+    --tx-cta-expense:#d6392e; --tx-cta-income:#248a3d; --tx-cta-transfer:#0060df;
   }
   [data-theme="dark"]{
     --bg:#0f1115; --bg2:#171a21; --card:#1c2029; --card2:#232834;
@@ -81,6 +100,21 @@
     /* Главная финансовая карточка (TASK_003) — тёмная тема переиспользует существующий --bg2, не инверсия светлой */
     --home-bg:var(--bg2);
     --fincard-shadow:0 10px 26px rgba(0,0,0,.32);
+    /* Страница операции (TASK_014) — тёмная тема не инверсия светлой, а
+       отдельный набор: глубокий графитовый фон, карточки отделены по тону. */
+    --tx-page-bg:#121317;
+    --tx-glow:rgba(90,120,220,.20);
+    --tx-card:var(--card);
+    --tx-sep:#2c313c;
+    --tx-fill:rgba(120,120,128,.24);
+    --tx-hairline:rgba(255,255,255,.10);
+    --tx-card-shadow:0 2px 12px rgba(0,0,0,.30);
+    --tx-glass-bar:rgba(22,24,30,.74);
+    --tx-glass-ind:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,.06));
+    --tx-glass-ind-border:rgba(255,255,255,.22);
+    --tx-glass-ind-shadow:0 4px 14px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.17);
+    --tx-expense:#ff6b60; --tx-income:#32d74b; --tx-transfer:#0a84ff;
+    --tx-cta-expense:#e04a3e; --tx-cta-income:#27a544; --tx-cta-transfer:#0a6fd8;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   /* TASK_006: html/body не скроллятся сами — вся прокручиваемая высота (.scroll-area) уже
@@ -356,10 +390,257 @@
     animation:up .25s ease;max-height:96vh;overflow-y:auto}
   @keyframes up{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
   .sheet .grab{width:40px;height:4px;border-radius:3px;background:var(--line);margin:0 auto 14px}
-  /* Полноэкранная страница добавления/редактирования операции (TASK_013) — тот же
-     паттерн, что и .detail-sheet у остальных полноэкранных экранов (allTxOverlay и т.д.),
-     но класс .sheet сохранён без изменений (на него завязаны $('.sheet') в openKeypad/closeKeypad). */
-  #overlay .sheet{height:100%;max-height:100vh;border-radius:0;animation:fade .2s}
+  /* ============================================================================
+     Полноэкранная страница добавления/редактирования операции.
+     TASK_013 — сам паттерн полноэкранной страницы (класс .sheet сохранён:
+     на него завязаны $('.sheet') в openKeypad/closeKeypad).
+     TASK_014 — премиальный редизайн: каркас концепции «Liquid Finance»
+     (серо-молочный фон + едва заметное холодное свечение, стекло ТОЛЬКО на
+     шапке и футере, перемещающийся стеклянный индикатор сегмента), структура
+     и типографика — концепции «Apple Minimal» (непрозрачные карточки, сумма
+     основным цветом текста с окрашенным знаком).
+     Все правила ниже scoped на #overlay — .seg/.field/.metarow используются и
+     другими экранами и не должны меняться.
+     ============================================================================ */
+  #overlay .sheet{
+    height:100%;max-height:100vh;border-radius:0;box-shadow:none;padding:0;
+    background:var(--tx-page-bg);
+    display:flex;flex-direction:column;overflow:hidden; /* скроллится только .tx-body */
+    position:relative;
+    /* Открытие экрана — системная подача iOS «снизу вверх». Общий keyframe
+       fade сдвигал страницу на 4px, из-за чего у полноэкранной страницы на
+       время анимации оголялась полоса подложки у нижнего края. */
+    animation:tx-page-in .32s cubic-bezier(.32,.72,0,1);
+  }
+  @keyframes tx-page-in{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){
+    #overlay .sheet{animation:fade .01s}
+  }
+  /* едва заметное холодное свечение в верхней части — не конкурирует с содержимым */
+  #overlay .sheet::before{
+    content:"";position:absolute;inset:0 0 auto;height:50%;pointer-events:none;z-index:0;
+    background:radial-gradient(120% 74% at 50% -8%,var(--tx-glow) 0%,transparent 68%);
+  }
+
+  /* ---------- Шапка: локальное стекло, закреплена, top safe-area ---------- */
+  .tx-hdr{
+    flex:0 0 auto;position:relative;z-index:6;
+    display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;
+    padding:calc(8px + env(safe-area-inset-top)) 16px 10px;
+    background:var(--tx-glass-bar);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);
+    box-shadow:0 .5px 0 var(--tx-hairline);
+  }
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .tx-hdr{background:var(--tx-page-bg)}
+  }
+  .tx-hdr .tx-title{text-align:center;font-size:17px;font-weight:600;letter-spacing:-.3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* видимый круг 32px, но зона нажатия — полные 44×44 (раздел 9, touch target) */
+  .tx-close{width:44px;height:44px;border:none;background:none;padding:0;position:relative;
+    color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;
+    border-radius:50%;transition:transform .12s ease}
+  .tx-close::before{content:"";position:absolute;left:6px;top:6px;width:32px;height:32px;
+    border-radius:50%;background:var(--tx-fill)}
+  .tx-close:active{transform:scale(.9)}
+  .tx-close:focus-visible{outline:2px solid var(--tx-transfer);outline-offset:-4px}
+  .tx-close svg{position:relative;width:13px;height:13px;stroke:currentColor;stroke-width:2.6;
+    stroke-linecap:round;fill:none}
+
+  /* ---------- Область прокрутки ---------- */
+  .tx-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    overscroll-behavior-y:contain;padding:14px 16px 8px;position:relative;z-index:1}
+
+  /* ---------- Segmented control: системный трек + стеклянный индикатор ---------- */
+  #overlay .seg{position:relative;display:flex;padding:3px;margin:0 0 26px;border-radius:11px;
+    background:var(--tx-fill);border:none}
+  #overlay .seg button{position:relative;z-index:1;flex:1;border:none;background:none;
+    padding:9px 4px;min-height:38px;border-radius:8px;font-family:inherit;
+    font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;transition:color .18s ease}
+  #overlay .seg button:focus-visible{outline:2px solid var(--tx-transfer);outline-offset:1px}
+  /* активный сегмент — цвет по типу; заливку несёт .tx-seg-ind, а не сама кнопка */
+  #overlay .seg button.on-exp{background:none;color:var(--tx-expense)}
+  #overlay .seg button.on-inc{background:none;color:var(--tx-income)}
+  #overlay .seg button.on-trans{background:none;color:var(--tx-transfer)}
+  .tx-seg-ind{position:absolute;z-index:0;top:3px;left:0;width:0;height:calc(100% - 6px);
+    border-radius:8px;pointer-events:none;opacity:0;
+    background:var(--tx-glass-ind);border:1px solid var(--tx-glass-ind-border);
+    box-shadow:var(--tx-glass-ind-shadow);
+    -webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);
+    transition:opacity .18s ease,transform .26s cubic-bezier(.34,1.05,.4,1),width .2s ease}
+  .tx-seg-ind.ready{opacity:1}
+  @media (prefers-reduced-motion:reduce){
+    .tx-seg-ind{transition:opacity .18s ease,width .01s}
+  }
+
+  /* ---------- Сумма: главный элемент, без рамок и подложек ---------- */
+  #overlay .display{background:none;border:none;border-radius:0;padding:4px 0 26px;margin:0;
+    min-height:0;align-items:center;justify-content:center;gap:0;text-align:center;cursor:pointer}
+  #overlay .display.active{box-shadow:none}
+  /* стартовый размер; фактический подбирает fitAmount() по ширине содержимого */
+  #overlay .disp-main{font-size:56px;font-weight:700;letter-spacing:-2px;line-height:1.05;
+    color:var(--text);max-width:100%;
+    font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+    transition:color .18s ease}
+  /* цветной только знак — цифры остаются основным цветом текста (концепция A) */
+  #overlay .disp-main .disp-sign{margin-right:2px}
+  #overlay .disp-main.exp .disp-sign{color:var(--tx-expense)}
+  #overlay .disp-main.inc .disp-sign{color:var(--tx-income)}
+  #overlay .disp-main.zero{color:var(--muted2)}
+  #overlay .disp-main .disp-cur{font-size:.58em;font-weight:600;color:var(--muted2);
+    margin-left:6px;opacity:1;letter-spacing:-1px}
+  #overlay .disp-sub{font-size:13px;font-weight:500;color:var(--muted);margin-top:10px;min-height:18px}
+  #overlay .display:active .disp-main{transform:scale(.99)}
+
+  /* карточка перевода (двусторонняя сумма) — в том же материале, что и карточки полей */
+  #overlay .trans-display{background:var(--tx-card);border:none;border-radius:22px;
+    box-shadow:var(--tx-card-shadow);margin-bottom:20px;min-height:92px}
+  #overlay .td-side{padding:15px 16px}
+  #overlay .td-side.active{background:var(--tx-fill)}
+  #overlay .td-side.from .td-amt{color:var(--tx-expense)}
+  #overlay .td-side.to .td-amt{color:var(--tx-income)}
+  #overlay .td-amt{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+  #overlay .td-arrow{color:var(--muted2)}
+
+  /* ---------- Карточки ---------- */
+  .tx-card{background:var(--tx-card);border-radius:22px;box-shadow:var(--tx-card-shadow);
+    overflow:hidden;margin-bottom:20px}
+  .tx-row{display:flex;align-items:center;gap:13px;width:100%;min-height:54px;padding:11px 16px;
+    border:none;background:none;font-family:inherit;text-align:left;color:var(--text);
+    position:relative;cursor:pointer;transition:background .12s ease}
+  .tx-row:active{background:var(--tx-fill)}
+  .tx-row:focus-visible{outline:2px solid var(--tx-transfer);outline-offset:-2px}
+  /* Разделитель начинается от текста, а не от края (паттерн списка Главной).
+     Ставится классом .tx-sep-top, а не селектором `+`: часть строк карточки
+     скрывается по типу операции (setType), и соседство в DOM не совпадает с
+     соседством на экране — класс расставляет refreshCardSeps() по фактически
+     видимым строкам. */
+  .tx-sep-top::before{content:"";position:absolute;left:53px;right:0;top:0;height:1px;
+    background:var(--tx-sep)}
+  .tx-row .tx-ic{flex:0 0 30px;width:30px;height:30px;border-radius:9px;display:flex;
+    align-items:center;justify-content:center;font-size:15px;background:var(--tx-fill)}
+  .tx-row .tx-nm{flex:0 0 auto;font-size:16px;font-weight:400;color:var(--text)}
+  .tx-row .tx-val{margin-left:auto;font-size:16px;font-weight:500;text-align:right;min-width:0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tx-row .tx-val.sec{font-weight:400;color:var(--muted)}
+  /* значение-плейсхолдер («Выбрать категорию») — действие, а не данные */
+  .tx-row .tx-val.ph{color:var(--tx-transfer);font-weight:400}
+  /* правая колонка: значение + компактный вторичный текст (остаток по счёту) */
+  .tx-row .tx-rt{margin-left:auto;min-width:0;display:flex;flex-direction:column;
+    align-items:flex-end;justify-content:center;gap:2px}
+  .tx-row .tx-rt .tx-val{margin-left:0;max-width:100%}
+  #overlay .m-bal{font-size:12.5px;font-weight:500;color:var(--muted);margin:0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  #overlay .m-bal.neg{color:var(--tx-expense)}
+  .tx-row .tx-chev{flex:0 0 auto;margin-left:7px;display:flex}
+  .tx-row .tx-chev svg{width:8px;height:13px;stroke:var(--muted2);stroke-width:2.2;
+    stroke-linecap:round;stroke-linejoin:round;fill:none;opacity:.8}
+  /* нативный контрол поверх строки: системный picker открывается штатно,
+     видимую часть рисует .tx-row — значения и обработчики не меняются */
+  .tx-row .tx-native{position:absolute;inset:0;width:100%;height:100%;opacity:0;
+    border:none;background:none;font-size:16px;cursor:pointer;-webkit-appearance:none;appearance:none}
+  .tx-row .tx-native::-webkit-date-and-time-value{text-align:left}
+  .tx-row .tx-native::-webkit-calendar-picker-indicator{opacity:0}
+
+  /* строка-раскрывашка (категория/подкатегория) и её содержимое внутри карточки */
+  #overlay #catBlock,#overlay #subcatBlock,#overlay #transRow,#overlay #receiptBlock{display:block}
+  #overlay .cat-toggle{border:none;border-radius:0;background:none;padding:11px 16px;min-height:54px;
+    gap:13px;position:relative}
+  #overlay .cat-toggle:active{background:var(--tx-fill)}
+  #overlay .cat-toggle .ct-ic{width:30px;height:30px;border-radius:9px;font-size:15px;flex:0 0 30px}
+  #overlay .cat-toggle .ct-nm{flex:0 0 auto;font-size:16px;font-weight:400;color:var(--text)}
+  #overlay .cat-toggle .ct-val{margin-left:auto;font-size:16px;font-weight:500;text-align:right;
+    min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+  #overlay .cat-toggle .ct-val.ph{color:var(--tx-transfer);font-weight:400}
+  #overlay .cat-toggle .ct-chev{flex:0 0 auto;margin-left:7px;color:var(--muted2);font-size:13px;opacity:.8}
+  #overlay .cat-grid{margin:0;padding:6px 12px 14px;border-top:1px solid var(--tx-sep);gap:14px 4px}
+  .tx-subrow{padding:12px 16px 4px;position:relative}
+  .tx-subrow .tx-sublbl{font-size:13px;color:var(--muted);margin-bottom:9px}
+  #overlay .subcat-strip{padding:0 0 12px;margin:0 -16px;padding-left:16px;padding-right:16px}
+  #overlay .subcat-chip{border-color:var(--tx-sep);background:var(--tx-fill);color:var(--muted);
+    min-height:34px;display:flex;align-items:center}
+  #overlay .subcat-chip.sel{border-color:transparent;background:var(--tx-transfer);color:#fff;font-weight:600}
+  #overlay .subcat-chip.add{background:none;color:var(--tx-transfer);border-style:dashed}
+
+  /* примечание — безрамочное поле внутри карточки */
+  #overlay .tx-note{align-items:flex-start;padding-top:14px;padding-bottom:14px}
+  #overlay .tx-note input{flex:1;min-width:0;width:auto;border:none;background:none;padding:0;
+    border-radius:0;font-size:16px;color:var(--text);font-family:inherit;outline:none}
+  #overlay .tx-note input::placeholder{color:var(--muted2)}
+  #overlay .field{margin-bottom:0}
+
+  /* чек: #receiptArea — правый слот строки; «Добавить» растянут на всю
+     свободную ширину, чтобы зона нажатия была полноразмерной (≥44px) */
+  #overlay #receiptBlock{margin:0}
+  #overlay #receiptArea{flex:1;min-width:0;margin-left:auto;display:flex;
+    align-items:center;justify-content:flex-end}
+  #overlay .receipt-add{flex:1;border:none;border-radius:0;background:none;padding:0;min-height:44px;
+    display:flex;align-items:center;justify-content:flex-end;
+    font-size:16px;color:var(--muted);width:auto}
+  #overlay .receipt-add:active{background:none;opacity:.55}
+  #overlay .receipt-add:focus-visible{outline:2px solid var(--tx-transfer);outline-offset:2px}
+  #overlay .receipt-thumb{width:36px;height:44px;border-radius:8px;border:none;flex:0 0 auto}
+  #overlay .receipt-del{width:20px;height:20px;font-size:11px;top:2px;right:2px}
+
+  /* «Дополнительно» — свёрнутые редкие поля (расписание/повтор) */
+  .tx-more{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:50px;
+    padding:14px;border:none;background:none;font-family:inherit;font-size:15px;font-weight:600;
+    color:var(--tx-transfer);cursor:pointer}
+  .tx-more:active{background:var(--tx-fill)}
+  .tx-more:focus-visible{outline:2px solid var(--tx-transfer);outline-offset:-2px}
+  .tx-more .tx-more-chev{font-size:12px;transition:transform .2s ease}
+  .tx-more.open .tx-more-chev{transform:rotate(180deg)}
+  @media (prefers-reduced-motion:reduce){ .tx-more .tx-more-chev{transition:none} }
+
+  /* вторичное destructive-действие — не конкурирует с основной кнопкой */
+  #overlay .btn-del{border:none;background:none;color:var(--tx-expense);font-size:16px;font-weight:500;
+    padding:14px;margin:0 0 8px;border-radius:14px;min-height:50px}
+  #overlay .btn-del:active{background:var(--tx-fill)}
+
+  /* ---------- Футер: стекло + основная кнопка по типу операции ---------- */
+  .tx-footer{flex:0 0 auto;position:relative;z-index:6;
+    padding:11px 16px calc(11px + env(safe-area-inset-bottom));
+    background:var(--tx-glass-bar);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);
+    box-shadow:0 -.5px 0 var(--tx-hairline);
+    transition:transform .26s cubic-bezier(.22,.61,.36,1)}
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .tx-footer{background:var(--tx-page-bg)}
+  }
+  #overlay .btn-primary{width:100%;height:56px;padding:0;margin:0;border-radius:18px;
+    background:var(--tx-cta-expense);color:#fff;font-size:17px;font-weight:700;letter-spacing:-.2px;
+    font-family:inherit;transition:transform .12s ease,filter .12s ease,background .18s ease}
+  #overlay .btn-primary:active{transform:scale(.985);filter:brightness(.94)}
+  #overlay .btn-primary:focus-visible{outline:2px solid var(--tx-transfer);outline-offset:2px}
+  #overlay .btn-primary:disabled{background:var(--tx-fill);color:var(--muted2);cursor:default;transform:none;filter:none}
+  /* цвет основной кнопки и активного сегмента — от типа операции на .sheet */
+  #overlay .sheet[data-txtype="income"] .btn-primary{background:var(--tx-cta-income)}
+  #overlay .sheet[data-txtype="transfer"] .btn-primary{background:var(--tx-cta-transfer)}
+  #overlay .sheet[data-txtype="income"] .btn-primary:disabled,
+  #overlay .sheet[data-txtype="transfer"] .btn-primary:disabled{background:var(--tx-fill)}
+
+  /* ---------- Открытый циферблат ----------
+     Док (.keypad-dock, position:fixed, ~324px) выезжает снизу: футер уезжает
+     синхронно с ним (не остаётся наполовину перекрытым), а .tx-body получает
+     запас снизу, чтобы поля можно было домотать над доком. */
+  #overlay .sheet.kp-open{padding-bottom:0}
+  .sheet.kp-open .tx-footer{transform:translateY(100%)}
+  .sheet.kp-open .tx-body{padding-bottom:calc(300px + env(safe-area-inset-bottom))}
+  @media (prefers-reduced-motion:reduce){ .tx-footer{transition:none} }
+  /* Визуальная интеграция циферблата: логика и разметка keypad не тронуты —
+     только акценты переведены с фирменного фиолетового --accent на семантику
+     страницы (операторы — синий, подтверждение — цвет типа операции). */
+  #overlay .keypad-dock{background:var(--tx-card);border-top:none;border-radius:22px 22px 0 0}
+  #overlay .keypad button{background:var(--tx-fill);border:none;color:var(--text)}
+  #overlay .keypad button:active,#overlay .keypad button.flash{background:var(--tx-sep);transform:scale(.92)}
+  #overlay .keypad button.op{color:var(--tx-transfer);background:none}
+  #overlay .keypad button.op:active{background:var(--tx-transfer);color:#fff}
+  #overlay .keypad button.save{background:var(--tx-cta-expense);color:#fff}
+  #overlay .sheet[data-txtype="income"] ~ .keypad-dock .keypad button.save{background:var(--tx-cta-income)}
+  #overlay .sheet[data-txtype="transfer"] ~ .keypad-dock .keypad button.save{background:var(--tx-cta-transfer)}
+  #overlay .kd-amount{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+  #overlay .kd-done{background:var(--tx-fill);color:var(--tx-transfer);font-weight:700}
+  #overlay .kd-side.kd-act{background:var(--tx-fill)}
   .modal{background:var(--bg);width:100%;max-width:560px;border-radius:26px 26px 0 0;
     padding:18px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -8px 40px rgba(0,0,0,.25);
     animation:up .25s ease;max-height:90vh;overflow-y:auto}
@@ -1253,75 +1534,148 @@
 
 <!-- Add / edit page (fullscreen, TASK_013) -->
 <div class="overlay" id="overlay" style="z-index:90;align-items:flex-start">
-  <div class="sheet">
-    <div class="detail-top">
-      <div class="nm" id="txSheetTitle">Новая операция</div>
-      <button class="iconbtn" id="closeSheet" aria-label="Закрыть">×</button>
-    </div>
-    <div class="seg">
-      <button id="segExp" class="on-exp">Расход</button>
-      <button id="segInc">Доход</button>
-      <button id="segTrans">Перевод</button>
-    </div>
-    <div class="display">
-      <div class="disp-main" id="dispMain">0 <span class="disp-cur" id="dispCur">€</span></div>
-      <div class="disp-sub" id="dispSub"></div>
-    </div>
-    <div class="trans-display" id="transDisplay" style="display:none">
-      <div class="td-side from" id="tdFrom">
-        <div class="td-acc"><span id="tdFromIc">💳</span><span id="tdFromNm">—</span></div>
-        <div class="td-amt" id="tdFromAmt">−0 €</div>
-      </div>
-      <div class="td-arrow">›</div>
-      <div class="td-side to" id="tdTo">
-        <div class="td-acc"><span id="tdToIc">💳</span><span id="tdToNm">—</span></div>
-        <div class="td-amt" id="tdToAmt">+0 €</div>
-      </div>
-    </div>
-    <div id="transRate" style="display:none;font-size:12px;color:var(--muted);margin:-8px 0 14px;padding:0 2px"></div>
-    <div id="catBlock">
-      <div class="sheet-label">Категория</div>
-      <button class="cat-toggle" id="catToggle" type="button">
-        <span class="ct-ic" id="catToggleIc">🍔</span>
-        <span class="ct-nm" id="catToggleNm">Выбрать категорию</span>
-        <span class="ct-chev" id="catToggleChev">▾</span>
+  <div class="sheet" data-txtype="expense">
+    <!-- Шапка: круглая кнопка закрытия · заголовок · (правый слот намеренно пуст —
+         основная кнопка сохранения одна и она внизу, TASK_014 п. 7.2) -->
+    <div class="tx-hdr">
+      <button class="tx-close" id="closeSheet" aria-label="Закрыть">
+        <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M1 1l12 12M13 1L1 13"/></svg>
       </button>
-      <div class="cat-grid" id="catStrip" style="display:none"></div>
+      <div class="tx-title" id="txSheetTitle">Новая операция</div>
+      <span aria-hidden="true"></span>
     </div>
-    <div id="subcatBlock">
-      <div class="sheet-label">Подкатегория <span style="font-weight:400;color:var(--muted2)">— необязательно</span></div>
-      <div class="subcat-strip" id="subcatStrip"></div>
+
+    <div class="tx-body" id="txBody">
+      <div class="seg" id="txSeg" role="tablist" aria-label="Тип операции">
+        <span class="tx-seg-ind" id="txSegInd" aria-hidden="true"></span>
+        <button id="segExp" class="on-exp" role="tab" aria-selected="true">Расход</button>
+        <button id="segInc" role="tab" aria-selected="false">Доход</button>
+        <button id="segTrans" role="tab" aria-selected="false">Перевод</button>
+      </div>
+
+      <div class="display" role="button" tabindex="0" aria-label="Сумма операции — открыть клавиатуру">
+        <div class="disp-main" id="dispMain">0 <span class="disp-cur" id="dispCur">€</span></div>
+        <div class="disp-sub" id="dispSub"></div>
+      </div>
+
+      <div class="trans-display" id="transDisplay" style="display:none">
+        <div class="td-side from" id="tdFrom">
+          <div class="td-acc"><span id="tdFromIc">💳</span><span id="tdFromNm">—</span></div>
+          <div class="td-amt" id="tdFromAmt">−0 €</div>
+        </div>
+        <div class="td-arrow">›</div>
+        <div class="td-side to" id="tdTo">
+          <div class="td-acc"><span id="tdToIc">💳</span><span id="tdToNm">—</span></div>
+          <div class="td-amt" id="tdToAmt">+0 €</div>
+        </div>
+      </div>
+      <div id="transRate" style="display:none;font-size:12px;color:var(--muted);margin:-8px 0 14px;padding:0 6px"></div>
+
+      <!-- Основная карточка: Категория · Подкатегория · Счёт(а) · Дата -->
+      <div class="tx-card" id="txCardMain">
+        <div id="catBlock">
+          <button class="cat-toggle tx-row" id="catToggle" type="button">
+            <span class="ct-ic" id="catToggleIc">🍔</span>
+            <span class="ct-nm">Категория</span>
+            <span class="ct-val" id="catToggleNm">Выбрать категорию</span>
+            <span class="ct-chev" id="catToggleChev">▾</span>
+          </button>
+          <div class="cat-grid" id="catStrip" style="display:none"></div>
+        </div>
+
+        <div id="subcatBlock" class="tx-subrow">
+          <div class="tx-sublbl">Подкатегория — необязательно</div>
+          <div class="subcat-strip" id="subcatStrip"></div>
+        </div>
+
+        <!-- Перевод: пара счетов вместо категории -->
+        <div id="transRow" style="display:none">
+          <div class="tx-row">
+            <span class="tx-ic" id="fromRowIc">💳</span>
+            <span class="tx-nm">Со счёта</span>
+            <span class="tx-rt">
+              <span class="tx-val" id="fromRowVal">—</span>
+              <span class="m-bal" id="fromBal"></span>
+            </span>
+            <span class="tx-chev"><svg viewBox="0 0 8 13" aria-hidden="true"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+            <select id="fFrom" class="tx-native" aria-label="Со счёта"></select>
+          </div>
+          <div class="tx-row">
+            <span class="tx-ic" id="toRowIc">💳</span>
+            <span class="tx-nm">На счёт</span>
+            <span class="tx-rt">
+              <span class="tx-val" id="toRowVal">—</span>
+              <span class="m-bal" id="toBal"></span>
+            </span>
+            <span class="tx-chev"><svg viewBox="0 0 8 13" aria-hidden="true"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+            <select id="fTo" class="tx-native" aria-label="На счёт"></select>
+          </div>
+        </div>
+
+        <div class="tx-row" id="accField">
+          <span class="tx-ic" id="accRowIc">💳</span>
+          <span class="tx-nm">Счёт</span>
+          <span class="tx-rt">
+            <span class="tx-val" id="accRowVal">—</span>
+            <span class="m-bal" id="accBal"></span>
+          </span>
+          <span class="tx-chev"><svg viewBox="0 0 8 13" aria-hidden="true"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+          <select id="fAccount" class="tx-native" aria-label="Счёт"></select>
+        </div>
+
+        <div class="tx-row" id="dateRow">
+          <span class="tx-ic">📅</span>
+          <span class="tx-nm">Дата</span>
+          <span class="tx-val" id="dateRowVal">Сегодня</span>
+          <span class="tx-chev"><svg viewBox="0 0 8 13" aria-hidden="true"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+          <input type="date" id="fDate" class="tx-native" aria-label="Дата операции">
+        </div>
+      </div>
+
+      <!-- Карточка деталей: Примечание · Чек -->
+      <div class="tx-card">
+        <div class="tx-row tx-note field">
+          <span class="tx-ic">✏️</span>
+          <input type="text" id="fNote" placeholder="Примечание" aria-label="Примечание">
+        </div>
+        <div id="receiptBlock">
+          <div class="tx-row" id="receiptRow">
+            <span class="tx-ic">🧾</span>
+            <span class="tx-nm">Чек</span>
+            <div id="receiptArea"></div>
+          </div>
+          <input type="file" id="receiptInput" accept="image/*" hidden>
+        </div>
+      </div>
+
+      <!-- Дополнительно: редко используемое расписание/повтор, свёрнуто -->
+      <div class="tx-card" id="txMoreCard">
+        <button class="tx-more" id="txMoreBtn" type="button" aria-expanded="false" aria-controls="scheduleBlock">
+          Дополнительно <span class="tx-more-chev" aria-hidden="true">▾</span>
+        </button>
+        <div id="scheduleBlock" style="display:none">
+          <div class="tx-row">
+            <span class="tx-ic">🔁</span>
+            <span class="tx-nm">Повторять</span>
+            <span class="tx-val sec" id="repeatRowVal">Не повторять</span>
+            <span class="tx-chev"><svg viewBox="0 0 8 13" aria-hidden="true"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+            <select id="fRepeat" class="tx-native" aria-label="Повторять">
+              <option value="none">Не повторять</option>
+              <option value="daily">Ежедневно</option>
+              <option value="weekly">Еженедельно</option>
+              <option value="monthly">Ежемесячно</option>
+              <option value="yearly">Ежегодно</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-del" id="delBtn" style="display:none">Удалить операцию</button>
     </div>
-    <div class="metarow" id="transRow" style="display:none">
-      <div class="m"><label>Со счёта</label><select id="fFrom"></select><div class="m-bal" id="fromBal"></div></div>
-      <div class="m"><label>На счёт</label><select id="fTo"></select><div class="m-bal" id="toBal"></div></div>
+
+    <div class="tx-footer">
+      <button class="btn-primary" id="saveBtn2">Сохранить расход</button>
     </div>
-    <div class="metarow">
-      <div class="m" id="accField"><label>Счёт</label><select id="fAccount"></select><div class="m-bal" id="accBal"></div></div>
-      <div class="m"><label>Дата</label><input type="date" id="fDate"></div>
-    </div>
-    <div id="scheduleBlock" style="margin-bottom:12px">
-      <div class="sheet-label">Расписание <span style="font-weight:400;color:var(--muted2)">— повтор</span></div>
-      <div class="metarow"><div class="m" style="flex:1"><label>Повторять</label>
-        <select id="fRepeat">
-          <option value="none">Не повторять</option>
-          <option value="daily">Ежедневно</option>
-          <option value="weekly">Еженедельно</option>
-          <option value="monthly">Ежемесячно</option>
-          <option value="yearly">Ежегодно</option>
-        </select>
-      </div></div>
-    </div>
-    <div class="field" style="margin-bottom:12px">
-      <input type="text" id="fNote" placeholder="Комментарий (необязательно)">
-    </div>
-    <div id="receiptBlock" style="margin-bottom:14px">
-      <div class="sheet-label">Чек</div>
-      <div id="receiptArea"></div>
-      <input type="file" id="receiptInput" accept="image/*" hidden>
-    </div>
-    <button class="btn-primary" id="saveBtn2">Сохранить</button>
-    <button class="btn-del" id="delBtn" style="display:none">Удалить операцию</button>
   </div>
   <!-- Выезжающий циферблат (по тапу на сумму) -->
   <div class="keypad-dock" id="keypadDock">
@@ -3446,7 +3800,7 @@ function moveNavIndicator(instant){
 let navIndicatorResizeTimer=null;
 window.addEventListener('resize',()=>{
   clearTimeout(navIndicatorResizeTimer);
-  navIndicatorResizeTimer=setTimeout(()=>{moveNavIndicator(true);movePeriodsIndicator(true);},80);
+  navIndicatorResizeTimer=setTimeout(()=>{moveNavIndicator(true);movePeriodsIndicator(true);moveTxSegIndicator(true);fitAmount();},80);
 });
 window.addEventListener('orientationchange',()=>setTimeout(()=>{moveNavIndicator(true);movePeriodsIndicator(true);},120));
 // ResizeObserver — основной надёжный триггер: реагирует на любое изменение фактических
@@ -3526,10 +3880,13 @@ function openSheet(id){
   }
   $('#fRepeat').value='none';
   $('#txSheetTitle').textContent=AF.Services.TxForm.titleFor(!!id);
+  setTxMoreOpen(false); // «Дополнительно» всегда открывается свёрнутым
   setType(aType,true);
   updateDisplay();
   updateAccBals();
   $('#overlay').classList.add('show');
+  // индикатор сегмента можно позиционировать только когда страница отрисована
+  requestAnimationFrame(()=>{moveTxSegIndicator(true);refreshCardSeps();fitAmount();});
   // История — системный back/свайп назад закрывают страницу вместо ухода из приложения (TASK_013)
   history.pushState({txSheet:true},'');
   sheetHistoryPushed=true;
@@ -3563,25 +3920,141 @@ function accBalLabel(selId,balId){
   const el=$(balId);el.textContent='Остаток: '+(b<0?'−':'')+fmtCur(Math.abs(b),cur);
   el.classList.toggle('neg',b<0);
 }
-function updateAccBals(){accBalLabel('#fAccount','#accBal');accBalLabel('#fFrom','#fromBal');accBalLabel('#fTo','#toBal');}
+function updateAccBals(){accBalLabel('#fAccount','#accBal');accBalLabel('#fFrom','#fromBal');accBalLabel('#fTo','#toBal');syncAccRows();}
+
+/* ---- TASK_014: тактильный отклик ----
+   В проекте единственный доступный механизм — navigator.vibrate (Android;
+   iOS Web его игнорирует). Обёртка нужна, чтобы вызовы не падали там, где
+   API нет вовсе, и чтобы не дублировать проверку в каждом обработчике. */
+function haptic(ms){try{if(navigator.vibrate)navigator.vibrate(ms||8);}catch(e){}}
+
+/* ---- TASK_014: строки-значения на месте нативных контролов ----
+   Сами <select>/<input type=date> остались на месте и лежат прозрачным слоем
+   поверх строки (.tx-native) — системные picker'ы, значения и обработчики не
+   изменились. Ниже только отрисовка видимого текста строки. */
+function accRowPaint(selId,icId,valId){
+  const sel=$(selId), ic=$(icId), val=$(valId);
+  if(!sel||!ic||!val)return;
+  const a=state.accounts.find(x=>x.id===sel.value);
+  ic.textContent=a?a.emoji:'💳';
+  ic.style.background=a&&a.color?a.color+'22':'';
+  val.textContent=a?a.name:'—';
+}
+function syncAccRows(){
+  accRowPaint('#fAccount','#accRowIc','#accRowVal');
+  accRowPaint('#fFrom','#fromRowIc','#fromRowVal');
+  accRowPaint('#fTo','#toRowIc','#toRowVal');
+}
+function syncDateRow(){
+  const today=new Date();
+  const todayIso=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  $('#dateRowVal').textContent=AF.Services.TxForm.dateLabel($('#fDate').value,todayIso);
+}
+function syncRepeatRow(){
+  const sel=$('#fRepeat');
+  $('#repeatRowVal').textContent=sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].text:'Не повторять';
+}
+function syncTxRows(){syncAccRows();syncDateRow();syncRepeatRow();}
+
+/* Разделители внутри карточки — только между фактически видимыми строками.
+   Соседство в DOM не совпадает с соседством на экране: часть строк скрыта
+   по типу операции (см. visibilityFor), поэтому селектор `+` не годится. */
+function refreshCardSeps(){
+  $$('#overlay .tx-card').forEach(card=>{
+    const rows=[];
+    card.querySelectorAll('.tx-row,.tx-subrow,.tx-more').forEach(r=>{
+      if(r.offsetParent!==null)rows.push(r);
+    });
+    rows.forEach((r,i)=>r.classList.toggle('tx-sep-top',i>0));
+  });
+}
+
+/* Стеклянный индикатор сегмента — тот же приём, что moveNavIndicator()
+   (TASK_002) и movePeriodsIndicator() (TASK_003A): позиция и ширина берутся
+   из фактической geometry активной кнопки. */
+function moveTxSegIndicator(instant){
+  const ind=$('#txSegInd'), wrap=$('#txSeg');
+  if(!ind||!wrap)return;
+  const activeBtn=wrap.querySelector('button.on-exp,button.on-inc,button.on-trans');
+  if(!activeBtn||wrap.offsetParent===null){ind.classList.remove('ready');return;}
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wrapRect=wrap.getBoundingClientRect(), btnRect=activeBtn.getBoundingClientRect();
+  const toX=btnRect.left-wrapRect.left, toW=btnRect.width;
+  const wasReady=ind.classList.contains('ready');
+  if(instant||reduced||!wasReady){
+    ind.style.transition='none';
+    ind.style.width=toW+'px';
+    ind.style.transform=`translateX(${toX}px)`;
+    ind.classList.add('ready');
+    void ind.offsetWidth;
+    ind.style.transition='';
+    return;
+  }
+  ind.style.width=toW+'px';
+  ind.style.transform=`translateX(${toX}px)`;
+  ind.classList.add('ready');
+}
+
+/* Основная кнопка неактивна, пока сумма не введена. Это ровно то же
+   обязательное условие, что и первая проверка в saveTx() (`!val||val<=0`);
+   остальные проверки saveTx (категория, разные счета перевода) оставлены ей
+   самой — их сообщения-тосты объясняют причину лучше, чем немой disabled. */
+/* Размер суммы подстраивается под длину значения (TASK_014 п. 7.4): длинные
+   суммы (1 234 567,89 €) не должны обрезаться многоточием. Шаги фиксированы —
+   перебор идёт максимум по 6 значениям и только по факту переполнения. */
+const TX_AMOUNT_SIZES=[56,48,42,36,30,26];
+function fitAmount(){
+  const m=$('#dispMain');
+  if(!m||m.offsetParent===null)return;
+  for(let i=0;i<TX_AMOUNT_SIZES.length;i++){
+    m.style.fontSize=TX_AMOUNT_SIZES[i]+'px';
+    if(m.scrollWidth<=m.clientWidth)return;
+  }
+}
+
+function updateSaveEnabled(){
+  const btn=$('#saveBtn2');if(!btn)return;
+  const val=evalExpr(aExpr);
+  btn.disabled=!(val>0);
+}
+
+function setTxMoreOpen(open){
+  const btn=$('#txMoreBtn');
+  $('#scheduleBlock').style.display=open?'':'none';
+  btn.classList.toggle('open',open);
+  btn.setAttribute('aria-expanded',open?'true':'false');
+  refreshCardSeps();
+}
+
 function setType(t,keepCat){
   aType=t;
   $('#segExp').className=t==='expense'?'on-exp':'';
   $('#segInc').className=t==='income'?'on-inc':'';
   $('#segTrans').className=t==='transfer'?'on-trans':'';
+  [['#segExp','expense'],['#segInc','income'],['#segTrans','transfer']].forEach(([sel,type])=>
+    $(sel).setAttribute('aria-selected',t===type?'true':'false'));
+  // тип операции — на .sheet: от него CSS красит активный сегмент, знак суммы
+  // и основную кнопку, без дублирования цветов в JS
+  $('#overlay .sheet').dataset.txtype=t;
+  $('#saveBtn2').textContent=AF.Services.TxForm.saveLabelFor(t);
   const isT=t==='transfer';
   const vis=AF.Services.TxForm.visibilityFor(t);
-  $('#transRow').style.display=vis.transRow?'flex':'none';
-  $('#catBlock').style.display=vis.catBlock?'block':'none';
-  $('#subcatBlock').style.display=vis.subcatBlock?'block':'none';
-  $('#receiptBlock').style.display=vis.receiptBlock?'block':'none';
-  $('#scheduleBlock').style.display=vis.scheduleBlock?'block':'none';
-  $('#accField').style.display=vis.accField?'block':'none';
-  $('.display').style.display=vis.amountDisplay?'flex':'none'; // перевод → двусторонняя карточка
-  $('#transDisplay').style.display=vis.transDisplay?'flex':'none';
+  // '' вместо конкретного display: layout строк задаёт CSS (.tx-row — flex,
+  // блоки-обёртки — block), JS отвечает только за «видно / не видно»
+  $('#transRow').style.display=vis.transRow?'':'none';
+  $('#catBlock').style.display=vis.catBlock?'':'none';
+  $('#subcatBlock').style.display=vis.subcatBlock?'':'none';
+  $('#receiptBlock').style.display=vis.receiptBlock?'':'none';
+  $('#txMoreCard').style.display=vis.scheduleBlock?'':'none'; // «Дополнительно» пусто при переводе
+  $('#accField').style.display=vis.accField?'':'none';
+  $('.display').style.display=vis.amountDisplay?'':'none'; // перевод → двусторонняя карточка
+  $('#transDisplay').style.display=vis.transDisplay?'':'none';
   if(!isT)$('#transRate').style.display='none';
   if(isT)transFocus='from';
   updateDisplay(); // обновить суммы/цвета под тип
+  syncTxRows();
+  moveTxSegIndicator();
+  refreshCardSeps();
   if(isT)return;
   renderReceipt();
   const cats=catsFor(t);
@@ -3592,6 +4065,7 @@ function setType(t,keepCat){
       <span class="ce" style="background:${c.color}22">${c.emoji}</span><span class="cl">${c.name}</span></div>`).join('')
     +`<div class="cat-pick cat-add" data-add="1"><span class="ce" style="background:var(--accent-soft);color:var(--accent)">＋</span><span class="cl">Создать</span></div>`;
   $$('#catStrip .cat-pick[data-cat]').forEach(el=>el.onclick=()=>{
+    haptic(8);
     aCat=el.dataset.cat;aSubcat=null;
     $$('#catStrip .cat-pick').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');
     updateCatToggle();setCatOpen(false); // выбрали → свернуть
@@ -3608,9 +4082,12 @@ function setType(t,keepCat){
   renderSubcats();
 }
 function updateCatToggle(){
-  const c=catById(aCat);if(!c)return;
-  $('#catToggleIc').textContent=c.emoji;$('#catToggleIc').style.background=(c.color||'#6d5df6')+'22';
-  $('#catToggleNm').textContent=c.name;
+  const c=catById(aCat), nm=$('#catToggleNm'), ic=$('#catToggleIc');
+  // TASK_014 п. 7.6: без выбранной категории — призыв к действию, а не «Без категории»
+  if(!c){nm.textContent='Выбрать категорию';nm.classList.add('ph');ic.textContent='＋';ic.style.background='';return;}
+  nm.classList.remove('ph');
+  ic.textContent=c.emoji;ic.style.background=(c.color||'#6d5df6')+'22';
+  nm.textContent=c.name;
 }
 function setCatOpen(open){
   $('#catStrip').style.display=open?'grid':'none';
@@ -3639,7 +4116,10 @@ function renderReceipt(){
     $('#receiptImg').onclick=()=>openReceiptViewer(aReceipt);
     $('#receiptDel').onclick=()=>{aReceipt=null;renderReceipt();};
   }else{
-    el.innerHTML=`<button class="receipt-add" id="receiptAdd">📷 Прикрепить фото чека</button>`;
+    // TASK_014: строка карточки, а не отдельная пунктирная плашка — подпись
+    // сокращена до значения строки («Чек · Добавить»), источники (камера/фото/
+    // файл) по-прежнему выбирает системный диалог #receiptInput
+    el.innerHTML=`<button class="receipt-add" id="receiptAdd" aria-label="Добавить чек: камера, фото или файл">Добавить</button>`;
     $('#receiptAdd').onclick=()=>$('#receiptInput').click();
   }
 }
@@ -3692,6 +4172,7 @@ function updateTransDisplay(){
     if(fcur!==tcur){hint.textContent='≈ курс 1 '+fcur+' = '+convertCur(1,fcur,tcur)+' '+tcur+' · можно изменить сумму вручную';hint.style.display='block';}
     else hint.style.display='none';
   }
+  updateSaveEnabled();
 }
 function updateDisplay(){
   if(aType==='transfer'){updateTransDisplay();return;}
@@ -3700,12 +4181,19 @@ function updateDisplay(){
   const sign=aType==='income'?'+':aType==='expense'?'−':'';
   const numStr=isNaN(val)?'0':val.toLocaleString('ru-RU',{maximumFractionDigits:2});
   const amt=(val>0?sign:'')+numStr;
-  const m=$('#dispMain'); m.className='disp-main '+cls;
-  m.innerHTML=amt+' <span class="disp-cur" id="dispCur">'+sym+'</span>';
+  const m=$('#dispMain'); m.className='disp-main '+cls+(val>0?'':' zero');
+  // TASK_014: знак выделен отдельным span — цифры остаются основным цветом
+  // текста, цветным окрашивается только «−»/«+» (иначе сумма кричит на экране)
+  m.innerHTML=(val>0&&sign?'<span class="disp-sign">'+sign+'</span>':'')
+    +numStr+' <span class="disp-cur" id="dispCur">'+sym+'</span>';
   const kd=$('#kdAmount'); if(kd)kd.textContent=amt+' '+sym; // зеркало суммы в циферблате
-  // строка ввода: видно, что именно набираешь
+  // Вторая строка: пока набирается выражение (12+5) — показываем его; в
+  // остальное время не дублируем сумму цифрами, а объясняем, что она нажимаемая.
   const raw=aExpr.replace(/\*/g,'×').replace(/\//g,'÷').replace(/\./g,',');
-  $('#dispSub').textContent=aExpr==='0'?'':raw;
+  const hasOp=/[+−×÷]/.test(raw);
+  $('#dispSub').textContent=hasOp?raw:'Нажмите, чтобы изменить сумму';
+  fitAmount();
+  updateSaveEnabled();
 }
 function openKeypad(){$('#keypadDock').classList.add('show');$('.display').classList.add('active');$('.sheet').classList.add('kp-open');}
 function closeKeypad(){$('#keypadDock').classList.remove('show');$('.display').classList.remove('active');$('.sheet').classList.remove('kp-open');}
@@ -3769,6 +4257,7 @@ function saveTx(){
     // autoPost: будущие срабатывания создадут операции сами; lastPosted=date — сегодняшняя уже создана вручную
     state.reminders.push({id:'r'+Date.now().toString(36),title,amount:val,type:aType,dueDate:date,repeatType:rep,categoryId:aCat,accountId:$('#fAccount').value,autoPost:true,lastPosted:date,isActive:true,done:false,createdAt:Date.now()});
   }
+  haptic(14); // успешное сохранение (TASK_014 п. 7.11)
   save();closeSheet();
   anchor=new Date(date);render();buildAccountSelect();
   if($('#catTxOverlay').classList.contains('show'))renderCatTx(); // обновить drill-down, если открыт
@@ -4076,20 +4565,27 @@ $('#receiptViewerClose').onclick=()=>$('#receiptViewer').classList.remove('show'
 $('#receiptViewer').onclick=e=>{if(e.target.id==='receiptViewer')$('#receiptViewer').classList.remove('show');};
 $('#closeSheet').onclick=closeSheet;
 $('#overlay').onclick=e=>{if(e.target.id==='overlay')closeSheet();};
-$('#segExp').onclick=()=>setType('expense');
-$('#segInc').onclick=()=>setType('income');
-$('#segTrans').onclick=()=>setType('transfer');
+// смена типа — с тактильным откликом (TASK_014 п. 7.11)
+$('#segExp').onclick=()=>{haptic(8);setType('expense');};
+$('#segInc').onclick=()=>{haptic(8);setType('income');};
+$('#segTrans').onclick=()=>{haptic(8);setType('transfer');};
 $('#saveBtn').onclick=saveTx;
 $('#saveBtn2').onclick=saveTx;
 $('#delBtn').onclick=delTx;
 $('.display').onclick=openKeypad;
+$('.display').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openKeypad();}};
 $('#tdFrom').onclick=()=>{transFocus='from';updateDisplay();openKeypad();};
 $('#tdTo').onclick=()=>{transFocus='to';updateDisplay();openKeypad();};
 $('#kdAmount').onclick=e=>{const s=e.target.closest('.kd-side');if(!s||aType!=='transfer')return;transFocus=s.classList.contains('to')?'to':'from';updateDisplay();};
 function syncTransTo(){const v=evalExpr(aExpr);if(sameTransCur())aToExpr=aExpr;else aToExpr=isNaN(v)?'0':String(convertCur(v,curOfAcc($('#fFrom').value),curOfAcc($('#fTo').value)));}
-$('#fFrom').onchange=()=>{syncTransTo();updateDisplay();updateAccBals();};
-$('#fTo').onchange=()=>{syncTransTo();updateDisplay();updateAccBals();};
-$('#fAccount').onchange=updateAccBals;
+$('#fFrom').onchange=()=>{haptic(8);syncTransTo();updateDisplay();updateAccBals();};
+$('#fTo').onchange=()=>{haptic(8);syncTransTo();updateDisplay();updateAccBals();};
+$('#fAccount').onchange=()=>{haptic(8);updateAccBals();};
+// TASK_014: нативные контролы лежат прозрачным слоем поверх строк — при
+// изменении значения перерисовываем видимый текст строки
+$('#fDate').onchange=()=>{haptic(8);syncDateRow();};
+$('#fRepeat').onchange=syncRepeatRow;
+$('#txMoreBtn').onclick=()=>setTxMoreOpen($('#scheduleBlock').style.display==='none');
 $('#kdDone').onclick=closeKeypad;
 $('#catToggle').onclick=()=>setCatOpen($('#catStrip').style.display==='none');
 $$('.keypad button[data-k]').forEach(b=>{const k=b.dataset.k;if(k&&k!=='back-hold')b.onclick=()=>key(k);});

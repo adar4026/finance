@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TASK_014 · Дизайн-концепции страницы операции</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
+  background:#f2f2f7;color:#16181f;padding:28px 20px 60px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
+.sub{font-size:14px;color:#6b7180;margin-bottom:8px;line-height:1.5}
+.warn{font-size:13px;color:#a1481f;background:#fff3e6;border:1px solid #f5d9bd;
+  border-radius:12px;padding:12px 14px;margin:16px 0 26px;line-height:1.5}
+a.card{display:block;background:#fff;border-radius:18px;padding:18px 20px;margin-bottom:12px;
+  text-decoration:none;color:inherit;box-shadow:0 2px 10px rgba(30,41,80,.05);transition:transform .12s}
+a.card:hover{transform:translateY(-1px)}
+a.card .t{font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;gap:9px}
+a.card .t .badge{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
+  padding:3px 8px;border-radius:6px;background:#e8f2ff;color:#007aff}
+a.card .d{font-size:13.5px;color:#6b7180;margin-top:7px;line-height:1.55}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TASK_014 — концепции страницы операции</h1>
+  <p class="sub">Дизайн-референсы, подготовленные на этапе 2 TASK_014 для выбора
+     направления редизайна полноэкранной страницы добавления/редактирования
+     операции. Открывать на ширине iPhone (≈393px).</p>
+
+  <div class="warn">
+    <strong>Только статические дизайн-референсы, не production-код.</strong>
+    Эти HTML-файлы — архив истории решения TASK_014 (см.
+    <code>docs/tasks/TASK_014_TX_PAGE_PREMIUM_REDESIGN.md</code>), а не часть
+    приложения:
+    <ul style="margin:8px 0 0 18px;padding:0">
+      <li>не подключены к <code>index.html</code>, не импортируются и не
+        линкуются оттуда никаким образом;</li>
+      <li>не зарегистрированы в <code>sw.js</code> — отсутствуют в списке
+        <code>ASSETS</code> и не кэшируются PWA service worker'ом;</li>
+      <li>не используют <code>AF.Store</code>/сервисы приложения — разметка и
+        данные на них зашиты статически, только для визуальной оценки;</li>
+      <li>реализована в production — только гибрид, и не копированием этого
+        файла, а отдельной вёрсткой внутри <code>#overlay</code> в
+        <code>index.html</code> с сохранением всей существующей бизнес-логики.</li>
+    </ul>
+  </div>
+
+  <a class="card" href="concept-hybrid.html">
+    <div class="t">Утверждённый гибрид <span class="badge">Реализовано</span></div>
+    <div class="d">Основа B (стекло только на header, segmented и футере) + структура и
+      спокойная типографика суммы из A. Есть переключатель светлой/тёмной темы
+      (кнопка ◐ в правом верхнем углу) и вторичное «Удалить операцию». Именно эта
+      концепция реализована в production (не путём подключения этого файла —
+      см. предупреждение выше).</div>
+  </a>
+
+  <a class="card" href="concept-a-minimal.html">
+    <div class="t">Концепция A — Apple Minimal</div>
+    <div class="d">Светлый системный фон, белые непрозрачные карточки, минимум теней,
+      строгая типографика, цвет только у типа операции, суммы и основного действия.</div>
+  </a>
+
+  <a class="card" href="concept-b-liquid.html">
+    <div class="t">Концепция B — Apple Liquid Finance</div>
+    <div class="d">Серо-молочный фон с мягким холодным свечением, стеклянные header,
+      segmented control и футер, сумма окрашена по типу операции, мягкая глубина.</div>
+  </a>
+
+  <a class="card" href="concept-c-banking.html">
+    <div class="t">Концепция C — Premium Banking</div>
+    <div class="d">Нейтрально-тёплый фон, строгие карточки с тонким stroke, почти чёрная
+      типографика, подчёркивание вместо капсулы в переключателе, графитовая кнопка.</div>
+  </a>
+</div>
+</body>
+</html>

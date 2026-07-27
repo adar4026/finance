@@ -35,4 +35,44 @@ AF.Services.TxForm = {
   titleFor(isEdit) {
     return isEdit ? 'Редактировать операцию' : 'Новая операция';
   },
+
+  // Подпись основной кнопки — по типу операции (TASK_014, п. 7.8).
+  saveLabelFor(type) {
+    if (type === 'income') return 'Сохранить доход';
+    if (type === 'transfer') return 'Сохранить перевод';
+    return 'Сохранить расход';
+  },
+
+  // Человекочитаемая дата для строки «Дата» (TASK_014, п. 7.6).
+  // Обе даты — 'YYYY-MM-DD' (тот же формат, что хранит #fDate и tx.date).
+  // Сравнение строковое, поэтому не зависит от таймзоны и от времени суток;
+  // время не показывается — в модели операции его нет.
+  dateLabel(iso, todayIso) {
+    if (!iso) return '';
+    const day = String(iso).slice(0, 10);
+    const today = String(todayIso || '').slice(0, 10);
+    if (today) {
+      if (day === today) return 'Сегодня';
+      if (day === this.shiftIsoDay(today, -1)) return 'Вчера';
+      if (day === this.shiftIsoDay(today, 1)) return 'Завтра';
+    }
+    const parts = day.split('-');
+    if (parts.length !== 3) return day;
+    const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const mi = Number(parts[1]) - 1;
+    if (!(mi >= 0 && mi < 12)) return day;
+    const label = Number(parts[2]) + ' ' + months[mi];
+    // год показываем только если он отличается от текущего
+    return (today && parts[0] === today.slice(0, 4)) ? label : label + ' ' + parts[0];
+  },
+
+  // Сдвиг даты 'YYYY-MM-DD' на n дней. UTC — чтобы переход через
+  // летнее/зимнее время не сдвигал результат на сутки.
+  shiftIsoDay(iso, n) {
+    const d = new Date(String(iso).slice(0, 10) + 'T00:00:00Z');
+    if (isNaN(d.getTime())) return '';
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  },
 };
