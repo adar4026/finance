@@ -8,16 +8,36 @@ AF.Services.Export = {
 
   toJSON(state) { return JSON.stringify(state, null, 2); },
 
+  // Метаданные операции (TASK_015). Читаются защитно, без обращения к
+  // AF.Services.TxMeta: export_service.js — отдельный файл и может приехать
+  // с CDN раньше/позже остальных (инвариант совместимости TASK_015 §0, С4).
+  _payee(t) { return typeof t.payee === 'string' ? t.payee : ''; },
+  _tags(t) { return Array.isArray(t.tags) ? t.tags.join(', ') : ''; },
+  _place(t) { return typeof t.location === 'string' ? t.location : ''; },
+  // Иерархия «Категория / Подкатегория» в одной колонке — формат Money Flow,
+  // который импорт уже умеет разбирать (resolveCatSub в index.html).
+  _catPath(state, t) {
+    const c = this._catName(state, t.cat), s = this._subName(state, t.subcategoryId);
+    return c && s ? c + ' / ' + s : (c || s);
+  },
+
   // CSV (формат Money Flow — с переводами, совместим с импортом; категории по имени)
+  //
+  // TASK_015 (ОВ-3): исправлено соответствие колонок. Раньше позиция 5,
+  // подписанная «Контрагент», содержала ПОДКАТЕГОРИЮ — число значений
+  // совпадало с числом заголовков, поэтому рассинхронизация ничем не
+  // ловилась. Подкатегория переехала в колонку «Категория» (через ' / '),
+  // позиция 5 отдана payee. Порядок и содержимое полей зафиксированы
+  // regression-тестом tests/export_service.test.js.
   csv(txList, state) {
     const head = ['Дата','Счёт','Сумма','Валюта','Категория','Контрагент','Перевод: Счёт','Перевод: Сумма','Перевод: Валюта','Метки','Место','Примечание'];
     const esc = v => { v = (v == null ? '' : String(v)); return /[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
     const cur = state.currency || '€';
     const rows = txList.map(t => {
-      if (t.type === 'transfer') return [t.date, this._accName(state, t.from), -t.amount, cur, '', '', this._accName(state, t.to), (t.toAmount != null ? t.toAmount : t.amount), cur, '', '', t.note || ''];
+      if (t.type === 'transfer') return [t.date, this._accName(state, t.from), -t.amount, cur, '', this._payee(t), this._accName(state, t.to), (t.toAmount != null ? t.toAmount : t.amount), cur, this._tags(t), this._place(t), t.note || ''];
       const amt = t.type === 'income' ? t.amount : -t.amount;
       const acc = state.accounts.find(a => a.id === t.account);
-      return [t.date, this._accName(state, t.account), amt, (acc && acc.currency) || cur, this._catName(state, t.cat), this._subName(state, t.subcategoryId), '', '', '', '', '', t.note || ''];
+      return [t.date, this._accName(state, t.account), amt, (acc && acc.currency) || cur, this._catPath(state, t), this._payee(t), '', '', '', this._tags(t), this._place(t), t.note || ''];
     });
     return [head, ...rows].map(r => r.map(esc).join(',')).join('\n');
   },
@@ -31,10 +51,11 @@ AF.Services.Export = {
       const sub = isT ? '' : this._subName(state, t.subcategoryId);
       const acc = isT ? (this._accName(state, t.from) + ' → ' + this._accName(state, t.to)) : this._accName(state, t.account);
       const sign = t.type === 'income' ? '' : (t.type === 'expense' ? '-' : '');
-      return `<tr><td>${t.date}</td><td>${typeName[t.type]}</td><td>${cat}</td><td>${sub}</td><td>${acc}</td><td>${sign}${this._fmt(t.amount)}</td><td>${(state.currency||'€')}</td><td>${(t.note||'').replace(/</g,'&lt;')}</td></tr>`;
+      const e = s => String(s == null ? '' : s).replace(/</g, '&lt;');
+      return `<tr><td>${t.date}</td><td>${typeName[t.type]}</td><td>${cat}</td><td>${sub}</td><td>${acc}</td><td>${sign}${this._fmt(t.amount)}</td><td>${(state.currency||'€')}</td><td>${e(t.note)}</td><td>${e(this._payee(t))}</td><td>${e(this._tags(t))}</td><td>${e(this._place(t))}</td></tr>`;
     }).join('');
     return `<html><head><meta charset="utf-8"></head><body><table border="1"><thead><tr>
-      <th>Дата</th><th>Тип</th><th>Категория</th><th>Подкатегория</th><th>Счёт</th><th>Сумма</th><th>Валюта</th><th>Комментарий</th>
+      <th>Дата</th><th>Тип</th><th>Категория</th><th>Подкатегория</th><th>Счёт</th><th>Сумма</th><th>Валюта</th><th>Комментарий</th><th>Контрагент</th><th>Метки</th><th>Место</th>
       </tr></thead><tbody>${rows}</tbody></table></body></html>`;
   },
 

@@ -12,7 +12,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > Version 1.1.0 is the active development milestone, built on top of the
 > stable 1.0.0 foundation.
 
+### Added
+
+- **Optional transaction metadata: payee, tags and location**
+  (`TASK_015`): a transaction can now carry three optional fields —
+  `payee` (the shop or counterparty), `tags` (a list of labels) and
+  `location` (free text only; no GPS, no geolocation permission, no maps
+  and no external services). The groundwork was already half-present at
+  the import/export boundary but missing from the model itself: the CSV
+  header in `export_service.js` had always listed `Контрагент`, `Метки`
+  and `Место` while exporting them as empty strings, and CSV import
+  recognised payee and place columns only to squash them into the note
+  field. That gap is what this task closes.
+
+  Storage follows an "empty means no key" rule — a blank value deletes
+  the key rather than storing `''`/`[]`, so an old transaction and a new
+  one with an empty payee are structurally identical. All normalisation
+  rules live in one new pure service, `js/services/tx_meta_service.js`
+  (trim, whitespace collapsing, code-point-aware truncation so emoji
+  aren't cut in half, case-insensitive tag de-duplication, `#` stripped
+  from stored tags and only rendered in the UI, limits of 80 / 10×24 /
+  120 characters). The schema version moved 2 → 3, with normalisation
+  running inside `AF.Store.migrate()` — the single choke point every data
+  path already goes through (app start, `.afb` restore, JSON import, CSV
+  import). No backfill is attempted on old notes, and rolling the app
+  back does not lose data, since the older code never strips keys it
+  doesn't recognise.
+
+  In the form the payee sits as the last row of the main card, with tags
+  (as chips, committed by Enter or comma — space stays available for
+  multi-word tags) and location in the details card. Payee offers
+  autocomplete computed from existing transactions, with no separate
+  table or directory: matches are case-insensitive, ranked by frequency
+  then recency, and the stored spelling is reused — but only when the
+  user explicitly picks a suggestion; typed text is never silently
+  rewritten. Payee is hidden for transfers, since a transfer moves money
+  between the user's own accounts and the "To account" field already
+  fills that role; tags, location and note stay available there. Search
+  now covers all three fields (a leading `#` in the query is ignored),
+  and the payee appears as a secondary line in transaction lists — tags
+  and location deliberately do not, to keep the cards readable.
+
+  Because a temporarily mismatched set of files from GitHub Pages/Fastly
+  must never break the app (the lesson from `TASK_014`), `index.html`
+  contains no direct `AF.Services.TxMeta` calls at all — everything goes
+  through a `txMeta()` helper with fallback normalisation, `migrate()`
+  checks the service exists before using it, and `export_service.js`
+  doesn't depend on it in the first place. Verified by deleting the
+  service at runtime: the form still opens, saves, searches, renders and
+  exports, with no console errors.
+
 ### Fixed
+
+- **CSV export wrote the subcategory into the "Контрагент" column**
+  (`TASK_015`): the expense/income row in `export_service.js` emitted
+  twelve values against twelve headers, so the count matched and nothing
+  ever flagged the mismatch — but position 5, labelled `Контрагент`, held
+  `_subName()`. The subcategory now joins the category column as
+  `Категория / Подкатегория` (the Money Flow hierarchy format that
+  `resolveCatSub` already parses back), and position 5 carries the payee.
+  A new `tests/export_service.test.js` locks the exact field order and
+  contents, including quoting of values containing commas, quotes,
+  semicolons and newlines, and a full export → import round trip; the
+  test was written against the old behaviour first to prove it actually
+  reads field positions. CSV import gained a `Метки` column and a
+  `resolveCatPath()` helper for the hierarchy, and it no longer merges
+  payee and place into the note — the note now holds only the note
+  column. Files without the new columns import exactly as before.
 
 - **White/dark strip below the entire app in standalone PWA — the real
   root cause, finally** (`TASK_011`): five previous attempts
@@ -253,8 +319,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `--accent` tokens and every other screen are untouched. The transaction
   model, `AF.Store`, `saveTx()`/`delTx()`, all money handling and the
   `TASK_013` history behaviour are unchanged. Cache version bumped
-  `finance-v154` → `finance-v155`. Not verified on a real iPhone in this
-  session — see the task file for the full list of what was and wasn't checked.
+  `finance-v154` → `finance-v155`, then `finance-v155` → `finance-v156`
+  in the follow-up that colours the whole amount by transaction type —
+  `finance-v156` is the published version of this task. Verified by the
+  user on a real iPhone and accepted as stable (safe area, opening the
+  form, entering an amount, switching types, saving and general
+  behaviour); no instrumented performance measurements were taken — see
+  the task file.
 
 - **Add transaction — fullscreen page instead of a two-step sheet**
   (`TASK_013`): tapping the central "+" button used to open a small bottom

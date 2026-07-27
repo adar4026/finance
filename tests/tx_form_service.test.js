@@ -46,6 +46,18 @@ function assertTrue(cond, msg) {
   assertTrue(!tr.catBlock && !tr.subcatBlock && !tr.receiptBlock && !tr.scheduleBlock && !tr.accField, 'Перевод: категория/подкатегория/чек/расписание/одиночный счёт скрыты');
 }
 
+// ---- TASK_015: видимость метаданных (payee скрыт у перевода, ОВ-2) ----
+{
+  const exp = F.visibilityFor('expense');
+  const inc = F.visibilityFor('income');
+  const tr = F.visibilityFor('transfer');
+  assertTrue(exp.payeeRow && exp.tagsRow && exp.locationRow, 'Расход: получатель, метки и место видны');
+  assertTrue(inc.payeeRow && inc.tagsRow && inc.locationRow, 'Доход: получатель, метки и место видны');
+  assertTrue(!tr.payeeRow, 'Перевод: «Получатель» скрыт — его роль выполняет «На счёт» (ОВ-2)');
+  assertTrue(tr.tagsRow && tr.locationRow, 'Перевод: метки и место остаются доступны (ОВ-2)');
+  assertEqual(exp, inc, 'Расход и Доход по-прежнему дают одинаковый набор блоков (с учётом метаданных)');
+}
+
 // ---- Заголовок страницы: создание vs редактирование ----
 {
   assertEqual(F.titleFor(false), 'Новая операция', 'Заголовок при создании');

@@ -4,7 +4,10 @@
 window.AF = window.AF || {};
 AF.Store = (function () {
   const KEY = 'finance_app';
-  const SCHEMA_VERSION = 2;
+  // v3 (TASK_015): у операции появились необязательные payee/tags/location.
+  // Ветвления по номеру версии нет — migrate идемпотентен и нормализует
+  // любое состояние; номер нужен как отметка поколения в backup-файле.
+  const SCHEMA_VERSION = 3;
   const PALETTE = ['#6d5df6','#22c55e','#ef4444','#f59e0b','#3bc9db','#da77f2','#ff8787','#4dabf7','#69db7c','#f783ac','#a9e34b','#fab005'];
 
   // Дефолтная БД (соответствует таблицам Product Book)
@@ -12,6 +15,8 @@ AF.Store = (function () {
     return {
       schemaVersion: SCHEMA_VERSION,
       tx: [],                 // Transactions: {id,type,amount,currency,accountId/account,categoryId/cat,subcategoryId,comment/note,date,from,to,toAmount,originalAmount,exchangeRate}
+                              //   + необязательные метаданные (TASK_015, v3): payee (string), tags (string[]), location (string).
+                              //   Принцип «пусто = ключа нет»: пустое значение не хранится, ключ удаляется.
       accounts: [             // Accounts
         { id:'cash', name:'Наличные', emoji:'💵', type:'cash', color:'#22c55e', start:0, isArchived:false, currency:'€' },
         { id:'card', name:'Карта',    emoji:'💳', type:'bank', color:'#6d5df6', start:0, isArchived:false, currency:'€' },
@@ -44,6 +49,15 @@ AF.Store = (function () {
     });
     const def = s.accounts[0].id;
     s.tx.forEach(t => { if (!t.account && t.type !== 'transfer') t.account = def; });
+    // Метаданные операции (TASK_015). migrate — единственная точка, через
+    // которую проходят ВСЕ пути входа данных (старт, restore .afb, импорт
+    // JSON, импорт CSV), поэтому нормализация нужна только здесь.
+    // Проверка наличия сервиса — не декоративная: инвариант совместимости
+    // TASK_015 §0, сценарий С2 (новый store.js мог приехать с CDN раньше
+    // tx_meta_service.js). Без сервиса метаданные просто не нормализуются,
+    // остальная миграция отрабатывает полностью и данные не теряются.
+    const TM = (typeof AF !== 'undefined' && AF && AF.Services) ? AF.Services.TxMeta : null;
+    if (TM && typeof TM.normalizeTx === 'function') s.tx.forEach(t => TM.normalizeTx(t));
     s.schemaVersion = SCHEMA_VERSION;
     return s;
   }

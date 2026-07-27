@@ -21,6 +21,10 @@
 <!-- Архитектура (feature-ready для Flutter): core → database → services. UI ниже использует только AF.Store / AF.Services -->
 <script src="js/core/result.js"></script>
 <script src="js/core/app_info.js"></script>
+<!-- TASK_015: подключается ДО store.js — migrate() при первом load() должен
+     видеть сервис. Если файл почему-то не приехал (CDN-рассинхронизация),
+     приложение стартует без нормализации метаданных, но не падает. -->
+<script src="js/services/tx_meta_service.js"></script>
 <script src="js/database/store.js"></script>
 <script src="js/services/currency_service.js"></script>
 <script src="js/services/account_service.js"></script>
@@ -568,6 +572,55 @@
     border-radius:0;font-size:16px;color:var(--text);font-family:inherit;outline:none}
   #overlay .tx-note input::placeholder{color:var(--muted2)}
   #overlay .field{margin-bottom:0}
+
+  /* ---- TASK_015: метаданные операции (Получатель · Метки · Место) ---- */
+  /* Автоподстановка получателя. Элемент лежит прямым потомком .tx-body, а не
+     внутри строки: у .tx-card overflow:hidden (нужен для скругления строк), и
+     список бы обрезался. Координаты считает placePayeeAc() по геометрии поля —
+     тот же приём, что moveTxSegIndicator() (TASK_002/003A/014). */
+  #overlay .tx-body{position:relative}
+  #overlay .tx-ac{position:absolute;z-index:12;
+    background:var(--tx-card);border:1px solid var(--line);border-radius:14px;
+    box-shadow:0 8px 24px rgba(20,26,60,.14);overflow:hidden;max-height:212px;overflow-y:auto;
+    -webkit-overflow-scrolling:touch}
+  #overlay .tx-ac[hidden]{display:none}
+  #overlay .tx-ac button{display:block;width:100%;text-align:left;border:none;background:none;
+    font:inherit;font-size:15px;color:var(--text);padding:0 14px;min-height:44px;cursor:pointer;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #overlay .tx-ac button+button{box-shadow:inset 0 1px 0 var(--line)}
+  #overlay .tx-ac button.on,#overlay .tx-ac button:hover{background:var(--tx-fill)}
+  #overlay .tx-ac button:focus-visible{outline:2px solid var(--tx-transfer);outline-offset:-2px}
+
+  /* Метки: чипсы + поле ввода. Строка растёт по высоте при переносе чипсов. */
+  #overlay .tx-tags{align-items:flex-start;padding-top:11px;padding-bottom:11px}
+  #overlay .tx-tags-box{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  #overlay .tx-chips{display:contents}
+  #overlay .tx-chip{display:inline-flex;align-items:center;gap:5px;max-width:100%;
+    background:var(--tx-fill);color:var(--text);border-radius:9px;
+    padding:0 4px 0 9px;min-height:30px;font-size:14px;font-weight:600}
+  #overlay .tx-chip .tc-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* Крестик: видимый круг 22px, зона нажатия расширена до 44×44 через ::before
+     (тот же приём, что у кнопки закрытия страницы в TASK_014). */
+  #overlay .tx-chip button{position:relative;flex:0 0 auto;width:22px;height:22px;border:none;
+    border-radius:50%;background:none;color:inherit;opacity:.72;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;padding:0;font:inherit;font-size:15px;line-height:1}
+  #overlay .tx-chip button::before{content:"";position:absolute;left:50%;top:50%;
+    width:44px;height:44px;transform:translate(-50%,-50%)}
+  #overlay .tx-chip button:active{opacity:1}
+  #overlay .tx-chip button:focus-visible{outline:2px solid currentColor;outline-offset:1px}
+  #overlay .tx-tags-box input{flex:1;min-width:88px;border:none;background:none;padding:0;
+    border-radius:0;font-size:16px;color:var(--text);font-family:inherit;outline:none;min-height:30px}
+  #overlay .tx-tags-box input::placeholder{color:var(--muted2)}
+  #overlay .tx-tags-box input:disabled{opacity:.55}
+  /* Подпись выравнивается по первому ряду чипсов, а не по центру строки —
+     иначе при 10 перенесённых чипсах она уезжает в середину карточки */
+  #overlay .tx-tags-live{flex:0 0 auto;font-size:12px;color:var(--muted2);
+    align-self:flex-start;margin-top:7px}
+  #overlay .tx-chip.dupe{animation:txChipDupe .32s ease}
+  @keyframes txChipDupe{0%,100%{transform:scale(1)}35%{transform:scale(1.09)}}
+  @media (prefers-reduced-motion:reduce){
+    #overlay .tx-chip.dupe{animation:none;outline:2px solid currentColor;outline-offset:1px}
+  }
 
   /* чек: #receiptArea — правый слот строки; «Добавить» растянут на всю
      свободную ширину, чтобы зона нажатия была полноразмерной (≥44px) */
@@ -1630,13 +1683,40 @@
           <span class="tx-chev"><svg viewBox="0 0 8 13" aria-hidden="true"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
           <input type="date" id="fDate" class="tx-native" aria-label="Дата операции">
         </div>
+
+        <!-- TASK_015: Получатель — последняя строка основной карточки.
+             Скрыт для перевода (роль адресата занята полем «На счёт»). -->
+        <div class="tx-row tx-note tx-ac-wrap" id="payeeRow">
+          <span class="tx-ic">🏪</span>
+          <input type="text" id="fPayee" placeholder="Получатель" aria-label="Получатель"
+                 autocomplete="off" autocapitalize="sentences" enterkeyhint="done"
+                 role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="payeeAc">
+        </div>
       </div>
 
-      <!-- Карточка деталей: Примечание · Чек -->
+      <!-- Карточка деталей: Примечание · Метки · Место · Чек -->
       <div class="tx-card">
         <div class="tx-row tx-note field">
           <span class="tx-ic">✏️</span>
           <input type="text" id="fNote" placeholder="Примечание" aria-label="Примечание">
+        </div>
+
+        <!-- TASK_015: Метки — чипсы + поле ввода (Enter/запятая фиксируют тег) -->
+        <div class="tx-row tx-tags" id="tagsRow" role="group" aria-label="Метки">
+          <span class="tx-ic">🏷️</span>
+          <div class="tx-tags-box">
+            <span class="tx-chips" id="tagChips"></span>
+            <input type="text" id="fTagInput" placeholder="Метки" aria-label="Добавить метку"
+                   autocomplete="off" autocapitalize="none" enterkeyhint="enter">
+          </div>
+          <span class="tx-tags-live" id="tagsLive" aria-live="polite"></span>
+        </div>
+
+        <!-- TASK_015: Место — только текст, без GPS/геолокации -->
+        <div class="tx-row tx-note" id="locationRow">
+          <span class="tx-ic">📍</span>
+          <input type="text" id="fLocation" placeholder="Место" aria-label="Место"
+                 autocomplete="off" autocapitalize="sentences" enterkeyhint="done">
         </div>
         <div id="receiptBlock">
           <div class="tx-row" id="receiptRow">
@@ -1671,6 +1751,12 @@
       </div>
 
       <button class="btn-del" id="delBtn" style="display:none">Удалить операцию</button>
+
+      <!-- TASK_015: список подсказок получателя лежит прямым потомком .tx-body,
+           а не внутри строки: у .tx-card overflow:hidden (скругление строк),
+           который обрезал бы выпадающий список. Позиция считается по геометрии
+           поля; absolute внутри скроллящейся .tx-body едет со скроллом сам. -->
+      <div class="tx-ac" id="payeeAc" role="listbox" aria-label="Подсказки получателя" hidden></div>
     </div>
 
     <div class="tx-footer">
@@ -1832,7 +1918,7 @@
     </div>
     <div class="search-box">
       <span class="search-ic">🔍</span>
-      <input id="searchInput" type="text" placeholder="Категория, заметка, сумма, счёт…" autocomplete="off">
+      <input id="searchInput" type="text" placeholder="Категория, получатель, метка, место, сумма…" autocomplete="off">
       <button class="search-clear" id="searchClear" style="display:none">×</button>
     </div>
     <div class="search-hint" id="searchHint">Введите запрос — например «такси», «150» или «карта».</div>
@@ -2259,6 +2345,34 @@ const curSymbol=cur=>AF.Services.Currency.SYM[cur]||cur; // 'EUR'->'€', '€'-
 const EMOJI_POOL=['🏷️','🧾','🍔','🚗','🏠','🛍️','💊','🎮','📄','☕','✈️','📚','🐾','💼','🎁','📈','🔑','🎵','👕','⛽','🚿','📱','🎓','🏥','🍷','🎬','💪','🎨'];
 const COLOR_POOL=['#ff6b6b','#ffa94d','#ffd43b','#da77f2','#9775fa','#4dabf7','#3bc9db','#69db7c','#a9e34b','#f783ac','#ff8787','#63e6be','#fab005','#e599f7','#74c0fc','#ffc078'];
 
+/* ---- TASK_015: единая точка доступа к сервису метаданных ----
+   Инвариант совместимости (TASK_015 §0, сценарий С1): новый index.html может
+   быть отдан CDN вместе со старым набором js/ — тогда tx_meta_service.js
+   отсутствует. Прямой вызов AF.Services.TxMeta.* уронил бы приложение на
+   старте, поэтому обращения идут ТОЛЬКО через этот хелпер, а у каждого
+   вызова есть поведение по умолчанию на случай null. */
+function txMeta(){
+  return (window.AF && AF.Services && AF.Services.TxMeta) ? AF.Services.TxMeta : null;
+}
+// Нормализация с безопасной деградацией: без сервиса значения не теряются,
+// а лишь не проходят полную нормализацию (простой trim как минимум).
+function metaNormPayee(v){const M=txMeta();return M?M.normalizePayee(v):(typeof v==='string'?v.trim():'');}
+function metaNormLocation(v){const M=txMeta();return M?M.normalizeLocation(v):(typeof v==='string'?v.trim():'');}
+function metaNormTags(v){
+  const M=txMeta();
+  if(M)return M.normalizeTags(v);
+  if(Array.isArray(v))return v.filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim());
+  if(typeof v==='string')return v.split(/[,;\n]/).map(x=>x.trim().replace(/^#+/,'').trim()).filter(Boolean);
+  return [];
+}
+// Запись метаданных в операцию по принципу «пусто = ключа нет» (TASK_015 §6.2).
+function applyTxMeta(t,payee,tags,location){
+  const p=metaNormPayee(payee); if(p)t.payee=p; else delete t.payee;
+  const g=metaNormTags(tags);   if(g.length)t.tags=g; else delete t.tags;
+  const l=metaNormLocation(location); if(l)t.location=l; else delete t.location;
+  return t;
+}
+
 /* ============ Состояние ============ */
 // Состояние = БД из Repository (AF.Store). Структура — в js/database/store.js
 let state=AF.Store.defaults();
@@ -2519,7 +2633,10 @@ function homeTxRow(t){
   const c=catById(t.cat);
   const acc=state.accounts.find(a=>a.id===t.account);
   const sub=t.subcategoryId?subcatById(t.subcategoryId):null;
-  const extra=[sub?sub.name:null,t.note?t.note:null].filter(Boolean).map(esc).join(' · ');
+  // TASK_015: payee первым — категория уже видна строкой выше, поэтому
+  // «Mercadona» информативнее подкатегории. Теги и место в списках не
+  // показываются (ОВ-6). Отсутствие поля ничего не меняет: filter(Boolean).
+  const extra=[t.payee||null,sub?sub.name:null,t.note?t.note:null].filter(Boolean).map(esc).join(' · ');
   return `<div class="home-tx" data-id="${t.id}">
     <div class="home-em" style="background:${c.color}2e">${c.emoji}</div>
     <div class="home-body">
@@ -2714,7 +2831,7 @@ function txRow(t){
   return `<div class="tx" data-id="${t.id}" style="background:${c.color}14">
     <div class="em" style="background:${c.color}2e">${c.emoji}</div>
     <div class="info"><div class="t1">${c.name}${sub?' · '+esc(sub.name):''}${t.receiptPath?' <span style="font-size:12px">🧾</span>':''}</div>
-      <div class="t2">${(acc?acc.emoji+' '+acc.name:'')}${t.note?' · '+esc(t.note):''}</div></div>
+      <div class="t2">${(acc?acc.emoji+' '+acc.name:'')}${t.payee?' · '+esc(t.payee):''}${t.note?' · '+esc(t.note):''}</div></div>
     <div class="amt ${t.type==='income'?'inc':'exp'}">${signed(t.amount,t.type)}</div>
   </div>`;
 }
@@ -2913,6 +3030,11 @@ function txSearchText(t){
     parts.push(t.type==='income'?'доход':'расход');
   }
   if(t.note)parts.push(t.note);
+  // TASK_015: получатель, метки и место — строго аддитивно. Для операций без
+  // метаданных корпус побайтово совпадает с прежним, поэтому результаты
+  // существующих запросов не могут сократиться.
+  const M=txMeta();
+  if(M){const m=M.metaSearchText(t);if(m)parts.push(m);}
   parts.push(String(t.amount), String(Math.round(t.amount)));
   return parts.join(' ').toLowerCase();
 }
@@ -2927,7 +3049,10 @@ function runSearch(q){
   $('#searchClear').style.display=q?'block':'none';
   const hint=$('#searchHint'), list=$('#searchList');
   if(!q){hint.style.display='block';hint.textContent='Введите запрос — например «такси», «150» или «карта».';list.innerHTML='';return;}
-  const terms=q.split(/\s+/).filter(Boolean);
+  // TASK_015: '#' в данных не хранится (только отображается), поэтому запрос
+  // «#еда» и «еда» должны находить одно и то же.
+  const terms=q.split(/\s+/).map(s=>s.replace(/^#+/,'')).filter(Boolean);
+  if(!terms.length){hint.style.display='block';hint.textContent='Введите запрос — например «такси», «150» или «карта».';list.innerHTML='';return;}
   const res=state.tx.filter(t=>{const s=txSearchText(t);return terms.every(term=>s.includes(term));});
   if(!res.length){hint.style.display='block';hint.textContent='Ничего не найдено по запросу «'+q+'».';list.innerHTML='';return;}
   hint.style.display='none';
@@ -3870,14 +3995,20 @@ function openSheet(id){
     aType=t.type;aExpr=String(t.amount);aCat=t.cat||CATS.expense[0].id;aSubcat=t.subcategoryId||null;aReceipt=t.receiptPath||null;
     aToExpr=String(t.toAmount||t.amount);transFocus='from';
     $('#fDate').value=t.date.slice(0,10);$('#fNote').value=t.note||'';
+    // TASK_015: метаданные — защитное чтение, отсутствующие поля дают пустоту
+    $('#fPayee').value=t.payee||'';$('#fLocation').value=t.location||'';
+    aTags=Array.isArray(t.tags)?t.tags.slice():[];
     if(t.type==='transfer'){$('#fFrom').value=t.from;$('#fTo').value=t.to;}
     else $('#fAccount').value=t.account;
     $('#delBtn').style.display='block';
   }else{
     aType=AF.Services.TxForm.DEFAULT_TYPE;aExpr='0';aToExpr='0';transFocus='from';aCat=CATS.expense[0].id;aSubcat=null;aReceipt=null;
     $('#fDate').value=new Date().toISOString().slice(0,10);$('#fNote').value='';
+    // TASK_015: обязательный сброс — иначе значения «протекут» между открытиями
+    $('#fPayee').value='';$('#fLocation').value='';aTags=[];
     $('#delBtn').style.display='none';
   }
+  $('#fTagInput').value='';closePayeeAc();renderTagChips();
   $('#fRepeat').value='none';
   $('#txSheetTitle').textContent=AF.Services.TxForm.titleFor(!!id);
   setTxMoreOpen(false); // «Дополнительно» всегда открывается свёрнутым
@@ -4018,6 +4149,129 @@ function updateSaveEnabled(){
   btn.disabled=!(val>0);
 }
 
+/* ============ TASK_015: метаданные операции в форме ============ */
+// Теги живут в отдельном состоянии страницы (как aCat/aSubcat/aReceipt), а не
+// в DOM: чипсы перерисовываются целиком, порядок ввода сохраняется.
+let aTags=[];
+const TX_MAX_TAGS=()=>{const M=txMeta();return M?M.MAX_TAGS:10;};
+
+function renderTagChips(){
+  const box=$('#tagChips'), inp=$('#fTagInput'), live=$('#tagsLive');
+  if(!box)return;
+  box.innerHTML=aTags.map((t,i)=>
+    `<span class="tx-chip" data-i="${i}"><span class="tc-t">#${esc(t)}</span>`+
+    `<button type="button" aria-label="Удалить метку ${esc(t)}">×</button></span>`).join('');
+  $$('#tagChips .tx-chip button').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();
+    removeTag(+b.parentNode.dataset.i);
+  });
+  const max=TX_MAX_TAGS(), full=aTags.length>=max;
+  if(inp){
+    inp.disabled=full;
+    inp.placeholder=full?'':'Метки';
+  }
+  if(live)live.textContent=full?('Максимум '+max):'';
+  refreshCardSeps();
+}
+function removeTag(i){
+  if(i<0||i>=aTags.length)return;
+  aTags.splice(i,1);
+  renderTagChips();
+  haptic(6);
+}
+// Возвращает true, если тег добавлен; false — дубль/пусто/лимит.
+function addTagsFromText(text){
+  const max=TX_MAX_TAGS();
+  const parsed=metaNormTags(text);
+  if(!parsed.length)return false;
+  let added=false;
+  parsed.forEach(t=>{
+    if(aTags.length>=max)return;
+    const k=t.toLocaleLowerCase();
+    const dup=aTags.findIndex(x=>x.toLocaleLowerCase()===k);
+    if(dup>=0){flashChip(dup);return;}
+    aTags.push(t);added=true;
+  });
+  if(added){renderTagChips();haptic(8);}
+  return added;
+}
+function flashChip(i){
+  renderTagChips();
+  const el=$(`#tagChips .tx-chip[data-i="${i}"]`);
+  if(!el)return;
+  el.classList.remove('dupe');void el.offsetWidth;el.classList.add('dupe');
+  setTimeout(()=>el.classList.remove('dupe'),400);
+}
+
+/* Автоподстановка получателя: варианты вычисляются из существующих операций,
+   отдельного справочника нет. Подстановка происходит ТОЛЬКО по явному выбору
+   пользователя — введённый текст никогда не заменяется автоматически. */
+let payeeAcItems=[], payeeAcIdx=-1;
+function closePayeeAc(){
+  const box=$('#payeeAc'), inp=$('#fPayee');
+  if(!box)return;
+  box.hidden=true;box.innerHTML='';
+  payeeAcItems=[];payeeAcIdx=-1;
+  if(inp){inp.setAttribute('aria-expanded','false');inp.removeAttribute('aria-activedescendant');}
+}
+/* Позиция списка считается по фактической геометрии поля, в системе координат
+   содержимого .tx-body (absolute внутри неё едет со скроллом сам). Если снизу
+   во вьюпорте не хватает места — раскрывается вверх. */
+function placePayeeAc(){
+  const box=$('#payeeAc'), inp=$('#fPayee'), body=$('#txBody');
+  if(!box||box.hidden||!inp||!body)return;
+  const r=inp.getBoundingClientRect(), b=body.getBoundingClientRect(), gap=6;
+  const left=r.left-b.left, top=r.bottom-b.top+body.scrollTop+gap;
+  box.style.left=left+'px';
+  box.style.width=r.width+'px';
+  box.style.maxHeight='';
+  const h=Math.min(box.scrollHeight,212);
+  const below=b.bottom-r.bottom-gap-8, above=r.top-b.top-gap-8;
+  if(below>=h||below>=above){
+    box.style.top=top+'px';
+    box.style.maxHeight=Math.max(88,Math.min(212,below))+'px';
+  }else{
+    const hh=Math.max(88,Math.min(212,above));
+    box.style.top=(r.top-b.top+body.scrollTop-gap-hh)+'px';
+    box.style.maxHeight=hh+'px';
+  }
+}
+function updatePayeeAc(){
+  const M=txMeta(), inp=$('#fPayee'), box=$('#payeeAc');
+  if(!M||!inp||!box){closePayeeAc();return;} // без сервиса подсказок просто нет
+  const q=inp.value;
+  const cur=(q||'').trim().toLocaleLowerCase();
+  const items=M.payeeSuggestions(state.tx,q).filter(v=>v.toLocaleLowerCase()!==cur);
+  if(!items.length){closePayeeAc();return;}
+  payeeAcItems=items;payeeAcIdx=-1;
+  box.innerHTML=items.map((v,i)=>
+    `<button type="button" role="option" aria-selected="false" id="payeeAcO${i}" data-i="${i}">${esc(v)}</button>`).join('');
+  // mousedown, а не click: click приходит после blur, который уже закрыл список
+  $$('#payeeAc button').forEach(b=>b.onmousedown=e=>{e.preventDefault();pickPayee(+b.dataset.i);});
+  box.hidden=false;
+  inp.setAttribute('aria-expanded','true');
+  placePayeeAc();
+}
+function pickPayee(i){
+  const inp=$('#fPayee');
+  if(!inp||i<0||i>=payeeAcItems.length)return;
+  inp.value=payeeAcItems[i];   // единственное место, где значение подставляется
+  closePayeeAc();
+  haptic(8);
+}
+function movePayeeAc(d){
+  if(!payeeAcItems.length)return;
+  payeeAcIdx=(payeeAcIdx+d+payeeAcItems.length)%payeeAcItems.length;
+  const inp=$('#fPayee');
+  $$('#payeeAc button').forEach((b,i)=>{
+    const on=i===payeeAcIdx;
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-selected',on?'true':'false');
+    if(on)b.scrollIntoView({block:'nearest'});
+  });
+  if(inp)inp.setAttribute('aria-activedescendant',payeeAcIdx>=0?'payeeAcO'+payeeAcIdx:'');
+}
+
 function setTxMoreOpen(open){
   const btn=$('#txMoreBtn');
   $('#scheduleBlock').style.display=open?'':'none';
@@ -4047,6 +4301,13 @@ function setType(t,keepCat){
   $('#receiptBlock').style.display=vis.receiptBlock?'':'none';
   $('#txMoreCard').style.display=vis.scheduleBlock?'':'none'; // «Дополнительно» пусто при переводе
   $('#accField').style.display=vis.accField?'':'none';
+  // TASK_015: «Получатель» скрыт у перевода; метки и место видимы всегда.
+  // Значение payee при этом НЕ стирается — если оно уже есть у операции
+  // (например, из импорта), оно сохранится при следующем saveTx().
+  $('#payeeRow').style.display=vis.payeeRow?'':'none';
+  $('#tagsRow').style.display=vis.tagsRow?'':'none';
+  $('#locationRow').style.display=vis.locationRow?'':'none';
+  if(!vis.payeeRow)closePayeeAc();
   $('.display').style.display=vis.amountDisplay?'':'none'; // перевод → двусторонняя карточка
   $('#transDisplay').style.display=vis.transDisplay?'':'none';
   if(!isT)$('#transRate').style.display='none';
@@ -4231,6 +4492,13 @@ function saveTx(){
   if(aType!=='transfer'&&!aCat){toast('Выберите категорию');return;}
   const date=$('#fDate').value||new Date().toISOString().slice(0,10);
   const note=$('#fNote').value.trim();
+  // TASK_015: незафиксированный текст в поле меток не теряется при сохранении
+  if($('#fTagInput').value.trim()){addTagsFromText($('#fTagInput').value);$('#fTagInput').value='';}
+  // «Получатель» скрыт у перевода — берём уже сохранённое значение операции,
+  // а не пустое скрытое поле, чтобы редактирование не затирало данные импорта.
+  const editTx=editId?state.tx.find(x=>x.id==editId):null;
+  const payee=(aType==='transfer')?(editTx&&editTx.payee||''):$('#fPayee').value;
+  const location=$('#fLocation').value, tags=aTags;
   if(aType==='transfer'){
     const from=$('#fFrom').value, to=$('#fTo').value;
     if(from===to){toast('Выберите разные счета');return;}
@@ -4240,14 +4508,16 @@ function saveTx(){
     if(diffCur&&(!toVal||toVal<=0)){toast('Укажите сумму зачисления');transFocus='to';updateDisplay();openKeypad();return;}
     if(editId){const t=state.tx.find(x=>x.id==editId);
       delete t.cat;delete t.account;
-      Object.assign(t,{type:'transfer',from,to,amount:val,toAmount:toVal,date,note});}
-    else state.tx.push({id:Date.now(),type:'transfer',from,to,amount:val,toAmount:toVal,date,note});
+      Object.assign(t,{type:'transfer',from,to,amount:val,toAmount:toVal,date,note});
+      applyTxMeta(t,payee,tags,location);}
+    else state.tx.push(applyTxMeta({id:Date.now(),type:'transfer',from,to,amount:val,toAmount:toVal,date,note},payee,tags,location));
   }else if(editId){
     const t=state.tx.find(x=>x.id==editId);
     delete t.from;delete t.to;delete t.toAmount;
     Object.assign(t,{type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note,receiptPath:aReceipt||null});
+    applyTxMeta(t,payee,tags,location);
   }else{
-    state.tx.push({id:Date.now(),type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note,receiptPath:aReceipt||null});
+    state.tx.push(applyTxMeta({id:Date.now(),type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note,receiptPath:aReceipt||null},payee,tags,location));
   }
   // Расписание: при выбранном повторе создаём регулярное напоминание (для новой операции)
   const rep=$('#fRepeat').value;
@@ -4487,19 +4757,22 @@ function loadDemo(){
   for(let m=0;m<3;m++){
     const base=new Date(today.getFullYear(),today.getMonth()-m,1);
     // доходы
-    tx.push({id:Date.now()+Math.random(),type:'income',amount:rnd(1800,2200),cat:'realty',subcategoryId:sub('realty',0),account:accs[0],date:dstr(base,5),note:'Inmo Digital'});
+    // TASK_015: метаданные заполнены НЕ у всех демо-операций — так сразу
+    // видно и новую функциональность, и смешанный случай «часть без полей»
+    tx.push({id:Date.now()+Math.random(),type:'income',amount:rnd(1800,2200),cat:'realty',subcategoryId:sub('realty',0),account:accs[0],date:dstr(base,5),note:'Inmo Digital',payee:'Inmo Digital',tags:['работа']});
     tx.push({id:Date.now()+Math.random(),type:'income',amount:rnd(150,400),cat:'income_main',account:accs[1]||accs[0],date:dstr(base,18),note:''});
     // расходы: [категория, индекс подкатегории|null, сумма]
-    [['products',2,rnd(280,420)],      // Mercadona
-     ['prius',4,rnd(60,140)],          // Бензин
-     ['flat',0,rnd(90,150)],           // Comunidad
-     ['health',2,rnd(20,120)],         // Аптека
-     ['clothes',3,rnd(40,160)],        // Одежда Алекс
-     ['beauty',2,rnd(20,60)],          // Парикмахерская
-     ['tech',3,rnd(30,300)],           // Электроника
-     ['subscriptions',null,rnd(10,40)],
-     ['home',1,rnd(20,90)]             // Бытовые
-    ].forEach((e,i)=>tx.push({id:Date.now()+Math.random()+i,type:'expense',amount:e[2],cat:e[0],subcategoryId:e[1]!=null?sub(e[0],e[1]):null,account:accs[i%accs.length],date:dstr(base,3+i*3),note:''}));
+    // [категория, индекс подкатегории|null, сумма, получатель|null, метки|null, место|null]
+    [['products',2,rnd(280,420),'Mercadona',['еда'],'Oviedo'],
+     ['prius',4,rnd(60,140),'Repsol',['авто'],null],
+     ['flat',0,rnd(90,150),null,['жильё'],null],
+     ['health',2,rnd(20,120),'Farmacia Uría',null,'Oviedo'],
+     ['clothes',3,rnd(40,160),null,null,null],
+     ['beauty',2,rnd(20,60),null,null,null],
+     ['tech',3,rnd(30,300),'MediaMarkt',['техника'],'Gijón'],
+     ['subscriptions',null,rnd(10,40),null,null,null],
+     ['home',1,rnd(20,90),'Mercadona',['дом'],null]
+    ].forEach((e,i)=>tx.push(applyTxMeta({id:Date.now()+Math.random()+i,type:'expense',amount:e[2],cat:e[0],subcategoryId:e[1]!=null?sub(e[0],e[1]):null,account:accs[i%accs.length],date:dstr(base,3+i*3),note:''},e[3],e[4],e[5])));
   }
   state.tx=tx;
   state.budgets={products:400,prius:200,subscriptions:50,beauty:80};
@@ -4586,6 +4859,47 @@ $('#fAccount').onchange=()=>{haptic(8);updateAccBals();};
 $('#fDate').onchange=()=>{haptic(8);syncDateRow();};
 $('#fRepeat').onchange=syncRepeatRow;
 $('#txMoreBtn').onclick=()=>setTxMoreOpen($('#scheduleBlock').style.display==='none');
+
+/* ---- TASK_015: обработчики метаданных ---- */
+// Закреплённый футер (TASK_014) может перекрыть нижние строки при поднятой
+// системной клавиатуре — поэтому при фокусе доскроллливаем строку в центр.
+function metaFieldFocus(e){
+  const row=e.target.closest('.tx-row');
+  if(row)setTimeout(()=>row.scrollIntoView({block:'center',behavior:'smooth'}),260);
+}
+['#fPayee','#fLocation','#fTagInput'].forEach(sel=>{const el=$(sel);if(el)el.addEventListener('focus',metaFieldFocus);});
+
+$('#fPayee').oninput=updatePayeeAc;
+$('#fPayee').onblur=()=>setTimeout(closePayeeAc,120);
+// absolute внутри .tx-body едет со скроллом сам; пересчёт нужен только при
+// смене размеров вьюпорта (поворот экрана, открытие системной клавиатуры)
+window.addEventListener('resize',placePayeeAc);
+$('#fPayee').onkeydown=e=>{
+  if(e.key==='ArrowDown'){e.preventDefault();movePayeeAc(1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();movePayeeAc(-1);}
+  else if(e.key==='Enter'){ if(payeeAcIdx>=0){e.preventDefault();pickPayee(payeeAcIdx);} else {closePayeeAc();e.target.blur();} }
+  else if(e.key==='Escape'){ if(!$('#payeeAc').hidden){e.stopPropagation();closePayeeAc();} }
+};
+// Тег фиксируется по Enter или запятой. Пробел разделителем НЕ является —
+// иначе многословные метки («бизнес расходы») стали бы невозможны.
+$('#fTagInput').onkeydown=e=>{
+  if(e.key==='Enter'||e.key===','){
+    e.preventDefault();
+    if(addTagsFromText(e.target.value))e.target.value='';
+    else if(metaNormTags(e.target.value).length)e.target.value=''; // дубль — поле всё равно очищаем
+  }else if(e.key==='Backspace'&&!e.target.value&&aTags.length){
+    e.preventDefault();removeTag(aTags.length-1);
+  }else if(e.key==='Escape'&&e.target.value){
+    e.stopPropagation();e.target.value='';
+  }
+};
+// Вставка «еда, семья» из буфера — сразу превращается в чипсы
+$('#fTagInput').oninput=e=>{ if(/[,;\n]/.test(e.target.value)){ addTagsFromText(e.target.value); e.target.value=''; } };
+// Незафиксированный текст не теряется: при потере фокуса он тоже становится тегом
+$('#fTagInput').onblur=e=>{ if(e.target.value.trim()){ addTagsFromText(e.target.value); e.target.value=''; } };
+// Тап по пустому месту строки меток — фокус в поле ввода
+$('#tagsRow').onclick=e=>{ if(e.target.closest('.tx-chip'))return; const i=$('#fTagInput'); if(i&&!i.disabled)i.focus(); };
+
 $('#kdDone').onclick=closeKeypad;
 $('#catToggle').onclick=()=>setCatOpen($('#catStrip').style.display==='none');
 $$('.keypad button[data-k]').forEach(b=>{const k=b.dataset.k;if(k&&k!=='back-hold')b.onclick=()=>key(k);});
@@ -4782,6 +5096,22 @@ function resolveCatSub(name,type){
   // 3) не нашли — создаём категорию по имени
   return {cat:ensureCat(name,type),sub:null};
 }
+// TASK_015: наш CSV-экспорт пишет иерархию одной колонкой «Категория / Подкатегория»
+// (export_service._catPath). Разбираем её обратно, иначе round-trip создал бы
+// категорию с буквальным именем «Продукты / Супермаркеты».
+function resolveCatPath(name,type){
+  const raw=(name||'').trim();
+  const i=raw.indexOf(' / ');
+  if(i<0)return resolveCatSub(raw,type);
+  const catName=raw.slice(0,i).trim(), subName=raw.slice(i+3).trim();
+  if(!catName)return resolveCatSub(subName,type);
+  const cat=ensureCat(catName,type);
+  if(!subName)return {cat,sub:null};
+  const norm=subName.toLowerCase();
+  let s=(state.subcats||[]).find(x=>x.categoryId===cat&&x.name.trim().toLowerCase()===norm);
+  if(!s){s={id:'s'+Date.now().toString(36)+state.subcats.length,categoryId:cat,name:subName,createdAt:Date.now()};state.subcats.push(s);}
+  return {cat,sub:s.id};
+}
 function ensureAcc(name,currency){
   name=(name||'').trim();
   if(!name)return state.accounts[0].id;
@@ -4803,6 +5133,7 @@ function importCSV(text){
   const iNote=findMain(['note','nota','descrip','comment','коммент','примеч','memo']);
   const iPayee=find(['контрагент','payee','counterparty','beneficiary']);
   const iPlace=find(['место','place','location','locat']);
+  const iTags=find(['метки','теги','tags','labels','etiquetas']); // TASK_015
   const iType=findMain(['type','tipo','тип','income/expense','flow','kind']);
   const iAcc =findMain(['account','cuenta','счет','счёт','wallet','cartera','konto']);
   const iCur =findMain(['currency','moneda','валюта','divisa']);
@@ -4818,13 +5149,17 @@ function importCSV(text){
     return;
   }
   const get=(r,i)=>i>=0&&i<r.length?r[i].trim():'';
-  const noteOf=r=>[get(r,iPayee),get(r,iPlace),get(r,iNote)].filter(Boolean).join(' · ');
+  // TASK_015 (ОВ-1): «Контрагент»/«Метки»/«Место» больше НЕ склеиваются в
+  // примечание — каждое значение идёт в собственное поле операции, а note
+  // содержит только колонку примечания. Файлы без этих колонок ведут себя
+  // как раньше: find() вернёт -1, get() — '', ключи не создадутся.
   const added=[];let skipped=0;
   for(let k=1;k<rows.length;k++){
     const r=rows[k];if(!r.some(x=>x.trim()))continue;
     const date=parseDate(get(r,iDate));
     if(!date){skipped++;continue;}
-    const note=noteOf(r);
+    const note=get(r,iNote);
+    const meta=[get(r,iPayee),get(r,iTags),get(r,iPlace)];
     const mainAmt=iAmt>=0?parseAmount(get(r,iAmt)):NaN;
     const tAccName=get(r,iTAcc), tAmtRaw=get(r,iTAmt);
     // ===== ПЕРЕВОД между счетами =====
@@ -4835,9 +5170,9 @@ function importCSV(text){
       if(!isNaN(mainAmt)&&mainAmt<0){from=mainName;fromAmt=-mainAmt;fromCur=mainCur;to=tAccName;toAmt=Math.abs(tAmt);toCur=tCur;}
       else{from=tAccName;fromAmt=Math.abs(tAmt);fromCur=tCur;to=mainName;toAmt=Math.abs(mainAmt);toCur=mainCur;}
       if(!(fromAmt>0)&&!(toAmt>0)){skipped++;continue;}
-      added.push({id:Date.now()+Math.random()+k,type:'transfer',
+      added.push(applyTxMeta({id:Date.now()+Math.random()+k,type:'transfer',
         from:ensureAcc(from,fromCur),to:ensureAcc(to,toCur),
-        amount:Math.round(fromAmt*100)/100,toAmount:Math.round(toAmt*100)/100,date,note});
+        amount:Math.round(fromAmt*100)/100,toAmount:Math.round(toAmt*100)/100,date,note},meta[0],meta[1],meta[2]));
       continue;
     }
     // ===== ДОХОД / РАСХОД =====
@@ -4855,9 +5190,9 @@ function importCSV(text){
       else{skipped++;continue;}
     }
     if(!amount||amount<=0){skipped++;continue;}
-    const rc=resolveCatSub(get(r,iCat),type);
-    added.push({id:Date.now()+Math.random()+k,type,amount:Math.round(amount*100)/100,
-      cat:rc.cat,subcategoryId:rc.sub,account:ensureAcc(get(r,iAcc),get(r,iCur)),date,note});
+    const rc=resolveCatPath(get(r,iCat),type);
+    added.push(applyTxMeta({id:Date.now()+Math.random()+k,type,amount:Math.round(amount*100)/100,
+      cat:rc.cat,subcategoryId:rc.sub,account:ensureAcc(get(r,iAcc),get(r,iCur)),date,note},meta[0],meta[1],meta[2]));
   }
   if(!added.length){toast('Не удалось распознать операции');return;}
   const nT=added.filter(t=>t.type==='transfer').length, nIE=added.length-nT;
