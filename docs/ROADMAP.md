@@ -201,6 +201,17 @@
     выполнена — инструмент iOS-симулятора вернул ошибку в этой сессии,
     остаётся единственным открытым пунктом. См.
     [`docs/tasks/TASK_017_PREMIUM_NAVIGATION_DRAWER.md`](tasks/TASK_017_PREMIUM_NAVIGATION_DRAWER.md).
+20. **TASK_017A_DRAWER_REMOVE_CAPITAL_CARD** — `DONE`. Небольшой
+    corrective follow-up к `TASK_017` (не занимает номер `TASK_018`):
+    карточка «Общий капитал» (баланс + спарклайн) полностью убрана из
+    drawer по правке пользователя — разметка, CSS (в скоупе
+    `.drawer-cap`, общие `.dc-l`/`.dc-v` донат-диаграмм не затронуты) и
+    функция `renderDrawerCap()` удалены. Footer автоматически подтянулся
+    к последней группе меню (`margin-top:auto`), без разрыва. Остальной
+    дизайн `TASK_017` не изменён; `totalCapital()` (Главная, экран
+    «Счета») не затронута. Версия кэша `sw.js` поднята `finance-v159` →
+    `finance-v160`. Тесты: 534 passed, 0 failed. См.
+    [`docs/tasks/TASK_017A_DRAWER_REMOVE_CAPITAL_CARD.md`](tasks/TASK_017A_DRAWER_REMOVE_CAPITAL_CARD.md).
 
 ## Пояснения
 

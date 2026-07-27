@@ -1,6 +1,6 @@
 # PROJECT_STATUS — A-Lex Finance
 
-**Обновлено:** 2026-07-27 (`TASK_017`)
+**Обновлено:** 2026-07-27 (`TASK_017A`)
 
 ## Состояние приложения
 
@@ -16,11 +16,12 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_017_PREMIUM_NAVIGATION_DRAWER`](tasks/TASK_017_PREMIUM_NAVIGATION_DRAWER.md)
+- **Задача:** [`TASK_017A_DRAWER_REMOVE_CAPITAL_CARD`](tasks/TASK_017A_DRAWER_REMOVE_CAPITAL_CARD.md)
 - **Статус:** `DONE` (534 passed, 0 failed по всем 7 файлам тестов —
-  только визуальная переработка, логика не затронута; проверено в
-  браузере — мобильный/desktop viewport, светлая/тёмная тема)
-- Ранее завершённые задачи: [`TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION`](tasks/TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION.md),
+  только визуальное удаление одного элемента, логика не затронута;
+  проверено в браузере)
+- Ранее завершённые задачи: [`TASK_017_PREMIUM_NAVIGATION_DRAWER`](tasks/TASK_017_PREMIUM_NAVIGATION_DRAWER.md),
+  [`TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION`](tasks/TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION.md),
   [`TASK_015_ADVANCED_TRANSACTION_METADATA`](tasks/TASK_015_ADVANCED_TRANSACTION_METADATA.md),
   [`TASK_014_TX_PAGE_PREMIUM_REDESIGN`](tasks/TASK_014_TX_PAGE_PREMIUM_REDESIGN.md),
   [`TASK_013_FULLSCREEN_ADD_TRANSACTION`](tasks/TASK_013_FULLSCREEN_ADD_TRANSACTION.md),
@@ -40,19 +41,49 @@
 
 ## Активная задача
 
-Нет. `TASK_017_PREMIUM_NAVIGATION_DRAWER` — статус `DONE`, реализация
+Нет. `TASK_017A_DRAWER_REMOVE_CAPITAL_CARD` — статус `DONE`, небольшой
+follow-up к `TASK_017`: карточка «Общий капитал» полностью убрана из
+drawer, остальной дизайн не тронут, footer аккуратно подтянут к
+последней группе меню без визуального разрыва. `totalCapital()` не
+затронута (по-прежнему используется на Главной и на экране «Счета»).
+Версия кэша `sw.js` поднята `finance-v159` → `finance-v160`.
+
+`TASK_017_PREMIUM_NAVIGATION_DRAWER` — статус `DONE`, реализация
 выполнена, закоммичена (`28e736f`), запушена в `origin/main` и
-**проверена на production**: https://adar4026.github.io/finance/ отдаёт
-`finance-v159`, drawer открывается/закрывается, светлая и тёмная темы,
-переходы на экраны, отсутствие остаточных blur/scale и console errors —
-подтверждены (см. §7.1 TASK-файла). **Реальная проверка на iPhone
-Safari/PWA не выполнена** — инструмент iOS-симулятора вернул ошибку
-(`stopped retrying after repeated crashes`); это единственный открытый
-пункт задачи, рекомендуется пользователю на живой версии `finance-v159`
-(виртуальный мобильный viewport не воспроизводит реальные
-safe-area-отступы). Ручная проверка `TASK_015` на реальном iPhone также
-остаётся открытым пунктом. `TASK_002A` (полноценный визуально заметный
-Liquid Glass) остаётся отложенной.
+**проверена на production**: https://adar4026.github.io/finance/ отдавал
+`finance-v159` (проверка проведена до `TASK_017A`), drawer
+открывается/закрывается, светлая и тёмная темы, переходы на экраны,
+отсутствие остаточных blur/scale и console errors — подтверждены (см.
+§7.1 TASK-файла `TASK_017`). **Реальная проверка на iPhone Safari/PWA не
+выполнена** — инструмент iOS-симулятора вернул ошибку (`stopped
+retrying after repeated crashes`); это единственный открытый пункт по
+обеим задачам (`TASK_017`/`TASK_017A`), рекомендуется пользователю на
+живой версии после публикации `finance-v160` (виртуальный мобильный
+viewport не воспроизводит реальные safe-area-отступы). Ручная проверка
+`TASK_015` на реальном iPhone также остаётся открытым пунктом.
+`TASK_002A` (полноценный визуально заметный Liquid Glass) остаётся
+отложенной.
+
+## TASK_017A — Drawer: Remove Capital Card (DONE)
+
+Небольшой corrective follow-up к `TASK_017` (не занимает номер
+`TASK_018`): карточка «Общий капитал» (баланс + спарклайн, `.drawer-cap`),
+сохранённая в `TASK_017` как существующая функция, по итоговой правке
+пользователя убрана из drawer полностью. Удалены разметка
+(`#drawerCap`/`#dcVal`/`#dcChg`/`#dcSpark`), соответствующие CSS-правила
+(только в скоупе `.drawer-cap` — общие `.dc-l`/`.dc-v`, используемые в
+donut-диаграммах, не затронуты) и функция `renderDrawerCap()` вместе с её
+вызовом в `openDrawer()`. Footer подтянулся к последней группе меню
+автоматически (уже существующий `margin-top:auto` в flex-колонке
+`.drawer-scroll`), без ручной правки отступов и без визуального разрыва.
+Остальной дизайн drawer (header, три группы, иконки, badge, разделители,
+анимации, blur/затемнение/масштаб фона) не изменён.
+`totalCapital()`/`AF.Services.Account.totalCapital` не тронуты — функция
+по-прежнему используется на Главной (финансовая карточка) и на экране
+«Счета» (`#accTotalCapital`), проверено в браузере. Версия кэша `sw.js`
+поднята `finance-v159` → `finance-v160`. Тесты: 534 passed, 0 failed (без
+изменений — сервисы/логика не затронуты). См.
+[`TASK_017A_DRAWER_REMOVE_CAPITAL_CARD`](tasks/TASK_017A_DRAWER_REMOVE_CAPITAL_CARD.md).
 
 ## TASK_017 — Premium Navigation Drawer (Apple Wallet / Liquid Glass) (DONE)
 

@@ -320,6 +320,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Navigation drawer — remove the capital card** (`TASK_017A`): a small
+  corrective follow-up to `TASK_017`. The dark "total capital" card
+  (balance + sparkline) that was deliberately kept during the drawer
+  redesign is now removed from the drawer entirely, per a follow-up
+  editorial call — its markup, the CSS scoped to `.drawer-cap` (the
+  shared `.dc-l`/`.dc-v` classes used by the donut charts elsewhere are
+  untouched) and the `renderDrawerCap()` function were deleted. The
+  footer now sits directly under the last menu group, pulled up
+  automatically by the existing `margin-top:auto` on the flex column —
+  no manual spacing changes were needed. Nothing else about the drawer
+  changed, and `totalCapital()` itself (still used by the Home screen's
+  finance card and the Accounts screen) is untouched. Cache version
+  bumped `finance-v159` → `finance-v160`.
+
 - **Navigation drawer — premium redesign (Apple Wallet / Liquid Glass)**
   (`TASK_017`): the side menu opened from the avatar was visually reworked
   end to end — architecture, navigation and business logic are unchanged,

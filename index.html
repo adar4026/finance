@@ -406,13 +406,6 @@
   .dr-badge{margin-left:auto;background:var(--expense);color:#fff;font-size:12px;font-weight:700;
     min-width:20px;height:20px;border-radius:7px;display:flex;align-items:center;justify-content:center;
     padding:0 5px;flex-shrink:0;box-shadow:0 2px 6px rgba(239,68,68,.4)}
-  .drawer-cap{margin:8px 16px 18px;padding:16px 16px 0;border-radius:22px;background:linear-gradient(160deg,#1b2433,#16203a);position:relative;overflow:hidden;color:#fff;
-    box-shadow:0 10px 26px rgba(10,14,30,.25)}
-  .drawer-cap .dc-l{font-size:13px;color:rgba(255,255,255,.7);font-weight:600}
-  .drawer-cap .dc-v{font-size:27px;font-weight:800;letter-spacing:-.5px;margin-top:4px}
-  .drawer-cap .dc-chg{font-size:13.5px;font-weight:700;color:#22c55e;margin-top:4px}
-  .drawer-cap .dc-chg.neg{color:#f87171}
-  .drawer-cap .dc-spark{display:block;width:100%;height:78px;margin-top:6px}
   /* Footer — компактный, прижат к низу (margin-top:auto в flex-колонке .drawer-scroll) */
   .drawer-footer{margin-top:auto;text-align:center;padding:14px 20px calc(16px + env(safe-area-inset-bottom));
     color:var(--muted2);background:none;border:none;width:100%;font-family:inherit;-webkit-user-select:none;user-select:none}
@@ -2105,15 +2098,6 @@
         </div>
       </div>
 
-      <div class="drawer-group" style="--i:3">
-        <div class="drawer-cap" id="drawerCap">
-          <div class="dc-l">Общий капитал</div>
-          <div class="dc-v" id="dcVal">€0</div>
-          <div class="dc-chg" id="dcChg"></div>
-          <svg class="dc-spark" id="dcSpark" viewBox="0 0 300 90" preserveAspectRatio="none"></svg>
-        </div>
-      </div>
-
       <!-- Release Information (ReleaseInfo) — наполняется из AF.AppInfo в renderReleaseInfo() -->
       <div class="drawer-footer" id="drawerRelease"></div>
     </div>
@@ -2580,32 +2564,8 @@ function openDrawer(){
   $('#drThemeLbl').textContent=themeLabel().replace(/^\S+\s/,'');
   const n=notifications().length,b=$('#drNotifBadge');
   if(n){b.textContent=n>9?'9+':n;b.style.display='flex';}else b.style.display='none';
-  renderDrawerCap();
   document.body.classList.add('drawer-open');
   $('#drawerOverlay').classList.add('show');
-}
-function renderDrawerCap(){
-  const now=totalCapital();
-  $('#dcVal').textContent=fmtCur(now);
-  // капитал 30 дней назад → изменение за месяц
-  const monthAgo=new Date();monthAgo.setMonth(monthAgo.getMonth()-1);monthAgo.setHours(23,59,59,999);
-  const prev=totalCapital(monthAgo);
-  const chg=$('#dcChg');
-  if(Math.abs(prev)>0.5){const d=(now-prev)/Math.abs(prev)*100;chg.textContent=(d>=0?'+':'−')+Math.abs(d).toFixed(1)+'% за месяц';chg.classList.toggle('neg',d<0);}
-  else {chg.textContent='за месяц';chg.classList.remove('neg');}
-  // спарклайн: капитал по 30 точкам за месяц
-  const pts=[];const start=new Date();start.setDate(start.getDate()-29);
-  for(let i=0;i<30;i++){const d=new Date(start);d.setDate(start.getDate()+i);d.setHours(23,59,59,999);pts.push(totalCapital(d));}
-  const W=300,H=90,pad=6;const min=Math.min(...pts),max=Math.max(...pts),rng=(max-min)||1;
-  const xs=i=>i/(pts.length-1)*W;
-  const ys=v=>H-pad-((v-min)/rng)*(H-pad*2);
-  let line='';pts.forEach((v,i)=>{line+=(i?'L':'M')+xs(i).toFixed(1)+','+ys(v).toFixed(1)+' ';});
-  const area=line+`L${W},${H} L0,${H} Z`;
-  $('#dcSpark').innerHTML=
-    '<defs><linearGradient id="dcGrad" x1="0" y1="0" x2="0" y2="1">'
-    +'<stop offset="0" stop-color="#22c55e" stop-opacity=".35"/><stop offset="1" stop-color="#22c55e" stop-opacity="0"/></linearGradient></defs>'
-    +'<path d="'+area+'" fill="url(#dcGrad)"/>'
-    +'<path d="'+line+'" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
 }
 function closeDrawer(){$('#drawerOverlay').classList.remove('show');document.body.classList.remove('drawer-open');}
 /* ReleaseInfo — блок версии внизу drawer. Источник истины: AF.AppInfo (единственное место правок). */
