@@ -64,6 +64,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Demo data referenced non-existent category ids** (`TASK_016`):
+  `loadDemo()` had drifted out of sync with the category taxonomy —
+  `realty`, `income_main`, `products`, `prius`, `flat`, `clothes`,
+  `beauty`, `tech` and `subscriptions` were never valid ids, so every
+  demo transaction rendered as the fallback "Другое ❓". The taxonomy
+  itself was extracted from an inline `index.html` constant into a new
+  pure `js/services/category_taxonomy_service.js` (values unchanged,
+  same pattern as the earlier `period_service.js`/`tx_form_service.js`
+  extractions), and demo-transaction generation moved into a new pure
+  `js/services/demo_data_service.js`, so a test
+  (`tests/demo_data_service.test.js`, 239 checks) can verify every
+  category/subcategory id the generator uses actually exists, that no
+  demo transaction ever falls back to "Другое", and that the generated
+  data is already schema-v3-normalized and exports cleanly. `state.budgets`
+  and the demo `state.reminders` were fixed the same way, on the same ids.
+
+- **Search had no Unicode diacritic normalization** (`TASK_016`):
+  `Gijón` would not match a search for `gijon`. A new pure
+  `js/services/search_service.js` (`AF.Services.Search.
+  normalizeSearchText`) does NFD decomposition + combining-mark removal
+  + lowercasing, applied to both the indexed transaction text
+  (`txSearchText()`) and the user's search terms (`runSearch()`) — the
+  displayed query text and all transaction data are untouched, only the
+  comparison is diacritic-insensitive. Deliberately does not transliterate
+  (Cyrillic `Овьедо` still won't match `Oviedo`) and does not fold `ß` to
+  `ss`. Degrades safely to plain lowercase+trim if the service or
+  `String.prototype.normalize` is unavailable — never throws. 37 new
+  tests in `tests/search_service.test.js` cover Spanish diacritics,
+  composed/decomposed Unicode, Cyrillic, the TASK_015 metadata fields
+  (payee/tags/location/note), AND-semantics of multi-term queries, and
+  the no-`normalize()` fallback.
+
 - **CSV export wrote the subcategory into the "Контрагент" column**
   (`TASK_015`): the expense/income row in `export_service.js` emitted
   twelve values against twelve headers, so the count matched and nothing

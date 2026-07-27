@@ -155,6 +155,29 @@
     расхождение существовало до `TASK_015`. См.
     [`docs/tasks/TASK_015_ADVANCED_TRANSACTION_METADATA.md`](tasks/TASK_015_ADVANCED_TRANSACTION_METADATA.md).
 
+18. **TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION** — `DONE`. Два
+    небольших независимых исправления, отложенных как известные
+    ограничения `TASK_015` (ОВ-4 и отдельно зафиксированный
+    `loadDemo()`-дефект): (1) `loadDemo()` ссылалась на несуществующие id
+    категорий/подкатегорий (`realty`, `income_main`, `products`, `prius`,
+    `flat`, `clothes`, `beauty`, `tech`, `subscriptions`) — все
+    демо-операции отображались как «Другое ❓»; исправлено переносом на
+    существующие семантически близкие id (таблица соответствия — в
+    TASK-файле), таксономия и генерация demo-операций вынесены в новые
+    чистые сервисы `js/services/category_taxonomy_service.js`/
+    `js/services/demo_data_service.js`. (2) Поиск не нормализовал
+    Unicode-диакритику (`Gijón` не находился по `gijon`); новый чистый
+    `js/services/search_service.js` (`AF.Services.Search.
+    normalizeSearchText`, NFD-декомпозиция + удаление combining marks)
+    применён к обеим сторонам сравнения в `txSearchText()`/`runSearch()`
+    без изменения отображаемых данных, без транслитерации кириллицы. Все
+    три новых сервиса безопасно деградируют при отсутствии (проверено
+    искусственным удалением в рантайме, тот же принцип, что `TxMeta` в
+    `TASK_015`). `SCHEMA_VERSION` не менялся (остаётся 3). Версия кэша
+    `sw.js` поднята `finance-v157` → `finance-v158`. Тесты: 534 passed в
+    7 файлах (было 258 в 5). См.
+    [`docs/tasks/TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION.md`](tasks/TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION.md).
+
 ## Пояснения
 
 - `TASK_001` является первой задачей в новой системе документации, а **не**

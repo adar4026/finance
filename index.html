@@ -38,6 +38,10 @@
 <script src="js/services/health_score_service.js"></script>
 <script src="js/services/export_service.js"></script>
 <script src="js/services/backup_service.js"></script>
+<!-- TASK_016 -->
+<script src="js/services/category_taxonomy_service.js"></script>
+<script src="js/services/demo_data_service.js"></script>
+<script src="js/services/search_service.js"></script>
 <style>
   /* Alex Finance Design Tokens (Product Book Part 2/4) */
   :root, [data-theme="light"]{
@@ -2294,38 +2298,11 @@
 // Персональная таксономия (перенесена из Money Flow пользователя — имена, порядок, подкатегории).
 // Стандартный набор категорий (общий, для новых пользователей). Полностью редактируемый.
 const TAXONOMY_VERSION=5;
-const CATS = {
-  expense: [
-    {id:'food',name:'Продукты',emoji:'🛒',color:'#40c057',subs:['Супермаркет','Рынок','Доставка']},
-    {id:'cafe',name:'Кафе и рестораны',emoji:'☕',color:'#f783ac',subs:['Кафе','Рестораны','Фастфуд','Кофе']},
-    {id:'transport',name:'Транспорт',emoji:'🚗',color:'#ffa94d',subs:['Топливо','Такси','Общественный','Парковка']},
-    {id:'home',name:'Жильё',emoji:'🏠',color:'#ffd43b',subs:['Аренда','Ипотека','Ремонт','Мебель']},
-    {id:'bills',name:'Счета и связь',emoji:'💡',color:'#4dabf7',subs:['Электричество','Вода/Газ','Интернет','Моб. связь']},
-    {id:'shopping',name:'Покупки',emoji:'🛍️',color:'#da77f2',subs:['Одежда','Обувь','Электроника','Для дома']},
-    {id:'health',name:'Здоровье',emoji:'💊',color:'#ff8787',subs:['Аптека','Врачи','Стоматология','Фитнес']},
-    {id:'fun',name:'Развлечения',emoji:'🎮',color:'#9775fa',subs:['Кино','Игры','Хобби','Концерты']},
-    {id:'subs',name:'Подписки',emoji:'📺',color:'#5c7cfa',subs:['Стриминг','Музыка','Приложения','Облако']},
-    {id:'travel',name:'Путешествия',emoji:'✈️',color:'#3bc9db',subs:['Билеты','Отели','Экскурсии','Виза']},
-    {id:'edu',name:'Образование',emoji:'🎓',color:'#69db7c',subs:['Курсы','Книги','Репетитор']},
-    {id:'pets',name:'Питомцы',emoji:'🐾',color:'#a9e34b',subs:['Корм','Ветеринар','Аксессуары']},
-    {id:'kids',name:'Дети',emoji:'👶',color:'#ffa8a8',subs:['Сад/Школа','Игрушки','Кружки','Одежда']},
-    {id:'care',name:'Красота и уход',emoji:'💆',color:'#faa2c1',subs:['Парикмахер','Косметика','Спа']},
-    {id:'sport',name:'Спорт',emoji:'🏋️',color:'#ff922b',subs:['Зал','Инвентарь','Секции']},
-    {id:'taxes',name:'Налоги и сборы',emoji:'🏛️',color:'#748ffc',subs:['Налоги','Штрафы','Комиссии']},
-    {id:'gifts_e',name:'Подарки',emoji:'🎁',color:'#f06595',subs:['Подарки','Праздники','Цветы']},
-    {id:'other_e',name:'Другое',emoji:'📦',color:'#868e96',subs:[]},
-  ],
-  income: [
-    {id:'salary',name:'Зарплата',emoji:'💼',color:'#3ecf8e',subs:['Оклад','Премия','Аванс']},
-    {id:'freelance',name:'Фриланс',emoji:'🧑‍💻',color:'#38d9a9',subs:['Проекты','Консультации']},
-    {id:'business',name:'Бизнес',emoji:'💰',color:'#20c997',subs:['Выручка','Прибыль']},
-    {id:'invest',name:'Инвестиции',emoji:'📈',color:'#0ca678',subs:['Дивиденды','Проценты','Продажа активов']},
-    {id:'rent',name:'Аренда',emoji:'🔑',color:'#63e6be',subs:['Аренда жилья']},
-    {id:'gift',name:'Подарки',emoji:'🎁',color:'#82c91e',subs:['Подарок','Кэшбэк']},
-    {id:'benefits',name:'Пособия',emoji:'🏦',color:'#3bc9db',subs:['Пенсия','Стипендия','Соцвыплаты']},
-    {id:'other_i',name:'Прочее',emoji:'💵',color:'#94d82d',subs:[]},
-  ]
-};
+// TASK_016: таксономия вынесена в js/services/category_taxonomy_service.js
+// (значения не изменены). Фолбэк на пустую таксономию — если сервис не
+// приехал с CDN, приложение стартует с пустыми категориями вместо падения
+// (тот же принцип безопасной деградации, что и у AF.Services.TxMeta).
+const CATS = (window.AF && AF.Services && AF.Services.CategoryTaxonomy && AF.Services.CategoryTaxonomy.CATS) || {expense:[],income:[]};
 // Категории data-driven: всё в state.cats (дефолтные сидируются в migrate с isSystem). Flutter → таблица categories.
 function allCats(){return state.cats||[];}
 function catsFor(type){return (state.cats||[]).filter(c=>c.type===type);}
@@ -2371,6 +2348,14 @@ function applyTxMeta(t,payee,tags,location){
   const g=metaNormTags(tags);   if(g.length)t.tags=g; else delete t.tags;
   const l=metaNormLocation(location); if(l)t.location=l; else delete t.location;
   return t;
+}
+// TASK_016: нормализация текста для поиска (снятие Unicode-диакритики +
+// нижний регистр), тот же паттерн защитного доступа, что и у txMeta().
+// Без сервиса — lowercase+trim без диакритики, не падает.
+function searchNorm(v){
+  const S=(window.AF&&AF.Services&&AF.Services.Search);
+  if(S)return S.normalizeSearchText(v);
+  return String(v==null?'':v).toLowerCase().replace(/\s+/g,' ').trim();
 }
 
 /* ============ Состояние ============ */
@@ -3036,7 +3021,9 @@ function txSearchText(t){
   const M=txMeta();
   if(M){const m=M.metaSearchText(t);if(m)parts.push(m);}
   parts.push(String(t.amount), String(Math.round(t.amount)));
-  return parts.join(' ').toLowerCase();
+  // TASK_016: снятие диакритики для сравнения (Gijón ≡ gijon) — отображаемые
+  // данные операции не меняются, нормализуется только эта служебная строка.
+  return searchNorm(parts.join(' '));
 }
 function openSearch(){
   $('#searchInput').value='';
@@ -3051,7 +3038,9 @@ function runSearch(q){
   if(!q){hint.style.display='block';hint.textContent='Введите запрос — например «такси», «150» или «карта».';list.innerHTML='';return;}
   // TASK_015: '#' в данных не хранится (только отображается), поэтому запрос
   // «#еда» и «еда» должны находить одно и то же.
-  const terms=q.split(/\s+/).map(s=>s.replace(/^#+/,'')).filter(Boolean);
+  // TASK_016: термы сравниваются без диакритики (searchNorm) — сам q (для
+  // отображения в подсказке «Ничего не найдено») не меняется.
+  const terms=searchNorm(q).split(/\s+/).map(s=>s.replace(/^#+/,'')).filter(Boolean);
   if(!terms.length){hint.style.display='block';hint.textContent='Введите запрос — например «такси», «150» или «карта».';list.innerHTML='';return;}
   const res=state.tx.filter(t=>{const s=txSearchText(t);return terms.every(term=>s.includes(term));});
   if(!res.length){hint.style.display='block';hint.textContent='Ничего не найдено по запросу «'+q+'».';list.innerHTML='';return;}
@@ -4751,31 +4740,16 @@ function deleteCat(){
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1700);}
 function loadDemo(){
   if(!confirm('Загрузить демо-данные? Текущие операции, бюджеты, цели и напоминания будут заменены примерными.'))return;
-  const today=new Date(),tx=[],rnd=(a,b)=>Math.round(a+Math.random()*(b-a));
+  // TASK_016: генерация операций вынесена в чистый AF.Services.DemoData —
+  // id категорий/подкатегорий проверены тестом против реальной таксономии
+  // (раньше loadDemo() ссылалась на несуществующие id, все демо-операции
+  // отображались как «Другое ❓»).
+  const DD=(window.AF&&AF.Services&&AF.Services.DemoData);
+  if(!DD){toast('Демо-данные недоступны: сервис не загружен');return;}
+  const today=new Date();
   const accs=state.accounts.map(a=>a.id);
-  const sub=(cat,i)=>'s_'+cat+'_'+i; // id подкатегории как в seedCategories
-  for(let m=0;m<3;m++){
-    const base=new Date(today.getFullYear(),today.getMonth()-m,1);
-    // доходы
-    // TASK_015: метаданные заполнены НЕ у всех демо-операций — так сразу
-    // видно и новую функциональность, и смешанный случай «часть без полей»
-    tx.push({id:Date.now()+Math.random(),type:'income',amount:rnd(1800,2200),cat:'realty',subcategoryId:sub('realty',0),account:accs[0],date:dstr(base,5),note:'Inmo Digital',payee:'Inmo Digital',tags:['работа']});
-    tx.push({id:Date.now()+Math.random(),type:'income',amount:rnd(150,400),cat:'income_main',account:accs[1]||accs[0],date:dstr(base,18),note:''});
-    // расходы: [категория, индекс подкатегории|null, сумма]
-    // [категория, индекс подкатегории|null, сумма, получатель|null, метки|null, место|null]
-    [['products',2,rnd(280,420),'Mercadona',['еда'],'Oviedo'],
-     ['prius',4,rnd(60,140),'Repsol',['авто'],null],
-     ['flat',0,rnd(90,150),null,['жильё'],null],
-     ['health',2,rnd(20,120),'Farmacia Uría',null,'Oviedo'],
-     ['clothes',3,rnd(40,160),null,null,null],
-     ['beauty',2,rnd(20,60),null,null,null],
-     ['tech',3,rnd(30,300),'MediaMarkt',['техника'],'Gijón'],
-     ['subscriptions',null,rnd(10,40),null,null,null],
-     ['home',1,rnd(20,90),'Mercadona',['дом'],null]
-    ].forEach((e,i)=>tx.push(applyTxMeta({id:Date.now()+Math.random()+i,type:'expense',amount:e[2],cat:e[0],subcategoryId:e[1]!=null?sub(e[0],e[1]):null,account:accs[i%accs.length],date:dstr(base,3+i*3),note:''},e[3],e[4],e[5])));
-  }
-  state.tx=tx;
-  state.budgets={products:400,prius:200,subscriptions:50,beauty:80};
+  state.tx=DD.build(accs,today);
+  state.budgets={food:400,transport:200,subs:50,care:80};
   const dl=new Date();dl.setMonth(dl.getMonth()+8);
   state.goals=[
     {id:'g1',name:'Подушка безопасности',targetAmount:10000,savedAmount:3908,currency:'€',deadline:dl.toISOString().slice(0,10),color:'#6d5df6',status:'active',createdAt:Date.now()},
@@ -4783,10 +4757,10 @@ function loadDemo(){
   ];
   const ym=(d)=>`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   state.reminders=[
-    {id:'r1',title:'Квартира — Comunidad',amount:95,type:'expense',dueDate:ym(17),repeatType:'monthly',categoryId:'flat',isActive:true,done:false,createdAt:Date.now()},
-    {id:'r2',title:'Подписки',amount:15,type:'expense',dueDate:ym(20),repeatType:'monthly',categoryId:'subscriptions',isActive:true,done:false,createdAt:Date.now()},
-    {id:'r3',title:'Доход',amount:2000,type:'income',dueDate:ym(5),repeatType:'monthly',categoryId:'income_main',isActive:true,done:false,createdAt:Date.now()},
-    {id:'r4',title:'IBI годовой налог',amount:300,type:'expense',dueDate:ym(3),repeatType:'none',categoryId:'flat',isActive:true,done:false,createdAt:Date.now()},
+    {id:'r1',title:'Квартира — Comunidad',amount:95,type:'expense',dueDate:ym(17),repeatType:'monthly',categoryId:'home',isActive:true,done:false,createdAt:Date.now()},
+    {id:'r2',title:'Подписки',amount:15,type:'expense',dueDate:ym(20),repeatType:'monthly',categoryId:'subs',isActive:true,done:false,createdAt:Date.now()},
+    {id:'r3',title:'Доход',amount:2000,type:'income',dueDate:ym(5),repeatType:'monthly',categoryId:'salary',isActive:true,done:false,createdAt:Date.now()},
+    {id:'r4',title:'IBI годовой налог',amount:300,type:'expense',dueDate:ym(3),repeatType:'none',categoryId:'taxes',isActive:true,done:false,createdAt:Date.now()},
   ];
   state.healthHistory=[];for(let i=5;i>=1;i--){const d=new Date(today.getFullYear(),today.getMonth()-i,1);state.healthHistory.push({date:d.toISOString().slice(0,10),total:70+(5-i)*4});}
   save();anchor=new Date();render();toast('Демо-данные загружены');

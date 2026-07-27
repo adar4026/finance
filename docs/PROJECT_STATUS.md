@@ -16,10 +16,11 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_015_ADVANCED_TRANSACTION_METADATA`](tasks/TASK_015_ADVANCED_TRANSACTION_METADATA.md)
-- **Статус:** `DONE` (реализация проверена в браузере; ручная проверка на
-  реальном iPhone — открытый пункт, см. ниже)
-- Ранее завершённые задачи: [`TASK_014_TX_PAGE_PREMIUM_REDESIGN`](tasks/TASK_014_TX_PAGE_PREMIUM_REDESIGN.md),
+- **Задача:** [`TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION`](tasks/TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION.md)
+- **Статус:** `DONE` (534 passed, 0 failed по всем 7 файлам тестов;
+  проверено в браузере — светлая/тёмная тема, мобильный viewport)
+- Ранее завершённые задачи: [`TASK_015_ADVANCED_TRANSACTION_METADATA`](tasks/TASK_015_ADVANCED_TRANSACTION_METADATA.md),
+  [`TASK_014_TX_PAGE_PREMIUM_REDESIGN`](tasks/TASK_014_TX_PAGE_PREMIUM_REDESIGN.md),
   [`TASK_013_FULLSCREEN_ADD_TRANSACTION`](tasks/TASK_013_FULLSCREEN_ADD_TRANSACTION.md),
   [`TASK_012_APP_ICON_PRODUCTION_ASSET`](tasks/TASK_012_APP_ICON_PRODUCTION_ASSET.md),
   [`TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS`](tasks/TASK_011_STANDALONE_BOTTOM_STRIP_DIAGNOSIS.md),
@@ -37,11 +38,41 @@
 
 ## Активная задача
 
-Нет. `TASK_015_ADVANCED_TRANSACTION_METADATA` — статус `DONE`, реализация
-выполнена, проверена в браузере и закоммичена; ручная проверка на
-реальном iPhone остаётся открытым пунктом (рекомендуется после деплоя).
-`TASK_002A` (полноценный визуально заметный Liquid Glass) остаётся
-отложенной.
+Нет. `TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION` — статус `DONE`,
+реализация выполнена, проверена в браузере и закоммичена. Ручная проверка
+`TASK_015` на реальном iPhone остаётся открытым пунктом (рекомендуется
+после очередного деплоя). `TASK_002A` (полноценный визуально заметный
+Liquid Glass) остаётся отложенной.
+
+## TASK_016 — Demo Data and Search Normalization Fixes (DONE)
+
+Два небольших независимых исправления, отложенных как известные
+ограничения `TASK_015`: (1) `loadDemo()` ссылалась на несуществующие id
+категорий/подкатегорий (`realty`, `income_main`, `products`, `prius`,
+`flat`, `clothes`, `beauty`, `tech`, `subscriptions`) — все демо-операции
+отображались как «Другое ❓»; (2) поиск не нормализовал Unicode-диакритику
+(`Gijón` не находился по `gijon`).
+
+Таксономия категорий вынесена из инлайновой константы `index.html` в
+новый чистый `js/services/category_taxonomy_service.js` (значения не
+изменены — тот же паттерн, что `period_service.js`/`tx_form_service.js`
+ранее); генерация demo-операций — в новый `js/services/
+demo_data_service.js`; все id в `loadDemo()`/`state.budgets`/
+`state.reminders` заменены на существующие, семантически близкие
+(`realty`→`rent`, `income_main`→`salary`, `products`→`food`, `prius`→
+`transport`, `flat`→`home`, `clothes`/`tech`/весь блок `home`→`shopping`,
+`beauty`→`care`, `subscriptions`→`subs`). Новый `js/services/
+search_service.js` (`AF.Services.Search.normalizeSearchText`) снимает
+диакритику через `normalize('NFD')` + удаление combining marks, применяется
+к обеим сторонам сравнения (`txSearchText()`/`runSearch()`) без изменения
+отображаемых данных; без транслитерации кириллицы. Все три новых сервиса
+безопасно деградируют при отсутствии (тот же принцип, что `AF.Services.
+TxMeta` в `TASK_015`) — проверено искусственным удалением в рантайме.
+`SCHEMA_VERSION` не менялся (остаётся 3). Версия кэша `sw.js` поднята
+`finance-v157` → `finance-v158`. Тесты: **534 passed, 0 failed** в 7
+файлах (было 258 в 5) — 239 новых проверок demo-данных, 37 новых проверок
+нормализации поиска. См.
+[`TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION`](tasks/TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION.md).
 
 ## TASK_015 — Advanced Transaction Metadata (DONE)
 
@@ -183,17 +214,16 @@ iPhone. `IMG_2662.jpg` не изменён (проверено по SHA-256 до
 
 ## Следующие этапы
 
-`TASK_015_ADVANCED_TRANSACTION_METADATA` закоммичена и запущена в деплой.
-Следующий шаг — ручная проверка на реальном iPhone по плану §21
-TASK-файла; после подтверждения пользователем задача считается полностью
-закрытой (аналогично прецеденту `TASK_013`/`TASK_014`).
+`TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION` закоммичена и запущена в
+деплой. Известное ограничение `TASK_015` — ручная проверка на реальном
+iPhone по плану §21 её TASK-файла — остаётся открытым пунктом,
+рекомендуется после очередного деплоя; после подтверждения пользователем
+`TASK_015` считается полностью закрытой (аналогично прецеденту
+`TASK_013`/`TASK_014`).
 
-Отдельно обнаружено **вне границ TASK_015** и намеренно не исправлено в
-этом коммите: `loadDemo()` ссылается на несуществующие id категорий
-(`realty`, `products`, `prius`, …) вместо сидируемых (`food`,
-`transport`, …), из-за чего все демо-операции отображаются как
-«Другое ❓». Расхождение существовало до `TASK_015` (проверено по
-`git show HEAD:index.html`) и требует отдельной задачи.
+Оба дефекта, отдельно зафиксированных как известные ограничения
+`TASK_015` (несуществующие id категорий в `loadDemo()` и отсутствие
+Unicode-нормализации диакритики в поиске), исправлены в `TASK_016`.
 
 ## Изменение кода приложения после baseline
 
