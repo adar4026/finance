@@ -320,6 +320,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Categories screen — Apple-style redesign** (`TASK_018`): the category
+  manager (opened via drawer → "Категории" → "Управлять") now matches the
+  Home screen's visual language end to end. The container background is
+  now the same light-gray `var(--home-bg)` as Home, and category cards
+  gained the same minimal shadow (`var(--fincard-shadow)`) and a larger
+  corner radius used elsewhere for card lists. The Expense/Income toggle
+  was rebuilt on the same sliding "Liquid Glass" component the Home
+  period switcher uses (`.periods`/`.periods-indicator`, blue glass
+  capsule) instead of its own solid-fill segmented control, so the app no
+  longer has two visually different toggle styles for this kind of
+  control. The drag handle icon changed from three plain bars to an SVG
+  grip (2×3 dots) that scales up and darkens while held. Drag-to-reorder
+  gained a short spring pop on pickup, a FLIP animation so sibling cards
+  slide smoothly out of the way instead of jumping, and a second light
+  haptic pulse on a successful drop (only when the order actually
+  changed); the lifted card's shadow/scale treatment was softened (no
+  more colored border). The close button already used the same shared
+  component as every other overlay screen, so it needed no changes.
+  Category data, ordering logic and subcategories are unchanged.
+
+  While wiring up the smoother reorder, a pre-existing bug surfaced:
+  `commitCatOrder()` called `.map()` on the result of the app's `$$()`
+  helper, which returns a plain `NodeList` (no `.map()`) — so releasing a
+  dragged card always threw, and category reordering had never actually
+  worked. Fixed alongside the animation work, since a working drag is
+  what this task asked for.
+
 - **Navigation drawer — remove the capital card** (`TASK_017A`): a small
   corrective follow-up to `TASK_017`. The dark "total capital" card
   (balance + sparkline) that was deliberately kept during the drawer

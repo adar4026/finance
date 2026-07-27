@@ -212,6 +212,27 @@
     «Счета») не затронута. Версия кэша `sw.js` поднята `finance-v159` →
     `finance-v160`. Тесты: 534 passed, 0 failed. См.
     [`docs/tasks/TASK_017A_DRAWER_REMOVE_CAPITAL_CARD.md`](tasks/TASK_017A_DRAWER_REMOVE_CAPITAL_CARD.md).
+21. **TASK_018_CATEGORIES_APPLE_REDESIGN** — `DONE`. Полный
+    Apple-редизайн экрана «Категории» (`#catMgrOverlay`) под стиль
+    Главной: фон `var(--home-bg)`, карточки с минимальной тенью
+    (`var(--fincard-shadow)`) и увеличенным радиусом, переключатель
+    Расходы/Доходы переведён на тот же компонент `.periods`/
+    `.periods-indicator` (синее Liquid Glass), что и переключатель
+    периода Главной (новая `moveCatMgrSegIndicator()`). Drag & drop
+    доработан: spring-подъём карточки, FLIP-анимация соседних карточек
+    (`flipCatRows()`), второй haptic после успешного отпускания,
+    современная SVG grip-иконка ручки (увеличивается/темнеет при
+    захвате). Кнопка закрытия уже была унифицирована (`.iconbtn`) —
+    изменений не потребовалось. Попутно найден и исправлен смежный баг:
+    `commitCatOrder()` вызывала `.map()` на `NodeList` (`$$()` не
+    оборачивает в массив), из-за чего reorder категорий падал с
+    `TypeError` при любом отпускании карточки и не работал вообще —
+    исправлено на `[...$$(...)].map(...)`. Структура данных/бизнес-
+    логика категорий и подкатегорий не изменены. Версия кэша `sw.js`
+    поднята `finance-v160` → `finance-v161`. Тесты: 534 passed, 0 failed.
+    Проверено в браузере реальным трастованным drag, светлая/тёмная
+    тема, консоль без ошибок. См.
+    [`docs/tasks/TASK_018_CATEGORIES_APPLE_REDESIGN.md`](tasks/TASK_018_CATEGORIES_APPLE_REDESIGN.md).
 
 ## Пояснения
 
