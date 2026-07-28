@@ -1289,7 +1289,11 @@
   .bud-hero .bh-val{font-size:44px;font-weight:800;letter-spacing:-1px;margin:6px 0 16px;white-space:nowrap}
   .bud-hero .bh-bar{height:12px;background:rgba(255,255,255,.22);border-radius:7px;overflow:hidden}
   .bud-hero .bh-fill{height:100%;background:#fff;border-radius:7px;transition:width .4s}
-  .bud-hero .bh-foot{display:flex;justify-content:space-between;font-size:13.5px;margin-top:10px;opacity:.92}
+  /* color явный: общий .bh-foot{color:var(--muted2)} иначе выигрывает у
+     унаследованного белого от .capital — свойство задано прямо на элементе,
+     наследование от предка всегда проигрывает такому правилу независимо
+     от специфичности предка. Без этой строки текст читался серым на градиенте. */
+  .bud-hero .bh-foot{display:flex;justify-content:space-between;font-size:13.5px;margin-top:10px;opacity:.92;color:#fff}
   .bud-hero .bh-empty{font-size:14px;opacity:.92;margin-top:8px}
   /* Budgets v2 — карточки категорий: белые карточки в стиле .acc-cat/.fincard
      (тень var(--fincard-shadow), без рамки); перерасход сигналит цветом

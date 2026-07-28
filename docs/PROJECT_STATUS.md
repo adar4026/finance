@@ -1,6 +1,6 @@
 # PROJECT_STATUS — A-Lex Finance
 
-**Обновлено:** 2026-07-28 (`TASK_023`)
+**Обновлено:** 2026-07-28 (`TASK_024`)
 
 ## Состояние приложения
 
@@ -16,15 +16,14 @@
 
 ## Последняя завершённая задача
 
-- **Задача:** [`TASK_023_SECURITY_SCREEN_APPLE_REDESIGN`](tasks/TASK_023_SECURITY_SCREEN_APPLE_REDESIGN.md)
-- **Статус:** `DONE` (885 passed, 0 failed по всем 12 файлам тестов —
-  709 существующих без регрессий + 174 новых; проверено в браузере на
-  мобильной ширине 375×812 — переход Профиль → Безопасность → назад,
-  создание/изменение/отключение защитного кода, зависимость «код ↔
-  Face ID», честное состояние «недоступно» для биометрии, сохранение и
-  реальное действие настройки «Запрашивать», светлая и тёмная тема,
-  консоль без ошибок)
-- Ранее завершённые задачи: [`TASK_022_BUDGETS_APPLE_REDESIGN`](tasks/TASK_022_BUDGETS_APPLE_REDESIGN.md),
+- **Задача:** [`TASK_024_BUDGETS_HERO_FOOT_TEXT_CONTRAST`](tasks/TASK_024_BUDGETS_HERO_FOOT_TEXT_CONTRAST.md)
+- **Статус:** `DONE` (887 passed, 0 failed по всем 12 файлам тестов —
+  886 существующих без регрессий + 1 новая; проверено в браузере на
+  мобильной ширине 375×812 — строка «Потрачено/Лимит» в герой-карточке
+  «Осталось в бюджете» стала белой и хорошо читается на градиенте,
+  светлая и тёмная тема, консоль без ошибок)
+- Ранее завершённые задачи: [`TASK_023_SECURITY_SCREEN_APPLE_REDESIGN`](tasks/TASK_023_SECURITY_SCREEN_APPLE_REDESIGN.md),
+  [`TASK_022_BUDGETS_APPLE_REDESIGN`](tasks/TASK_022_BUDGETS_APPLE_REDESIGN.md),
   [`TASK_021_PROFILE_SCREEN_APPLE_REDESIGN`](tasks/TASK_021_PROFILE_SCREEN_APPLE_REDESIGN.md),
   [`TASK_020_ACCOUNTS_APPLE_REDESIGN`](tasks/TASK_020_ACCOUNTS_APPLE_REDESIGN.md),
   [`TASK_019_ANALYTICS_APPLE_REDESIGN`](tasks/TASK_019_ANALYTICS_APPLE_REDESIGN.md),
@@ -51,7 +50,30 @@
 
 ## Активная задача
 
-Нет. `TASK_023_SECURITY_SCREEN_APPLE_REDESIGN` — статус `DONE`, полная
+Нет. `TASK_024_BUDGETS_HERO_FOOT_TEXT_CONTRAST` — статус `DONE`,
+небольшая corrective-задача по прецеденту `TASK_017A`. Пользователь
+прислал скриншот production-экрана «Бюджеты» и отметил, что строка
+«Потрачено/Лимит» в герой-карточке «Осталось в бюджете» читается
+приглушённым серым текстом на фиолетово-голубом градиенте. Причина: в
+CSS есть два правила `.bh-foot` — общее `.bh-foot{color:var(--muted2)}`
+(изначально для неиспользуемого набора `.bh-head`/`.bh-title`/`.bh-sub`)
+и `.bud-hero .bh-foot{...}` (без явного `color`). Поскольку `color` —
+наследуемое свойство, правило, заданное прямо на элементе, всегда
+побеждает унаследованное от предка (`.capital{color:#fff}`) значение
+независимо от специфичности предка — отсюда серый, а не белый текст.
+Исправлено добавлением явного `color:#fff` на `.bud-hero .bh-foot`
+(`index.html:1292`) — специфичность (0,2,0) выше общего `.bh-foot`
+(0,1,0), переопределяет его однозначно, без побочных эффектов для
+других потребителей класса. Версия кэша `sw.js` поднята
+`finance-v166` → `finance-v167`. Тесты: 887 passed, 0 failed (886
+существующих без регрессий + 1 новая в `tests/budgets_screen.test.js`).
+Отдельно зафиксировано как известное наблюдение вне границ задачи:
+`.bh-empty` (текст пустого состояния той же герой-карточки) подвержен
+той же причине и тоже может читаться приглушённо — пользователь эту
+строку не показывал и не просил, не исправлено без прямого запроса. См.
+[`TASK_024_BUDGETS_HERO_FOOT_TEXT_CONTRAST`](tasks/TASK_024_BUDGETS_HERO_FOOT_TEXT_CONTRAST.md).
+
+`TASK_023_SECURITY_SCREEN_APPLE_REDESIGN` — статус `DONE`, полная
 переработка экрана «Безопасность» (`#securityOverlay`) из модальной
 `.detail-sheet` в отдельный полноэкранный Apple-экран `.secp-page` в
 языке Профиля/Счетов/Бюджетов (фон `var(--home-bg)`, белые карточки
@@ -825,12 +847,13 @@ iPhone. `IMG_2662.jpg` не изменён (проверено по SHA-256 до
 
 ## Следующие этапы
 
-`TASK_023_SECURITY_SCREEN_APPLE_REDESIGN` завершена; следующая задача не
-определена — ждёт постановки пользователем. Production-верификация
-`finance-v166` — см. §11 `TASK_023_SECURITY_SCREEN_APPLE_REDESIGN.md`.
-Открытый пункт `TASK_023`: подтвердить работу Face ID (WebAuthn) на
-реальном iPhone — в безголовом браузере системный диалог показать
-негде.
+`TASK_024_BUDGETS_HERO_FOOT_TEXT_CONTRAST` завершена; следующая задача
+не определена — ждёт постановки пользователем. Production-верификация
+`finance-v167` — см. §6 `TASK_024_BUDGETS_HERO_FOOT_TEXT_CONTRAST.md`.
+
+`TASK_023_SECURITY_SCREEN_APPLE_REDESIGN` завершена. Открытый пункт:
+подтвердить работу Face ID (WebAuthn) на реальном iPhone — в
+безголовом браузере системный диалог показать негде.
 
 `TASK_016_DEMO_DATA_AND_SEARCH_NORMALIZATION` закоммичена и запущена в
 деплой. Известное ограничение `TASK_015` — ручная проверка на реальном

@@ -220,8 +220,13 @@ assertTrue(/const SEC = \(typeof AF !== 'undefined' && AF && AF\.Services\) \? A
 assertEqual((store.match(/const SCHEMA_VERSION = (\d+);/) || [])[1], '3',
   'SCHEMA_VERSION не поднимался — новые ключи необязательны и нормализуются идемпотентно');
 assertTrue(/'\.\/js\/services\/security_service\.js',/.test(sw), 'Сервис добавлен в ASSETS service worker');
-assertEqual((sw.match(/const CACHE = '([^']+)'/) || [])[1], 'finance-v166',
-  'Версия кэша service worker поднята до finance-v166');
+// >= вместо точного номера — та же практика, что tests/budgets_screen.test.js §7:
+// последующие точечные задачи (напр. TASK_024) законно поднимают версию дальше.
+{
+  const m = sw.match(/const CACHE = 'finance-v(\d+)'/);
+  assertTrue(!!m, 'sw.js: CACHE найден');
+  if (m) assertTrue(parseInt(m[1], 10) >= 166, 'Версия кэша service worker поднята до finance-v166 или выше (TASK_023)');
+}
 assertTrue(!/document\.|localStorage|navigator\.|crypto\.|PublicKeyCredential/.test(svcCode),
   'Сервис остаётся чистым: без DOM, localStorage, WebAuthn и прочих обращений к платформе');
 

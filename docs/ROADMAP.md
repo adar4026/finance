@@ -361,6 +361,20 @@
     `tests/security_screen.test.js`. См.
     [`docs/tasks/TASK_023_SECURITY_SCREEN_APPLE_REDESIGN.md`](tasks/TASK_023_SECURITY_SCREEN_APPLE_REDESIGN.md).
 
+27. **TASK_024_BUDGETS_HERO_FOOT_TEXT_CONTRAST** — `DONE`. Небольшая
+    corrective-задача (по прецеденту `TASK_017A`): строка
+    «Потрачено/Лимит» в герой-карточке «Осталось в бюджете» читалась
+    приглушённым серым текстом на фиолетово-голубом градиенте вместо
+    белого. Причина — два конкурирующих правила `.bh-foot` в CSS: общее
+    `.bh-foot{color:var(--muted2)}` побеждало унаследованный от
+    `.capital{color:#fff}` белый цвет, поскольку явно заданный на
+    элементе `color` всегда выигрывает у наследования от предка,
+    независимо от специфичности предка. Исправлено добавлением явного
+    `color:#fff` на `.bud-hero .bh-foot`. Версия кэша `sw.js` поднята
+    `finance-v166` → `finance-v167`. Тесты: 887 passed в 12 файлах (было
+    886) — 1 новая проверка в `tests/budgets_screen.test.js`. См.
+    [`docs/tasks/TASK_024_BUDGETS_HERO_FOOT_TEXT_CONTRAST.md`](tasks/TASK_024_BUDGETS_HERO_FOOT_TEXT_CONTRAST.md).
+
 ## Пояснения
 
 - `TASK_001` является первой задачей в новой системе документации, а **не**

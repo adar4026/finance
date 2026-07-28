@@ -132,6 +132,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Budgets hero card: "Потрачено/Лимит" text was grey instead of white**
+  (`TASK_024`): the hero card gets `class="capital bud-hero"`, and
+  `.capital{color:#fff}` colours its text white by inheritance — but a
+  second, unrelated rule, `.bh-foot{color:var(--muted2)}` (originally
+  written for an unused `.bh-head`/`.bh-title`/`.bh-sub` trio), set
+  `color` directly on the "Потрачено €… / Лимит €…" row. A color set
+  directly on an element always wins over one inherited from an
+  ancestor, regardless of the ancestor rule's specificity, so the row
+  rendered muted grey on the purple-to-teal gradient instead of white.
+  Fixed with an explicit `color:#fff` on `.bud-hero .bh-foot`, which
+  overrides the generic rule outright. Service worker cache
+  `finance-v166` → `finance-v167`.
+
 - **Demo data referenced non-existent category ids** (`TASK_016`):
   `loadDemo()` had drifted out of sync with the category taxonomy —
   `realty`, `income_main`, `products`, `prius`, `flat`, `clothes`,

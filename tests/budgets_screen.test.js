@@ -131,5 +131,15 @@ function assertEqual(actual, expected, msg) {
   if (m) assertTrue(parseInt(m[1], 10) >= 165, 'sw.js: версия кэша поднята до finance-v165 или выше (TASK_022)');
 }
 
+// ============ §8 — TASK_024: «Потрачено/Лимит» в герой-карточке — белый текст ============
+// Общий .bh-foot{color:var(--muted2)} побеждает унаследованный от .capital
+// белый (color, заданный прямо на элементе, всегда выигрывает у наследования
+// от предка). Без явного color:#fff на .bud-hero .bh-foot текст читался бы
+// приглушённым серым на фиолетово-голубом градиенте.
+{
+  assertTrue(/\.bud-hero \.bh-foot\{[^}]*color:#fff/.test(html),
+    'TASK_024: .bud-hero .bh-foot задаёт color:#fff (переопределяет общий .bh-foot{color:var(--muted2)})');
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
