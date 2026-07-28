@@ -1182,9 +1182,11 @@
   .goals-empty{text-align:center;color:var(--muted2);padding:34px 16px}
   .goals-empty .big{font-size:40px;margin-bottom:10px}
 
-  /* ===== Budgets (Screen 6) ===== */
-  /* Budgets v2 — герой */
-  .bud-hero{background:var(--cap-grad);border-radius:24px;padding:22px 20px;color:#fff;margin-bottom:20px;box-shadow:0 14px 32px rgba(109,93,246,.30)}
+  /* ===== Budgets (Screen 6, TASK_022 Apple redesign) ===== */
+  /* Budgets v2 — герой: базовый фон/радиус/тень/цвет теперь приходят от
+     общего .capital (см. #scrBudgets .capital ниже — точный градиент
+     .drawer-head/#scrAccounts .capital, TASK_017/TASK_020); .bud-hero
+     несёт только собственную внутреннюю структуру. */
   .bud-hero .bh-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .bud-hero .bh-lbl{font-size:15px;opacity:.92}
   .bud-hero .bh-badge{font-size:12.5px;font-weight:700;background:rgba(255,255,255,.2);padding:4px 10px;border-radius:9px;white-space:nowrap}
@@ -1193,10 +1195,13 @@
   .bud-hero .bh-fill{height:100%;background:#fff;border-radius:7px;transition:width .4s}
   .bud-hero .bh-foot{display:flex;justify-content:space-between;font-size:13.5px;margin-top:10px;opacity:.92}
   .bud-hero .bh-empty{font-size:14px;opacity:.92;margin-top:8px}
-  /* Budgets v2 — карточки категорий */
-  .bud-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px;cursor:pointer;transition:.12s}
+  /* Budgets v2 — карточки категорий: белые карточки в стиле .acc-cat/.fincard
+     (тень var(--fincard-shadow), без рамки); перерасход сигналит цветом
+     текста/прогресс-бара (.bc-rl.over/.bc-rv.over/.bc-fill), не толстой
+     рамкой вокруг карточки — прежний модификатор ".over" с толстой красной
+     рамкой (2px solid) убран по прямому требованию пользователя. */
+  .bud-card{background:var(--card);border-radius:20px;box-shadow:var(--fincard-shadow);padding:16px;margin-bottom:12px;cursor:pointer;transition:.12s}
   .bud-card:active{transform:scale(.99)}
-  .bud-card.over{border:2px solid rgba(239,68,68,.42)}
   .bc-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
   .bc-ic{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
   .bc-info{flex:1;min-width:0}
@@ -1212,7 +1217,7 @@
   .bc-edit:active{opacity:1}
   .bc-bar{height:10px;border-radius:6px;background:var(--bg2);overflow:hidden}
   .bc-fill{height:100%;border-radius:6px;transition:width .4s}
-  .bud-empty{text-align:center;color:var(--muted2);padding:30px 16px}
+  .bud-empty{background:var(--card);border-radius:20px;box-shadow:var(--fincard-shadow);text-align:center;color:var(--muted2);padding:30px 16px}
   .bud-empty .big{font-size:38px;margin-bottom:10px}
   .bud-limit-input{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--card)}
   .bud-limit-input .cur{font-size:22px;color:var(--muted);font-weight:700}
@@ -1361,6 +1366,14 @@
   #scrAccounts .panel h3{font-size:17px;letter-spacing:-.2px}
   #scrAccounts .capital{background:linear-gradient(135deg,#a79cf7 0%,#8fb0f6 55%,#8fdde3 100%);
     box-shadow:0 12px 28px rgba(110,120,220,.28),inset 0 1px 0 rgba(255,255,255,.5);padding:18px 20px}
+  /* TASK_022: тот же приём для «Бюджетов» — фон и зона под навигацией приведены к
+     единому светло-серому фону Главной; карточка «Осталось в бюджете» переиспользует
+     точно тот же градиент, что «Общий капитал» на «Счетах» (не новый похожий цвет) —
+     .bud-hero получает в JS класс .capital, здесь только scoped-override фона/тени. */
+  #scrBudgets{background:var(--home-bg)}
+  .scroll-area:has(>#scrBudgets.active){background:var(--home-bg)}
+  #scrBudgets .capital{background:linear-gradient(135deg,#a79cf7 0%,#8fb0f6 55%,#8fdde3 100%);
+    box-shadow:0 12px 28px rgba(110,120,220,.28),inset 0 1px 0 rgba(255,255,255,.5);padding:22px 20px}
   /* Компактный переключатель месяца — над карточкой */
   .month-switch{display:flex;align-items:center;justify-content:center;gap:2px;margin-bottom:10px}
   /* TASK_005: только SVG-шеврон, без круга/фона/обводки — системный синий (активна) /
@@ -1609,7 +1622,7 @@
     </div>
   </div>
 
-  <!-- Screen: Budgets (Product Book Screen 6) -->
+  <!-- Screen: Budgets (TASK_022 Apple redesign) -->
   <div class="screen" id="scrBudgets">
     <div id="budgetTotal"></div>
     <div class="sec-head"><span>По категориям</span></div>
@@ -3231,7 +3244,7 @@ function renderBudgets(){
   const {limit,spent}=budgetTotals();
   const mr=budgetMonthRange();
   const monthLbl=(m=>m.charAt(0).toUpperCase()+m.slice(1))(mr.from.toLocaleDateString('ru-RU',{month:'long'}));
-  const bt=$('#budgetTotal'); bt.className='bud-hero';
+  const bt=$('#budgetTotal'); bt.className='capital bud-hero';
   if(!limit){
     bt.innerHTML=`<div class="bh-top"><span class="bh-lbl">Бюджет · ${monthLbl}</span></div>
       <div class="bh-empty">Бюджеты не заданы — добавьте лимит для категории ниже.</div>`;
@@ -3254,7 +3267,7 @@ function renderBudgets(){
       const rawPct=sp/lim*100,pct=Math.min(100,rawPct),over=sp>lim,lvl=budgetLevel(rawPct);
       const col=budgetColor(lvl,c.color);
       const rl=over?'over':(lvl==='warning'?'warn':'');
-      return `<div class="bud-card ${over?'over':''}" data-cat="${cid}">
+      return `<div class="bud-card" data-cat="${cid}">
         <div class="bc-head">
           <span class="bc-ic" style="background:${c.color}22">${c.emoji}</span>
           <div class="bc-info"><div class="bc-nm">${esc(c.name)}</div><div class="bc-sub">${num(sp)} из ${num(lim)}</div></div>

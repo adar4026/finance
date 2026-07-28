@@ -320,6 +320,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Budgets screen — Apple-style redesign** (`TASK_022`): the whole
+  "Бюджеты" screen (`#scrBudgets`) was reworked to match Home's,
+  Analytics', Categories' and — most directly — Accounts' visual
+  language (`TASK_020`), with the underlying calculation logic (month
+  range, limit, spent, remaining, overspend, categories, create/edit/
+  delete) left completely untouched. The "Осталось в бюджете" hero card
+  now shares the exact same gradient and shadow as the "Общий капитал"
+  card on the Accounts screen — literally, not a newly picked similar
+  purple — via the same reusable `.capital` component plus a scoped
+  `#scrBudgets .capital{...}` override identical in value to
+  `#scrAccounts .capital{...}`; the card's own rules were trimmed down to
+  just its internal structure (badge, big value, progress bar, spent/limit
+  footer), all of which keep working exactly as before.
+
+  Category cards (`.bud-card`) were restyled into plain white cards with
+  `var(--fincard-shadow)` and no border, in the same language as
+  `.acc-cat`/`.fincard`. The previous `.bud-card.over{border:2px solid
+  rgba(239,68,68,.42)}` rule — a heavy red border wrapping the whole card
+  on overspend — is gone entirely; the status stays legible through the
+  already-existing red text (`.bc-rl.over`/`.bc-rv.over`) and the
+  dynamically-colored progress fill (`.bc-fill`, driven by the unchanged
+  `budgetColor()`), not through decorating the card itself. The empty
+  state ("Бюджетов пока нет...") picked up the same white card treatment
+  instead of sitting as bare text on the screen background — same emoji,
+  same copy, no invented data. The "Добавить бюджет" button needed no
+  change at all: it already shared the exact `.add-dashed` class used by
+  "+ Счёт"/"+ Группа" on Accounts. The budget editor sheet, the shared
+  period switcher and the month navigation row are outside this task's
+  scope, same as the account editor was left alone in `TASK_020`. Service
+  worker cache: `finance-v164` → `finance-v165`.
+
 - **Profile is now its own screen; "Безопасность" moved there from the
   drawer** (`TASK_021`): the personal profile used to be a bottom modal
   sheet (`#profOverlay` → `.modal`) carrying ten rows that duplicated the
