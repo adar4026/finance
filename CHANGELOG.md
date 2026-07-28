@@ -320,6 +320,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Accounts screen — Apple-style redesign** (`TASK_020`): the whole
+  "Счета" screen (`#scrAccounts`) was reworked to match Home's, Analytics'
+  and Categories' visual language, with the underlying data model and
+  business logic left untouched. The "Общий капитал" (total capital) card
+  now uses the exact same gradient as the "Личный профиль A-Lex" card in
+  the navigation drawer (`.drawer-head`, `TASK_017`:
+  `linear-gradient(135deg,#a79cf7 0%,#8fb0f6 55%,#8fdde3 100%)`) through a
+  scoped override (`#scrAccounts .capital{...}`) — the global `.capital`
+  rule the Statistics screen's hero card also relies on was left
+  untouched; the balance-visibility eye, sum and currency kept their
+  existing behavior. The screen background is now the same light-gray
+  `var(--home-bg)` as Home, and the capital-distribution panel picked up
+  the same shadow/corner-radius as Home's `.fincard` plus roomier padding,
+  through a scoped `#scrAccounts .panel{...}` override.
+
+  Each account group ("Наличные"/"Карты"/"Крипто" and any custom group)
+  is now its own white card — icon, name and account count on the left,
+  total sum, a chevron and a "⋯" menu on the right — styled after Apple
+  Wallet/iOS Settings grouped lists. Expanding a card reveals its accounts
+  as list rows with inset dividers that start after the icon column
+  (rather than full-bleed), instead of the previous nested card-in-card
+  look, with a smooth CSS `max-height` expand/collapse transition (new
+  `toggleAccGroup()`) instead of the previous full-list re-render on every
+  toggle. The large "↕ Изменить порядок" button was replaced with a
+  compact "Изменить" link next to the "Счета" section title, reusing the
+  existing `.sec-head` component already used elsewhere on Home. The drag
+  reordering itself (`setupAccountSort()`/`liftAccCard()`/
+  `commitAccountOrder()`) was not touched algorithmically — only its CSS
+  hooks were renamed (`.acc3` → `.acc-cat-row`); the functional
+  `.grp-body` class the reorder commit logic depends on was intentionally
+  kept as-is. While writing the new collapse toggle, the exact bug class
+  found in `TASK_018` (calling `.find()` on a `NodeList` returned by the
+  project's `$$()` helper, which doesn't wrap it in an array) was
+  proactively avoided by using an attribute selector instead.
+
+  The capital-distribution donut chart is unchanged; the list underneath
+  it gained modern inset separators, right-aligned amounts/percentages,
+  and a thin per-row progress bar (reusing the existing `.progress`/
+  `.fill` component already used for goals/budgets) filled with the
+  account's color to the width of its share of total capital. Category
+  card icons are picked at render time by group name (for the three
+  built-in groups) or from a small fixed color palette by index (for
+  custom groups) — purely presentational, not persisted to
+  `state.accountGroups`. The account editor, account detail graph,
+  archive/restore flow, and account/group creation were not redesigned
+  and their logic is unchanged.
+
 - **Analytics screen — Apple-style redesign** (`TASK_019`): the whole
   composition of the Analytics screen (`#scrCharts`) was reworked to
   match Home's visual language, while every calculation, real data

@@ -831,47 +831,66 @@
   .btn-del{width:100%;padding:13px;border:1px solid var(--expense);border-radius:13px;background:none;color:var(--expense);
     font-size:14px;font-weight:600;cursor:pointer;margin-top:9px}
 
-  /* ===== Accounts v2 (Redesign) ===== */
-  .acc3{border-radius:20px;padding:16px;margin-bottom:12px;border:1px solid var(--line);cursor:pointer;transition:.12s}
-  .acc3:active{transform:scale(.99)}
-  .acc3-head{display:flex;align-items:center;gap:13px;margin-bottom:12px}
-  .acc3-ic{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
-  .acc3-nm{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .acc3-sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .acc3-dots{color:var(--muted2);font-size:18px;letter-spacing:1px;cursor:pointer;padding:2px 6px;align-self:flex-start}
-  .acc3-bot{display:flex;justify-content:space-between;align-items:flex-end}
-  .acc3-bal{font-size:21px;font-weight:800;letter-spacing:-.3px}
-  .acc3-pct{font-size:15px;font-weight:700}
+  /* ===== Accounts (TASK_020 Apple redesign) ===== */
+  /* Категория счетов — карточка (стиль Apple Wallet / Настройки iOS) */
+  .acc-cat{background:var(--card);border-radius:20px;box-shadow:var(--fincard-shadow);margin-bottom:12px;overflow:hidden}
+  .acc-cat-head{display:flex;align-items:center;gap:12px;padding:14px;cursor:pointer;user-select:none;
+    border-bottom:.5px solid rgba(0,0,0,.06);transition:border-color .3s}
+  [data-theme="dark"] .acc-cat-head{border-bottom-color:rgba(255,255,255,.08)}
+  .acc-cat:not(.open) .acc-cat-head{border-bottom-color:transparent}
+  .acc-cat-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .acc-cat-ic svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .acc-cat-info{flex:1;min-width:0}
+  .acc-cat-nm{font-size:16px;font-weight:700;letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acc-cat-count{font-size:12.5px;color:var(--muted);margin-top:1px}
+  .acc-cat-sum{font-size:14.5px;font-weight:700;white-space:nowrap;flex-shrink:0}
+  .acc-cat-chev{width:9px;height:14px;flex-shrink:0;display:flex;align-items:center;transition:transform .32s cubic-bezier(.4,0,.2,1)}
+  .acc-cat-chev svg{width:9px;height:8px;stroke:var(--muted2);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .acc-cat.open .acc-cat-chev{transform:rotate(180deg)}
+  .acc-cat-menu{background:none;border:none;color:var(--muted2);font-size:18px;letter-spacing:1px;cursor:pointer;padding:2px 0 2px 8px;flex-shrink:0;font-family:inherit}
+  .acc-cat-body-wrap{max-height:none;overflow:hidden;transition:max-height .32s cubic-bezier(.4,0,.2,1)}
+  .grp-body,.arch-body{min-height:4px}
+  /* Строки счетов внутри карточки категории — разделители inset, как в iOS */
+  .acc-cat-row{display:flex;align-items:center;cursor:pointer}
+  .acc-cat-row:active{background:var(--card2)}
+  .acc-cat-row.editing{cursor:default}
+  .acc-cat-row.archived .acc-row-nm,.acc-cat-row.archived .acc-row-bal{opacity:.6}
+  .acc-row-ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-size:16px;flex-shrink:0;margin:10px 10px 10px 14px}
+  .acc-row-body{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 14px 12px 0;border-top:.5px solid rgba(0,0,0,.06)}
+  [data-theme="dark"] .acc-row-body{border-top-color:rgba(255,255,255,.08)}
+  .acc-cat-row:first-child .acc-row-body{border-top:none}
+  .acc-row-left{min-width:0}
+  .acc-row-nm{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acc-row-sub{font-size:11.5px;color:var(--muted);margin-top:1px}
+  .acc-row-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+  .acc-row-amt{text-align:right}
+  .acc-row-bal{font-size:15px;font-weight:700;letter-spacing:-.2px}
+  .acc-row-pct{font-size:11.5px;font-weight:600;margin-top:1px}
+  .acc-row-dots{color:var(--muted2);font-size:17px;letter-spacing:1px;cursor:pointer;padding:2px 0 2px 8px;flex-shrink:0}
   .add-dashed{width:100%;padding:15px;border:1.5px dashed var(--line);border-radius:18px;background:none;color:var(--accent);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:18px}
   .add-dashed:active{background:var(--card2)}
   .acc-add-row{display:flex;gap:10px}
   .acc-add-row .add-dashed{margin-bottom:18px}
-  .grp-head{display:flex;align-items:center;gap:9px;padding:16px 4px 9px;cursor:pointer;user-select:none}
-  .grp-head .grp-arrow{font-size:10px;color:var(--muted2);width:11px;flex-shrink:0}
-  .grp-head .grp-nm{font-size:16px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .grp-head .grp-sum{font-size:14px;font-weight:700;white-space:nowrap}
-  .grp-head .grp-edit{color:var(--muted2);font-size:18px;padding:0 4px;flex-shrink:0}
-  .acc-toolbar{display:flex;justify-content:flex-end;margin:0 0 10px}
-  .acc-edit-toggle{border:1px solid var(--line);background:var(--card2);color:var(--text);font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:12px;cursor:pointer;font-family:inherit}
-  .acc-edit-toggle.on{background:var(--accent);color:#fff;border-color:transparent}
-  .acc-edit-toggle:active{opacity:.85}
-  .acc-handle{display:inline-flex;flex-direction:column;justify-content:center;gap:4px;padding:8px 4px;cursor:grab;touch-action:none;flex-shrink:0;align-self:flex-start}
+  .acc-handle{display:inline-flex;flex-direction:column;justify-content:center;gap:4px;padding:8px 4px;cursor:grab;touch-action:none;flex-shrink:0}
   .acc-handle span{display:block;width:22px;height:2.5px;background:var(--muted2);border-radius:2px}
-  .acc3.editing{cursor:default}
-  .grp-body{min-height:8px}
-  /* пустой слот, куда упадёт карточка — пунктирный акцентный */
-  .acc-ph{border:2px dashed var(--accent);background:var(--accent-soft);border-radius:20px;margin-bottom:12px;transition:height .15s ease}
-  /* парящая карточка под пальцем — ярко поднята */
-  .acc-lift{border:2px solid var(--accent)!important;border-radius:20px!important;
+  /* пустой слот, куда упадёт строка при перетаскивании — пунктирный акцентный */
+  .acc-ph{border:2px dashed var(--accent);background:var(--accent-soft);border-radius:14px;margin:4px 8px;transition:height .15s ease}
+  /* парящая строка под пальцем — ярко поднята */
+  .acc-lift{background:var(--card)!important;border:2px solid var(--accent)!important;border-radius:14px!important;
     box-shadow:0 26px 54px rgba(40,50,120,.32),0 0 0 1px rgba(109,93,246,.15)!important;
     will-change:transform;cursor:grabbing}
   .dist2-toggle{color:var(--accent);font-size:13.5px;font-weight:600;cursor:pointer;margin-top:10px}
-  .dist-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-top:1px solid var(--line)}
+  .dist-row{padding:11px 2px 12px;border-top:.5px solid rgba(0,0,0,.06)}
+  [data-theme="dark"] .dist-row{border-top-color:rgba(255,255,255,.08)}
   .dist-row:first-child{border-top:none}
-  .dist-row .dr-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
-  .dist-row .dr-nm{flex:1;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .dist-row .dr-amt{font-size:14.5px;font-weight:700;white-space:nowrap}
-  .dist-row .dr-pct{font-size:12.5px;color:var(--muted2);width:48px;text-align:right;flex-shrink:0}
+  .dist-row-top{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+  .dist-row .dr-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .dist-row .dr-nm{flex:1;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dist-row .dr-amt{font-size:14px;font-weight:700;white-space:nowrap;min-width:64px;text-align:right}
+  .dist-row .dr-pct{font-size:12px;color:var(--muted2);width:36px;text-align:right;flex-shrink:0}
+  .dist-progress{height:5px;border-radius:4px;margin-left:20px}
   .search-box{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin:10px 0 6px}
   .search-box .search-ic{font-size:16px;opacity:.7}
   .search-box input{flex:1;border:none;background:none;outline:none;font-size:16px;color:var(--text);font-family:inherit;min-width:0}
@@ -1296,6 +1315,17 @@
   #scrCharts{background:var(--home-bg)}
   .scroll-area:has(>#scrCharts.active){background:var(--home-bg)}
   #scrCharts .panel{border-radius:22px;box-shadow:var(--fincard-shadow)}
+  /* TASK_020: тот же приём для «Счета» — фон и зона под навигацией приведены к
+     единому светло-серому фону Главной; карточка «Общий капитал» переиспользует
+     точный градиент карточки «Личный профиль» (.drawer-head, TASK_017) — не
+     новый похожий цвет, а тот же самый; глобальные .capital (используется на
+     «Статистике», #statsHero) и .panel (Бюджеты/Аналитика/Health Score) — не тронуты. */
+  #scrAccounts{background:var(--home-bg)}
+  .scroll-area:has(>#scrAccounts.active){background:var(--home-bg)}
+  #scrAccounts .panel{border-radius:22px;box-shadow:var(--fincard-shadow);padding:22px 20px}
+  #scrAccounts .panel h3{font-size:17px;letter-spacing:-.2px}
+  #scrAccounts .capital{background:linear-gradient(135deg,#a79cf7 0%,#8fb0f6 55%,#8fdde3 100%);
+    box-shadow:0 12px 28px rgba(110,120,220,.28),inset 0 1px 0 rgba(255,255,255,.5);padding:18px 20px}
   /* Компактный переключатель месяца — над карточкой */
   .month-switch{display:flex;align-items:center;justify-content:center;gap:2px;margin-bottom:10px}
   /* TASK_005: только SVG-шеврон, без круга/фона/обводки — системный синий (активна) /
@@ -1336,6 +1366,8 @@
   .sec-head{display:flex;justify-content:space-between;align-items:center;margin:20px 2px 11px}
   .sec-head span{font-size:15.5px;font-weight:700}
   .sec-head a{font-size:12.5px;color:var(--accent);cursor:pointer;font-weight:500}
+  .sec-head button{background:none;border:none;font-family:inherit;font-size:14px;color:var(--accent);font-weight:600;cursor:pointer;padding:2px}
+  .sec-head button.on{font-weight:700}
   .acc-strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
   .acc-strip::-webkit-scrollbar{display:none}
   .acc-card{flex:0 0 auto;width:142px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;cursor:pointer;transition:.12s}
@@ -1551,13 +1583,13 @@
     <div style="height:20px"></div>
   </div>
 
-  <!-- Screen: Accounts (Product Book Screen 3) -->
+  <!-- Screen: Accounts (TASK_020 Apple redesign) -->
   <div class="screen" id="scrAccounts">
     <div class="capital cap-simple">
       <div class="cap-head"><span class="cap-l">Общий капитал <span id="capEye2" style="cursor:pointer">👁</span></span><span class="cap-cur" id="accCapCur">EUR</span></div>
       <div class="cap-val" id="accTotalCapital">€0</div>
     </div>
-    <div class="acc-toolbar"><button id="accEditBtn" class="acc-edit-toggle">↕ Изменить порядок</button></div>
+    <div class="sec-head" style="margin-top:20px"><span>Счета</span><button id="accEditBtn">Изменить</button></div>
     <div id="accList"></div>
     <div class="acc-add-row">
       <button class="add-dashed" id="addAccBtn">+ Счёт</button>
@@ -3657,30 +3689,51 @@ function renderDistList(){
   if(!dist.length){el.innerHTML=`<div style="color:var(--muted2);font-size:13px;padding:8px 0">Нет балансов</div>`;return;}
   el.innerHTML=dist.map(d=>{
     const amt=fmtCur(d.balance,d.account.currency||state.currency);
-    const pct=Math.round(d.share)+'%';
-    return `<div class="dist-row"><span class="dr-dot" style="background:${d.account.color||'#6d5df6'}"></span>
-      <span class="dr-nm">${esc(d.account.name)}</span><span class="dr-amt">${amt}</span><span class="dr-pct">${pct}</span></div>`;
+    const pct=Math.round(d.share);
+    const col=d.account.color||'#6d5df6';
+    return `<div class="dist-row">
+      <div class="dist-row-top">
+        <span class="dr-dot" style="background:${col}"></span>
+        <span class="dr-nm">${esc(d.account.name)}</span>
+        <span class="dr-amt">${amt}</span>
+        <span class="dr-pct">${pct}%</span>
+      </div>
+      <div class="progress dist-progress"><div class="fill" style="width:${pct}%;background:${col}"></div></div>
+    </div>`;
   }).join('');
 }
 let accEditMode=false;
-function accountCardHtml(a,archived){
+// Иконка карточки-категории: по названию для встроенных групп, иначе — из палитры по индексу.
+// Чисто визуальное сопоставление (не хранится в state.accountGroups — модель данных не меняется).
+function accGroupIcon(name,idx){
+  if(/наличн/i.test(name))return{bg:'#34c759',p:'<rect x="2.6" y="7" width="18.8" height="10" rx="2.5"/><circle cx="12" cy="12" r="2.3"/>'};
+  if(/карт/i.test(name))return{bg:'#3b82f6',p:'<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10.5h18"/>'};
+  if(/крипто/i.test(name))return{bg:'#ff9500',p:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.3 9.5c0-1.1 1-2 2.7-2s2.7.7 2.7 1.7c0 2.3-5.4 1-5.4 3.3 0 1 1 1.7 2.7 1.7s2.7-.9 2.7-2"/>'};
+  const pal=['#af52de','#ff2d55','#5ac8fa','#ffcc00','#30b0c7'];
+  return{bg:pal[idx%pal.length],p:'<path d="M4 7a2 2 0 0 1 2-2h3.6l1.8 2H18a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Z"/>'};
+}
+function accountRowHtml(a,archived){
   const bal=accBalance(a.id),cur=a.currency||state.currency,share=Math.round(AF.Services.Account.share(state,a.id));
   const col=a.color||'#6d5df6';
   const sub=(ACC_TYPE_LABEL[a.type]||'Счёт')+' • '+curCode(cur);
-  const bg=archived?'var(--card)':`linear-gradient(135deg, ${col}1f, var(--card) 70%)`;
   const editing=accEditMode&&!archived;
   const right=editing
     ? `<span class="acc-handle" data-handle="${a.id}"><span></span><span></span><span></span></span>`
-    : `<span class="acc3-dots" data-edit="${a.id}">⋯</span>`;
-  return `<div class="acc3${archived?' archived':''}${editing?' editing':''}" data-acc="${a.id}" style="background:${bg};border-color:${archived?'var(--line)':col+'33'}">
-    <div class="acc3-head">
-      <span class="acc3-ic" style="background:${col};color:#fff">${a.emoji}</span>
-      <div style="flex:1;min-width:0"><div class="acc3-nm">${esc(a.name)}</div><div class="acc3-sub">${archived?'В архиве':sub}</div></div>
-      ${right}
-    </div>
-    <div class="acc3-bot">
-      <span class="acc3-bal" style="color:${bal<0?'var(--expense)':'var(--text)'}">${(bal<0?'−':'')+fmtCur(Math.abs(bal),cur)}</span>
-      ${share>0&&!archived?`<span class="acc3-pct" style="color:${col}">${share}%</span>`:''}
+    : `<span class="acc-row-dots" data-edit="${a.id}">⋯</span>`;
+  return `<div class="acc-cat-row${archived?' archived':''}${editing?' editing':''}" data-acc="${a.id}">
+    <span class="acc-row-ic" style="background:${archived?'var(--muted2)':col};color:#fff">${a.emoji}</span>
+    <div class="acc-row-body">
+      <div class="acc-row-left">
+        <div class="acc-row-nm">${esc(a.name)}</div>
+        <div class="acc-row-sub">${archived?'В архиве':sub}</div>
+      </div>
+      <div class="acc-row-right">
+        <div class="acc-row-amt">
+          <div class="acc-row-bal" style="color:${bal<0?'var(--expense)':'var(--text)'}">${(bal<0?'−':'')+fmtCur(Math.abs(bal),cur)}</div>
+          ${share>0&&!archived?`<div class="acc-row-pct" style="color:${col}">${share}%</div>`:''}
+        </div>
+        ${right}
+      </div>
     </div>
   </div>`;
 }
@@ -3704,38 +3757,73 @@ function renderAccounts(){
   const active=AF.Services.Account.active(state);
   const archived=state.accounts.filter(a=>a.isArchived);
   const groups=accGroups();
-  let html='';
-  const groupBlock=(gid,name,accs,deletable)=>{
+  let html='',gi=0;
+  const groupBlock=(gid,name,accs,deletable,iconOverride)=>{
     const sub=accs.reduce((s,a)=>s+accBalance(a.id),0);
     const isCol=!!state.groupCollapsed[gid];
-    html+=`<div class="grp-head" data-grp="${gid}">
-      <span class="grp-arrow">${isCol?'▶':'▼'}</span>
-      <span class="grp-nm">${esc(name)}</span>
-      <span class="grp-sum" style="color:${sub<0?'var(--expense)':'var(--income)'}">${(sub<0?'−':'+')+fmtCur(Math.abs(sub),state.currency)}</span>
-      ${deletable?`<span class="grp-edit" data-grpedit="${gid}">⋯</span>`:''}
+    const icon=iconOverride||accGroupIcon(name,gi++);
+    html+=`<div class="acc-cat${isCol?'':' open'}" data-grp="${gid}">
+      <div class="acc-cat-head" data-grp="${gid}">
+        <span class="acc-cat-ic" style="background:${icon.bg}"><svg viewBox="0 0 24 24" aria-hidden="true">${icon.p}</svg></span>
+        <div class="acc-cat-info">
+          <div class="acc-cat-nm">${esc(name)}</div>
+          <div class="acc-cat-count">${accs.length} ${plural(accs.length,'счёт','счёта','счетов')}</div>
+        </div>
+        <div class="acc-cat-sum" style="color:${sub<0?'var(--expense)':'var(--text)'}">${(sub<0?'−':'')+fmtCur(Math.abs(sub),state.currency)}</div>
+        <span class="acc-cat-chev"><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg></span>
+        ${deletable?`<button class="acc-cat-menu" data-grpedit="${gid}" aria-label="Меню категории">⋯</button>`:''}
+      </div>
+      <div class="acc-cat-body-wrap"${isCol?' style="max-height:0px"':''}>
+        <div class="grp-body" data-grp="${gid}">${accs.map(a=>accountRowHtml(a,false)).join('')}</div>
+      </div>
     </div>`;
-    if(!isCol)html+=`<div class="grp-body" data-grp="${gid}">`+accs.map(a=>accountCardHtml(a,false)).join('')+`</div>`;
   };
   groups.forEach(g=>groupBlock(g.id,g.name,active.filter(a=>(a.groupId||'')===g.id),true));
   const ung=active.filter(a=>!a.groupId||!groups.find(g=>g.id===a.groupId));
-  if(ung.length)groupBlock('_none','Другие',ung,false);
+  if(ung.length)groupBlock('_none','Другие',ung,false,{bg:'#8e8e93',p:'<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>'});
   if(archived.length){
-    const aCol=!!state.groupCollapsed['_arch'];
-    html+=`<div class="grp-head" data-grp="_arch">
-      <span class="grp-arrow">${aCol?'▶':'▼'}</span>
-      <span class="grp-nm">📦 Архив</span>
-      <span class="grp-sum" style="color:var(--muted2)">${archived.length}</span>
+    const gid='_arch',isCol=!!state.groupCollapsed[gid];
+    html+=`<div class="acc-cat${isCol?'':' open'}" data-grp="${gid}">
+      <div class="acc-cat-head" data-grp="${gid}">
+        <span class="acc-cat-ic" style="background:#8e8e93"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg></span>
+        <div class="acc-cat-info">
+          <div class="acc-cat-nm">Архив</div>
+          <div class="acc-cat-count">${archived.length} ${plural(archived.length,'счёт','счёта','счетов')}</div>
+        </div>
+        <span class="acc-cat-chev"><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg></span>
+      </div>
+      <div class="acc-cat-body-wrap"${isCol?' style="max-height:0px"':''}>
+        <div class="arch-body">${archived.map(a=>accountRowHtml(a,true)).join('')}</div>
+      </div>
     </div>`;
-    if(!aCol)html+=archived.map(a=>accountCardHtml(a,true)).join('');
   }
   el.innerHTML=html;
   if(!accEditMode){
-    $$('#accList .acc3').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
-    $$('#accList .acc3-dots').forEach(b=>b.onclick=e=>{e.stopPropagation();openAcc(b.dataset.edit);});
+    $$('#accList .acc-cat-row').forEach(r=>r.onclick=()=>openAccountGraph(r.dataset.acc));
+    $$('#accList .acc-row-dots').forEach(b=>b.onclick=e=>{e.stopPropagation();openAcc(b.dataset.edit);});
   }
-  $$('#accList .grp-head').forEach(h=>h.onclick=()=>{const g=h.dataset.grp;state.groupCollapsed[g]=!state.groupCollapsed[g];save();renderAccounts();});
-  $$('#accList .grp-edit').forEach(b=>b.onclick=e=>{e.stopPropagation();openGroupEdit(b.dataset.grpedit);});
+  $$('#accList .acc-cat-head').forEach(h=>h.onclick=()=>toggleAccGroup(h.dataset.grp));
+  $$('#accList .acc-cat-menu').forEach(b=>b.onclick=e=>{e.stopPropagation();openGroupEdit(b.dataset.grpedit);});
   setupAccountSort();
+}
+// Плавное раскрытие/сворачивание карточки категории — CSS-transition по max-height
+// (измеряется scrollHeight), без полного перерендера #accList на каждый клик.
+function toggleAccGroup(gid){
+  state.groupCollapsed[gid]=!state.groupCollapsed[gid];
+  save();
+  const card=$(`#accList .acc-cat[data-grp="${CSS.escape(gid)}"]`);
+  if(!card)return;
+  const wrap=card.querySelector('.acc-cat-body-wrap');
+  const isCol=state.groupCollapsed[gid];
+  card.classList.toggle('open',!isCol);
+  if(!wrap)return;
+  if(isCol){
+    wrap.style.maxHeight=wrap.scrollHeight+'px';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{wrap.style.maxHeight='0px';}));
+  }else{
+    wrap.style.maxHeight=wrap.scrollHeight+'px';
+    wrap.addEventListener('transitionend',function h(e){if(e.propertyName!=='max-height')return;wrap.style.maxHeight='';wrap.removeEventListener('transitionend',h);},{once:true});
+  }
 }
 // Перетаскивание счетов — только в режиме редактирования, за ручку (≡)
 let accDrag=null;
@@ -3745,7 +3833,7 @@ function setupAccountSort(){
     h.addEventListener('pointerdown',e=>{
       if(accDrag||(e.pointerType==='mouse'&&e.button!==0))return;
       e.preventDefault(); e.stopPropagation();
-      const card=h.closest('.acc3'); if(card)liftAccCard(card,e.clientX,e.clientY,e.pointerId);
+      const card=h.closest('.acc-cat-row'); if(card)liftAccCard(card,e.clientX,e.clientY,e.pointerId);
     });
   });
 }
@@ -3768,7 +3856,7 @@ function liftAccCard(card,sx,sy,pid){
     const under=document.elementFromPoint(ev.clientX,ev.clientY);
     card.style.visibility='';
     const body=under&&under.closest?under.closest('.grp-body'):null;
-    const over=under&&under.closest?under.closest('.acc3'):null;
+    const over=under&&under.closest?under.closest('.acc-cat-row'):null;
     if(body){
       if(over&&over!==card){const r=over.getBoundingClientRect();body.insertBefore(ph,(ev.clientY<r.top+r.height/2)?over:over.nextSibling);}
       else if(!over)body.appendChild(ph);
@@ -3800,7 +3888,7 @@ function commitAccountOrder(){
   const seq=[], rendered=new Set();
   $$('#accList .grp-body').forEach(b=>{
     const gid=b.dataset.grp==='_none'?null:b.dataset.grp;
-    b.querySelectorAll('.acc3').forEach(c=>{const a=byId(c.dataset.acc); if(a){a.groupId=gid; seq.push(a.id); rendered.add(a.id);}});
+    b.querySelectorAll('.acc-cat-row').forEach(c=>{const a=byId(c.dataset.acc); if(a){a.groupId=gid; seq.push(a.id); rendered.add(a.id);}});
   });
   let k=0;
   state.accounts=orig.map(a=>rendered.has(a.id)?byId(seq[k++]):a);
@@ -5091,7 +5179,7 @@ $('#delAcc').onclick=delAcc;
 $('#archiveAcc').onclick=archiveFromEditor;
 $('#accEditBtn').onclick=()=>{accEditMode=!accEditMode;
   $('#accEditBtn').classList.toggle('on',accEditMode);
-  $('#accEditBtn').textContent=accEditMode?'✓ Готово':'↕ Изменить порядок';
+  $('#accEditBtn').textContent=accEditMode?'Готово':'Изменить';
   renderAccounts();};
 $('#addGroupBtn').onclick=()=>openGroupEdit(null);
 $('#groupEditClose').onclick=()=>$('#groupEditOverlay').classList.remove('show');
