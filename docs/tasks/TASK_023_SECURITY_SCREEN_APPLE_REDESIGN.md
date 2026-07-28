@@ -444,4 +444,28 @@ disabled — функции нет).
 
 ## 11. Production-верификация
 
-_(заполняется после push)_
+- Коммит: `5cde4ff` (`feat(TASK_023): rebuild security screen and make
+  its settings real`), запушен в `origin/main` (`d2d9a22..5cde4ff
+  main -> main`).
+- GitHub Pages пересобран: `https://adar4026.github.io/finance/sw.js`
+  отдаёт `CACHE = 'finance-v166'` (подтверждено `curl`-опросом с
+  cache-busting; деплой занял ~40 секунд).
+  `https://adar4026.github.io/finance/js/services/security_service.js`
+  отдаётся с production — новый файл доехал.
+- Открыт живой production URL (`https://adar4026.github.io/finance/`),
+  переход Профиль → «Безопасность»:
+  - `AF.Services.Security` доступен, `state.settings.security` =
+    `{lockDelay:0, biometric:false, bioCredId:null, lastActiveAt:null}`
+    (миграция отработала на реальном production-профиле, данные
+    пользователя не затронуты);
+  - состав экрана: «Защитный код», «Face ID / Сначала включите защитный
+    код», «Запрашивать / Сразу» (неактивна — код выключен), «Разрешить
+    виджетам доступ к данным / Веб-версия не поддерживает виджеты»
+    (disabled), «Скрывать суммы»;
+  - оформление совпадает с локальной проверкой: круглая кнопка «Назад»,
+    центрированный заголовок, подзаголовок, белые карточки с мягкой
+    тенью, тонкие разделители, обе сноски-пояснения.
+  - `read_console_messages` — без ошибок.
+- `.claude/launch.json`, удаление `icon.svg` и untracked `.DS_Store`
+  подтверждены нетронутыми: остались единственными незакоммиченными
+  изменениями в рабочем дереве до и после коммита/push.
