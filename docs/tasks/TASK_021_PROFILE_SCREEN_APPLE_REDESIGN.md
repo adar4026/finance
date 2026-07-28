@@ -299,4 +299,24 @@
 
 ## 10. Production-верификация
 
-(заполняется после push)
+- Коммит: `6099da2` (`feat(TASK_021): make profile a standalone
+  Apple-style screen`), запушен в `origin/main`
+  (`ebadefd..6099da2 main -> main`).
+- GitHub Pages пересобран: `https://adar4026.github.io/finance/sw.js`
+  отдаёт `CACHE = 'finance-v164'` (подтверждено `curl`-опросом с
+  cache-buster; деплой занял около 45 секунд).
+- Открыт живой production URL (`https://adar4026.github.io/finance/`),
+  мобильная ширина 375×812: экран «Профиль» отдаётся в новом виде —
+  светло-серый фон, «Назад» и заголовок «Профиль», белая карточка с
+  круглым аватаром и кнопкой-камерой, имя «A-Lex», строка «Сменить
+  фото», секция «ЗАЩИТА» с единственным пунктом «Безопасность».
+  Программно подтверждено на production-DOM: `#drSecurity` отсутствует,
+  `#profSecurity` присутствует, контейнер `.prof-page` присутствует
+  (то есть отдаётся именно новая разметка, а не старая шторка из кэша).
+  `read_console_messages` — без ошибок.
+- `.claude/launch.json`, удаление `icon.svg` и untracked `.DS_Store`
+  подтверждены нетронутыми: остались единственными незакоммиченными
+  изменениями рабочего дерева до и после коммита/push (в коммит вошли
+  только `index.html`, `sw.js`, `tests/profile_screen.test.js`,
+  `CHANGELOG.md`, `docs/PROJECT_STATUS.md`, `docs/ROADMAP.md` и этот
+  TASK-файл).
