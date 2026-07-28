@@ -320,6 +320,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Profile is now its own screen; "Безопасность" moved there from the
+  drawer** (`TASK_021`): the personal profile used to be a bottom modal
+  sheet (`#profOverlay` → `.modal`) carrying ten rows that duplicated the
+  navigation drawer almost item for item — notifications, goals, calendar,
+  financial health, statistics, security, theme, export and "all
+  settings". It is now a separate full-height screen in the same visual
+  language as Home: light-gray `var(--home-bg)` background, an Apple-style
+  back button (SVG chevron plus "Назад" in the system blue
+  `var(--nav-blue)`) on the left of the navigation bar and a centered
+  "Профиль" title.
+
+  The screen holds only what belongs to the person using the app. A white
+  rounded card (`var(--fincard-shadow)`, 22px radius) carries a large 96px
+  round photo with a small camera button pinned to its corner, the
+  editable name below it (placeholder "A-Lex") and, under a hairline inset
+  divider, a "Сменить фото" row with a camera icon and a chevron. Both the
+  camera button and the row open the same existing `#photoInput`, so the
+  photo pipeline — `FileReader` → 256×256 center-cropped canvas → JPEG
+  q=0.85 → `state.avatar` → `save()` + `renderHeader()` — is reused
+  verbatim and not touched. Name handling (`state.profileName`, its live
+  sync into the header avatar initial and the drawer card) is likewise
+  unchanged.
+
+  Below that sits a single "Защита" section with one item, "Безопасность",
+  carrying the shield icon reused literally from the drawer entry and
+  leading to the existing security screen (PIN, hide-amounts). That entry
+  was *moved*, not duplicated: `#drSecurity` and its separator are gone
+  from the drawer's "Приложение" group, and `openSecurity()` no longer
+  closes the profile behind it — so closing the security screen returns
+  the user exactly to the profile they came from. Everything else stays in
+  the drawer and remains reachable there; the profile screen deliberately
+  has no categories, goals, export, notifications, calendar, statistics,
+  health, theme or "all settings". The corresponding handlers and the now
+  unused `#profNotifBadge` branch in `renderHeader()` were removed with
+  them, and a new `tests/profile_screen.test.js` (80 checks) asserts, among
+  other things, that no reference to a removed element survives anywhere in
+  `index.html` — a stale `$('#profGoals').onclick` would throw at startup
+  and take the whole app down. Service worker cache: `finance-v163` →
+  `finance-v164`.
+
 - **Accounts screen — Apple-style redesign** (`TASK_020`): the whole
   "Счета" screen (`#scrAccounts`) was reworked to match Home's, Analytics'
   and Categories' visual language, with the underlying data model and

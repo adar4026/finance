@@ -1023,14 +1023,49 @@
   .notif .nt2{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.35}
   .notif-empty{text-align:center;color:var(--muted2);padding:40px 16px}
   .notif-empty .big{font-size:40px;margin-bottom:10px}
-  /* profile */
-  .prof-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
-  .prof-head input{flex:1;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:15px;font-family:inherit;outline:none}
-  .prof-row{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 15px;border:1px solid var(--line);
-    border-radius:13px;background:var(--card);color:var(--text);font-size:14.5px;cursor:pointer;margin-bottom:9px;font-family:inherit;text-align:left}
+  /* ===== Профиль — отдельный экран (TASK_021) =====
+     Тот же язык, что Главная: фон var(--home-bg), белые карточки с
+     var(--fincard-shadow), тонкие inset-разделители, стиль строк —
+     .drawer-row/.dr-ic из TASK_017. Все правила скоуплены к #profOverlay,
+     общий .modal/.overlay не тронуты. */
+  .overlay.prof-ov{align-items:flex-start;justify-content:center;background:rgba(0,0,0,.35)}
+  .prof-page{background:var(--home-bg);width:100%;max-width:560px;height:100%;max-height:100vh;
+    display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:fade .2s;
+    padding:max(6px,env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))}
+  .prof-nav{position:relative;display:flex;align-items:center;min-height:46px;margin-bottom:8px}
+  .prof-back{display:flex;align-items:center;gap:3px;border:none;background:none;padding:6px 8px 6px 0;
+    color:var(--nav-blue);font-size:17px;font-family:inherit;cursor:pointer;letter-spacing:-.2px}
+  .prof-back svg{width:11px;height:19px;stroke:currentColor;stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .prof-back:active{opacity:.55}
+  .prof-nav .prof-title{position:absolute;left:0;right:0;text-align:center;pointer-events:none;
+    font-size:17px;font-weight:600;letter-spacing:-.2px;color:var(--text)}
+  .prof-card{background:var(--card);border-radius:22px;box-shadow:var(--fincard-shadow);overflow:hidden}
+  .prof-id{display:flex;flex-direction:column;align-items:center;padding:26px 20px 20px}
+  .prof-ava{position:relative;width:96px;height:96px}
+  .prof-ava .avatar{width:96px;height:96px;font-size:38px;border-radius:50%}
+  .prof-cam{position:absolute;right:-2px;bottom:-2px;width:32px;height:32px;border-radius:50%;
+    border:2.5px solid var(--card);background:var(--nav-blue);color:#fff;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;box-shadow:0 4px 12px rgba(20,25,55,.18);transition:.15s}
+  .prof-cam:active{transform:scale(.9)}
+  .prof-cam svg{width:16px;height:16px;stroke:#fff;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .prof-name-in{margin-top:16px;width:100%;max-width:280px;padding:9px 12px;border:none;border-radius:12px;
+    background:transparent;color:var(--text);font-size:22px;font-weight:700;letter-spacing:-.3px;
+    font-family:inherit;text-align:center;outline:none;transition:background .15s}
+  .prof-name-in::placeholder{color:var(--muted2);font-weight:700}
+  .prof-name-in:focus{background:var(--card2)}
+  .prof-name-hint{margin-top:4px;font-size:12.5px;color:var(--muted2)}
+  .prof-sep{height:1px;background:rgba(0,0,0,.06);margin-left:60px}
+  [data-theme="dark"] .prof-sep{background:rgba(255,255,255,.08)}
+  .prof-group-title{font-size:12px;font-weight:700;color:var(--muted2);text-transform:uppercase;
+    letter-spacing:.05em;padding:0 14px 6px;margin-top:26px}
+  .prof-row{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;border:none;background:none;
+    color:var(--text);font-size:17px;font-weight:600;font-family:inherit;text-align:left;cursor:pointer;letter-spacing:-.1px}
   .prof-row:active{background:var(--card2)}
-  .prof-row .chev{color:var(--muted2);font-size:18px}
-  .prof-badge{display:none;background:var(--expense);color:#fff;font-size:11px;font-weight:700;border-radius:9px;padding:1px 7px;margin-left:5px;vertical-align:1px}
+  .prof-ic{width:29px;height:29px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;background:var(--ic,var(--accent))}
+  .prof-ic svg{width:17px;height:17px;stroke:#fff;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .prof-lbl{flex:1;min-width:0}
+  .prof-chev{width:7px;height:12px;stroke:var(--muted2);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 
   /* ===== Security (Screen 11) ===== */
   .sec-toggle{display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;font-size:15px}
@@ -2015,25 +2050,46 @@
   </div>
 </div>
 
-<!-- Профиль -->
-<div class="overlay" id="profOverlay">
-  <div class="modal">
-    <h2>Профиль<span class="x" id="profClose">×</span></h2>
-    <div class="prof-head">
-      <div class="avatar lg" id="profAvatar"></div>
-      <input type="text" id="profName" placeholder="Ваше имя" maxlength="24">
+<!-- Профиль — отдельный экран (TASK_021). Только личные данные (фото + имя)
+     и секция «Защита»; все общие настройки живут в боковой шторке. -->
+<div class="overlay prof-ov" id="profOverlay">
+  <div class="prof-page">
+    <div class="prof-nav">
+      <button class="prof-back" id="profClose" aria-label="Назад">
+        <svg viewBox="0 0 12 20" aria-hidden="true"><path d="M10.5 1.5 2 10l8.5 8.5"/></svg>
+        <span>Назад</span>
+      </button>
+      <div class="prof-title">Профиль</div>
     </div>
-    <button class="prof-row" id="changePhoto"><span>📷 Сменить фото</span><span class="chev">›</span></button>
+
+    <div class="prof-card">
+      <div class="prof-id">
+        <div class="prof-ava">
+          <div class="avatar" id="profAvatar"></div>
+          <button class="prof-cam" id="profCamBtn" aria-label="Сменить фото">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h3.2l1.4-2.2h6.8l1.4 2.2H20a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13.5" r="3.2"/></svg>
+          </button>
+        </div>
+        <input type="text" id="profName" class="prof-name-in" placeholder="A-Lex" maxlength="24" aria-label="Имя профиля">
+        <div class="prof-name-hint">Нажмите, чтобы изменить имя</div>
+      </div>
+      <div class="prof-sep"></div>
+      <button class="prof-row" id="changePhoto">
+        <span class="prof-ic" style="--ic:#3b82f6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h3.2l1.4-2.2h6.8l1.4 2.2H20a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13.5" r="3.2"/></svg></span>
+        <span class="prof-lbl">Сменить фото</span>
+        <svg class="prof-chev" viewBox="0 0 7 12" aria-hidden="true"><path d="M1 1l5 5-5 5"/></svg>
+      </button>
+    </div>
     <input type="file" id="photoInput" accept="image/*" hidden>
-    <button class="prof-row" id="profNotif"><span>🔔 Уведомления <span class="prof-badge" id="profNotifBadge"></span></span><span class="chev">›</span></button>
-    <button class="prof-row" id="profGoals"><span>🎯 Цели</span><span class="chev">›</span></button>
-    <button class="prof-row" id="profCalendar"><span>📅 Календарь</span><span class="chev">›</span></button>
-    <button class="prof-row" id="profHealth"><span>❤️ Финансовое здоровье</span><span class="chev">›</span></button>
-    <button class="prof-row" id="profStats"><span>📊 Статистика</span><span class="chev">›</span></button>
-    <button class="prof-row" id="profSecurity"><span>🔐 Безопасность</span><span class="chev">›</span></button>
-    <button class="prof-row" id="profTheme"><span id="profThemeLbl">🌙 Тёмная тема</span><span class="chev">›</span></button>
-    <button class="prof-row" id="profExport"><span>📤 Экспорт и копии</span><span class="chev">›</span></button>
-    <button class="prof-row" id="profMore"><span>⚙️ Все настройки</span><span class="chev">›</span></button>
+
+    <div class="prof-group-title">Защита</div>
+    <div class="prof-card">
+      <button class="prof-row" id="profSecurity">
+        <span class="prof-ic" style="--ic:#30b0c7"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 5-3 7.5-7 9-4-1.5-7-4-7-9V6l7-3Z"/></svg></span>
+        <span class="prof-lbl">Безопасность</span>
+        <svg class="prof-chev" viewBox="0 0 7 12" aria-hidden="true"><path d="M1 1l5 5-5 5"/></svg>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -2103,12 +2159,6 @@
             <span class="dr-ic" style="--ic:#ff9500"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 3.4 1 5.2 1.6 6.2a1 1 0 0 1-.9 1.5H5.3a1 1 0 0 1-.9-1.5C5 13.2 6 11.4 6 8Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></span>
             <span class="dr-lbl">Уведомления</span>
             <span class="dr-badge" id="drNotifBadge"></span>
-          </button>
-          <div class="drawer-sep"></div>
-          <button class="drawer-row" id="drSecurity">
-            <span class="dr-ic" style="--ic:#30b0c7"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 5-3 7.5-7 9-4-1.5-7-4-7-9V6l7-3Z"/></svg></span>
-            <span class="dr-lbl">Безопасность</span>
-            <svg class="dr-chev" viewBox="0 0 7 12" aria-hidden="true"><path d="M1 1l5 5-5 5"/></svg>
           </button>
           <div class="drawer-sep"></div>
           <button class="drawer-row" id="drTheme">
@@ -2574,7 +2624,6 @@ function renderHeader(){
   av.style.cssText=avatarStyle();av.textContent=avatarInner();
   const n=notifications().length;
   const ad=$('#avatarDot');if(ad){if(n){ad.textContent=n>9?'9+':n;ad.style.display='flex';}else ad.style.display='none';}
-  const pb=$('#profNotifBadge');if(pb){if(n){pb.textContent=n;pb.style.display='inline-block';}else pb.style.display='none';}
 }
 function openNotif(){
   $('#profOverlay').classList.remove('show');
@@ -2585,10 +2634,11 @@ function openNotif(){
     :`<div class="notif-empty"><div class="big">🔔</div><p>Уведомлений нет.<br>Здесь появятся превышения бюджетов и минусы по счетам.</p></div>`;
   $('#notifOverlay').classList.add('show');
 }
+// TASK_021: профиль — отдельный экран, только личные данные (фото + имя) и секция «Защита».
+// Общие настройки (уведомления/цели/календарь/тема/экспорт/…) живут в боковой шторке.
 function openProfile(){
   $('#profAvatar').style.cssText=avatarStyle();$('#profAvatar').textContent=avatarInner();
   $('#profName').value=state.profileName||'';
-  $('#profThemeLbl').textContent=themeLabel();
   $('#profOverlay').classList.add('show');
 }
 function openDrawer(){
@@ -3615,7 +3665,9 @@ function doBackupRestore(text){
 
 /* ============ Безопасность (Screen 11): PIN + скрытие сумм ============ */
 async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('af_pin_'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
-function openSecurity(){$('#profOverlay').classList.remove('show');renderSecurity();$('#securityOverlay').classList.add('show');}
+// TASK_021: экран профиля НЕ закрывается — «Безопасность» открывается поверх него,
+// поэтому по закрытию пользователь возвращается ровно на профиль, откуда пришёл.
+function openSecurity(){renderSecurity();$('#securityOverlay').classList.add('show');}
 function renderSecurity(){
   const pinOn=!!state.pinHash, hide=!!state.hideAmounts;
   let html=`<div class="sec-toggle"><span>🔒 PIN-код на вход</span><button class="sw ${pinOn?'on':''}" id="swPin"></button></div>`;
@@ -5134,17 +5186,16 @@ function toggleTheme(){const order=['light','dark','system'];
   applyTheme();save();render();}
 function themeLabel(){return {light:'☀️ Светлая тема',dark:'🌙 Тёмная тема',system:'🌗 Системная тема'}[state.theme]||'☀️ Светлая тема';}
 // Шапка: колокольчик + аватар + профиль
-$('#profNotif').onclick=openNotif;
 $('#notifClose').onclick=()=>$('#notifOverlay').classList.remove('show');
 $('#notifOverlay').onclick=e=>{if(e.target.id==='notifOverlay')$('#notifOverlay').classList.remove('show');};
 $('#profClose').onclick=()=>$('#profOverlay').classList.remove('show');
 $('#profOverlay').onclick=e=>{if(e.target.id==='profOverlay')$('#profOverlay').classList.remove('show');};
 $('#profName').oninput=e=>{state.profileName=e.target.value;};
 $('#profName').onchange=()=>{save();renderHeader();$('#profAvatar').textContent=avatarInner();};
-$('#profTheme').onclick=()=>{toggleTheme();$('#profThemeLbl').textContent=themeLabel();};
-$('#profExport').onclick=openExport;
-$('#profMore').onclick=()=>{$('#profOverlay').classList.remove('show');showScreen('scrMore');};
+// Смена фото — существующий механизм (#photoInput → FileReader → canvas 256px → state.avatar),
+// доступна и из строки «Сменить фото», и из кнопки-камеры на аватаре (TASK_021).
 $('#changePhoto').onclick=()=>$('#photoInput').click();
+$('#profCamBtn').onclick=()=>$('#photoInput').click();
 $('#photoInput').onchange=e=>{const f=e.target.files[0];if(!f)return;
   const r=new FileReader();r.onload=()=>{
     // ужимаем фото до 256px чтобы не раздувать localStorage
@@ -5451,14 +5502,11 @@ $('#recurOverlay').onclick=e=>{if(e.target.id==='recurOverlay')$('#recurOverlay'
 $('#addRecurBtn').onclick=()=>openReminderEdit(null);
 $('#drHealth').onclick=drGo(openHealth);
 $('#drStats').onclick=drGo(openStats);
-$('#drSecurity').onclick=drGo(openSecurity);
 $('#drExport').onclick=drGo(openExport);
 $('#drMore').onclick=()=>{closeDrawer();showScreen('scrMore');};
 $('#drTheme').onclick=()=>{toggleTheme();$('#drThemeLbl').textContent=themeLabel().replace(/^\S+\s/,'');};
 $('#capEye2').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();render();updateEye();updateFcEye();};
 // Финздоровье
-$('#profHealth').onclick=openHealth;
-$('#profStats').onclick=openStats;
 $('#statsClose').onclick=()=>$('#statsOverlay').classList.remove('show');
 $('#statsOverlay').onclick=e=>{if(e.target.id==='statsOverlay')$('#statsOverlay').classList.remove('show');};
 $('#statsTabs').onclick=e=>{
@@ -5477,7 +5525,6 @@ $('#healthClose').onclick=()=>$('#healthOverlay').classList.remove('show');
 $('#healthDetailClose').onclick=()=>$('#healthDetailOverlay').classList.remove('show');
 $('#healthDetailOverlay').onclick=e=>{if(e.target.id==='healthDetailOverlay')$('#healthDetailOverlay').classList.remove('show');};
 // Календарь
-$('#profCalendar').onclick=openCalendar;
 $('#calClose').onclick=()=>$('#calOverlay').classList.remove('show');
 $('#calPrev').onclick=()=>{calAnchor=new Date(calAnchor.getFullYear(),calAnchor.getMonth()-1,1);calSelDay=null;renderCalGrid();renderCalEvents();};
 $('#calNext').onclick=()=>{calAnchor=new Date(calAnchor.getFullYear(),calAnchor.getMonth()+1,1);calSelDay=null;renderCalGrid();renderCalEvents();};
@@ -5491,7 +5538,6 @@ $('#remSave').onclick=saveReminder;
 $('#remDelete').onclick=deleteReminder;
 $('#remAutoPost').onclick=()=>$('#remAutoPost').classList.toggle('on');
 // Цели (Goals)
-$('#profGoals').onclick=openGoals;
 $('#goalsClose').onclick=()=>$('#goalsOverlay').classList.remove('show');
 $('#addGoalBtn').onclick=()=>openGoalEdit(null);
 $('#goalEditClose').onclick=()=>$('#goalEditOverlay').classList.remove('show');
