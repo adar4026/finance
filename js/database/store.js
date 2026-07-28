@@ -58,6 +58,14 @@ AF.Store = (function () {
     // остальная миграция отрабатывает полностью и данные не теряются.
     const TM = (typeof AF !== 'undefined' && AF && AF.Services) ? AF.Services.TxMeta : null;
     if (TM && typeof TM.normalizeTx === 'function') s.tx.forEach(t => TM.normalizeTx(t));
+    // Настройки безопасности (TASK_023): lockDelay/biometric/bioCredId живут в
+    // s.settings.security. SCHEMA_VERSION не поднимается — ключи необязательны,
+    // их отсутствие = безопасные значения по умолчанию, нормализация
+    // идемпотентна. Проверка наличия сервиса — тот же инвариант совместимости
+    // TASK_015 §0, что и у TxMeta выше: без сервиса приложение стартует с
+    // прежним поведением (код спрашивается на входе) и не падает.
+    const SEC = (typeof AF !== 'undefined' && AF && AF.Services) ? AF.Services.Security : null;
+    if (SEC && typeof SEC.normalize === 'function') SEC.normalize(s);
     s.schemaVersion = SCHEMA_VERSION;
     return s;
   }

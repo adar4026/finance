@@ -154,8 +154,17 @@ const drawerBlock = block(/<div class="overlay drawer-ov" id="drawerOverlay">/, 
     'Пункт «Безопасность» ведёт на существующий openSecurity()');
   assertTrue(/id="securityOverlay"/.test(html) && /function renderSecurity\(\)/.test(html),
     'Экран «Безопасность» и его рендер сохранены (перенесена только точка входа)');
-  assertTrue(/function openSecurity\(\)\{renderSecurity\(\);\$\('#securityOverlay'\)\.classList\.add\('show'\);\}/.test(html),
-    'openSecurity() не закрывает профиль — возврат назад ведёт обратно на профиль');
+  // TASK_023 добавила в тело openSecurity() тихую проверку доступности биометрии,
+  // поэтому проверяется не дословный текст функции, а её инвариант из TASK_021:
+  // профиль под экраном безопасности НЕ закрывается.
+  {
+    const m = html.match(/function openSecurity\(\)\{[^}]*\}/);
+    assertTrue(!!m, 'openSecurity() найдена');
+    assertTrue(!!m && /renderSecurity\(\)/.test(m[0]) && /\$\('#securityOverlay'\)\.classList\.add\('show'\)/.test(m[0]),
+      'openSecurity() рендерит экран безопасности и показывает его');
+    assertTrue(!!m && !/profOverlay/.test(m[0]),
+      'openSecurity() не закрывает профиль — возврат назад ведёт обратно на профиль');
+  }
   assertEqual((html.match(/\.onclick=openSecurity|drGo\(openSecurity\)/g) || []).length, 1,
     'Единственная точка входа в «Безопасность» — пункт профиля');
   assertTrue(/'#profOverlay'/.test(html) && html.includes("'#profOverlay',"),

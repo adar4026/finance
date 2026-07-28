@@ -14,6 +14,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Security screen rebuilt as a standalone Apple-style screen, with its
+  settings made real** (`TASK_023`): the security screen moved out of the
+  old modal `.detail-sheet` (a "🔐 Безопасность" header and two coarse
+  toggle rows) into a full-screen page in the same visual language as
+  Profile, Accounts and Budgets — `var(--home-bg)` background, white
+  cards with `var(--fincard-shadow)` and a large radius, hairline inset
+  separators, a large circular back button with a thin outline and an SVG
+  chevron, a centred title and the calm "Ограничение входа в приложение"
+  subtitle. No emoji, no gradients, no stray colour.
+
+  The larger half of the task was behaviour, not looks: the brief
+  explicitly ruled out fake security, so every row is either genuinely
+  wired up or honestly marked unavailable. The passcode reuses the
+  existing machinery untouched (`state.pinHash` is a salted SHA-256, with
+  the same `pinStart`/`pinKey`/`pinComplete` state machine), and gains a
+  separate "Изменить защитный код" row. Face ID is new — the app had no
+  biometric code at all — and is built on a real WebAuthn platform
+  authenticator (`authenticatorAttachment:'platform'`,
+  `userVerification:'required'`), which on iOS is the system Face ID /
+  Touch ID prompt; availability comes from
+  `PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()`,
+  and when there is no platform authenticator the row reads "Недоступно
+  на этом устройстве" with a disabled switch rather than pretending. The
+  unlock screen gains a "Разблокировать Face ID" button, with the keypad
+  still a full fallback. A footnote on the screen states plainly what the
+  protection is: a local entry lock on this device, with the code stored
+  only as a hash and the app's data not encrypted by either mechanism.
+
+  "Запрашивать" (Сразу / 1 / 5 / 15 минут / 1 час) is new and actually
+  changes when the app locks. Until now the app only locked on a cold
+  start, so a delay setting would have been decorative — the exact thing
+  the brief forbids. Backgrounding now records a timestamp on
+  `visibilitychange`/`pagehide`, and the decision is made by a pure
+  `AF.Services.Security.shouldLock()`. Widget data access is rendered as
+  an honest disabled state with an explanation: the PWA has no widgets
+  (`manifest.json` has no `widgets` field and nothing exchanges data with
+  one), so the setting is not stored at all — persisting a flag that
+  influences nothing would advertise protection that does not exist. The
+  pre-existing "Скрывать суммы" setting was not dropped; it moved into
+  its own "Приватность" card.
+
+  The dependency rules live in a new pure service,
+  `js/services/security_service.js`, rather than in click handlers:
+  biometrics cannot be on without a passcode (re-checked on every
+  normalisation, so an enabled state survives neither an `.afb` restore,
+  nor a JSON import, nor hand-editing `localStorage`), enabling Face ID
+  without a code leads to creating one, turning the code off clears
+  biometrics and the stored credential id, and an unknown delay, a
+  missing or malformed timestamp, or a clock moved backwards all fail
+  secure. Normalisation runs from `AF.Store.migrate()` behind a
+  service-presence check — the same compatibility invariant as `TxMeta`
+  (`TASK_015` §0). `SCHEMA_VERSION` stays at 3: the new keys are
+  optional, their absence means safe defaults, and normalisation is
+  idempotent, so no user data migrates.
+
+  Switches are native `<button role="switch">` elements with
+  `aria-label`, `aria-checked`, a visible focus ring, smooth animation
+  and focus preserved across re-renders; the on state uses the calm teal
+  `#30b0c7` already used for the security icon chip in Profile. Security
+  did **not** return to the "Ещё" drawer — Profile remains its only entry
+  point. Service worker cache `finance-v165` → `finance-v166`. Tests: 885
+  passing across 12 files (up from 709 across 10).
+
+  Not verified instrumentally: the actual Face ID system prompt and
+  biometric unlock — the headless preview browser cannot display it and
+  `navigator.credentials.create()` hangs there — so that needs confirming
+  on a real iPhone.
+
 - **Optional transaction metadata: payee, tags and location**
   (`TASK_015`): a transaction can now carry three optional fields —
   `payee` (the shop or counterparty), `tags` (a list of labels) and

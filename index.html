@@ -25,6 +25,10 @@
      видеть сервис. Если файл почему-то не приехал (CDN-рассинхронизация),
      приложение стартует без нормализации метаданных, но не падает. -->
 <script src="js/services/tx_meta_service.js"></script>
+<!-- TASK_023: тоже ДО store.js — migrate() нормализует settings.security при
+     первом load(). Если файл не приехал, приложение стартует с прежним
+     поведением блокировки (код на входе) и не падает. -->
+<script src="js/services/security_service.js"></script>
 <script src="js/database/store.js"></script>
 <script src="js/services/currency_service.js"></script>
 <script src="js/services/account_service.js"></script>
@@ -1068,14 +1072,106 @@
   .prof-chev{width:7px;height:12px;stroke:var(--muted2);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 
   /* ===== Security (Screen 11) ===== */
+  /* .sw/.sec-toggle — ОБЩИЕ, используются не только здесь (редактор напоминания,
+     строка «Создавать операцию автоматически»). TASK_023 их не трогает и не
+     переиспользует: у экрана безопасности собственный переключатель .secp-sw. */
   .sec-toggle{display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;font-size:15px}
   .sw{width:50px;height:30px;border-radius:16px;background:var(--line);border:none;cursor:pointer;position:relative;transition:.2s;flex-shrink:0}
   .sw.on{background:var(--accent)}
   .sw::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
   .sw.on::after{left:23px}
-  .sec-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;font-size:15px;color:var(--text);cursor:pointer;font-family:inherit;text-align:left}
-  .sec-btn:active{background:var(--card2)}
-  .sec-btn .chev{color:var(--muted2);font-size:18px}
+
+  /* ===== Безопасность — отдельный экран (TASK_023) =====
+     Тот же язык, что Профиль (TASK_021)/Счета/Бюджеты: фон var(--home-bg),
+     белые карточки var(--fincard-shadow) с крупным радиусом, тонкие
+     inset-разделители, мягкие тени, без эмодзи и лишнего цвета.
+     Все правила скоуплены к собственному префиксу .secp-* — общие
+     .overlay/.modal/.sw/.prof-* не изменяются. */
+  /* Спокойный бирюзово-голубой акцент референса — тот же тон, что у чипа
+     иконки «Безопасность» на экране профиля (--ic:#30b0c7). Не градиент.
+     Объявлен на обоих слоях: выбор времени блокировки — отдельный оверлей,
+     он не вложен в .secp-page и иначе не увидел бы переменную. */
+  .secp-page,.secp-pick-ov{--secp-accent:#30b0c7; --secp-sw-off:#8a8f99}
+  [data-theme="dark"] .secp-page,[data-theme="dark"] .secp-pick-ov{--secp-accent:#3ec8de; --secp-sw-off:#4a5060}
+  .overlay.secp-ov{align-items:flex-start;justify-content:center;background:rgba(0,0,0,.35)}
+  .secp-page{background:var(--home-bg);width:100%;max-width:560px;height:100%;max-height:100vh;
+    display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:fade .2s;
+    padding:max(6px,env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))}
+  .secp-nav{position:relative;display:flex;align-items:center;min-height:52px;margin:2px 0 20px}
+  .secp-back{width:46px;height:46px;border-radius:50%;padding:0;flex-shrink:0;cursor:pointer;
+    border:1.6px solid var(--text);background:none;color:var(--text);
+    display:flex;align-items:center;justify-content:center;transition:transform .15s,background .15s}
+  .secp-back:active{transform:scale(.93);background:var(--card2)}
+  .secp-back:focus-visible{outline:2px solid var(--nav-blue);outline-offset:3px}
+  .secp-back svg{width:13px;height:22px;margin-left:-3px;stroke:currentColor;stroke-width:2.3;fill:none;
+    stroke-linecap:round;stroke-linejoin:round}
+  .secp-nav .secp-title{position:absolute;left:60px;right:60px;text-align:center;pointer-events:none;
+    font-size:21px;font-weight:800;letter-spacing:-.4px;color:var(--text)}
+  .secp-sub{font-size:19px;font-weight:600;letter-spacing:-.3px;color:var(--muted2);
+    line-height:1.3;padding:0 6px;margin:14px 0 14px}
+  .secp-card{background:var(--card);border-radius:24px;box-shadow:var(--fincard-shadow);overflow:hidden}
+  .secp-card+.secp-note{margin-top:10px}
+  .secp-card+.secp-card,.secp-note+.secp-card{margin-top:26px}
+  .secp-group-title{font-size:12px;font-weight:700;color:var(--muted2);text-transform:uppercase;
+    letter-spacing:.05em;padding:0 14px 8px;margin-top:28px}
+  .secp-row{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:14px 20px;
+    border:none;background:none;color:var(--text);font-size:19px;font-weight:600;letter-spacing:-.3px;
+    font-family:inherit;text-align:left}
+  button.secp-row{cursor:pointer}
+  button.secp-row:active{background:var(--card2)}
+  button.secp-row:focus-visible{outline:2px solid var(--nav-blue);outline-offset:-3px;border-radius:12px}
+  .secp-row.muted{color:var(--muted2)}
+  .secp-row.muted button.secp-row,.secp-row[aria-disabled="true"]{cursor:default}
+  button.secp-row[aria-disabled="true"]:active{background:none}
+  .secp-lbl{flex:1;min-width:0;line-height:1.25}
+  .secp-sub2{display:block;font-style:normal;font-size:13.5px;font-weight:500;letter-spacing:-.1px;
+    color:var(--muted2);line-height:1.35;margin-top:3px}
+  .secp-val{flex-shrink:0;font-size:18px;font-weight:600;color:var(--muted);letter-spacing:-.2px}
+  .secp-chev{width:8px;height:14px;flex-shrink:0;stroke:var(--muted2);stroke-width:2.2;fill:none;
+    stroke-linecap:round;stroke-linejoin:round}
+  .secp-sep{height:1px;background:rgba(0,0,0,.06);margin-left:20px}
+  [data-theme="dark"] .secp-sep{background:rgba(255,255,255,.08)}
+  .secp-note{font-size:13.5px;line-height:1.5;color:var(--muted2);padding:0 8px}
+  /* Переключатель: role="switch" на <button> — фокусируется и переключается
+     с клавиатуры штатно (Tab/Space/Enter), состояние читается screen reader'ом
+     из aria-checked, поэтому оно же и источник визуального состояния. */
+  .secp-sw{position:relative;flex-shrink:0;width:58px;height:34px;padding:0;border:none;border-radius:17px;
+    background:var(--secp-sw-off);cursor:pointer;-webkit-tap-highlight-color:transparent;
+    transition:background .24s cubic-bezier(.4,.2,.2,1)}
+  .secp-sw::after{content:'';position:absolute;top:3px;left:3px;width:28px;height:28px;border-radius:50%;
+    background:#fff;box-shadow:0 2px 6px rgba(16,20,40,.22);
+    transition:transform .24s cubic-bezier(.4,.2,.2,1)}
+  .secp-sw[aria-checked="true"]{background:var(--secp-accent)}
+  .secp-sw[aria-checked="true"]::after{transform:translateX(24px)}
+  .secp-sw:focus-visible{outline:2px solid var(--nav-blue);outline-offset:3px}
+  .secp-sw:not([disabled]):active::after{width:33px}
+  .secp-sw[disabled]{opacity:.42;cursor:default}
+  /* Выбор времени блокировки — нижняя шторка в стиле iOS-выбора */
+  .overlay.secp-pick-ov{z-index:70;align-items:flex-end;background:rgba(0,0,0,.4)}
+  .secp-pick{width:100%;max-width:560px;background:var(--card);border-radius:26px 26px 0 0;
+    padding:20px 0 calc(12px + env(safe-area-inset-bottom));animation:up .26s cubic-bezier(.22,.61,.36,1)}
+  .secp-pick-t{font-size:17px;font-weight:700;letter-spacing:-.2px;text-align:center;color:var(--text);padding:0 20px 6px}
+  .secp-pick-s{font-size:13px;color:var(--muted2);text-align:center;padding:0 24px 14px;line-height:1.45}
+  .secp-pick-row{display:flex;align-items:center;gap:12px;width:100%;padding:15px 22px;border:none;background:none;
+    color:var(--text);font-size:17px;font-weight:600;font-family:inherit;text-align:left;cursor:pointer;letter-spacing:-.2px}
+  .secp-pick-row:active{background:var(--card2)}
+  .secp-pick-row:focus-visible{outline:2px solid var(--nav-blue);outline-offset:-3px}
+  .secp-pick-row[aria-checked="true"]{color:var(--secp-accent)}
+  .secp-pick-row .secp-pick-lbl{flex:1;min-width:0}
+  .secp-pick-ck{width:16px;height:13px;flex-shrink:0;stroke:var(--secp-accent);stroke-width:2.6;fill:none;
+    stroke-linecap:round;stroke-linejoin:round;opacity:0}
+  .secp-pick-row[aria-checked="true"] .secp-pick-ck{opacity:1}
+  .secp-pick-cancel{display:block;width:calc(100% - 40px);margin:12px 20px 0;padding:15px;border:none;border-radius:16px;
+    background:var(--card2);color:var(--nav-blue);font-size:17px;font-weight:700;font-family:inherit;cursor:pointer}
+  .secp-pick-cancel:active{opacity:.7}
+  /* Кнопка биометрии на экране ввода кода (TASK_023) */
+  .pin-bio{margin-top:22px;display:inline-flex;align-items:center;gap:9px;padding:11px 20px;border-radius:16px;
+    border:1px solid var(--line);background:var(--card);color:var(--text);font-size:15px;font-weight:600;
+    font-family:inherit;cursor:pointer}
+  .pin-bio[hidden]{display:none} /* класс задаёт display:inline-flex и иначе перебил бы атрибут hidden */
+  .pin-bio:active{background:var(--card2)}
+  .pin-bio svg{width:20px;height:20px;stroke:var(--secp-accent,#30b0c7);stroke-width:1.8;fill:none;
+    stroke-linecap:round;stroke-linejoin:round}
   .pin-overlay{background:var(--bg);align-items:center;justify-content:center;z-index:200}
   .pin-box{text-align:center;padding:24px;width:100%;max-width:340px}
   .pin-logo{font-size:40px;margin-bottom:12px}
@@ -2199,12 +2295,28 @@
   </div>
 </div>
 
-<!-- Безопасность (Screen 11) -->
-<div class="overlay" id="securityOverlay" style="align-items:flex-start">
-  <div class="detail-sheet">
-    <div class="detail-top"><div class="nm">🔐 Безопасность</div><button class="iconbtn" id="securityClose">×</button></div>
-    <div id="securityBody" style="margin-top:10px"></div>
-    <p style="font-size:11.5px;color:var(--muted2);margin-top:14px;line-height:1.5">PIN — локальная блокировка приложения на этом устройстве. Хранится в виде хэша, не в открытом виде.</p>
+<!-- Безопасность — отдельный экран (Screen 11, TASK_023). Открывается поверх
+     Профиля (TASK_021), поэтому «Назад» возвращает ровно на профиль.
+     Содержимое карточек рендерит renderSecurity(). -->
+<div class="overlay secp-ov" id="securityOverlay">
+  <div class="secp-page">
+    <div class="secp-nav">
+      <button class="secp-back" id="securityClose" aria-label="Назад">
+        <svg viewBox="0 0 12 20" aria-hidden="true"><path d="M10 1.5 2 10l8 8.5"/></svg>
+      </button>
+      <div class="secp-title">Безопасность</div>
+    </div>
+    <div id="securityBody"></div>
+  </div>
+</div>
+
+<!-- Выбор времени блокировки («Запрашивать», TASK_023) -->
+<div class="overlay secp-pick-ov" id="secLockOverlay">
+  <div class="secp-pick">
+    <div class="secp-pick-t">Запрашивать код</div>
+    <div class="secp-pick-s">Если приложение было свёрнуто дольше выбранного времени, код спросят снова.</div>
+    <div id="secLockList" role="radiogroup" aria-label="Когда запрашивать защитный код"></div>
+    <button class="secp-pick-cancel" id="secLockCancel">Отмена</button>
   </div>
 </div>
 
@@ -2220,6 +2332,12 @@
       <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
       <span></span><button data-k="0">0</button><button data-k="back" class="pk-back">⌫</button>
     </div>
+    <!-- TASK_023: показывается только при включённой и доступной биометрии,
+         цифровой ввод остаётся полноценным запасным путём -->
+    <button class="pin-bio" id="pinBio" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v2.2M15 9.5v2.2M9.2 15.6a4.4 4.4 0 0 0 5.6 0"/></svg>
+      <span>Разблокировать Face ID</span>
+    </button>
     <button class="pin-cancel" id="pinCancel">Отмена</button>
   </div>
 </div>
@@ -3680,24 +3798,189 @@ function doBackupRestore(text){
 async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('af_pin_'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 // TASK_021: экран профиля НЕ закрывается — «Безопасность» открывается поверх него,
 // поэтому по закрытию пользователь возвращается ровно на профиль, откуда пришёл.
-function openSecurity(){renderSecurity();$('#securityOverlay').classList.add('show');}
+function openSecurity(){secCheckBio();renderSecurity();$('#securityOverlay').classList.add('show');}
+
+/* ---- TASK_023: настройки безопасности (чистые правила — AF.Services.Security) ----
+   UI спрашивает сервис, а не хранит правила у себя. Сервис может не приехать
+   при рассинхронизации CDN (инвариант совместимости TASK_015 §0) — тогда экран
+   работает в урезанном, но честном режиме: код и «скрывать суммы» как раньше,
+   биометрия и «Запрашивать» недоступны. */
+function secSvc(){return (window.AF&&AF.Services)?AF.Services.Security:null;}
+function secGet(){const S=secSvc();return S?S.normalize(state):{lockDelay:0,biometric:false,bioCredId:null,lastActiveAt:null};}
+
+/* Доступность настоящей биометрии. Единственный честный путь в вебе —
+   платформенный аутентификатор WebAuthn: на iOS это системный Face ID/Touch ID.
+   Ответ кэшируется: null — ещё не спрашивали, true/false — известно. */
+let secBioAvail=null;
+async function secCheckBio(){
+  if(secBioAvail!==null)return secBioAvail;
+  try{
+    if(!window.isSecureContext||!window.PublicKeyCredential||!navigator.credentials
+       ||typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable!=='function'){
+      secBioAvail=false;
+    }else{
+      secBioAvail=(await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())===true;
+    }
+  }catch(e){secBioAvail=false;}
+  if($('#securityOverlay').classList.contains('show'))renderSecurity();
+  return secBioAvail;
+}
+function b64uEnc(buf){let s='';new Uint8Array(buf).forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function b64uDec(str){const b=atob(str.replace(/-/g,'+').replace(/_/g,'/'));const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a;}
+// Регистрация ключа: платформенный аутентификатор с userVerification:'required'
+// не создаст credential без реального Face ID/Touch ID/кода устройства.
+async function secBioRegister(){
+  const name=(state.profileName||'A-Lex');
+  const cred=await navigator.credentials.create({publicKey:{
+    challenge:crypto.getRandomValues(new Uint8Array(32)),
+    rp:{name:'A-Lex Finance'},
+    user:{id:crypto.getRandomValues(new Uint8Array(16)),name,displayName:name},
+    pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+    authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},
+    attestation:'none',timeout:60000}});
+  return cred?b64uEnc(cred.rawId):null;
+}
+// Проверка: assertion выдаётся только после успешной системной проверки
+// пользователя. Сервера у приложения нет, подпись не проверяется на бэкенде —
+// это локальная блокировка входа того же класса, что защитный код.
+async function secBioVerify(credId){
+  const asrt=await navigator.credentials.get({publicKey:{
+    challenge:crypto.getRandomValues(new Uint8Array(32)),
+    allowCredentials:credId?[{type:'public-key',id:b64uDec(credId)}]:[],
+    userVerification:'required',timeout:60000}});
+  return !!asrt;
+}
+
 function renderSecurity(){
-  const pinOn=!!state.pinHash, hide=!!state.hideAmounts;
-  let html=`<div class="sec-toggle"><span>🔒 PIN-код на вход</span><button class="sw ${pinOn?'on':''}" id="swPin"></button></div>`;
-  if(pinOn)html+=`<button class="sec-btn" id="changePinBtn"><span>Изменить PIN</span><span class="chev">›</span></button>`;
-  html+=`<div class="sec-toggle"><span>🙈 Скрывать суммы</span><button class="sw ${hide?'on':''}" id="swHide"></button></div>`;
+  const S=secSvc(), sec=secGet(), pinOn=!!state.pinHash, hide=!!state.hideAmounts;
+  const bioReady=secBioAvail===true&&!!S, bioOn=bioReady&&sec.biometric;
+  const delayLbl=S?S.lockDelayLabel(sec.lockDelay):'Сразу';
+  // aria-label обязателен: подпись строки лежит в соседнем <span>, сам по себе
+  // переключатель без неё читался бы screen reader'ом как безымянный «switch».
+  const sw=(id,label,on,dis)=>`<button class="secp-sw" id="${id}" type="button" role="switch" aria-label="${label}" aria-checked="${on?'true':'false'}"${dis?' disabled':''}></button>`;
+  const chev='<svg class="secp-chev" viewBox="0 0 8 14" aria-hidden="true"><path d="M1 1l5.5 6L1 13"/></svg>';
+
+  let html=`<div class="secp-sub">Ограничение входа в приложение</div>
+  <div class="secp-card">
+    <div class="secp-row"><span class="secp-lbl" id="secCodeLbl">Защитный код</span>${sw('swPin','Защитный код',pinOn)}</div>
+    <div class="secp-sep"></div>
+    <div class="secp-row"><span class="secp-lbl">Face ID${
+      secBioAvail===false?'<i class="secp-sub2">Недоступно на этом устройстве</i>'
+      :(!pinOn?'<i class="secp-sub2">Сначала включите защитный код</i>':'')
+    }</span>${sw('swBio','Face ID',bioOn,secBioAvail!==true)}</div>
+    <div class="secp-sep"></div>`;
+  html+=pinOn
+    ? `<button class="secp-row" type="button" id="secLockBtn"><span class="secp-lbl">Запрашивать</span><span class="secp-val">${delayLbl}</span>${chev}</button>`
+    : `<div class="secp-row muted" aria-disabled="true"><span class="secp-lbl">Запрашивать</span><span class="secp-val">${delayLbl}</span>${chev}</div>`;
+  html+=`</div>`;
+  if(pinOn)html+=`<div class="secp-card"><button class="secp-row" type="button" id="secChangePin"><span class="secp-lbl">Изменить защитный код</span>${chev}</button></div>`;
+  html+=`<div class="secp-note">Защитный код и Face ID — локальная блокировка входа на этом устройстве. Код хранится только в виде хэша, сами данные приложения ими не шифруются.</div>`;
+
+  // Виджеты: у веб-версии их нет (в manifest.json нет поля widgets, обмена
+  // данными с виджетами не существует) — честное disabled-состояние вместо
+  // настройки, которая ни на что не влияла бы.
+  html+=`<div class="secp-card">
+    <div class="secp-row"><span class="secp-lbl">Разрешить виджетам доступ к данным<i class="secp-sub2">Веб-версия не поддерживает виджеты</i></span>${sw('swWidgets','Разрешить виджетам доступ к данным',false,true)}</div>
+  </div>
+  <div class="secp-note">Виджеты доступны только в нативных приложениях. Веб-версия A-Lex Finance не передаёт данные виджетам, поэтому разрешать здесь нечего.</div>`;
+
+  html+=`<div class="secp-group-title">Приватность</div>
+  <div class="secp-card">
+    <div class="secp-row"><span class="secp-lbl">Скрывать суммы</span>${sw('swHide','Скрывать суммы',hide)}</div>
+  </div>`;
+  // Перерисовка заменяет узлы целиком, поэтому фокус вернуть надо вручную —
+  // иначе после переключения с клавиатуры Tab начинался бы с начала экрана.
+  const focusId=(document.activeElement&&$('#securityBody').contains(document.activeElement))?document.activeElement.id:null;
   $('#securityBody').innerHTML=html;
+  if(focusId&&$('#'+focusId))$('#'+focusId).focus();
+
   $('#swPin').onclick=()=>{ if(state.pinHash)pinStart('disable'); else pinStart('set'); };
-  if(pinOn)$('#changePinBtn').onclick=()=>pinStart('change');
+  if(pinOn)$('#secChangePin').onclick=()=>pinStart('change');
+  if(pinOn)$('#secLockBtn').onclick=openLockPicker;
+  $('#swBio').onclick=secToggleBio;
   $('#swHide').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();renderSecurity();render();updateEye();updateFcEye();};
+}
+
+async function secToggleBio(){
+  const S=secSvc(); if(!S)return;
+  const sec=S.normalize(state);
+  if(sec.biometric){ // выключение — просто снимаем, код остаётся рабочим входом
+    sec.biometric=false;sec.bioCredId=null;save();renderSecurity();toast('Face ID отключён');return;
+  }
+  if(!state.pinHash){ // включение без кода — сначала честно создаём код
+    toast('Сначала задайте защитный код');pinStart('set');return;
+  }
+  if(!S.canEnableBiometric(!!state.pinHash,secBioAvail))return;
+  try{
+    const id=await secBioRegister();
+    if(!id){toast('Не удалось включить Face ID');return;}
+    sec.bioCredId=id;sec.biometric=true;save();renderSecurity();toast('Face ID включён ✓');
+  }catch(e){ renderSecurity(); toast('Face ID не подтверждён'); }
+}
+
+/* Выбор времени блокировки — реальная настройка: см. secShouldLock()/secMarkInactive() */
+function openLockPicker(){
+  const S=secSvc(); if(!S)return;
+  const cur=S.normalize(state).lockDelay;
+  $('#secLockList').innerHTML=S.LOCK_DELAYS.map(d=>
+    `<button class="secp-pick-row" type="button" role="radio" aria-checked="${d.value===cur?'true':'false'}" data-v="${d.value}">
+      <span class="secp-pick-lbl">${d.label}</span>
+      <svg class="secp-pick-ck" viewBox="0 0 16 13" aria-hidden="true"><path d="M1 7l4.5 4.5L15 1.5"/></svg>
+    </button>`).join('');
+  $$('#secLockList .secp-pick-row').forEach(b=>b.onclick=()=>{
+    const next=S.setLockDelay(S.normalize(state),Number(b.dataset.v));
+    state.settings.security=next;save();
+    $('#secLockOverlay').classList.remove('show');renderSecurity();
+    toast('Сохранено ✓');
+  });
+  $('#secLockOverlay').classList.add('show');
+}
+
+/* Реальный учёт неактивности: без него выбор «Через 15 минут» ничего бы не
+   менял. Отметка пишется при уходе в фон, решение принимает чистый
+   AF.Services.Security.shouldLock(). Нет отметки → блокируем (fail-secure). */
+function secMarkInactive(){
+  const S=secSvc(); if(!S||!state.pinHash)return;
+  S.normalize(state).lastActiveAt=Date.now();
+  AF.Store.save(state); // без renderHeader(): приложение уже уходит в фон
+}
+function secShouldLock(){
+  const S=secSvc();
+  return S?S.shouldLock(state,Date.now()):!!state.pinHash;
+}
+function secMaybeLock(){
+  if(secShouldLock()&&!$('#pinOverlay').classList.contains('show'))pinStart('unlock');
+}
+function secUnlocked(){
+  const S=secSvc();
+  if(S&&state.pinHash){S.normalize(state).lastActiveAt=Date.now();AF.Store.save(state);}
+  closePin();
 }
 // PIN state machine
 let pinState={mode:null,buf:'',temp:null};
 function pinStart(mode){pinState={mode,buf:'',temp:null};
   $('#pinCancel').style.display=mode==='unlock'?'none':'block';
+  secSyncPinBio(mode);
   setPinTitle();renderPinDots();$('#pinOverlay').classList.add('show');}
+// Кнопка биометрии на экране разблокировки (TASK_023). Показывается только
+// если биометрия реально включена и доступна; авто-запрос делается мягко —
+// при отказе браузера в жесте пользователь всегда может нажать кнопку сам
+// или ввести код цифрами.
+function secSyncPinBio(mode){
+  const b=$('#pinBio'); if(!b)return;
+  const sec=secGet(), show=mode==='unlock'&&sec.biometric&&secBioAvail===true;
+  b.hidden=!show;
+  if(show)setTimeout(()=>{if(!$('#pinOverlay').classList.contains('show'))return;secBioUnlock(true);},260);
+}
+async function secBioUnlock(silent){
+  const sec=secGet();
+  if(!sec.biometric||secBioAvail!==true)return;
+  try{ if(await secBioVerify(sec.bioCredId))secUnlocked(); }
+  catch(e){ if(!silent)toast('Face ID не подтверждён'); }
+}
+// TASK_023: единая формулировка «защитный код» — та же, что на переработанном экране
 function setPinTitle(t){const m=pinState.mode;
-  $('#pinTitle').textContent=t||(m==='unlock'?'Введите PIN-код':m==='set'?'Придумайте PIN-код':m==='change'?'Текущий PIN-код':m==='disable'?'PIN для отключения':'PIN-код');}
+  $('#pinTitle').textContent=t||(m==='unlock'?'Введите защитный код':m==='set'?'Придумайте защитный код':m==='change'?'Текущий защитный код':m==='disable'?'Код для отключения':'Защитный код');}
 function renderPinDots(err){$('#pinDots').innerHTML=[0,1,2,3].map(i=>`<span class="pin-dot ${i<pinState.buf.length?'on':''} ${err?'err':''}"></span>`).join('');}
 function pinKey(d){
   if(d==='back'){pinState.buf=pinState.buf.slice(0,-1);renderPinDots();return;}
@@ -3707,12 +3990,18 @@ function pinKey(d){
 }
 async function pinComplete(){
   const code=pinState.buf,m=pinState.mode;
-  if(m==='unlock'){ if(await sha(code)===state.pinHash){closePin();} else pinError(); return; }
-  if(m==='disable'){ if(await sha(code)===state.pinHash){state.pinHash=null;save();closePin();renderSecurity();toast('PIN отключён');} else pinError(); return; }
-  if(m==='change'){ if(await sha(code)===state.pinHash){pinState.mode='set';pinState.buf='';pinState.temp=null;setPinTitle('Новый PIN-код');renderPinDots();} else pinError(); return; }
+  if(m==='unlock'){ if(await sha(code)===state.pinHash){secUnlocked();} else pinError(); return; }
+  // TASK_023: снятие кода обязано гасить биометрию — без кода у неё нет
+  // запасного пути входа. Правило живёт в чистом сервисе, а не только здесь.
+  if(m==='disable'){ if(await sha(code)===state.pinHash){
+      state.pinHash=null;
+      const S=secSvc(); if(S)state.settings.security=S.applyPasscodeOff(S.read(state));
+      save();closePin();renderSecurity();toast('Защитный код отключён');
+    } else pinError(); return; }
+  if(m==='change'){ if(await sha(code)===state.pinHash){pinState.mode='set';pinState.buf='';pinState.temp=null;setPinTitle('Новый защитный код');renderPinDots();} else pinError(); return; }
   if(m==='set'){
-    if(!pinState.temp){pinState.temp=code;pinState.buf='';setPinTitle('Повторите PIN-код');renderPinDots();}
-    else if(pinState.temp===code){state.pinHash=await sha(code);save();closePin();renderSecurity();toast('PIN установлен ✓');}
+    if(!pinState.temp){pinState.temp=code;pinState.buf='';setPinTitle('Повторите защитный код');renderPinDots();}
+    else if(pinState.temp===code){state.pinHash=await sha(code);save();closePin();renderSecurity();toast('Защитный код установлен ✓');}
     else{pinState.temp=null;pinState.buf='';renderPinDots(true);setTimeout(()=>{setPinTitle('Не совпало. Придумайте заново');renderPinDots();},400);}
   }
 }
@@ -5487,9 +5776,13 @@ $('#clearBtn').onclick=()=>{
 };
 // Безопасность
 $('#profSecurity').onclick=openSecurity;
+// «Назад» возвращает ровно на экран профиля — он под этим экраном не закрывался (TASK_021)
 $('#securityClose').onclick=()=>$('#securityOverlay').classList.remove('show');
 $('#securityOverlay').onclick=e=>{if(e.target.id==='securityOverlay')$('#securityOverlay').classList.remove('show');};
+$('#secLockCancel').onclick=()=>$('#secLockOverlay').classList.remove('show');
+$('#secLockOverlay').onclick=e=>{if(e.target.id==='secLockOverlay')$('#secLockOverlay').classList.remove('show');};
 $$('#pinPad button[data-k]').forEach(b=>b.onclick=()=>pinKey(b.dataset.k));
+$('#pinBio').onclick=()=>secBioUnlock(false);
 $('#pinCancel').onclick=()=>{if(pinState.mode!=='unlock')closePin();};
 $('#fcEye').onclick=()=>{state.hideAmounts=!state.hideAmounts;save();render();updateEye();updateFcEye();};
 // Стрелки над карточкой двигают общий anchor/period (единый источник диапазона, TASK_003A) —
@@ -5577,7 +5870,7 @@ $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();})
   sa.addEventListener('scroll',sync,{passive:true});
   sync();
 })();
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay','#recurOverlay','#ratesOverlay','#goalContribOverlay'].forEach(s=>$(s).classList.remove('show'));document.body.classList.remove('drawer-open');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay','#recurOverlay','#ratesOverlay','#goalContribOverlay','#securityOverlay','#secLockOverlay'].forEach(s=>$(s).classList.remove('show'));document.body.classList.remove('drawer-open');}});
 
 /* ============ Statistics (Screen 14) ============ */
 let statsPeriod='year'; // 'month'|'year'|'all'
@@ -5936,9 +6229,13 @@ renderReleaseInfo(); // блок версии в drawer — статичен, р
 showScreen('scrRecords');
 updateEye();
 updateFcEye();
-if(state.pinHash)pinStart('unlock'); // блокировка на входе
+secCheckBio();          // доступность платформенной биометрии — узнаём заранее, тихо
+secMaybeLock();         // блокировка на входе (TASK_023: с учётом настройки «Запрашивать»)
 // при возврате в приложение — догнать пропущенные авто-операции
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(processAutoPost())render(); } });
+// TASK_023: отметка ухода в фон + повторный запрос кода по настройке «Запрашивать»
+document.addEventListener('visibilitychange',()=>{ document.visibilityState==='hidden'?secMarkInactive():secMaybeLock(); });
+window.addEventListener('pagehide',secMarkInactive);
 
 if('serviceWorker' in navigator){
   let swRefreshing=false;
