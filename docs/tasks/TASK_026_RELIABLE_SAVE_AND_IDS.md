@@ -351,7 +351,7 @@ id не мигрируют.
 
 ## 17. Публикация
 
-- Коммит: `<заполняется после коммита>` — `fix(TASK_026): make persistence atomic and generate collision-safe ids`
+- Коммит: `38561b5` — `fix(TASK_026): make persistence atomic and generate collision-safe ids`
 - Запушено в `origin/main`, GitHub Pages задеплоен.
 - Production проверен: https://adar4026.github.io/finance/ отдаёт
   `sw.js` с `CACHE = 'finance-v168'`, `js/core/ids.js` доступен (HTTP 200),
