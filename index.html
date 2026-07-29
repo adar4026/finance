@@ -20,6 +20,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <!-- Архитектура (feature-ready для Flutter): core → database → services. UI ниже использует только AF.Store / AF.Services -->
 <script src="js/core/result.js"></script>
+<script src="js/core/ids.js"></script>
 <script src="js/core/app_info.js"></script>
 <!-- TASK_015: подключается ДО store.js — migrate() при первом load() должен
      видеть сервис. Если файл почему-то не приехал (CDN-рассинхронизация),
@@ -1562,6 +1563,16 @@
     color:var(--bg);padding:12px 20px;border-radius:12px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;
     transition:.25s;z-index:90}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* TASK_026: ошибка сохранения. Тот же компонент, заметный вариант —
+     красный фон (одинаково читаемый в обеих темах: белый текст на #d92d20),
+     многострочный текст, ограниченная ширина, кликабелен для закрытия.
+     Отступ снизу учитывает нижнюю навигацию и safe-area, чтобы сообщение
+     не перекрывало системные кнопки. */
+  .toast.err{background:#d92d20;color:#fff;pointer-events:auto;cursor:pointer;
+    max-width:min(560px,calc(100vw - 32px));width:max-content;white-space:pre-line;text-align:left;
+    line-height:1.35;padding:13px 18px;border-radius:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.28);z-index:200;
+    bottom:calc(90px + env(safe-area-inset-bottom,0px))}
 
   /* ===== Statistics (Screen 14) ===== */
   .stats-period-sel{display:flex;gap:4px}
@@ -2677,6 +2688,14 @@ let anaCur=[], anaPre=[];   // tx текущего/прошлого период
 let curScreen='scrRecords';
 // add-sheet state
 let aType='expense', aCat='food', aSubcat=null, aReceipt=null, aExpr='0', editId=null;
+// TASK_026: id создаваемой операции фиксируется на время открытия формы —
+// повторная попытка после ошибки хранилища переиспользует его, а не плодит
+// новые идентификаторы на каждый клик «Сохранить». txSaving — защита от
+// повторного входа в saveTx(); txCommitted — защёлка «эта форма уже
+// сохранена»: closeSheet() уходит через history.back(), а это асинхронно —
+// второй клик двойного нажатия успевает прийти на ещё видимую страницу.
+let aTxId=null, txSaving=false, txCommitted=false;
+function newTxId(){ if(!aTxId)aTxId=AF.Ids.forTx(state); return aTxId; }
 let aToExpr='0', transFocus='from'; // перевод: сумма «на счёт» и активная сторона
 const subcatById=id=>(state.subcats||[]).find(s=>s.id===id);
 // account editor
@@ -2705,7 +2724,7 @@ function load(){
 function seedCategories(){
   if(!Array.isArray(state.cats))state.cats=[];
   if(!Array.isArray(state.subcats))state.subcats=[];
-  if(state.cats.length>0){state.taxonomyVersion=TAXONOMY_VERSION;AF.Store.save(state);return;}
+  if(state.cats.length>0){state.taxonomyVersion=TAXONOMY_VERSION;saveBoot('seedCategories');return;}
   const all=[...CATS.expense.map(c=>({...c,type:'expense'})),...CATS.income.map(c=>({...c,type:'income'}))];
   all.forEach(tc=>{
     const ex=state.cats.find(c=>c.id===tc.id);
@@ -2716,9 +2735,80 @@ function seedCategories(){
       tc.subs.forEach((nm,j)=>state.subcats.push({id:'s_'+tc.id+'_'+j,categoryId:tc.id,name:nm,createdAt:Date.now()}));
   });
   state.taxonomyVersion=TAXONOMY_VERSION;
-  AF.Store.save(state);
+  saveBoot('seedCategories');
 }
-function save(){ AF.Store.save(state); renderHeader(); }
+
+/* ===== TASK_026: единый контракт сохранения =====
+   До TASK_026 обёртка выглядела так:
+       function save(){ AF.Store.save(state); renderHeader(); }
+   — результат физической записи выбрасывался, и при переполнении
+   localStorage пользователь видел «Расход добавлен ✓» при несохранённых
+   данных (C-1, Critical).
+
+   Теперь save() возвращает тот же Result, что AF.Store.save():
+       { ok:true }  |  { ok:false, error:{ code, message } },
+       code ∈ QUOTA_EXCEEDED | SERIALIZATION_FAILED | STORAGE_FAILED.
+   Второго формата Result не заводим — используется существующий AF.Result.
+
+   При неудаче save() САМ:
+     1) откатывает состояние в памяти к последнему успешно сохранённому
+        (иначе несохранённая операция продолжала бы влиять на капитал,
+        аналитику и бюджеты, а после перезагрузки исчезала);
+     2) показывает понятное сообщение существующим механизмом тостов
+        (вариант .toast.err — заметнее и не исчезает сам);
+     3) перерисовывает экраны, чтобы фантомная запись исчезла из списков.
+   Вызывающий код обязан прервать свой «успешный» сценарий:
+       if(!save().ok)return;
+   — не закрывать форму, не чистить поля, не показывать success. */
+function saveFailed(res){
+  const err=(res&&res.error)||{};
+  console.error('[save] запись не состоялась',{code:err.code||'STORAGE_FAILED'});
+  return res;
+}
+let saveRecovering=false;             // защита от рекурсии render() → save() → render()
+function save(){
+  const res=AF.Store.save(state);
+  if(!res.ok){
+    saveFailed(res);
+    AF.Store.rollback(state);        // память = последнее сохранённое состояние
+    if(!saveRecovering){
+      saveRecovering=true;
+      try{renderHeader();render();}catch(e){console.error('[save] перерисовка после отката',e);}
+      finally{saveRecovering=false;}
+    }
+    toastError(((res.error&&res.error.message)||'Не удалось сохранить данные'));
+    return res;
+  }
+  renderHeader();
+  return res;
+}
+// Сохранения на старте приложения (сидирование категорий, групп счетов):
+// пользовательского действия за ними нет и UI ещё не готов, поэтому без
+// отката и без модального шума — но и не молча (требование «результат
+// AF.Store.save() не игнорируется»).
+function saveBoot(where){
+  const res=AF.Store.save(state);
+  if(!res.ok)console.error('[save:boot] '+where+' не сохранено',{code:(res.error&&res.error.code)||'STORAGE_FAILED'});
+  return res;
+}
+
+/* TASK_026 (M-10): Math.min(...массив) / Math.max(...массив) раскладывают
+   массив в аргументы, а их число ограничено размером стека (порядка 10⁵).
+   На большой истории операций это RangeError и падение экрана целиком.
+   Итеративная форма ограничения не имеет. Семантика воспроизведена точно,
+   включая NaN: одна нераспознанная дата по-прежнему даёт NaN, как у
+   Math.min — исправление этого поведения относится к TASK_027 (H-6) и
+   намеренно не делается здесь, чтобы не смешивать задачи. */
+function minOf(arr,init){
+  let m=(init===undefined?Infinity:+init);
+  for(let i=0;i<arr.length;i++){const v=+arr[i];if(v!==v)return NaN;if(v<m)m=v;}
+  return m;
+}
+function maxOf(arr,init){
+  let m=(init===undefined?-Infinity:+init);
+  for(let i=0;i<arr.length;i++){const v=+arr[i];if(v!==v)return NaN;if(v>m)m=v;}
+  return m;
+}
 function applyTheme(){
   const sys=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
   const resolved=state.theme==='system'?sys:(state.theme||'light');
@@ -2996,7 +3086,7 @@ function capPoints(range){
   else if(range==='6m')for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i+1,0,23,59,59);push(d,monLbl(d));}
   else if(range==='1y')for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i+1,0,23,59,59);push(d,monLbl(d));}
   else{
-    const ds=state.tx.map(t=>new Date(t.date));const first=ds.length?new Date(Math.min(...ds)):new Date();
+    const ds=state.tx.map(t=>new Date(t.date));const first=ds.length?new Date(minOf(ds)):new Date();
     const months=Math.max(1,(now.getFullYear()-first.getFullYear())*12+now.getMonth()-first.getMonth());
     const step=Math.ceil(months/11)||1;
     for(let i=months;i>=0;i-=step){const d=new Date(now.getFullYear(),now.getMonth()-i+1,0,23,59,59);push(d,monLbl(d));}
@@ -3225,7 +3315,7 @@ function catTxRange(){
   if(catTxMode==='year')return {from:new Date(y,0,1),to:new Date(y,11,31,23,59,59),lbl:String(y)};
   if(catTxMode==='all'){
     const ds=state.tx.map(t=>new Date(t.date));
-    const from=ds.length?new Date(Math.min(...ds)):new Date(2000,0,1);
+    const from=ds.length?new Date(minOf(ds)):new Date(2000,0,1);
     return {from:new Date(from.getFullYear(),from.getMonth(),1),to:new Date(2999,0,1),lbl:'Всё время'};
   }
   if(catTxMode==='custom'){
@@ -3430,12 +3520,14 @@ function saveBudget(){
   if(!lim||lim<=0){$('#budLimitErr').classList.add('show');$('#budLimit').focus();return;}
   if(!budCat){toast('Выберите категорию');return;}
   state.budgets[budCat]=Math.round(lim*100)/100;
-  save();$('#budgetEditOverlay').classList.remove('show');render();toast('Бюджет сохранён ✓');
+  if(!save().ok)return;                       // TASK_026: не закрывать форму и не показывать успех
+  $('#budgetEditOverlay').classList.remove('show');render();toast('Бюджет сохранён ✓');
 }
 function deleteBudget(){
   if(!budEdit)return;
   delete state.budgets[budEdit];
-  save();$('#budgetEditOverlay').classList.remove('show');render();toast('Бюджет удалён');
+  if(!save().ok)return;                       // TASK_026: бюджет остаётся, откат уже выполнен
+  $('#budgetEditOverlay').classList.remove('show');render();toast('Бюджет удалён');
 }
 
 /* ============ Цели (Goals, Screen 7) ============ */
@@ -3498,7 +3590,8 @@ function saveContribGoal(){
   g.savedAmount=Math.round((g.savedAmount+v)*100)/100;
   const reached=g.savedAmount>=g.targetAmount;
   if(reached)g.status='completed';
-  save();$('#goalContribOverlay').classList.remove('show');renderGoals();renderHeader();
+  if(!save().ok)return;                       // TASK_026
+  $('#goalContribOverlay').classList.remove('show');renderGoals();renderHeader();
   toast(reached?'🎉 Цель достигнута!':'Добавлено '+num(v));
 }
 function openGoalEdit(id){
@@ -3524,14 +3617,16 @@ function saveGoal(){
   if(!target||target<=0){$('#goalTargetErr').classList.add('show');$('#goalTarget').focus();return;}
   const deadline=$('#goalDeadline').value||null;
   if(goalEdit){const g=state.goals.find(x=>x.id===goalEdit);Object.assign(g,{name,targetAmount:target,deadline,color:gColor});}
-  else state.goals.push({id:'g'+Date.now().toString(36),name,targetAmount:Math.round(target*100)/100,savedAmount:0,currency:state.currency,deadline,color:gColor,status:'active',createdAt:Date.now()});
-  save();$('#goalEditOverlay').classList.remove('show');renderGoals();toast('Цель сохранена ✓');
+  else state.goals.push({id:AF.Ids.forGoal(state),name,targetAmount:Math.round(target*100)/100,savedAmount:0,currency:state.currency,deadline,color:gColor,status:'active',createdAt:Date.now()});
+  if(!save().ok)return;                       // TASK_026
+  $('#goalEditOverlay').classList.remove('show');renderGoals();toast('Цель сохранена ✓');
 }
 function deleteGoal(){
   if(!goalEdit)return;
   if(!confirm('Удалить цель?'))return;
   state.goals=state.goals.filter(g=>g.id!==goalEdit);
-  save();$('#goalEditOverlay').classList.remove('show');renderGoals();toast('Цель удалена');
+  if(!save().ok)return;                       // TASK_026: цель восстановлена откатом
+  $('#goalEditOverlay').classList.remove('show');renderGoals();toast('Цель удалена');
 }
 
 /* ============ Финансовый календарь (Screen 8) ============ */
@@ -3630,7 +3725,7 @@ function renderRecurring(){
 // Авто-проводка: регулярные напоминания с autoPost сами создают операции в дни срабатывания
 function processAutoPost(){
   const today=new Date();today.setHours(23,59,59,999);
-  let nid=Date.now(),created=0;
+  let created=0;
   (state.reminders||[]).forEach(r=>{
     if(r.isActive===false||!r.autoPost)return;
     const rt=r.repeatType||'none';if(rt==='none')return;
@@ -3643,15 +3738,22 @@ function processAutoPost(){
     const acc=(r.accountId&&state.accounts.find(a=>a.id===r.accountId))?r.accountId:(state.accounts[0]&&state.accounts[0].id);
     if(!acc)return;
     occ.forEach(d=>{
-      state.tx.push({id:nid++,type:r.type,amount:r.amount,cat:r.categoryId||catsFor(r.type)[0].id,subcategoryId:null,account:acc,date:d.toISOString().slice(0,10),note:(r.title||'')+' · авто 🔁',receiptPath:null,autoFrom:r.id});
+      // TASK_026 (M-8): раньше nid=Date.now()+инкремент — мог пересечься с id
+      // операции, сохранённой вручную в ту же миллисекунду.
+      state.tx.push({id:AF.Ids.forTx(state),type:r.type,amount:r.amount,cat:r.categoryId||catsFor(r.type)[0].id,subcategoryId:null,account:acc,date:d.toISOString().slice(0,10),note:(r.title||'')+' · авто 🔁',receiptPath:null,autoFrom:r.id});
       created++;
     });
     r.lastPosted=occ[occ.length-1].toISOString().slice(0,10);
   });
-  if(created){save();if(typeof toast==='function')toast(`Авто-операций добавлено: ${created} 🔁`);}
+  // TASK_026: авто-операции считаются созданными только после физической
+  // записи; при отказе откат в save() убирает их и возвращает r.lastPosted.
+  if(created){
+    if(!save().ok)return 0;
+    if(typeof toast==='function')toast(`Авто-операций добавлено: ${created} 🔁`);
+  }
   return created;
 }
-function markReminderDone(id){const r=(state.reminders||[]).find(x=>x.id===id);if(!r)return;r.done=true;save();renderCalendar();toast('Отмечено выполненным ✓');}
+function markReminderDone(id){const r=(state.reminders||[]).find(x=>x.id===id);if(!r)return;r.done=true;if(!save().ok)return;renderCalendar();toast('Отмечено выполненным ✓');}
 function openReminderEdit(id){
   remEdit=id||null;
   $('#remAccount').innerHTML=state.accounts.map(a=>`<option value="${a.id}">${a.emoji} ${esc(a.name)}</option>`).join('');
@@ -3682,13 +3784,15 @@ function saveReminder(){
   const autoPost=$('#remAutoPost').classList.contains('on');
   const data={title,amount:Math.round(amount*100)/100,type:remType,dueDate:$('#remDate').value||new Date().toISOString().slice(0,10),repeatType:$('#remRepeat').value,categoryId:remCat||null,accountId:$('#remAccount').value||null,autoPost,isActive:true};
   if(remEdit){const r=state.reminders.find(x=>x.id===remEdit);Object.assign(r,data);if(r.repeatType!=='none')r.done=false;}
-  else state.reminders.push(Object.assign({id:'r'+Date.now().toString(36),done:false,createdAt:Date.now()},data));
-  save();processAutoPost();$('#reminderEditOverlay').classList.remove('show');render();renderCalendar();renderRecurring();renderHeader();toast('Напоминание сохранено ✓');
+  else state.reminders.push(Object.assign({id:AF.Ids.forReminder(state),done:false,createdAt:Date.now()},data));
+  if(!save().ok)return;                       // TASK_026
+  processAutoPost();$('#reminderEditOverlay').classList.remove('show');render();renderCalendar();renderRecurring();renderHeader();toast('Напоминание сохранено ✓');
 }
 function deleteReminder(){
   if(!remEdit)return;
   state.reminders=state.reminders.filter(r=>r.id!==remEdit);
-  save();$('#reminderEditOverlay').classList.remove('show');renderCalendar();renderRecurring();toast('Напоминание удалено');
+  if(!save().ok)return;                       // TASK_026: напоминание восстановлено откатом
+  $('#reminderEditOverlay').classList.remove('show');renderCalendar();renderRecurring();toast('Напоминание удалено');
 }
 
 /* ============ Финансовое здоровье (Screen 9) ============ */
@@ -3706,7 +3810,7 @@ function snapshotHealth(res){
   const last=state.healthHistory[state.healthHistory.length-1];
   if(last&&last.date===today)last.total=res.total; else state.healthHistory.push({date:today,total:res.total});
   if(state.healthHistory.length>60)state.healthHistory=state.healthHistory.slice(-60);
-  save();
+  save();  // TASK_026: успех пользователю не заявляется; при отказе save() сам откатит снимок и покажет ошибку
 }
 function hbColor(s){return s>=75?'var(--income)':s>=50?'var(--warn)':'var(--expense)';}
 function renderHealth(){
@@ -3786,15 +3890,29 @@ function doExportPdf(){
 }
 function doBackupCreate(){
   downloadFile('alex_finance_backup_'+stamp()+'.afb',AF.Services.Backup.create(state),'application/json');
-  state.lastBackup=Date.now();save();
-  $('#bkpLast').textContent='Последняя копия: '+new Date(state.lastBackup).toLocaleString('ru-RU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-  toast('Резервная копия создана ✓');
+  // Файл уже отдан пользователю — сама копия создана в любом случае; не
+  // сохранилась только отметка о дате (TASK_026: не молчим об этом).
+  state.lastBackup=Date.now();
+  const okSaved=save().ok;
+  if(okSaved)$('#bkpLast').textContent='Последняя копия: '+new Date(state.lastBackup).toLocaleString('ru-RU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  if(okSaved)toast('Резервная копия создана ✓');
 }
 function doBackupRestore(text){
   const res=AF.Services.Backup.restore(text);
   if(!res.ok){toast(res.error);return;}
   if(!confirm('Восстановить из копии? Текущие данные будут заменены.'))return;
-  state=res.value;AF.Store.save(state);load();render();
+  // TASK_026: сначала записываем восстановленную базу и только при успехе
+  // подменяем состояние в памяти. Раньше state заменялся до записи — при
+  // отказе storage в памяти оказывалась одна база, в хранилище другая, а
+  // пользователь видел «Данные восстановлены ✓».
+  const next=res.value;
+  const w=AF.Store.save(next);
+  if(!w.ok){                                  // прежняя база в хранилище цела
+    saveFailed(w);
+    toastError((w.error&&w.error.message)||'Не удалось сохранить данные');
+    return;
+  }
+  state=next;load();render();
   $('#exportOverlay').classList.remove('show');toast('Данные восстановлены ✓');
 }
 
@@ -3909,7 +4027,7 @@ async function secToggleBio(){
   const S=secSvc(); if(!S)return;
   const sec=S.normalize(state);
   if(sec.biometric){ // выключение — просто снимаем, код остаётся рабочим входом
-    sec.biometric=false;sec.bioCredId=null;save();renderSecurity();toast('Face ID отключён');return;
+    sec.biometric=false;sec.bioCredId=null;if(!save().ok){renderSecurity();return;}renderSecurity();toast('Face ID отключён');return;
   }
   if(!state.pinHash){ // включение без кода — сначала честно создаём код
     toast('Сначала задайте защитный код');pinStart('set');return;
@@ -3918,7 +4036,7 @@ async function secToggleBio(){
   try{
     const id=await secBioRegister();
     if(!id){toast('Не удалось включить Face ID');return;}
-    sec.bioCredId=id;sec.biometric=true;save();renderSecurity();toast('Face ID включён ✓');
+    sec.bioCredId=id;sec.biometric=true;if(!save().ok){renderSecurity();return;}renderSecurity();toast('Face ID включён ✓');
   }catch(e){ renderSecurity(); toast('Face ID не подтверждён'); }
 }
 
@@ -3933,7 +4051,8 @@ function openLockPicker(){
     </button>`).join('');
   $$('#secLockList .secp-pick-row').forEach(b=>b.onclick=()=>{
     const next=S.setLockDelay(S.normalize(state),Number(b.dataset.v));
-    state.settings.security=next;save();
+    state.settings.security=next;
+    if(!save().ok){renderSecurity();return;}   // TASK_026: шторка остаётся открытой
     $('#secLockOverlay').classList.remove('show');renderSecurity();
     toast('Сохранено ✓');
   });
@@ -3946,7 +4065,11 @@ function openLockPicker(){
 function secMarkInactive(){
   const S=secSvc(); if(!S||!state.pinHash)return;
   S.normalize(state).lastActiveAt=Date.now();
-  AF.Store.save(state); // без renderHeader(): приложение уже уходит в фон
+  // Без renderHeader(): приложение уже уходит в фон. TASK_026: результат не
+  // игнорируем, но и не откатываем — здесь меняется одна отметка времени, а
+  // при её отсутствии secShouldLock() трактует состояние fail-secure.
+  const r=AF.Store.save(state);
+  if(!r.ok)console.error('[save:security] отметка ухода в фон не сохранена',{code:(r.error&&r.error.code)||'STORAGE_FAILED'});
 }
 function secShouldLock(){
   const S=secSvc();
@@ -3957,7 +4080,11 @@ function secMaybeLock(){
 }
 function secUnlocked(){
   const S=secSvc();
-  if(S&&state.pinHash){S.normalize(state).lastActiveAt=Date.now();AF.Store.save(state);}
+  if(S&&state.pinHash){
+    S.normalize(state).lastActiveAt=Date.now();
+    const r=AF.Store.save(state); // TASK_026: та же отметка времени, fail-secure при отказе
+    if(!r.ok)console.error('[save:security] отметка разблокировки не сохранена',{code:(r.error&&r.error.code)||'STORAGE_FAILED'});
+  }
   closePin();
 }
 // PIN state machine
@@ -4000,12 +4127,15 @@ async function pinComplete(){
   if(m==='disable'){ if(await sha(code)===state.pinHash){
       state.pinHash=null;
       const S=secSvc(); if(S)state.settings.security=S.applyPasscodeOff(S.read(state));
-      save();closePin();renderSecurity();toast('Защитный код отключён');
+      // TASK_026: код не считается снятым, пока это не записано —
+      // иначе после перезагрузки вход снова требовал бы старый код.
+      if(!save().ok){renderSecurity();return;}
+      closePin();renderSecurity();toast('Защитный код отключён');
     } else pinError(); return; }
   if(m==='change'){ if(await sha(code)===state.pinHash){pinState.mode='set';pinState.buf='';pinState.temp=null;setPinTitle('Новый защитный код');renderPinDots();} else pinError(); return; }
   if(m==='set'){
     if(!pinState.temp){pinState.temp=code;pinState.buf='';setPinTitle('Повторите защитный код');renderPinDots();}
-    else if(pinState.temp===code){state.pinHash=await sha(code);save();closePin();renderSecurity();toast('Защитный код установлен ✓');}
+    else if(pinState.temp===code){state.pinHash=await sha(code);if(!save().ok){renderSecurity();return;}closePin();renderSecurity();toast('Защитный код установлен ✓');}
     else{pinState.temp=null;pinState.buf='';renderPinDots(true);setTimeout(()=>{setPinTitle('Не совпало. Придумайте заново');renderPinDots();},400);}
   }
 }
@@ -4104,7 +4234,10 @@ function seedAccountGroups(){
       {id:'g_crypto',name:'Крипто',order:2}
     ];
     state.accounts.forEach(a=>{ if(!a.groupId) a.groupId = a.type==='cash'?'g_cash' : a.type==='crypto'?'g_crypto' : 'g_cards'; });
-    save();
+    // saveBoot, а не save(): функция вызывается ИЗ renderAccounts(), а save()
+    // при отказе сам вызывает render() — получилась бы бесконечная рекурсия
+    // (TASK_026). Сидирование не является действием пользователя.
+    saveBoot('seedAccountGroups');
   }
   if(!state.groupCollapsed)state.groupCollapsed={};
 }
@@ -4168,7 +4301,7 @@ function renderAccounts(){
 // (измеряется scrollHeight), без полного перерендера #accList на каждый клик.
 function toggleAccGroup(gid){
   state.groupCollapsed[gid]=!state.groupCollapsed[gid];
-  save();
+  if(!save().ok)return;                       // TASK_026: список уже перерисован откатом
   const card=$(`#accList .acc-cat[data-grp="${CSS.escape(gid)}"]`);
   if(!card)return;
   const wrap=card.querySelector('.acc-cat-body-wrap');
@@ -4268,15 +4401,19 @@ function saveGroup(){
   const name=$('#groupName').value.trim();
   if(!name){$('#groupNameErr').classList.add('show');$('#groupName').focus();return;}
   if(groupEdit){state.accountGroups.find(x=>x.id===groupEdit).name=name;}
-  else{const ord=Math.max(-1,...state.accountGroups.map(g=>g.order||0))+1;state.accountGroups.push({id:'g'+Date.now(),name,order:ord});}
-  save();$('#groupEditOverlay').classList.remove('show');render();toast(groupEdit?'Группа сохранена ✓':'Группа создана ✓');
+  // TASK_026 (M-8): id группы счетов больше не 'g'+Date.now() — тот же префикс
+  // использовали цели ('g'+base36), и две сущности разных типов могли совпасть.
+  else{const ord=maxOf(state.accountGroups.map(g=>g.order||0),-1)+1;state.accountGroups.push({id:AF.Ids.forAccountGroup(state),name,order:ord});}
+  if(!save().ok)return;                       // TASK_026
+  $('#groupEditOverlay').classList.remove('show');render();toast(groupEdit?'Группа сохранена ✓':'Группа создана ✓');
 }
 function delGroup(){
   if(!groupEdit)return;
   if(!confirm('Удалить группу? Счета останутся, но станут без группы.'))return;
   state.accounts.forEach(a=>{if(a.groupId===groupEdit)a.groupId=null;});
   state.accountGroups=state.accountGroups.filter(g=>g.id!==groupEdit);
-  save();$('#groupEditOverlay').classList.remove('show');render();toast('Группа удалена');
+  if(!save().ok)return;                       // TASK_026: группа и привязки счетов восстановлены откатом
+  $('#groupEditOverlay').classList.remove('show');render();toast('Группа удалена');
 }
 
 /* ============ Asset Graph: детали счёта ============ */
@@ -4478,6 +4615,7 @@ function showScreen(id){
 let sheetHistoryPushed=false;
 function openSheet(id){
   editId=id||null;
+  aTxId=null;txCommitted=false;     // TASK_026: id новой операции выдаётся один раз на открытие формы
   closeKeypad();
   buildAccountSelect();
   if(id){
@@ -4878,7 +5016,8 @@ function setType(t,keepCat){
   $('#catStrip .cat-add').onclick=()=>{
     const name=(prompt('Название новой категории')||'').trim();
     if(!name)return;
-    aCat=ensureCat(name,aType);aSubcat=null;save();
+    aCat=ensureCat(name,aType);aSubcat=null;
+    if(!save().ok){aCat=CATS[aType]?CATS[aType][0].id:aCat;setType(aType,true);return;} // TASK_026: категория откатилась
     setType(aType,true); // перерисовать сетку с новой категорией
   };
   setCatOpen(false); // по умолчанию свёрнуто
@@ -4906,7 +5045,7 @@ function renderSubcats(){
   $$('#subcatStrip .subcat-chip').forEach(el=>el.onclick=()=>{
     if(el.dataset.sub==='__add'){
       const name=(prompt('Название подкатегории')||'').trim();
-      if(name){const id='s'+Date.now().toString(36);state.subcats.push({id,categoryId:aCat,name,createdAt:Date.now()});save();aSubcat=id;renderSubcats();}
+      if(name){const id=AF.Ids.forSubcategory(state);state.subcats.push({id,categoryId:aCat,name,createdAt:Date.now()});if(!save().ok){renderSubcats();return;}aSubcat=id;renderSubcats();}
       return;
     }
     aSubcat=(aSubcat===el.dataset.sub)?null:el.dataset.sub;
@@ -4948,7 +5087,8 @@ function openRates(){
 function saveRates(){
   state.rates=state.rates||{};
   $$('#ratesList input[data-cur]').forEach(i=>{const v=parseFloat(i.value);if(v>0)state.rates[i.dataset.cur]=v;});
-  save();$('#ratesOverlay').classList.remove('show');toast('Курсы сохранены ✓');
+  if(!save().ok)return;                       // TASK_026
+  $('#ratesOverlay').classList.remove('show');toast('Курсы сохранены ✓');
 }
 function curOfAcc(id){const a=state.accounts.find(x=>x.id===id);return a?(a.currency||state.currency):state.currency;}
 function sameTransCur(){return curKey(curOfAcc($('#fFrom').value))===curKey(curOfAcc($('#fTo').value));}
@@ -5029,6 +5169,11 @@ function key(k){
   updateDisplay();
 }
 function saveTx(){
+  // TASK_026: два быстрых нажатия «Сохранить» не должны дать две операции.
+  // Первое нажатие при успехе закрывает страницу — второе (уже поставленное
+  // в очередь событий) приходит на закрытую форму и здесь же отсекается.
+  if(!$('#overlay').classList.contains('show'))return;
+  if(txSaving||txCommitted)return;
   const val=evalExpr(aExpr);
   if(!val||val<=0){toast('Введите сумму');return;}
   // Категория обязательна для Расход/Доход (Screen 5)
@@ -5053,14 +5198,14 @@ function saveTx(){
       delete t.cat;delete t.account;
       Object.assign(t,{type:'transfer',from,to,amount:val,toAmount:toVal,date,note});
       applyTxMeta(t,payee,tags,location);}
-    else state.tx.push(applyTxMeta({id:Date.now(),type:'transfer',from,to,amount:val,toAmount:toVal,date,note},payee,tags,location));
+    else state.tx.push(applyTxMeta({id:newTxId(),type:'transfer',from,to,amount:val,toAmount:toVal,date,note},payee,tags,location));
   }else if(editId){
     const t=state.tx.find(x=>x.id==editId);
     delete t.from;delete t.to;delete t.toAmount;
     Object.assign(t,{type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note,receiptPath:aReceipt||null});
     applyTxMeta(t,payee,tags,location);
   }else{
-    state.tx.push(applyTxMeta({id:Date.now(),type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note,receiptPath:aReceipt||null},payee,tags,location));
+    state.tx.push(applyTxMeta({id:newTxId(),type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note,receiptPath:aReceipt||null},payee,tags,location));
   }
   // Расписание: при выбранном повторе создаём регулярное напоминание (для новой операции)
   const rep=$('#fRepeat').value;
@@ -5068,10 +5213,21 @@ function saveTx(){
     state.reminders=state.reminders||[];
     const title=note||catById(aCat).name;
     // autoPost: будущие срабатывания создадут операции сами; lastPosted=date — сегодняшняя уже создана вручную
-    state.reminders.push({id:'r'+Date.now().toString(36),title,amount:val,type:aType,dueDate:date,repeatType:rep,categoryId:aCat,accountId:$('#fAccount').value,autoPost:true,lastPosted:date,isActive:true,done:false,createdAt:Date.now()});
+    state.reminders.push({id:AF.Ids.forReminder(state),title,amount:val,type:aType,dueDate:date,repeatType:rep,categoryId:aCat,accountId:$('#fAccount').value,autoPost:true,lastPosted:date,isActive:true,done:false,createdAt:Date.now()});
   }
+  // TASK_026 (C-1): операция считается добавленной только после физической
+  // записи. При отказе save() откатывает state к последнему сохранённому
+  // состоянию (операция не попадает ни в баланс, ни в аналитику, ни в
+  // бюджеты) и показывает причину; форма остаётся открытой со всеми
+  // введёнными значениями, повтор возможен и дубликата не создаёт —
+  // id новой операции фиксирован (aTxId), а откат убрал предыдущую попытку.
+  txSaving=true;
+  const res=save();
+  txSaving=false;
+  if(!res.ok)return;                          // ни success-тоста, ни закрытия, ни haptic
+  txCommitted=true;                           // защёлка до следующего openSheet()
   haptic(14); // успешное сохранение (TASK_014 п. 7.11)
-  save();closeSheet();
+  closeSheet();
   anchor=new Date(date);render();buildAccountSelect();
   if($('#catTxOverlay').classList.contains('show'))renderCatTx(); // обновить drill-down, если открыт
   const repToast=(!editId&&aType!=='transfer'&&rep!=='none')?' · повтор задан 🔁':'';
@@ -5079,7 +5235,11 @@ function saveTx(){
 }
 function delTx(){
   if(!editId)return;
-  if(confirm('Удалить операцию?')){state.tx=state.tx.filter(t=>t.id!=editId);save();closeSheet();render();if($('#catTxOverlay').classList.contains('show'))renderCatTx();toast('Удалено');}
+  if(confirm('Удалить операцию?')){
+    state.tx=state.tx.filter(t=>t.id!=editId);
+    if(!save().ok)return;                     // TASK_026: операция восстановлена откатом, баланс не изменился
+    closeSheet();render();if($('#catTxOverlay').classList.contains('show'))renderCatTx();toast('Удалено');
+  }
 }
 
 /* ============ Счета ============ */
@@ -5151,9 +5311,10 @@ function saveAcc(){
     const a=state.accounts.find(x=>x.id===accEdit);
     Object.assign(a,{name,emoji:accEmoji,color:accColor,type:accType,start,currency,groupId,updatedAt:Date.now()});
   }else{
-    state.accounts.push({id:'a'+Date.now(),name,emoji:accEmoji,color:accColor,type:accType,start,currency,groupId,isArchived:false,createdAt:Date.now(),updatedAt:Date.now()});
+    state.accounts.push({id:AF.Ids.forAccount(state),name,emoji:accEmoji,color:accColor,type:accType,start,currency,groupId,isArchived:false,createdAt:Date.now(),updatedAt:Date.now()});
   }
-  save();$('#accOverlay').classList.remove('show');render();buildAccountSelect();toast(accEdit?'Счёт сохранён ✓':'Счёт создан ✓');
+  if(!save().ok)return;                       // TASK_026
+  $('#accOverlay').classList.remove('show');render();buildAccountSelect();toast(accEdit?'Счёт сохранён ✓':'Счёт создан ✓');
 }
 function delAcc(){
   if(!accEdit)return;
@@ -5161,7 +5322,8 @@ function delAcc(){
   if(has&&!confirm('На счёте есть операции. Они перейдут на первый счёт. Удалить?'))return;
   state.tx.forEach(t=>{if(t.account===accEdit)t.account=state.accounts.find(a=>a.id!==accEdit).id;});
   state.accounts=state.accounts.filter(a=>a.id!==accEdit);
-  save();$('#accOverlay').classList.remove('show');render();buildAccountSelect();toast('Счёт удалён');
+  if(!save().ok)return;                       // TASK_026: счёт и привязки операций восстановлены откатом
+  $('#accOverlay').classList.remove('show');render();buildAccountSelect();toast('Счёт удалён');
 }
 
 /* ============ Управление категориями (Story 2.4) ============ */
@@ -5276,6 +5438,8 @@ function commitCatOrder(){
   const reordered=seq.map(id=>orig.find(c=>c.id===id)).filter(Boolean);
   let k=0;
   state.cats=orig.map(c=>c.type===catMgrType?reordered[k++]:c);
+  // TASK_026: успех пользователю не заявляется; при отказе save() вернёт
+  // прежний порядок и перерисует экран, показав причину.
   save();
 }
 function openCatEdit(id){
@@ -5304,15 +5468,18 @@ function renderCatSubs(){
   $$('#catSubStrip .ren').forEach(el=>el.onclick=()=>{const s=state.subcats.find(x=>x.id===el.dataset.ren);
     const name=(prompt('Переименовать подкатегорию',s.name)||'').trim();if(name){s.name=name;save();renderCatSubs();}});
   $$('#catSubStrip .del').forEach(el=>el.onclick=()=>{state.subcats=state.subcats.filter(s=>s.id!==el.dataset.del);save();renderCatSubs();});
+  // TASK_026: подкатегории — те же правила; save() при отказе откатывает
+  // список и показывает причину, renderCatSubs() перерисует фактическое состояние.
   $('#catSubAdd').onclick=()=>{const name=(prompt('Название подкатегории')||'').trim();
-    if(name){state.subcats.push({id:'s'+Date.now().toString(36),categoryId:catEdit,name,createdAt:Date.now()});save();renderCatSubs();}};
+    if(name){state.subcats.push({id:AF.Ids.forSubcategory(state),categoryId:catEdit,name,createdAt:Date.now()});save();renderCatSubs();}};
 }
 function saveCat(){
   const name=$('#catName').value.trim();
   if(!name){$('#catNameErr').classList.add('show');$('#catName').classList.add('invalid');$('#catName').focus();return;}
   if(catEdit){const c=catById(catEdit);Object.assign(c,{name,emoji:cEmoji,color:cColor});}
-  else{const id='c'+Date.now().toString(36);state.cats.push({id,name,type:catMgrType,emoji:cEmoji,color:cColor,isSystem:false,createdAt:Date.now()});catEdit=id;}
-  save();renderCatMgr();$('#catEditOverlay').classList.remove('show');render();toast('Категория сохранена ✓');
+  else{const id=AF.Ids.forCategory(state);state.cats.push({id,name,type:catMgrType,emoji:cEmoji,color:cColor,isSystem:false,createdAt:Date.now()});catEdit=id;}
+  if(!save().ok){renderCatMgr();return;}      // TASK_026: редактор остаётся открытым
+  renderCatMgr();$('#catEditOverlay').classList.remove('show');render();toast('Категория сохранена ✓');
 }
 function deleteCat(){
   if(!catEdit)return;
@@ -5324,11 +5491,21 @@ function deleteCat(){
   state.tx.forEach(t=>{if(t.cat===catEdit)t.cat=other.id;});
   state.subcats=state.subcats.filter(s=>s.categoryId!==catEdit);
   state.cats=state.cats.filter(c=>c.id!==catEdit);
-  save();renderCatMgr();$('#catEditOverlay').classList.remove('show');render();toast('Категория удалена');
+  if(!save().ok){renderCatMgr();return;}      // TASK_026: категория и операции восстановлены откатом
+  renderCatMgr();$('#catEditOverlay').classList.remove('show');render();toast('Категория удалена');
 }
 
 /* ============ Прочее ============ */
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1700);}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.remove('err');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1700);}
+// TASK_026: ошибка сохранения — тот же общий механизм тостов, но заметный
+// вариант: красный фон, две строки текста, не исчезает сам (пользователь
+// должен успеть прочитать и решить, что делать) — закрывается касанием.
+// Отдельного второго механизма ошибок в приложении не заводим.
+function toastError(m){
+  const t=$('#toast');t.textContent=m;t.classList.add('err','show');
+  clearTimeout(t._t);t._t=null;
+  t.onclick=()=>{t.classList.remove('show');t.onclick=null;};
+}
 function loadDemo(){
   if(!confirm('Загрузить демо-данные? Текущие операции, бюджеты, цели и напоминания будут заменены примерными.'))return;
   // TASK_016: генерация операций вынесена в чистый AF.Services.DemoData —
@@ -5354,7 +5531,8 @@ function loadDemo(){
     {id:'r4',title:'IBI годовой налог',amount:300,type:'expense',dueDate:ym(3),repeatType:'none',categoryId:'taxes',isActive:true,done:false,createdAt:Date.now()},
   ];
   state.healthHistory=[];for(let i=5;i>=1;i--){const d=new Date(today.getFullYear(),today.getMonth()-i,1);state.healthHistory.push({date:d.toISOString().slice(0,10),total:70+(5-i)*4});}
-  save();anchor=new Date();render();toast('Демо-данные загружены');
+  if(!save().ok)return;                       // TASK_026: прежние данные восстановлены откатом
+  anchor=new Date();render();toast('Демо-данные загружены');
 }
 function dstr(b,d){return new Date(b.getFullYear(),b.getMonth(),d).toISOString().slice(0,10);}
 
@@ -5558,7 +5736,8 @@ $$('#dSeg button').forEach(b=>b.onclick=()=>{detailType=b.dataset.t;
 function archiveAccount(id){
   const a=state.accounts.find(x=>x.id===id);if(!a)return;
   a.isArchived=!a.isArchived;a.updatedAt=Date.now();
-  save();$('#detailOverlay').classList.remove('show');render();
+  if(!save().ok)return;                       // TASK_026
+  $('#detailOverlay').classList.remove('show');render();
   toast(a.isArchived?'Счёт перемещён в архив':'Счёт восстановлен ✓');
 }
 // Архивировать / восстановить из редактора счёта (при восстановлении применяет выбранную группу)
@@ -5567,7 +5746,8 @@ function archiveFromEditor(){
   const a=state.accounts.find(x=>x.id===accEdit);if(!a)return;
   a.groupId=$('#accGroup').value||null;     // даём восстановить в нужный раздел
   a.isArchived=!a.isArchived;a.updatedAt=Date.now();
-  save();$('#accOverlay').classList.remove('show');render();buildAccountSelect();
+  if(!save().ok)return;                       // TASK_026
+  $('#accOverlay').classList.remove('show');render();buildAccountSelect();
   toast(a.isArchived?'Счёт перемещён в архив 📦':'Счёт восстановлен ✓');
 }
 function deleteAccount(id){
@@ -5578,7 +5758,8 @@ function deleteAccount(id){
   const target=others[0].id;
   state.tx.forEach(t=>{if(t.account===id)t.account=target;if(t.from===id)t.from=target;if(t.to===id)t.to=target;});
   state.accounts=state.accounts.filter(a=>a.id!==id);
-  save();$('#detailOverlay').classList.remove('show');render();buildAccountSelect();toast('Счёт удалён');
+  if(!save().ok)return;                       // TASK_026: счёт и привязки операций восстановлены откатом
+  $('#detailOverlay').classList.remove('show');render();buildAccountSelect();toast('Счёт удалён');
 }
 
 function exportData(){
@@ -5603,11 +5784,58 @@ $('#importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new
     const txt=String(r.result||'');
     const isJson=f.name.toLowerCase().endsWith('.json')||txt.trim().startsWith('{');
     if(isJson){
-      try{const d=JSON.parse(txt);if(Array.isArray(d.tx)){state=Object.assign(state,d);save();load();render();toast('Данные загружены');}else toast('Неверный формат');}catch(_){toast('Ошибка чтения');}
+      try{const d=JSON.parse(txt);if(Array.isArray(d.tx))importJSON(d);else toast('Неверный формат');}catch(_){toast('Ошибка чтения');}
     }else{ importCSV(txt); }
     e.target.value='';
   };
   r.readAsText(f);};
+
+/* TASK_026 — импорт JSON.
+   Было: `state=Object.assign(state,d); save(); load(); render(); toast(...)`.
+   Проблемы, которые здесь закрываются (в границах TASK_026, без полной
+   нормализации импорта — она остаётся за TASK_034):
+     1. состояние подменялось ДО записи: при отказе storage в памяти
+        оказывалась импортированная база, в хранилище — прежняя, а
+        пользователь видел «Данные загружены»;
+     2. импортируемые коллекции могли содержать повторяющиеся id — при
+        совпадении одна сущность незаметно затирала другую в любой
+        операции find/filter по id.
+   Теперь: собираем кандидата отдельно от state, чиним дубли id внутри
+   каждой коллекции, пишем — и только при успехе принимаем результат.
+   Прежняя база не разрушается: при ошибке записи в хранилище остаётся она. */
+function dedupeIds(list,prefix){
+  if(!Array.isArray(list))return 0;
+  const seen=new Set();let fixed=0;
+  list.forEach(item=>{
+    if(!item||typeof item!=='object')return;
+    const id=item.id;
+    if(id===undefined||id===null||id===''||seen.has(String(id))){
+      item.id=AF.Ids.unique(prefix,seen);fixed++;
+    }
+    seen.add(String(item.id));
+  });
+  return fixed;
+}
+function importJSON(d){
+  const next=Object.assign({},state,d);       // копия: state не трогаем до успеха
+  const fixed=dedupeIds(next.tx,AF.Ids.PREFIX.tx)
+    +dedupeIds(next.accounts,AF.Ids.PREFIX.account)
+    +dedupeIds(next.cats,AF.Ids.PREFIX.category)
+    +dedupeIds(next.subcats,AF.Ids.PREFIX.subcategory)
+    +dedupeIds(next.goals,AF.Ids.PREFIX.goal)
+    +dedupeIds(next.reminders,AF.Ids.PREFIX.reminder)
+    +dedupeIds(next.accountGroups,AF.Ids.PREFIX.accountGroup);
+  if(fixed)console.warn('[import] перевыдано повторяющихся id: '+fixed);
+  const w=AF.Store.save(next);
+  if(!w.ok){                                  // прежняя база в хранилище цела
+    saveFailed(w);
+    toastError((w.error&&w.error.message)||'Не удалось сохранить данные');
+    return false;
+  }
+  state=next;load();render();buildAccountSelect();
+  toast('Данные загружены'+(fixed?` · id исправлено: ${fixed}`:''));
+  return true;
+}
 
 /* ============ Импорт CSV (Money Flow и др.) ============ */
 function parseCSV(text){
@@ -5641,7 +5869,10 @@ function ensureCat(name,type){
   let c=catsFor(type).find(x=>x.name.trim().toLowerCase()===norm);
   if(c)return c.id;
   const n=state.cats.length;
-  c={id:'c'+Date.now().toString(36)+n, name, type,
+  // TASK_026 (M-8): id больше не собирается конкатенацией времени и длины
+  // массива — две категории, созданные импортом в одну миллисекунду при
+  // одинаковой длине коллекции, получали один id.
+  c={id:AF.Ids.forCategory(state), name, type,
      emoji:EMOJI_POOL[n%EMOJI_POOL.length], color:COLOR_POOL[n%COLOR_POOL.length]};
   state.cats.push(c);return c.id;
 }
@@ -5673,7 +5904,7 @@ function resolveCatPath(name,type){
   if(!subName)return {cat,sub:null};
   const norm=subName.toLowerCase();
   let s=(state.subcats||[]).find(x=>x.categoryId===cat&&x.name.trim().toLowerCase()===norm);
-  if(!s){s={id:'s'+Date.now().toString(36)+state.subcats.length,categoryId:cat,name:subName,createdAt:Date.now()};state.subcats.push(s);}
+  if(!s){s={id:AF.Ids.forSubcategory(state),categoryId:cat,name:subName,createdAt:Date.now()};state.subcats.push(s);}
   return {cat,sub:s.id};
 }
 function ensureAcc(name,currency){
@@ -5682,7 +5913,7 @@ function ensureAcc(name,currency){
   const norm=name.toLowerCase();
   let a=state.accounts.find(x=>x.name.trim().toLowerCase()===norm);
   if(a){if(currency&&!a.currency)a.currency=currency;return a.id;}
-  a={id:'a'+Date.now().toString(36)+state.accounts.length, name, emoji:'💳', start:0, currency:currency||state.currency};
+  a={id:AF.Ids.forAccount(state), name, emoji:'💳', start:0, currency:currency||state.currency};
   state.accounts.push(a);return a.id;
 }
 function importCSV(text){
@@ -5717,6 +5948,11 @@ function importCSV(text){
   // примечание — каждое значение идёт в собственное поле операции, а note
   // содержит только колонку примечания. Файлы без этих колонок ведут себя
   // как раньше: find() вернёт -1, get() — '', ключи не создадутся.
+  // TASK_026 (M-8): id импортируемых операций больше не Date.now()+Math.random()+k.
+  // Проверяем уникальность и против уже существующих операций, и внутри пачки —
+  // иначе импорт мог незаметно «перекрыть» существующую операцию с тем же id.
+  const usedTxIds=new Set((state.tx||[]).map(t=>String(t.id)));
+  const nextTxId=()=>{const id=AF.Ids.unique(AF.Ids.PREFIX.tx,usedTxIds);usedTxIds.add(id);return id;};
   const added=[];let skipped=0;
   for(let k=1;k<rows.length;k++){
     const r=rows[k];if(!r.some(x=>x.trim()))continue;
@@ -5734,7 +5970,7 @@ function importCSV(text){
       if(!isNaN(mainAmt)&&mainAmt<0){from=mainName;fromAmt=-mainAmt;fromCur=mainCur;to=tAccName;toAmt=Math.abs(tAmt);toCur=tCur;}
       else{from=tAccName;fromAmt=Math.abs(tAmt);fromCur=tCur;to=mainName;toAmt=Math.abs(mainAmt);toCur=mainCur;}
       if(!(fromAmt>0)&&!(toAmt>0)){skipped++;continue;}
-      added.push(applyTxMeta({id:Date.now()+Math.random()+k,type:'transfer',
+      added.push(applyTxMeta({id:nextTxId(),type:'transfer',
         from:ensureAcc(from,fromCur),to:ensureAcc(to,toCur),
         amount:Math.round(fromAmt*100)/100,toAmount:Math.round(toAmt*100)/100,date,note},meta[0],meta[1],meta[2]));
       continue;
@@ -5755,7 +5991,7 @@ function importCSV(text){
     }
     if(!amount||amount<=0){skipped++;continue;}
     const rc=resolveCatPath(get(r,iCat),type);
-    added.push(applyTxMeta({id:Date.now()+Math.random()+k,type,amount:Math.round(amount*100)/100,
+    added.push(applyTxMeta({id:nextTxId(),type,amount:Math.round(amount*100)/100,
       cat:rc.cat,subcategoryId:rc.sub,account:ensureAcc(get(r,iAcc),get(r,iCur)),date,note},meta[0],meta[1],meta[2]));
   }
   if(!added.length){toast('Не удалось распознать операции');return;}
@@ -5763,7 +5999,10 @@ function importCSV(text){
   let msg=`Распознано операций: ${added.length}\n• переводов: ${nT}\n• доходов/расходов: ${nIE}`+(skipped?`\n• пропущено: ${skipped}`:'')+`\n\nДобавить к текущим данным?`;
   if(!confirm(msg))return;
   added.forEach(t=>state.tx.push(t));
-  save();
+  // TASK_026: импорт не считается успешным без физической записи. Откат в
+  // save() убирает и добавленные операции, и созданные по пути категории/
+  // счета — частично импортированного состояния в памяти не остаётся.
+  if(!save().ok)return;
   // перейти к месяцу последней операции
   const last=added.map(t=>t.date).sort().pop();
   if(last)anchor=new Date(last);
@@ -5776,7 +6015,8 @@ $('#clearBtn').onclick=()=>{
   state.tx=[];state.budgets={};state.reminders=[];state.goals=[];
   // сброс категорий/подкатегорий к чистой таксономии
   state.cats=[];state.subcats=[];state.taxonomyVersion=0;seedCategories();
-  save();render();toast('Всё очищено, категории сброшены ✓');
+  if(!save().ok)return;                       // TASK_026: данные восстановлены откатом
+  render();toast('Всё очищено, категории сброшены ✓');
 };
 // Безопасность
 $('#profSecurity').onclick=openSecurity;
@@ -5894,7 +6134,7 @@ function statsRange(){
   const txs=state.tx||[];
   if(!txs.length) return [new Date(now.getFullYear(),0,1), now];
   const dates=txs.map(t=>new Date(t.date));
-  return [new Date(Math.min(...dates)), now];
+  return [new Date(minOf(dates)), now];
 }
 
 function statsRangeLabel(){
@@ -6135,7 +6375,7 @@ function buildStatsHabits(){
 
   // avg transactions per week
   const dates=expAll.map(t=>new Date(t.date));
-  const minD=dates.length?Math.min(...dates):Date.now();
+  const minD=dates.length?minOf(dates):Date.now();
   const weeks=Math.max(1,Math.round((Date.now()-minD)/604800000));
   const avgPerWeek=(expAll.length/weeks).toFixed(1);
 

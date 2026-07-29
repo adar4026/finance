@@ -34,15 +34,22 @@ AF.Services.DemoData = {
     const accs = (Array.isArray(accountIds) && accountIds.length) ? accountIds : [undefined];
     const rnd = (a, b) => Math.round(a + Math.random() * (b - a));
     const dstr = (base, day) => new Date(base.getFullYear(), base.getMonth(), day).toISOString().slice(0, 10);
+    // TASK_026 (M-8): id демо-операций генерировались как Date.now()+Math.random(),
+    // из-за чего две операции одной пачки могли совпасть. Сервис остаётся
+    // независимым: если AF.Ids не загружен (рассинхронизация файлов на CDN —
+    // инвариант совместимости TASK_015 §0), работает локальный запасной счётчик.
+    const IDS = (typeof AF !== 'undefined' && AF && AF.Ids) ? AF.Ids : null;
+    let seq = 0;
+    const nid = () => IDS ? IDS.newId('t') : ('t' + Date.now().toString(36) + '-' + (++seq).toString(36) + '-' + Math.floor(Math.random() * 0xffffff).toString(16));
     const tx = [];
     for (let m = 0; m < 3; m++) {
       const base = new Date(today.getFullYear(), today.getMonth() - m, 1);
       // доход: аренда через агентство (Inmo Digital) + основной ежемесячный доход
-      tx.push({ id: Date.now() + Math.random(), type: 'income', amount: rnd(1800, 2200), cat: 'rent', subcategoryId: this.subId('rent', 0), account: accs[0], date: dstr(base, 5), note: 'Inmo Digital', payee: 'Inmo Digital', tags: ['работа'] });
-      tx.push({ id: Date.now() + Math.random(), type: 'income', amount: rnd(150, 400), cat: 'salary', account: accs[1] || accs[0], date: dstr(base, 18), note: '' });
+      tx.push({ id: nid(), type: 'income', amount: rnd(1800, 2200), cat: 'rent', subcategoryId: this.subId('rent', 0), account: accs[0], date: dstr(base, 5), note: 'Inmo Digital', payee: 'Inmo Digital', tags: ['работа'] });
+      tx.push({ id: nid(), type: 'income', amount: rnd(150, 400), cat: 'salary', account: accs[1] || accs[0], date: dstr(base, 18), note: '' });
       this.EXPENSE_SPEC.forEach((e, i) => {
         const [cat, subIndex, min, max, payee, tags, location] = e;
-        const t = { id: Date.now() + Math.random() + i, type: 'expense', amount: rnd(min, max), cat, subcategoryId: subIndex != null ? this.subId(cat, subIndex) : null, account: accs[i % accs.length], date: dstr(base, 3 + i * 3), note: '' };
+        const t = { id: nid(), type: 'expense', amount: rnd(min, max), cat, subcategoryId: subIndex != null ? this.subId(cat, subIndex) : null, account: accs[i % accs.length], date: dstr(base, 3 + i * 3), note: '' };
         if (payee) t.payee = payee;
         if (tags && tags.length) t.tags = tags;
         if (location) t.location = location;

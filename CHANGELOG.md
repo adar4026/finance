@@ -12,6 +12,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > Version 1.1.0 is the active development milestone, built on top of the
 > stable 1.0.0 foundation.
 
+### Fixed
+
+- **Saving is now atomic and never reports success it did not achieve**
+  (`TASK_026`, closes the Critical finding C-1 of the `TASK_025` audit):
+  the UI wrapper `save()` used to discard the `Result` returned by
+  `AF.Store.save()`, so a failed write — most realistically a full
+  `localStorage`, since receipt photos live as data URLs inside the same
+  `finance_app` record — still produced the ordinary "Расход добавлен ✓"
+  toast while the transaction existed only in memory and disappeared on the
+  next reload. `save()` now returns the same `Result`, and every CRUD path
+  (transactions, transfers, accounts, account groups, categories,
+  subcategories, budgets, goals, reminders, auto-posted operations,
+  settings, passcode and biometrics, demo data, full reset, CSV and JSON
+  import, backup restore) stops before its success toast, before closing
+  its form and before the success haptic. On failure the in-memory state is
+  rolled back to the last successfully saved snapshot (`AF.Store.snapshot`
+  / `AF.Store.rollback`, restoring in place so closure references stay
+  valid), so an unsaved entry never reaches the capital, analytics or
+  budgets, an unsaved edit leaves no partially modified object, and an
+  unsaved deletion does not make the record vanish. The form stays open
+  with everything the user typed — amount, note, payee, attached receipt —
+  and a retry saves exactly once: the id of a new transaction is issued
+  once per form (`aTxId`), and a `txCommitted` latch closes the window in
+  which a double tap could slip through (`closeSheet()` goes through
+  `history.back()`, which is asynchronous).
+- **Storage failures are told apart and explained in plain language**
+  (`TASK_026`): `AF.Store.save()` now returns typed errors —
+  `QUOTA_EXCEEDED` (recognised across `QuotaExceededError`,
+  `NS_ERROR_DOM_QUOTA_REACHED` and the legacy codes 22 / 1014),
+  `SERIALIZATION_FAILED` (a throwing `JSON.stringify`) and
+  `STORAGE_FAILED` (storage unavailable, e.g. private mode). A full
+  storage reads "Не удалось сохранить данные: хранилище приложения
+  заполнено. Удалите ненужные фотографии чеков или создайте резервную
+  копию." — no exception names, no stack traces and no invented byte
+  limit. The message reuses the existing toast component in a deliberately
+  more visible variant (`.toast.err`): white on red in both themes,
+  multiline, kept clear of the safe area, and dismissed by tap instead of
+  vanishing on a timer.
+- **Import and backup restore can no longer destroy the existing database**
+  (`TASK_026`): both used to replace `state` before writing, so a failed
+  write left memory and storage disagreeing while the user was told the
+  data had been loaded. The candidate database is now assembled separately
+  and adopted only after a successful write; CSV import rolls back both the
+  added transactions and any categories or accounts created along the way.
+  Duplicate ids inside an imported file are re-issued (`dedupeIds`) so an
+  imported record cannot silently overwrite an existing one.
+- **Collision-safe identifiers** (`TASK_026`, closes M-8): the three
+  competing generators (`Date.now()`, `Date.now()+Math.random()+k`,
+  `'c'+Date.now().toString(36)`) are replaced by a single `AF.Ids`
+  (`js/core/ids.js`) — timestamp plus a process counter plus a random tail,
+  so entities created within the same millisecond can no longer share an
+  id, with `unique()` additionally guaranteeing no collision inside the
+  target collection. `crypto.randomUUID()` is used when available and has a
+  full fallback (it only exists in secure contexts and not in every Safari
+  version). Entity prefixes are now distinct — goals and account groups
+  both used to start with `g`. Existing user ids are deliberately left
+  untouched; no data migration is part of this task.
+- **`Math.min(...array)` over unbounded transaction lists replaced with an
+  iterative form** (`TASK_026`, closes M-10): argument spreading is limited
+  by the stack size, so a long history could throw `RangeError` and take
+  down the screen. NaN semantics are reproduced exactly — the related H-6
+  fix belongs to `TASK_027` and is intentionally not mixed in here.
+
 ### Added
 
 - **Security screen rebuilt as a standalone Apple-style screen, with its

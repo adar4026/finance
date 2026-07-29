@@ -152,14 +152,19 @@ assertTrue(/state\.pinHash=null;\s*\n?\s*const S=secSvc\(\); if\(S\)state\.setti
   'Отключение защитного кода гасит Face ID через правило чистого сервиса');
 assertTrue(/if\(!S\.canEnableBiometric\(!!state\.pinHash,secBioAvail\)\)return;/.test(html),
   'Включение биометрии проходит через проверку canEnableBiometric()');
-assertTrue(/sec\.biometric=false;sec\.bioCredId=null;save\(\);renderSecurity\(\)/.test(html),
+// TASK_026 переписала строку: сохранение теперь проверяется (`if(!save().ok)`),
+// поэтому дословное сравнение заменено на сам инвариант — выключение снимает
+// и флаг, и сохранённый идентификатор ключа, после чего экран перерисовывается.
+assertTrue(/sec\.biometric=false;sec\.bioCredId=null;.*renderSecurity\(\)/.test(html),
   'Выключение Face ID удаляет сохранённый ключ');
 
 // ============ 7. «Запрашивать» — настоящая, а не декоративная настройка ============
 assertTrue(/<div id="secLockList" role="radiogroup"/.test(pickMarkup),
   'Выбор времени блокировки — доступная группа radio');
 assertTrue(/role="radio" aria-checked=/.test(html), 'Варианты выбора помечены role="radio" + aria-checked');
-assertTrue(/state\.settings\.security=next;save\(\);/.test(html),
+// TASK_026: между присваиванием и закрытием шторки появилась проверка
+// результата записи — инвариант тот же, дословный текст изменился.
+assertTrue(/state\.settings\.security=next;\s*\n?\s*if\(!save\(\)\.ok\)/.test(html),
   'Выбранное значение сохраняется в состояние (переживает перезагрузку)');
 assertTrue(/function secMarkInactive\(\)\{[\s\S]*lastActiveAt=Date\.now\(\)/.test(html),
   'Уход приложения в фон фиксируется отметкой времени');

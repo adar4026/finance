@@ -70,27 +70,107 @@ AF.Store = (function () {
     return s;
   }
 
+  // ===== TASK_026: единый контракт сохранения =====
+  // Коды ошибок записи. Вызывающий код обязан различать их: переполнение
+  // хранилища требует другого сообщения пользователю, чем несериализуемые
+  // данные или недоступное storage (private mode, отключённые cookies).
+  const SAVE_ERROR = {
+    QUOTA_EXCEEDED: 'QUOTA_EXCEEDED',           // хранилище заполнено
+    SERIALIZATION_FAILED: 'SERIALIZATION_FAILED', // JSON.stringify бросил
+    STORAGE_FAILED: 'STORAGE_FAILED',           // storage недоступен / прочее
+  };
+  const SAVE_MESSAGE = {
+    QUOTA_EXCEEDED: 'Не удалось сохранить данные: хранилище приложения заполнено. ' +
+      'Удалите ненужные фотографии чеков или создайте резервную копию.',
+    SERIALIZATION_FAILED: 'Не удалось сохранить данные: не получилось подготовить их к записи.',
+    STORAGE_FAILED: 'Не удалось сохранить данные: хранилище приложения недоступно.',
+  };
+
+  // Последнее СОСТОЯВШЕЕСЯ состояние в сериализованном виде. Строка уже
+  // построена в save() — храним готовую, лишнего JSON.stringify не делаем.
+  // Служит источником отката: после неуспешной записи память обязана
+  // соответствовать последнему успешно сохранённому состоянию.
+  let lastGoodJson = null;
+
+  // Браузерные варианты переполнения квоты: имя (Chrome/Safari/Firefox),
+  // legacy-код 22 и Firefox 1014. iOS Safari в приватном режиме бросает
+  // QuotaExceededError уже на первом setItem — тот же код, то же сообщение.
+  function isQuotaError(e) {
+    if (!e) return false;
+    const name = e.name || '';
+    if (name === 'QuotaExceededError' || name === 'NS_ERROR_DOM_QUOTA_REACHED') return true;
+    return e.code === 22 || e.code === 1014;
+  }
+
+  function saveErr(code, e) {
+    return AF.Result.err({ code, message: SAVE_MESSAGE[code] || SAVE_MESSAGE.STORAGE_FAILED, cause: e || null });
+  }
+
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
       const s = Object.assign(defaults(), raw ? JSON.parse(raw) : {});
-      return migrate(s);
+      const migrated = migrate(s);
+      // Точка отсчёта для отката. migrate идемпотентен, поэтому это состояние
+      // эквивалентно содержимому хранилища (перезагрузка даст то же самое).
+      markSaved(migrated);
+      return migrated;
     } catch (e) {
       console.warn('Store.load failed, using defaults', e);
-      return defaults();
+      const d = defaults();
+      markSaved(d);
+      return d;
     }
   }
 
   function save(state) {
+    const prevUpdatedAt = state.updatedAt;
+    let json;
     try {
       state.updatedAt = Date.now();
-      localStorage.setItem(KEY, JSON.stringify(state));
-      return AF.Result.ok(true);
+      json = JSON.stringify(state);
     } catch (e) {
-      console.error('Store.save failed', e);
-      return AF.Result.err('Не удалось сохранить данные');
+      state.updatedAt = prevUpdatedAt;
+      console.error('Store.save: serialization failed', e);
+      return saveErr(SAVE_ERROR.SERIALIZATION_FAILED, e);
     }
+    try {
+      localStorage.setItem(KEY, json);
+    } catch (e) {
+      state.updatedAt = prevUpdatedAt;
+      const code = isQuotaError(e) ? SAVE_ERROR.QUOTA_EXCEEDED : SAVE_ERROR.STORAGE_FAILED;
+      console.error('Store.save failed [' + code + ']', e && e.name);
+      return saveErr(code, e);
+    }
+    lastGoodJson = json;
+    return AF.Result.ok(true);
   }
 
-  return { KEY, SCHEMA_VERSION, PALETTE, defaults, migrate, load, save };
+  // Зафиксировать состояние как «последнее успешно сохранённое» без записи.
+  // Нужен только для load(): дальше отметку двигает исключительно успешный save().
+  function markSaved(state) {
+    try { lastGoodJson = JSON.stringify(state); } catch (e) { lastGoodJson = null; }
+  }
+
+  function snapshot() { return lastGoodJson; }
+
+  // Откат состояния в памяти к последнему успешно сохранённому.
+  // Восстанавливаем ВНУТРЬ того же объекта, а не возвращаем новый: на `state`
+  // держат ссылки замыкания и сервисы, подмена ссылки оставила бы часть
+  // приложения на несохранённых данных.
+  function rollback(state, json) {
+    const src = (typeof json === 'string') ? json : lastGoodJson;
+    if (typeof src !== 'string' || !state || typeof state !== 'object') return false;
+    let parsed;
+    try { parsed = JSON.parse(src); } catch (e) { return false; }
+    if (!parsed || typeof parsed !== 'object') return false;
+    Object.keys(state).forEach(k => { delete state[k]; });
+    Object.assign(state, parsed);
+    return true;
+  }
+
+  return {
+    KEY, SCHEMA_VERSION, PALETTE, SAVE_ERROR, SAVE_MESSAGE,
+    defaults, migrate, load, save, markSaved, snapshot, rollback, isQuotaError,
+  };
 })();
