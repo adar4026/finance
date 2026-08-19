@@ -12,6 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > Version 1.1.0 is the active development milestone, built on top of the
 > stable 1.0.0 foundation.
 
+### Changed
+
+- **Export screen copy tweaked** (`TASK_038A`, small follow-up to
+  `TASK_038` — no logic changed). The CSV import card no longer names
+  Money Flow specifically; it now reads "Из приложений и банков,
+  поддерживающих CSV" (from apps and banks that support CSV). The backup
+  card copy was tightened to "Создать резервную копию / Все данные
+  приложения · .afb".
+
 ### Added
 
 - **Export, import and restore are now three separate things** (`TASK_038`,
