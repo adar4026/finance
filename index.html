@@ -78,6 +78,15 @@
     /* Главная финансовая карточка (TASK_003) — системный светлый grouped-фон экрана и белая карточка */
     --home-bg:#f2f2f7;
     --fincard-shadow:0 10px 26px rgba(30,41,80,.08);
+    /* TASK_039: фон четырёх основных экранов (Главная/Аналитика/Счета/Бюджеты) — отдельные
+       токены, НЕ переопределение --home-bg, т.к. --home-bg используют и другие места
+       (Профиль, Безопасность, Категории, Drawer, --tx-page-bg), которые задача не трогает.
+       Мягкий вертикальный переход: насыщенный холодный мятный сверху → светлый серо-зелёный
+       ниже; двухточечный градиент без промежуточных стопов не даёт видимой полосы, а после
+       380px остаётся плоским цветом --main-bg-bottom до конца контента (длинный скролл). */
+    --main-bg-top:#D1E4DB;
+    --main-bg-bottom:#EBF0ED;
+    --main-bg-grad:linear-gradient(180deg,var(--main-bg-top) 0%,var(--main-bg-bottom) 380px);
     /* ===== Страница операции (TASK_014) — локальные семантические токены экрана.
        Глобальные --expense/--income намеренно НЕ переопределяются: они управляют
        цветом сумм в списках, на Главной и в аналитике и остаются как были. ===== */
@@ -118,6 +127,11 @@
     /* Главная финансовая карточка (TASK_003) — тёмная тема переиспользует существующий --bg2, не инверсия светлой */
     --home-bg:var(--bg2);
     --fincard-shadow:0 10px 26px rgba(0,0,0,.32);
+    /* TASK_039: тёмная тема не меняется — новые токены фиксируются на прежнем --home-bg,
+       поэтому #scrRecords/#scrCharts/#scrAccounts/#scrBudgets в dark выглядят как раньше. */
+    --main-bg-top:var(--home-bg);
+    --main-bg-bottom:var(--home-bg);
+    --main-bg-grad:var(--home-bg);
     /* Страница операции (TASK_014) — тёмная тема не инверсия светлой, а
        отдельный набор: глубокий графитовый фон, карточки отделены по тону. */
     --tx-page-bg:#121317;
@@ -1511,38 +1525,41 @@
   .ci2-s{font-size:9.5px;color:var(--muted2);margin-top:2px;white-space:nowrap}
 
   /* ===== Главная финансовая карточка (TASK_003) ===== */
-  #scrRecords{background:var(--home-bg)}
+  #scrRecords{background:var(--main-bg-grad)}
   /* TASK_009: фон #scrRecords покрывает только собственный бокс экрана — резерв под
      плавающую .nav (padding-bottom на .scroll-area, включает env(safe-area-inset-bottom))
      лежит уже вне #scrRecords и просвечивал белым фоном body/.app. Пока активна Главная,
-     .scroll-area сама получает --home-bg (background-origin по умолчанию — padding-box,
+     .scroll-area сама получает тот же фон (background-origin по умолчанию — padding-box,
      фон покрывает и padding-bottom, т.е. и зону под навигацией). На остальных экранах
-     (без переопределения фона) правило не действует — там как и раньше просвечивает --bg. */
-  .scroll-area:has(>#scrRecords.active){background:var(--home-bg)}
+     (без переопределения фона) правило не действует — там как и раньше просвечивает --bg.
+     TASK_039: --home-bg заменён на --main-bg-grad (мягкий мятно-серо-зелёный градиент,
+     см. :root) — оба правила используют один и тот же токен, поэтому зона под sticky
+     навигацией остаётся тем же плоским цветом, что нижняя часть градиента, без шва. */
+  .scroll-area:has(>#scrRecords.active){background:var(--main-bg-grad)}
   /* TASK_019: тот же приём для «Аналитики» — фон экрана и зона под навигацией
-     приведены к единому светло-серому фону Главной; карточки .panel внутри
-     #scrCharts получают тень/радиус .fincard (scoped-override, глобальный
+     приведены к единому фону Главной (TASK_039 — тот же --main-bg-grad); карточки .panel
+     внутри #scrCharts получают тень/радиус .fincard (scoped-override, глобальный
      .panel на других экранах — бюджеты/счета/health score и т.д. — не тронут). */
-  #scrCharts{background:var(--home-bg)}
-  .scroll-area:has(>#scrCharts.active){background:var(--home-bg)}
+  #scrCharts{background:var(--main-bg-grad)}
+  .scroll-area:has(>#scrCharts.active){background:var(--main-bg-grad)}
   #scrCharts .panel{border-radius:22px;box-shadow:var(--fincard-shadow)}
   /* TASK_020: тот же приём для «Счета» — фон и зона под навигацией приведены к
-     единому светло-серому фону Главной; карточка «Общий капитал» переиспользует
-     точный градиент карточки «Личный профиль» (.drawer-head, TASK_017) — не
-     новый похожий цвет, а тот же самый; глобальные .capital (используется на
+     единому фону Главной (TASK_039 — тот же --main-bg-grad); карточка «Общий капитал»
+     переиспользует точный градиент карточки «Личный профиль» (.drawer-head, TASK_017) —
+     не новый похожий цвет, а тот же самый; глобальные .capital (используется на
      «Статистике», #statsHero) и .panel (Бюджеты/Аналитика/Health Score) — не тронуты. */
-  #scrAccounts{background:var(--home-bg)}
-  .scroll-area:has(>#scrAccounts.active){background:var(--home-bg)}
+  #scrAccounts{background:var(--main-bg-grad)}
+  .scroll-area:has(>#scrAccounts.active){background:var(--main-bg-grad)}
   #scrAccounts .panel{border-radius:22px;box-shadow:var(--fincard-shadow);padding:22px 20px}
   #scrAccounts .panel h3{font-size:17px;letter-spacing:-.2px}
   #scrAccounts .capital{background:linear-gradient(135deg,#a79cf7 0%,#8fb0f6 55%,#8fdde3 100%);
     box-shadow:0 12px 28px rgba(110,120,220,.28),inset 0 1px 0 rgba(255,255,255,.5);padding:18px 20px}
   /* TASK_022: тот же приём для «Бюджетов» — фон и зона под навигацией приведены к
-     единому светло-серому фону Главной; карточка «Осталось в бюджете» переиспользует
-     точно тот же градиент, что «Общий капитал» на «Счетах» (не новый похожий цвет) —
-     .bud-hero получает в JS класс .capital, здесь только scoped-override фона/тени. */
-  #scrBudgets{background:var(--home-bg)}
-  .scroll-area:has(>#scrBudgets.active){background:var(--home-bg)}
+     единому фону Главной (TASK_039 — тот же --main-bg-grad); карточка «Осталось в бюджете»
+     переиспользует точно тот же градиент, что «Общий капитал» на «Счетах» (не новый похожий
+     цвет) — .bud-hero получает в JS класс .capital, здесь только scoped-override фона/тени. */
+  #scrBudgets{background:var(--main-bg-grad)}
+  .scroll-area:has(>#scrBudgets.active){background:var(--main-bg-grad)}
   #scrBudgets .capital{background:linear-gradient(135deg,#a79cf7 0%,#8fb0f6 55%,#8fdde3 100%);
     box-shadow:0 12px 28px rgba(110,120,220,.28),inset 0 1px 0 rgba(255,255,255,.5);padding:22px 20px}
   /* Компактный переключатель месяца — над карточкой */

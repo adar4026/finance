@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > Version 1.1.0 is the active development milestone, built on top of the
 > stable 1.0.0 foundation.
 
+### Changed
+
+- **Main screens background tinted mint-gray-green** (`TASK_039`, small
+  point fix, not part of the `TASK_025` plan). The background behind Home,
+  Analytics, Accounts and Budgets was almost white (`#f2f2f7`) and gave
+  white cards little separation. Replaced with a soft vertical gradient —
+  a more saturated cool mint (`#D1E4DB`) at the top fading smoothly into a
+  light gray-green (`#EBF0ED`) — scoped to a new token so the shared
+  `--home-bg` token (used by Profile, Security, Categories, the drawer,
+  and the transaction page) is untouched. Dark theme is pixel-identical to
+  before.
+
 ### Added
 
 - **"Создать резервную копию" can now save through the OS-native "Save

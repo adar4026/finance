@@ -35,12 +35,20 @@ function assertEqual(actual, expected, msg) {
   else { failed++; console.error(`FAIL: ${msg}\n  expected: ${e}\n  actual:   ${a}`); }
 }
 
-// ============ §1 — фон экрана «Бюджеты» приведён к var(--home-bg) ============
+// ============ §1 — фон экрана «Бюджеты» приведён к тому же токену, что «Главная» ============
+// TASK_039: конкретный токен фона основных экранов сменился с --home-bg на
+// --main-bg-grad (мягкий мятно-серо-зелёный градиент); инвариант — все четыре
+// экрана и их зона под навигацией используют ОДИН И ТОТ ЖЕ токен, каким бы он
+// ни был, а не дословно "--home-bg".
 {
-  assertTrue(/#scrBudgets\{background:var\(--home-bg\)\}/.test(html),
-    'index.html: #scrBudgets получил тот же светло-серый фон, что #scrRecords/#scrCharts/#scrAccounts');
-  assertTrue(/\.scroll-area:has\(>#scrBudgets\.active\)\{background:var\(--home-bg\)\}/.test(html),
-    'index.html: зона под нижней навигацией на «Бюджетах» тоже покрыта var(--home-bg) (тот же приём TASK_009/019/020)');
+  const recM = html.match(/#scrRecords\{background:var\((--[\w-]+)\)\}/);
+  assertTrue(!!recM, '#scrRecords{background:var(--...)} найден в index.html (эталон)');
+  const bgToken = recM && recM[1];
+  const budEsc = bgToken ? bgToken.replace(/[-]/g, '\\-') : '';
+  assertTrue(!!bgToken && new RegExp(`#scrBudgets\\{background:var\\(${budEsc}\\)\\}`).test(html),
+    'index.html: #scrBudgets получил тот же фон, что #scrRecords/#scrCharts/#scrAccounts');
+  assertTrue(!!bgToken && new RegExp(`\\.scroll-area:has\\(>#scrBudgets\\.active\\)\\{background:var\\(${budEsc}\\)\\}`).test(html),
+    'index.html: зона под нижней навигацией на «Бюджетах» тоже покрыта тем же токеном (тот же приём TASK_009/019/020)');
 }
 
 // ============ §2 — карточка «Осталось в бюджете» = тот же градиент, что «Счета» ============
