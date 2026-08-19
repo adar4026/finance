@@ -121,5 +121,5 @@ envelope, restore flow) не затрагиваются.
 (`#impCsvBtn`, `#bkpCreate`); `.claude/launch.json` и `icon.svg`
 (несвязанные локальные изменения) не тронуты.
 
-- Коммит реализации: `docs(TASK_038A)`/`feat(TASK_038A)` — см.
-  `docs/ROADMAP.md`, пункт `TASK_038A`.
+- Коммит реализации: `6f6dea51328246910d316cfb7ecb356857be6066` (`6f6dea5`)
+  — `feat(TASK_038A): убрать упоминание Money Flow, уточнить подпись бэкапа`.
