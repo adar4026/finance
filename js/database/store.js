@@ -25,6 +25,7 @@ AF.Store = (function () {
       cats: [],               // пользовательские Categories: {id,name,type,icon,color,isSystem}
       subcats: [],            // Subcategories: {id,categoryId,name}
       goals: [],              // Goals: {id,name,targetAmount,savedAmount,currency,deadline,color,status,createdAt}
+      importBatches: [],      // ImportBatches (TASK_038): {id,createdAt,source,fileName,counts} — журнал импортов CSV
       reminders: [],          // Reminders: {id,title,amount,dueDate,repeatType,categoryId,isActive}
       healthHistory: [],      // FinancialHealthHistory snapshots
       settings: {},           // key/value
@@ -37,7 +38,12 @@ AF.Store = (function () {
   function migrate(s) {
     if (!s.accounts || !s.accounts.length) s.accounts = defaults().accounts;
     s.budgets = s.budgets || {};
-    ['tx','cats','subcats','goals','reminders','healthHistory'].forEach(k => { if (!Array.isArray(s[k])) s[k] = []; });
+    // importBatches (TASK_038) — журнал импортов CSV: по записи на импорт,
+    // нужен для «Отменить импорт» и для честного показа истории. Ключ
+    // необязательный, поэтому SCHEMA_VERSION не поднимается (подъём 3 → 4
+    // зарезервирован за TASK_035) — тот же приём, что у настроек
+    // безопасности в TASK_023: отсутствие ключа = пустой журнал.
+    ['tx','cats','subcats','goals','reminders','healthHistory','importBatches'].forEach(k => { if (!Array.isArray(s[k])) s[k] = []; });
     s.settings = s.settings || {};
     if (!s.theme) s.theme = 'light';
     if (!s.currency) s.currency = '€';

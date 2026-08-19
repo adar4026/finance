@@ -12,6 +12,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > Version 1.1.0 is the active development milestone, built on top of the
 > stable 1.0.0 foundation.
 
+### Added
+
+- **Export, import and restore are now three separate things** (`TASK_038`,
+  absorbs the reserved `TASK_034`/M-9). The "Экспорт и копии" screen used to
+  mix them: export shared a screen with backup, and CSV import was hidden in
+  Settings. Now the screen reads top to bottom as Экспорт → Импорт данных →
+  Резервные копии, with restore visually marked as destructive, and each
+  path has an explicit contract — **export never writes**, **import merges**,
+  **restore replaces**.
+- **A real CSV import wizard** with four steps — file analysis → column,
+  account and category mapping → preview → result. Nothing is written to the
+  database until the button on the preview step; every earlier step works on
+  a plan held in memory. The wizard reports what it found (rows, period,
+  currencies, accounts, categories, detected source, encoding and delimiter),
+  auto-maps what it recognises, and lets you correct anything it got wrong.
+- **Duplicate detection.** Re-importing the same file now adds nothing. The
+  fingerprint combines date, type, amount, currency, account, category and
+  payee — and, for a transfer, both accounts — and is held as a multiset, so
+  two genuinely identical coffees on the same day still import as two
+  operations while a repeated file imports as zero.
+- **Undo import.** Entities created by an import carry an `importBatchId` and
+  are listed in a new `importBatches` journal, so the result screen can
+  remove exactly what that import added. An account or category is kept if
+  one of your own transactions has since started referring to it.
+- **Excel export is now a real `.xlsx`** instead of an HTML table served with
+  an `.xls` extension. Dates are dates and amounts are numbers, so sorting,
+  filtering and summing work in the file itself. Written without any
+  dependency: a minimal OOXML package inside a hand-built ZIP.
+- **Export periods**: current month, previous month, current year, previous
+  year, all history, and a custom range.
+- **Backup files carry an envelope**: format identifier, backup version,
+  schema version, app version, creation time, entity counts and an FNV-1a
+  checksum over a canonical serialisation. Restore shows all of it in a
+  preview before anything is replaced. Old backups (`{app,data}`) and bare
+  state files still restore exactly as before.
+
+### Changed
+
+- **Restoring a backup is now a checked sequence, not a `confirm()`**: read
+  and validate the file → show a preview → automatically save a safety copy
+  of the current data → migrate → write → **re-read from storage and verify
+  the counts** → only then report success. If the verification does not
+  match, the previous database is put back from the last successfully saved
+  snapshot. A corrupted, truncated, foreign or newer-than-the-app file is
+  refused with a plain-language reason and leaves the database untouched.
+- **CSV files are decoded properly.** Reading used to be UTF-8 only, so a
+  bank or Money Flow export saved in windows-1251 silently turned into
+  mojibake that ended up in category names. Encoding is now detected
+  (UTF-8 → windows-1251 → UTF-16, BOM handled), the delimiter is chosen by
+  actually parsing candidate rows rather than counting characters in the
+  first line, and quoted values keep their commas and line breaks.
+- **Import no longer creates entities while parsing.** Accounts and
+  categories used to be pushed into the state inside the parse loop, before
+  the user had seen a single number. The import is now built as a plan
+  against a clone and committed in one write, so a parse failure, a
+  validation failure or a storage failure all leave the database exactly as
+  it was.
+- **Account and category matching is normalised** (case, spaces, punctuation,
+  diacritics) and understands a short bilingual synonym list, so `Groceries`
+  maps onto your existing «Продукты» instead of becoming its twenty-first
+  near-duplicate. Every mapping decision is shown and can be overridden.
+- **No `confirm()` on the import and restore paths** — both now have real
+  screens, and errors use the app's existing toast mechanism.
+
 ### Fixed
 
 - **Saving is now atomic and never reports success it did not achieve**

@@ -41,8 +41,13 @@
 <script src="js/services/goal_service.js"></script>
 <script src="js/services/forecast_service.js"></script>
 <script src="js/services/health_score_service.js"></script>
+<script src="js/services/xlsx_writer_service.js"></script>
 <script src="js/services/export_service.js"></script>
 <script src="js/services/backup_service.js"></script>
+<script src="js/services/csv_parser_service.js"></script>
+<script src="js/services/import_source_service.js"></script>
+<script src="js/services/import_mapping_service.js"></script>
+<script src="js/services/import_service.js"></script>
 <!-- TASK_016 -->
 <script src="js/services/category_taxonomy_service.js"></script>
 <script src="js/services/demo_data_service.js"></script>
@@ -1199,6 +1204,71 @@
   .exp-tx b{font-size:14.5px;font-weight:600}
   .exp-tx i{font-size:11.5px;color:var(--muted2);font-style:normal;margin-top:2px}
   .exp-row .chev{color:var(--muted2);font-size:18px}
+
+  /* TASK_038: свой период, разделы импорта и восстановления, мастер импорта.
+     Отдельного набора компонентов не заводим — карточки, шапки разделов и
+     кнопки переиспользуют существующие токены экрана. */
+  .exp-custom{display:flex;gap:8px;margin:-2px 0 12px}
+  /* display:flex у класса перебивает встроенное [hidden]{display:none} —
+     без этой строки поля своего периода видны при любом выборе */
+  .exp-custom[hidden]{display:none}
+  .exp-custom label{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .exp-custom input{flex:1;min-width:0;padding:10px;border-radius:10px;border:1px solid var(--line);
+    background:var(--card);color:var(--text);font-size:13px;font-family:inherit}
+  .exp-hint{font-size:11.5px;color:var(--muted2);margin:0 2px 12px}
+  .exp-row[disabled]{opacity:.5;pointer-events:none}
+  /* восстановление — разрушающее действие, поэтому отличается от импорта не
+     только текстом: красный заголовок строки и красная рамка */
+  .exp-row.danger{border-color:var(--expense)}
+  .exp-row.danger .exp-tx b{color:var(--expense)}
+
+  .imp-steps{display:flex;gap:6px;margin:2px 0 14px}
+  .imp-steps i{flex:1;height:3px;border-radius:2px;background:var(--line);transition:background .2s}
+  .imp-steps i.on{background:var(--accent)}
+  .imp-card{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px;margin-bottom:10px}
+  .imp-card h4{font-size:14px;font-weight:700;margin:0 0 8px}
+  .imp-kv{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13px;
+    padding:7px 0;border-bottom:1px solid var(--line)}
+  .imp-kv:last-child{border-bottom:none}
+  .imp-kv>span{color:var(--muted);flex:0 0 auto}
+  .imp-kv>b{font-weight:600;text-align:right;min-width:0;overflow-wrap:anywhere}
+  .imp-kv.big>b{font-size:15px}
+  .imp-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .imp-row:last-child{border-bottom:none}
+  .imp-row .nm{flex:1 1 auto;min-width:0;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .imp-row .nm i{display:block;font-style:normal;font-size:11px;color:var(--muted2);margin-top:2px;white-space:normal}
+  .imp-row select{flex:0 1 52%;max-width:52%;min-height:38px;padding:8px 10px;border-radius:10px;
+    border:1px solid var(--line);background:var(--bg2);color:var(--text);font-size:12.5px;font-family:inherit}
+  .imp-badge{font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:7px;white-space:nowrap;
+    background:var(--income-soft);color:var(--income)}
+  .imp-badge.new{background:var(--warn-soft);color:var(--warn)}
+  .imp-badge.err{background:var(--expense-soft);color:var(--expense)}
+  /* длинные списки сопоставления не должны выталкивать кнопку за экран */
+  .imp-scroll{max-height:40vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  /* sticky-подвал липнет к нижней границе padding-box контейнера, а у
+     .detail-sheet есть padding-bottom — из-за этого под кнопками оставалась
+     щель, сквозь которую просвечивал следующий ряд списка. Отрицательный
+     bottom прижимает подвал к самому краю, а его собственный padding
+     возвращает отступ и safe-area. */
+  .imp-foot{position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom));z-index:2;
+    background:var(--bg);display:flex;gap:10px;margin-top:6px;
+    padding:12px 0 calc(22px + env(safe-area-inset-bottom))}
+  .imp-btn{flex:1 1 auto;min-height:48px;border:none;border-radius:14px;font-family:inherit;font-size:15px;
+    font-weight:600;cursor:pointer;background:var(--accent);color:#fff;padding:0 12px}
+  .imp-btn:active{transform:scale(.985)}
+  .imp-btn.sec{flex:0 0 38%;background:var(--card2);color:var(--text);border:1px solid var(--line)}
+  .imp-btn.danger{background:var(--expense)}
+  .imp-btn[disabled]{opacity:.55;pointer-events:none}
+  .imp-warn{border:1px solid var(--expense);background:var(--expense-soft);border-radius:14px;
+    padding:12px 14px;font-size:12.5px;color:var(--expense);font-weight:600;line-height:1.45;margin-bottom:12px}
+  .imp-info{border:1px solid var(--warn);background:var(--warn-soft);border-radius:14px;
+    padding:11px 13px;font-size:12.5px;color:var(--text);line-height:1.45;margin-bottom:12px}
+  .imp-note{font-size:12px;color:var(--muted2);margin-top:8px;line-height:1.5}
+  .imp-prob{font-size:12px;color:var(--muted);padding:6px 0;border-bottom:1px dashed var(--line)}
+  .imp-prob:last-child{border-bottom:none}
+  .imp-done{text-align:center;padding:6px 0 2px}
+  .imp-done .big{font-size:40px}
+  .imp-done .t{font-size:17px;font-weight:700;margin-top:8px}
 
   /* ===== Financial Health (Screen 9) ===== */
   .health-ring{border:1px solid var(--line);border-radius:18px;padding:18px;text-align:center;margin:10px 0 14px;box-shadow:var(--shadow);cursor:pointer}
@@ -2363,16 +2433,59 @@
     <div class="detail-top"><div class="nm">📤 Экспорт и копии</div><button class="iconbtn" id="exportClose">×</button></div>
     <div class="sec-head" style="margin-top:10px"><span>Экспорт</span></div>
     <div class="exp-period"><span>Период</span>
-      <select id="expPeriod"><option value="month">Текущий месяц</option><option value="year">Текущий год</option><option value="all">Всё время</option></select></div>
+      <select id="expPeriod">
+        <option value="month">Текущий месяц</option>
+        <option value="prevmonth">Прошлый месяц</option>
+        <option value="year">Текущий год</option>
+        <option value="prevyear">Прошлый год</option>
+        <option value="all">Вся история</option>
+        <option value="custom">Свой период</option>
+      </select></div>
+    <div class="exp-custom" id="expCustom" hidden>
+      <label>с <input type="date" id="expFrom"></label>
+      <label>по <input type="date" id="expTo"></label>
+    </div>
+    <div class="exp-hint" id="expHint"></div>
     <button class="exp-row" id="expPdf"><span class="exp-ic" style="background:var(--expense-soft)">📄</span><span class="exp-tx"><b>PDF-отчёт</b><i>Сводка за период + операции</i></span><span class="chev">›</span></button>
-    <button class="exp-row" id="expXls"><span class="exp-ic" style="background:var(--income-soft)">📊</span><span class="exp-tx"><b>Excel (.xls)</b><i>Таблица операций</i></span><span class="chev">›</span></button>
-    <button class="exp-row" id="expCsv"><span class="exp-ic" style="background:var(--info-soft)">📋</span><span class="exp-tx"><b>CSV</b><i>Для импорта в другие приложения</i></span><span class="chev">›</span></button>
+    <button class="exp-row" id="expXls"><span class="exp-ic" style="background:var(--income-soft)">📊</span><span class="exp-tx"><b>Excel (.xlsx)</b><i>Таблица операций</i></span><span class="chev">›</span></button>
+    <button class="exp-row" id="expCsv"><span class="exp-ic" style="background:var(--info-soft)">📋</span><span class="exp-tx"><b>CSV</b><i>Для Excel и других приложений</i></span><span class="chev">›</span></button>
+    <div class="sec-head" style="margin-top:18px"><span>Импорт данных</span></div>
+    <button class="exp-row" id="impCsvBtn"><span class="exp-ic" style="background:var(--accent-soft)">📥</span><span class="exp-tx"><b>Импортировать CSV</b><i>Из Money Flow, банков и других приложений</i></span><span class="chev">›</span></button>
+    <input type="file" id="impCsvFile" accept=".csv,text/csv" hidden>
+    <div class="exp-hint">Импорт добавляет операции к текущим данным и не удаляет существующие.</div>
     <div class="sec-head" style="margin-top:18px"><span>Резервные копии</span></div>
-    <button class="exp-row" id="bkpCreate"><span class="exp-ic" style="background:var(--accent-soft)">💾</span><span class="exp-tx"><b>Создать копию</b><i>Файл alex_finance_backup.afb</i></span><span class="chev">›</span></button>
-    <button class="exp-row" id="bkpRestore"><span class="exp-ic" style="background:var(--warn-soft)">♻️</span><span class="exp-tx"><b>Восстановить из копии</b><i>Загрузить .afb — заменит данные</i></span><span class="chev">›</span></button>
+    <button class="exp-row" id="bkpCreate"><span class="exp-ic" style="background:var(--accent-soft)">💾</span><span class="exp-tx"><b>Создать копию</b><i>Полная копия всех данных, файл .afb</i></span><span class="chev">›</span></button>
+    <button class="exp-row danger" id="bkpRestore"><span class="exp-ic" style="background:var(--expense-soft)">♻️</span><span class="exp-tx"><b>Восстановить из копии</b><i>Заменит все текущие данные приложения</i></span><span class="chev">›</span></button>
     <input type="file" id="bkpFile" accept=".afb,application/json,.json" hidden>
     <div id="bkpLast" style="font-size:11.5px;color:var(--muted2);text-align:center;margin-top:12px"></div>
     <div style="height:24px"></div>
+  </div>
+</div>
+
+<!-- Мастер импорта CSV (TASK_038). Шаги: анализ → сопоставление → предпросмотр → результат.
+     База не меняется ни на одном шаге до кнопки «Импортировать» на шаге предпросмотра. -->
+<div class="overlay" id="importOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top"><div class="nm" id="impTitle">📥 Импорт CSV</div><button class="iconbtn" id="impClose">×</button></div>
+    <div class="imp-steps" id="impSteps"><i></i><i></i><i></i><i></i></div>
+    <div id="impBody"></div>
+    <div class="imp-foot">
+      <button class="imp-btn sec" id="impBack">Назад</button>
+      <button class="imp-btn" id="impNext">Далее</button>
+    </div>
+  </div>
+</div>
+
+<!-- Предпросмотр восстановления из копии (TASK_038). Данные заменяются только
+     после явного подтверждения на этом экране и после safety-копии. -->
+<div class="overlay" id="restoreOverlay" style="align-items:flex-start">
+  <div class="detail-sheet">
+    <div class="detail-top"><div class="nm">♻️ Восстановление</div><button class="iconbtn" id="rstClose">×</button></div>
+    <div id="rstBody"></div>
+    <div class="imp-foot">
+      <button class="imp-btn sec" id="rstCancel">Отмена</button>
+      <button class="imp-btn danger" id="rstConfirm">Восстановить</button>
+    </div>
   </div>
 </div>
 
@@ -3864,24 +3977,103 @@ function openHealthDetail(res){
   $('#healthDetailOverlay').classList.add('show');
 }
 
-/* ============ Экспорт и резервные копии (Screen 12–13) ============ */
+/* ============ Экспорт, импорт и копии (Screen 12–13) ============ */
+/* TASK_038. Три разных сценария разведены и по коду, и по экрану:
+     Export  — read-only выгрузка, база не меняется;
+     Import  — merge: анализ → сопоставление → дубликаты → предпросмотр → запись;
+     Restore — replace: проверка → safety-копия → атомарная замена → откат.
+   Вся предметная логика живёт в сервисах (CsvParser / ImportSource /
+   ImportMapping / Import / Backup / Xlsx); здесь — только экран. */
 function openExport(){
   $('#profOverlay').classList.remove('show');
-  $('#bkpLast').textContent=state.lastBackup?('Последняя копия: '+new Date(state.lastBackup).toLocaleString('ru-RU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})):'Копий ещё не было';
+  renderBkpLast();
+  syncExpPeriodUi();
   $('#exportOverlay').classList.add('show');
 }
-function exportRange(){
-  const v=$('#expPeriod').value, now=new Date();
-  if(v==='month')return {from:new Date(now.getFullYear(),now.getMonth(),1),to:new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59),label:now.toLocaleDateString('ru-RU',{month:'long',year:'numeric'})};
-  if(v==='year')return {from:new Date(now.getFullYear(),0,1),to:new Date(now.getFullYear(),11,31,23,59,59),label:String(now.getFullYear())+' год'};
-  return {from:new Date(2000,0,1),to:new Date(2999,0,1),label:'всё время'};
+function renderBkpLast(){
+  $('#bkpLast').textContent=state.lastBackup
+    ?('Последняя копия: '+new Date(state.lastBackup).toLocaleString('ru-RU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}))
+    :'Копий ещё не было';
 }
-function exportTx(){const {from,to}=exportRange();return state.tx.filter(t=>{const d=new Date(t.date);return d>=from&&d<=to;});}
-function downloadFile(name,content,mime){const blob=new Blob([content],{type:mime+';charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);}
-function stamp(){return new Date().toISOString().slice(0,10);}
-function doExportCsv(){const list=exportTx();if(!list.length){toast('Нет операций за период');return;}downloadFile('alex_finance_'+stamp()+'.csv','﻿'+AF.Services.Export.csv(list,state),'text/csv');toast('CSV сохранён ✓');}
-function doExportXls(){const list=exportTx();if(!list.length){toast('Нет операций за период');return;}const {label}=exportRange();downloadFile('alex_finance_'+stamp()+'.xls','﻿'+AF.Services.Export.xlsHtml(list,state,label),'application/vnd.ms-excel');toast('Excel сохранён ✓');}
+// Локальный ключ даты 'YYYY-MM-DD'. Границы периода сравниваются строками, а
+// не через new Date(t.date): 'YYYY-MM-DD' разбирается как полночь UTC, и в
+// плюсовых поясах операция первого числа выпадала из своего же месяца.
+function dateKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function exportRange(){
+  const v=$('#expPeriod').value, now=new Date(), P=(window.AF&&AF.Services&&AF.Services.Period);
+  const bounds=(anchor,kind)=>{
+    if(P)return kind==='year'?P.yearBounds(anchor):P.monthBounds(anchor);
+    return kind==='year'
+      ?{from:new Date(anchor.getFullYear(),0,1),to:new Date(anchor.getFullYear(),11,31)}
+      :{from:new Date(anchor.getFullYear(),anchor.getMonth(),1),to:new Date(anchor.getFullYear(),anchor.getMonth()+1,0)};
+  };
+  const wrap=(b,label)=>({from:b.from,to:b.to,fromKey:dateKey(b.from),toKey:dateKey(b.to),label});
+  if(v==='month')    return wrap(bounds(now,'month'),now.toLocaleDateString('ru-RU',{month:'long',year:'numeric'}));
+  if(v==='prevmonth'){const a=new Date(now.getFullYear(),now.getMonth()-1,1);return wrap(bounds(a,'month'),a.toLocaleDateString('ru-RU',{month:'long',year:'numeric'}));}
+  if(v==='year')     return wrap(bounds(now,'year'),String(now.getFullYear())+' год');
+  if(v==='prevyear'){const a=new Date(now.getFullYear()-1,0,1);return wrap(bounds(a,'year'),String(a.getFullYear())+' год');}
+  if(v==='custom'){
+    const f=$('#expFrom').value, t=$('#expTo').value;
+    const from=f?new Date(f+'T00:00:00'):new Date(now.getFullYear(),now.getMonth(),1);
+    const to=t?new Date(t+'T00:00:00'):now;
+    if(from>to)return wrap({from:to,to:from},fmtDay(to)+' — '+fmtDay(from));
+    return wrap({from,to},fmtDay(from)+' — '+fmtDay(to));
+  }
+  return wrap({from:new Date(2000,0,1),to:new Date(2999,0,1)},'вся история');
+}
+function fmtDay(d){return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function exportTx(){
+  const {fromKey,toKey}=exportRange();
+  return (state.tx||[]).filter(t=>{const d=String(t.date||'').slice(0,10);return d&&d>=fromKey&&d<=toKey;});
+}
+function syncExpPeriodUi(){
+  const custom=$('#expPeriod').value==='custom';
+  $('#expCustom').hidden=!custom;
+  if(custom&&!$('#expFrom').value){
+    const now=new Date();
+    $('#expFrom').value=dateKey(new Date(now.getFullYear(),now.getMonth(),1));
+    $('#expTo').value=dateKey(now);
+  }
+  const {label}=exportRange(), n=exportTx().length;
+  $('#expHint').textContent=n?('Период: '+label+' · операций: '+n):('Период: '+label+' · операций нет');
+}
+function downloadFile(name,content,mime){const blob=new Blob([content],{type:mime+';charset=utf-8'});downloadBlob(name,blob);}
+// Бинарная выгрузка (.xlsx): charset к бинарному типу неприменим, а Uint8Array
+// нельзя отдавать как строку — иначе архив портится ещё до сохранения.
+function downloadBytes(name,bytes,mime){downloadBlob(name,new Blob([bytes],{type:mime}));}
+function downloadBlob(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);}
+function stamp(){const d=new Date();return dateKey(d);}
+// Экспорт ничего не пишет в базу. Единственная блокировка — от повторного
+// нажатия во время формирования файла (на длинной истории это заметно).
+let expBusy=false;
+function expLock(on){
+  expBusy=on;
+  ['#expPdf','#expXls','#expCsv'].forEach(id=>{const b=$(id);if(b){if(on)b.setAttribute('disabled','');else b.removeAttribute('disabled');}});
+}
+function doExportCsv(){
+  if(expBusy)return;
+  const list=exportTx();if(!list.length){toast('Нет операций за период');return;}
+  expLock(true);
+  try{downloadFile('alex_finance_'+stamp()+'.csv','﻿'+AF.Services.Export.csv(list,state),'text/csv');toast('CSV сохранён ✓');}
+  finally{expLock(false);}
+}
+function doExportXls(){
+  if(expBusy)return;
+  const list=exportTx();if(!list.length){toast('Нет операций за период');return;}
+  const {label}=exportRange();
+  expLock(true);
+  try{
+    const bytes=AF.Services.Export.xlsx(list,state,label);
+    // Писатель .xlsx — отдельный файл и может не приехать при рассинхронизации
+    // CDN (инвариант совместимости TASK_015 §0). Тогда честно говорим об этом,
+    // а не роняем обработчик кнопки.
+    if(!bytes){toast('Формат Excel сейчас недоступен');return;}
+    downloadBytes('alex_finance_'+stamp()+'.xlsx',bytes,AF.Services.Xlsx.MIME);
+    toast('Excel сохранён ✓');
+  }finally{expLock(false);}
+}
 function doExportPdf(){
+  if(expBusy)return;
   const list=exportTx();if(!list.length){toast('Нет операций за период');return;}
   const {label}=exportRange();const w=window.open('','_blank');
   if(!w){toast('Разрешите всплывающие окна для PDF');return;}
@@ -3889,31 +4081,321 @@ function doExportPdf(){
   setTimeout(()=>{try{w.focus();w.print();}catch(e){}},500);
 }
 function doBackupCreate(){
-  downloadFile('alex_finance_backup_'+stamp()+'.afb',AF.Services.Backup.create(state),'application/json');
+  const file=AF.Services.Backup.create(state,{appVersion:(window.AF&&AF.AppInfo&&AF.AppInfo.version)||''});
+  downloadFile('alex_finance_backup_'+stamp()+'.afb',file,'application/json');
   // Файл уже отдан пользователю — сама копия создана в любом случае; не
   // сохранилась только отметка о дате (TASK_026: не молчим об этом).
   state.lastBackup=Date.now();
   const okSaved=save().ok;
-  if(okSaved)$('#bkpLast').textContent='Последняя копия: '+new Date(state.lastBackup).toLocaleString('ru-RU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  if(okSaved)renderBkpLast();
   if(okSaved)toast('Резервная копия создана ✓');
 }
-function doBackupRestore(text){
-  const res=AF.Services.Backup.restore(text);
-  if(!res.ok){toast(res.error);return;}
-  if(!confirm('Восстановить из копии? Текущие данные будут заменены.'))return;
-  // TASK_026: сначала записываем восстановленную базу и только при успехе
-  // подменяем состояние в памяти. Раньше state заменялся до записи — при
-  // отказе storage в памяти оказывалась одна база, в хранилище другая, а
-  // пользователь видел «Данные восстановлены ✓».
-  const next=res.value;
-  const w=AF.Store.save(next);
-  if(!w.ok){                                  // прежняя база в хранилище цела
-    saveFailed(w);
-    toastError((w.error&&w.error.message)||'Не удалось сохранить данные');
-    return;
+
+/* ---------- Восстановление из копии (replace) ---------- */
+let rstCtx=null, rstBusy=false;
+function openRestorePreview(text,fileName){
+  const res=AF.Services.Backup.inspect(text);
+  if(!res.ok){toastError(res.error.message||'Не удалось прочитать файл резервной копии');return;}
+  rstCtx={data:res.value.data,info:res.value.info,fileName:fileName||''};
+  renderRestorePreview();
+  $('#exportOverlay').classList.remove('show');
+  $('#restoreOverlay').classList.add('show');
+}
+function renderRestorePreview(){
+  const i=rstCtx.info, c=i.counts;
+  const created=i.createdAt?new Date(i.createdAt).toLocaleString('ru-RU',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}):'дата не указана';
+  const cur=AF.Services.Backup.counts(state);
+  const kv=(k,v)=>'<div class="imp-kv"><span>'+k+'</span><b>'+v+'</b></div>';
+  $('#rstBody').innerHTML=
+    '<div class="imp-warn">Восстановление заменит текущие данные приложения: '+cur.tx+' операций, '+
+      cur.accounts+' счетов, '+cur.categories+' категорий. Перед заменой будет автоматически сохранена копия текущих данных.</div>'+
+    '<div class="imp-card"><h4>Резервная копия A-Lex Finance</h4>'+
+      (rstCtx.fileName?kv('Файл',esc(rstCtx.fileName)):'')+
+      kv('Создана',created)+
+      kv('Операций',c.tx)+kv('Счетов',c.accounts)+kv('Категорий',c.categories)+
+      kv('Бюджетов',c.budgets)+kv('Целей',c.goals)+kv('Напоминаний',c.reminders)+
+      kv('Версия схемы',i.schemaVersion)+
+      (i.appVersion?kv('Версия приложения',esc(i.appVersion)):'')+
+      kv('Целостность',i.checksumChecked?'проверена ✓':'сумма отсутствует')+
+    '</div>'+
+    (i.warnings.length?'<div class="imp-info">'+i.warnings.map(esc).join('<br>')+'</div>':'');
+}
+function closeRestore(){rstCtx=null;$('#restoreOverlay').classList.remove('show');}
+// Порядок шагов обязателен и не сокращается: safety-копия → миграция →
+// запись → ПРОВЕРКА записанного → и только потом успех. Если проверка не
+// сошлась, прежняя база возвращается из снимка последнего успешного
+// сохранения (AF.Store.snapshot(), TASK_026).
+function doRestoreCommit(){
+  if(rstBusy||!rstCtx)return;
+  rstBusy=true;$('#rstConfirm').setAttribute('disabled','');$('#rstConfirm').textContent='Восстановление…';
+  try{
+    const safetyJson=AF.Store.snapshot();
+    const safetyFile=AF.Services.Backup.create(state,{appVersion:(window.AF&&AF.AppInfo&&AF.AppInfo.version)||''});
+    downloadFile('alex_finance_safety_'+stamp()+'.afb',safetyFile,'application/json');
+    const mig=AF.Services.Backup.migrateBackup(rstCtx.data);
+    if(!mig.ok){toastError(mig.error.message);return;}
+    const next=mig.value;
+    const expected=AF.Services.Backup.counts(next);
+    const w=AF.Store.save(next);
+    if(!w.ok){                       // хранилище не тронуто — прежняя база цела
+      saveFailed(w);
+      toastError((w.error&&w.error.message)||'Не удалось сохранить данные');
+      return;
+    }
+    load();                          // перечитываем из хранилища: память = диск
+    const actual=AF.Services.Backup.counts(state);
+    if(actual.tx!==expected.tx||actual.accounts!==expected.accounts||actual.categories!==expected.categories){
+      const back=restoreSafety(safetyJson);
+      toastError('Восстановление не подтвердилось'+(back?' — прежние данные возвращены.':', и вернуть прежние данные не удалось. Используйте сохранённую копию.'));
+      render();renderHeader();
+      return;
+    }
+    render();renderHeader();buildAccountSelect();
+    closeRestore();
+    toast('Данные восстановлены ✓');
+  }finally{
+    rstBusy=false;$('#rstConfirm').removeAttribute('disabled');$('#rstConfirm').textContent='Восстановить';
   }
-  state=next;load();render();
-  $('#exportOverlay').classList.remove('show');toast('Данные восстановлены ✓');
+}
+function restoreSafety(json){
+  if(typeof json!=='string')return false;
+  let prev;try{prev=JSON.parse(json);}catch(e){return false;}
+  const w=AF.Store.save(prev);
+  if(!w.ok){saveFailed(w);return false;}
+  load();
+  return true;
+}
+
+/* ---------- Мастер импорта CSV (merge) ---------- */
+let impCtx=null, impBusy=false;
+function impSetBusy(on){
+  impBusy=on;
+  const n=$('#impNext');if(n){if(on)n.setAttribute('disabled','');else n.removeAttribute('disabled');}
+}
+function openImportCsv(file){
+  if(impBusy)return;
+  impSetBusy(true);
+  const r=new FileReader();
+  r.onerror=()=>{impSetBusy(false);toastError('Не удалось прочитать файл.');};
+  r.onload=()=>{
+    impSetBusy(false);
+    let res;
+    try{res=AF.Services.CsvParser.parseBytes(new Uint8Array(r.result));}
+    catch(e){toastError('Не удалось разобрать файл CSV.');return;}
+    if(!res.ok){toastError(res.error.message);return;}
+    const parsed=res.value;
+    const auto=AF.Services.ImportSource.autoMap(parsed.header);
+    impCtx={fileName:file.name||'CSV',parsed,
+      source:AF.Services.ImportSource.detect(parsed.header),
+      mapping:Object.assign({},auto.map),confidence:auto.confidence,
+      decisions:{},accountPlan:[],categoryPlan:[],plan:null,result:null,step:0};
+    $('#exportOverlay').classList.remove('show');
+    $('#importOverlay').classList.add('show');
+    impGoto(0);
+  };
+  r.readAsArrayBuffer(file);
+}
+function closeImport(){impCtx=null;$('#importOverlay').classList.remove('show');}
+function impGoto(step){
+  if(!impCtx)return;
+  impCtx.step=step;
+  $('#impSteps').querySelectorAll('i').forEach((el,idx)=>el.classList.toggle('on',idx<=step));
+  const R=[impRenderAnalyze,impRenderMapping,impRenderPreview,impRenderResult][step];
+  R();
+  $('#impBody').scrollTop=0;
+}
+function impFoot(backText,nextText,nextClass){
+  const b=$('#impBack'), n=$('#impNext');
+  b.textContent=backText||'Назад';b.hidden=!backText;
+  n.textContent=nextText;n.className='imp-btn'+(nextClass?' '+nextClass:'');
+  n.removeAttribute('disabled');
+}
+// ---- шаг 1: анализ файла (база не изменена) ----
+function impRenderAnalyze(){
+  const p=impCtx.parsed;
+  const a=AF.Services.Import.analyze(p.body,impCtx.mapping,state);
+  impCtx.analysis=a;
+  const kv=(k,v,cls)=>'<div class="imp-kv'+(cls?' '+cls:'')+'"><span>'+k+'</span><b>'+v+'</b></div>';
+  const period=(a.dateFrom&&a.dateTo)?(fmtIso(a.dateFrom)+' — '+fmtIso(a.dateTo)):'не определён';
+  $('#impTitle').textContent='📥 Импорт CSV';
+  $('#impBody').innerHTML=
+    '<div class="imp-card"><h4>Файл готов к импорту</h4>'+
+      kv('Файл',esc(impCtx.fileName))+
+      kv('Найдено операций',a.rows,'big')+
+      kv('Период',period)+
+      kv('Валюты',a.currencies.length?a.currencies.map(esc).join(', '):'валюта счёта')+
+      kv('Счетов в файле',a.accounts.length)+
+      kv('Категорий в файле',a.categories.length)+
+      kv('Источник',esc(impCtx.source.name))+
+      kv('Кодировка',esc(p.encoding||'UTF-8')+' · разделитель «'+(p.delimiter==='\t'?'таб':esc(p.delimiter))+'»')+
+    '</div>'+
+    (a.badDates?'<div class="imp-info">Строк с неразобранной датой: '+a.badDates+'. Их можно будет пропустить на следующем шаге.</div>':'')+
+    '<div class="imp-note">Импорт добавит операции к текущим данным. Ничего не изменится, пока вы не подтвердите последний шаг.</div>';
+  impFoot('Отмена','Далее — сопоставление');
+}
+function fmtIso(iso){const m=String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);return m?(m[3]+'.'+m[2]+'.'+m[1]):String(iso);}
+// ---- шаг 2: сопоставление колонок, счетов и категорий ----
+function impRebuildPlans(){
+  const I=AF.Services.Import, M=AF.Services.ImportMapping, body=impCtx.parsed.body;
+  impCtx.accountPlan=M.buildAccountPlan(I.collectAccountNames(body,impCtx.mapping),state.accounts);
+  impCtx.categoryPlan=M.buildCategoryPlan(I.collectCategoryEntries(body,impCtx.mapping),state.cats);
+  // решения пользователя переживают пересборку планов: смена колонки не
+  // должна молча сбрасывать уже сделанный выбор по счетам и категориям
+  const d=impCtx.decisions;
+  [].concat(impCtx.accountPlan,impCtx.categoryPlan).forEach(row=>{
+    const saved=d[row.key];
+    if(!saved)return;
+    if(saved.action==='use'&&saved.targetId){row.action='use';row.targetId=saved.targetId;}
+    else if(saved.action==='create'){row.action='create';row.targetId=null;}
+  });
+}
+function impRenderMapping(){
+  impRebuildPlans();
+  const F=AF.Services.ImportSource.FIELDS, head=impCtx.parsed.header;
+  const colOpts=(sel)=>['<option value="-1">— не использовать —</option>']
+    .concat(head.map((h,i)=>'<option value="'+i+'"'+(sel===i?' selected':'')+'>'+esc(h||('колонка '+(i+1)))+'</option>')).join('');
+  const cols=F.map(f=>{
+    const idx=impCtx.mapping[f.id];
+    const conf=impCtx.confidence[f.id];
+    const badge=f.required
+      ?(idx>=0?'':'<span class="imp-badge err">нужна</span>')
+      :(conf==='low'&&idx>=0?'<span class="imp-badge new">проверьте</span>':'');
+    return '<div class="imp-row"><div class="nm">'+esc(f.label)+(f.required?' *':'')+'</div>'+badge+
+      '<select data-imp-col="'+f.id+'">'+colOpts(idx)+'</select></div>';
+  }).join('');
+  const accOpts=(row)=>['<option value="">Создать новый счёт</option>']
+    .concat((state.accounts||[]).map(a=>'<option value="'+esc(a.id)+'"'+(row.action==='use'&&row.targetId===a.id?' selected':'')+'>'+esc(a.name)+'</option>')).join('');
+  const accs=impCtx.accountPlan.length?impCtx.accountPlan.map(row=>
+    '<div class="imp-row"><div class="nm">'+esc(row.external)+'<i>строк: '+row.count+'</i></div>'+
+    (row.how==='exact'?'<span class="imp-badge">найден</span>':'<span class="imp-badge new">новый</span>')+
+    '<select data-imp-acc="'+esc(row.key)+'">'+accOpts(row)+'</select></div>').join('')
+    :'<div class="imp-note">В файле нет колонки со счётом — операции попадут на счёт «'+esc((state.accounts[0]||{}).name||'')+'».</div>';
+  const catOpts=(row)=>['<option value="">Создать новую категорию</option>']
+    .concat(catsFor(row.type).map(c=>'<option value="'+esc(c.id)+'"'+(row.action==='use'&&row.targetId===c.id?' selected':'')+'>'+esc(c.name)+'</option>')).join('');
+  const cats=impCtx.categoryPlan.length?impCtx.categoryPlan.map(row=>
+    '<div class="imp-row"><div class="nm">'+esc(row.external)+'<i>'+(row.type==='income'?'доход':'расход')+' · строк: '+row.count+'</i></div>'+
+    (row.how==='exact'?'<span class="imp-badge">найдена</span>':row.how==='alias'?'<span class="imp-badge">по смыслу</span>':'<span class="imp-badge new">новая</span>')+
+    '<select data-imp-cat="'+esc(row.key)+'">'+catOpts(row)+'</select></div>').join('')
+    :'<div class="imp-note">В файле нет колонки категории.</div>';
+  $('#impBody').innerHTML=
+    '<div class="imp-card"><h4>Колонки файла</h4>'+
+      '<div class="imp-note" style="margin:0 0 6px">Определено автоматически — измените, если что-то распознано неверно.</div>'+
+      '<div class="imp-scroll">'+cols+'</div></div>'+
+    '<div class="imp-card"><h4>Счета</h4><div class="imp-scroll">'+accs+'</div></div>'+
+    '<div class="imp-card"><h4>Категории</h4><div class="imp-scroll">'+cats+'</div></div>';
+  impFoot('Назад','Проверить импорт');
+}
+// ---- шаг 3: предпросмотр (последний шаг без изменений в базе) ----
+function impRenderPreview(){
+  const I=AF.Services.Import;
+  impRebuildPlans();
+  const plan=I.buildPlan({
+    body:impCtx.parsed.body,mapping:impCtx.mapping,state,
+    accountPlan:impCtx.accountPlan,categoryPlan:impCtx.categoryPlan,skipDuplicates:true,
+  });
+  impCtx.plan=plan;
+  const c=plan.counts;
+  const kv=(k,v,cls)=>'<div class="imp-kv'+(cls?' '+cls:'')+'"><span>'+k+'</span><b>'+v+'</b></div>';
+  const probs=plan.problems.slice(0,8).map(p=>'<div class="imp-prob">Строка '+p.row+': '+esc(p.reason)+(p.raw?' («'+esc(String(p.raw).slice(0,24))+'»)':'')+'</div>').join('');
+  const warns=plan.warnings.slice(0,5).map(w=>'<div class="imp-prob">Строка '+w.row+': '+esc(w.reason)+'</div>').join('');
+  $('#impBody').innerHTML=
+    '<div class="imp-card"><h4>Будет импортировано</h4>'+
+      kv('Операций',c.toImport,'big')+
+      (c.transfers?kv('из них переводов',c.transfers):'')+
+      kv('Новых счетов',c.newAccounts)+
+      kv('Новых категорий',c.newCategories)+
+      (c.newSubcategories?kv('Новых подкатегорий',c.newSubcategories):'')+
+      kv('Дубликатов будет пропущено',c.duplicates)+
+      kv('Строк с ошибками',c.problems)+
+    '</div>'+
+    (probs?'<div class="imp-card"><h4>Строки требуют внимания</h4>'+probs+
+      (plan.problems.length>8?'<div class="imp-note">…и ещё '+(plan.problems.length-8)+'. Такие строки будут пропущены.</div>':'<div class="imp-note">Такие строки будут пропущены.</div>')+'</div>':'')+
+    (warns?'<div class="imp-card"><h4>Предупреждения</h4>'+warns+'</div>':'')+
+    (c.duplicates?'<div class="imp-note">Дубликаты определяются по дате, сумме, валюте, счёту, категории и контрагенту — повторная загрузка того же файла не создаст вторых операций.</div>':'')+
+    (!c.toImport?'<div class="imp-info">Импортировать нечего: все распознанные операции уже есть в базе или не прошли проверку.</div>':'');
+  impFoot('Назад',c.toImport?('Импортировать '+c.toImport+' '+plural(c.toImport,'операцию','операции','операций')):'Нечего импортировать');
+  if(!c.toImport)$('#impNext').setAttribute('disabled','');
+}
+// ---- запись: единственное место мастера, которое меняет базу ----
+function impCommit(){
+  if(impBusy||!impCtx||!impCtx.plan)return;
+  impSetBusy(true);$('#impNext').textContent='Импорт…';
+  try{
+    const I=AF.Services.Import;
+    const applied=I.apply(state,impCtx.plan,{source:impCtx.source.name,fileName:impCtx.fileName});
+    // apply() уже включает validate(): при любой несостыковке плана мы сюда
+    // не дойдём и база не изменится ни на одну операцию.
+    if(!applied.ok){toastError(applied.error.message||'Импорт остановлен.');return;}
+    const w=AF.Store.save(applied.value);
+    if(!w.ok){                       // прежняя база в хранилище цела
+      saveFailed(w);
+      toastError((w.error&&w.error.message)||'Не удалось сохранить данные');
+      return;
+    }
+    load();                          // память = хранилище
+    impCtx.result={batchId:impCtx.plan.batchId,counts:impCtx.plan.counts};
+    const last=impCtx.plan.items.map(i=>i.tx.date).sort().pop();
+    if(last)anchor=new Date(last+'T00:00:00');
+    render();renderHeader();buildAccountSelect();
+    impGoto(3);
+  }finally{
+    impSetBusy(false);
+  }
+}
+// ---- шаг 4: результат + отмена импорта ----
+function impRenderResult(){
+  const c=impCtx.result.counts;
+  const kv=(k,v)=>'<div class="imp-kv"><span>'+k+'</span><b>'+v+'</b></div>';
+  $('#impTitle').textContent='📥 Импорт завершён';
+  $('#impBody').innerHTML=
+    '<div class="imp-done"><div class="big">✅</div><div class="t">Импорт завершён</div></div>'+
+    '<div class="imp-card">'+
+      kv('Добавлено операций',c.toImport)+
+      kv('Создано счетов',c.newAccounts)+
+      kv('Создано категорий',c.newCategories)+
+      kv('Пропущено дубликатов',c.duplicates)+
+      kv('Ошибочных строк',c.problems)+
+    '</div>'+
+    '<div class="imp-note">«Отменить импорт» удалит только то, что добавил этот импорт. Счета и категории, на которые уже успели сослаться ваши собственные операции, сохранятся.</div>';
+  impFoot('Отменить импорт','Готово');
+  $('#impBack').className='imp-btn sec danger-text';
+}
+function impUndo(){
+  if(impBusy||!impCtx||!impCtx.result)return;
+  impSetBusy(true);
+  try{
+    const res=AF.Services.Import.undo(state,impCtx.result.batchId);
+    if(!res.ok){toastError(res.error.message||'Не удалось отменить импорт.');return;}
+    const w=AF.Store.save(res.value.state);
+    if(!w.ok){
+      saveFailed(w);
+      toastError((w.error&&w.error.message)||'Не удалось сохранить данные');
+      return;
+    }
+    load();render();renderHeader();buildAccountSelect();
+    closeImport();
+    toast('Импорт отменён ✓');
+  }finally{
+    impSetBusy(false);
+  }
+}
+function impNext(){
+  if(!impCtx)return;
+  if(impCtx.step===0)return impGoto(1);
+  if(impCtx.step===1){
+    const m=impCtx.mapping;
+    if(m.date<0){toast('Укажите колонку с датой');return;}
+    if(m.amount<0&&m.income<0&&m.expense<0){toast('Укажите колонку с суммой');return;}
+    return impGoto(2);
+  }
+  if(impCtx.step===2)return impCommit();
+  closeImport();
+}
+function impBack(){
+  if(!impCtx)return;
+  if(impCtx.step===0)return closeImport();
+  if(impCtx.step===3)return impUndo();
+  impGoto(impCtx.step-1);
 }
 
 /* ============ Безопасность (Screen 11): PIN + скрытие сумм ============ */
@@ -5772,21 +6254,64 @@ function exportData(){
 $('#exportBtn').onclick=exportData;
 // Экспорт и резервные копии
 $('#exportClose').onclick=()=>$('#exportOverlay').classList.remove('show');
+$('#expPeriod').onchange=syncExpPeriodUi;
+$('#expFrom').onchange=syncExpPeriodUi;
+$('#expTo').onchange=syncExpPeriodUi;
 $('#expPdf').onclick=doExportPdf;
 $('#expXls').onclick=doExportXls;
 $('#expCsv').onclick=doExportCsv;
+// Импорт CSV — мастер (TASK_038). Файл только читается: разбор, анализ и
+// сопоставление идут в памяти, база не меняется до последнего шага.
+$('#impCsvBtn').onclick=()=>$('#impCsvFile').click();
+$('#impCsvFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)openImportCsv(f);};
+$('#impClose').onclick=closeImport;
+$('#impBack').onclick=impBack;
+$('#impNext').onclick=impNext;
+// переопределение сопоставления пользователем: пересобираем только затронутый слой
+$('#impBody').addEventListener('change',e=>{
+  const t=e.target;if(!impCtx)return;
+  if(t.dataset.impCol!==undefined){
+    const field=t.dataset.impCol, idx=parseInt(t.value,10);
+    // одна колонка не может быть занята двумя полями сразу
+    if(idx>=0)Object.keys(impCtx.mapping).forEach(k=>{if(k!==field&&impCtx.mapping[k]===idx)impCtx.mapping[k]=-1;});
+    impCtx.mapping[field]=idx;
+    impCtx.confidence[field]='high';
+    impRenderMapping();
+  }else if(t.dataset.impAcc!==undefined){
+    impCtx.decisions[t.dataset.impAcc]=t.value?{action:'use',targetId:t.value}:{action:'create'};
+    const row=impCtx.accountPlan.find(r=>r.key===t.dataset.impAcc);
+    if(row){row.action=t.value?'use':'create';row.targetId=t.value||null;}
+  }else if(t.dataset.impCat!==undefined){
+    impCtx.decisions[t.dataset.impCat]=t.value?{action:'use',targetId:t.value}:{action:'create'};
+    const row=impCtx.categoryPlan.find(r=>r.key===t.dataset.impCat);
+    if(row){row.action=t.value?'use':'create';row.targetId=t.value||null;}
+  }
+});
 $('#bkpCreate').onclick=doBackupCreate;
 $('#bkpRestore').onclick=()=>$('#bkpFile').click();
-$('#bkpFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{doBackupRestore(String(r.result));e.target.value='';};r.readAsText(f);};
+// Восстановление: файл читается и проверяется, затем показывается предпросмотр.
+// Замена данных происходит только по кнопке на экране предпросмотра.
+$('#bkpFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  const r=new FileReader();
+  r.onerror=()=>toastError('Не удалось прочитать файл.');
+  r.onload=()=>openRestorePreview(String(r.result),f.name);
+  r.readAsText(f);};
+$('#rstClose').onclick=closeRestore;
+$('#rstCancel').onclick=closeRestore;
+$('#rstConfirm').onclick=doRestoreCommit;
 $('#importBtn').onclick=()=>$('#importFile').click();
-$('#importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+// Настройки → «Импорт (JSON / CSV)»: JSON остаётся прежним путём, CSV
+// отправляется в мастер импорта — второй, упрощённой ветки импорта CSV в
+// приложении больше нет.
+$('#importFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  if(/\.csv$/i.test(f.name)){openImportCsv(f);return;}
+  const r=new FileReader();
+  r.onerror=()=>toastError('Не удалось прочитать файл.');
   r.onload=()=>{
     const txt=String(r.result||'');
-    const isJson=f.name.toLowerCase().endsWith('.json')||txt.trim().startsWith('{');
-    if(isJson){
+    if(/\.json$/i.test(f.name)||txt.trim().startsWith('{')){
       try{const d=JSON.parse(txt);if(Array.isArray(d.tx))importJSON(d);else toast('Неверный формат');}catch(_){toast('Ошибка чтения');}
-    }else{ importCSV(txt); }
-    e.target.value='';
+    }else{ openImportCsv(f); }
   };
   r.readAsText(f);};
 
@@ -5837,32 +6362,14 @@ function importJSON(d){
   return true;
 }
 
-/* ============ Импорт CSV (Money Flow и др.) ============ */
-function parseCSV(text){
-  text=text.replace(/^﻿/,'');                 // убрать BOM
-  const fl=(text.split(/\r?\n/).find(l=>l.trim())||'');
-  const c={';':(fl.match(/;/g)||[]).length, ',':(fl.match(/,/g)||[]).length, '\t':(fl.match(/\t/g)||[]).length};
-  const delim=Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||',';
-  const rows=[];let row=[],fld='',q=false;
-  for(let i=0;i<text.length;i++){const ch=text[i];
-    if(q){ if(ch==='"'){ if(text[i+1]==='"'){fld+='"';i++;} else q=false; } else fld+=ch; }
-    else{ if(ch==='"')q=true;
-      else if(ch===delim){row.push(fld);fld='';}
-      else if(ch==='\n'){row.push(fld);rows.push(row);row=[];fld='';}
-      else if(ch!=='\r')fld+=ch; }
-  }
-  if(fld.length||row.length){row.push(fld);rows.push(row);}
-  return rows.filter(r=>r.some(x=>x.trim()!==''));
-}
-function parseAmount(s){return AF.Services.Currency.parse(s);}
-function pad2(n){return String(n).padStart(2,'0');}
-function parseDate(s){
-  s=String(s).trim();let m;
-  if(m=s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/))return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
-  if(m=s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/)){let d=+m[1],mo=+m[2];if(mo>12&&d<=12){[d,mo]=[mo,d];}return `${m[3]}-${pad2(mo)}-${pad2(d)}`;}
-  const t=Date.parse(s);if(!isNaN(t))return new Date(t).toISOString().slice(0,10);
-  return null;
-}
+/* ============ Категория по имени (форма операции) ============ */
+/* TASK_038: прежний блок «Импорт CSV (Money Flow и др.)» удалён целиком —
+   разбор файла, определение источника, сопоставление колонок, счетов и
+   категорий, детектор дубликатов и запись переехали в сервисы
+   (csv_parser_service / import_source_service / import_mapping_service /
+   import_service) и в мастер импорта. Здесь осталась единственная функция из
+   того блока, у которой есть свой, не связанный с импортом потребитель:
+   создание категории по имени из формы операции. */
 function ensureCat(name,type){
   name=(name||'').trim()||(type==='income'?'Доход':'Другое');
   const norm=name.toLowerCase();
@@ -5875,139 +6382,6 @@ function ensureCat(name,type){
   c={id:AF.Ids.forCategory(state), name, type,
      emoji:EMOJI_POOL[n%EMOJI_POOL.length], color:COLOR_POOL[n%COLOR_POOL.length]};
   state.cats.push(c);return c.id;
-}
-// Импорт: распознаём, является ли значение категорией или подкатегорией (восстановление иерархии Money Flow)
-function resolveCatSub(name,type){
-  const norm=(name||'').trim().toLowerCase();
-  if(norm){
-    // 1) совпадение с категорией
-    const c=catsFor(type).find(x=>x.name.trim().toLowerCase()===norm);
-    if(c)return {cat:c.id,sub:null};
-    // 2) совпадение с подкатегорией (в пределах типа) → родитель + подкатегория
-    const catIds=new Set(catsFor(type).map(x=>x.id));
-    const s=(state.subcats||[]).find(x=>catIds.has(x.categoryId)&&x.name.trim().toLowerCase()===norm);
-    if(s)return {cat:s.categoryId,sub:s.id};
-  }
-  // 3) не нашли — создаём категорию по имени
-  return {cat:ensureCat(name,type),sub:null};
-}
-// TASK_015: наш CSV-экспорт пишет иерархию одной колонкой «Категория / Подкатегория»
-// (export_service._catPath). Разбираем её обратно, иначе round-trip создал бы
-// категорию с буквальным именем «Продукты / Супермаркеты».
-function resolveCatPath(name,type){
-  const raw=(name||'').trim();
-  const i=raw.indexOf(' / ');
-  if(i<0)return resolveCatSub(raw,type);
-  const catName=raw.slice(0,i).trim(), subName=raw.slice(i+3).trim();
-  if(!catName)return resolveCatSub(subName,type);
-  const cat=ensureCat(catName,type);
-  if(!subName)return {cat,sub:null};
-  const norm=subName.toLowerCase();
-  let s=(state.subcats||[]).find(x=>x.categoryId===cat&&x.name.trim().toLowerCase()===norm);
-  if(!s){s={id:AF.Ids.forSubcategory(state),categoryId:cat,name:subName,createdAt:Date.now()};state.subcats.push(s);}
-  return {cat,sub:s.id};
-}
-function ensureAcc(name,currency){
-  name=(name||'').trim();
-  if(!name)return state.accounts[0].id;
-  const norm=name.toLowerCase();
-  let a=state.accounts.find(x=>x.name.trim().toLowerCase()===norm);
-  if(a){if(currency&&!a.currency)a.currency=currency;return a.id;}
-  a={id:AF.Ids.forAccount(state), name, emoji:'💳', start:0, currency:currency||state.currency};
-  state.accounts.push(a);return a.id;
-}
-function importCSV(text){
-  const rows=parseCSV(text);
-  if(rows.length<2){toast('Файл пустой или не распознан');return;}
-  const H=rows[0].map(h=>h.trim().toLowerCase().replace(/^"|"$/g,''));
-  const find=cands=>H.findIndex(h=>cands.some(c=>h===c||h.includes(c)));
-  const isTrans=h=>/перевод|transfer|трансфер/.test(h);
-  const findMain=cands=>H.findIndex(h=>!isTrans(h)&&cands.some(c=>h===c||h.includes(c)));
-  const iDate=find(['date','fecha','дата','data','день','time']);
-  const iCat =findMain(['category','categor','категор','rubric']);
-  const iNote=findMain(['note','nota','descrip','comment','коммент','примеч','memo']);
-  const iPayee=find(['контрагент','payee','counterparty','beneficiary']);
-  const iPlace=find(['место','place','location','locat']);
-  const iTags=find(['метки','теги','tags','labels','etiquetas']); // TASK_015
-  const iType=findMain(['type','tipo','тип','income/expense','flow','kind']);
-  const iAcc =findMain(['account','cuenta','счет','счёт','wallet','cartera','konto']);
-  const iCur =findMain(['currency','moneda','валюта','divisa']);
-  const iAmt =findMain(['amount','importe','cantidad','monto','sum','сумма','value','price']);
-  const iIncome=findMain(['income','ingreso','доход','deposit','credit']);
-  const iExpense=findMain(['expense','gasto','расход','withdraw','debit']);
-  // колонки перевода между счетами
-  const iTAcc=H.findIndex(h=>isTrans(h)&&/счёт|счет|account|cuenta|wallet/.test(h));
-  const iTAmt=H.findIndex(h=>isTrans(h)&&/сумма|amount|importe|monto/.test(h));
-  const iTCur=H.findIndex(h=>isTrans(h)&&/валюта|currency|moneda/.test(h));
-  if(iDate<0||(iAmt<0&&iIncome<0&&iExpense<0)){
-    toast('Не нашёл колонки даты/суммы. Пришли файл — настрою.');
-    return;
-  }
-  const get=(r,i)=>i>=0&&i<r.length?r[i].trim():'';
-  // TASK_015 (ОВ-1): «Контрагент»/«Метки»/«Место» больше НЕ склеиваются в
-  // примечание — каждое значение идёт в собственное поле операции, а note
-  // содержит только колонку примечания. Файлы без этих колонок ведут себя
-  // как раньше: find() вернёт -1, get() — '', ключи не создадутся.
-  // TASK_026 (M-8): id импортируемых операций больше не Date.now()+Math.random()+k.
-  // Проверяем уникальность и против уже существующих операций, и внутри пачки —
-  // иначе импорт мог незаметно «перекрыть» существующую операцию с тем же id.
-  const usedTxIds=new Set((state.tx||[]).map(t=>String(t.id)));
-  const nextTxId=()=>{const id=AF.Ids.unique(AF.Ids.PREFIX.tx,usedTxIds);usedTxIds.add(id);return id;};
-  const added=[];let skipped=0;
-  for(let k=1;k<rows.length;k++){
-    const r=rows[k];if(!r.some(x=>x.trim()))continue;
-    const date=parseDate(get(r,iDate));
-    if(!date){skipped++;continue;}
-    const note=get(r,iNote);
-    const meta=[get(r,iPayee),get(r,iTags),get(r,iPlace)];
-    const mainAmt=iAmt>=0?parseAmount(get(r,iAmt)):NaN;
-    const tAccName=get(r,iTAcc), tAmtRaw=get(r,iTAmt);
-    // ===== ПЕРЕВОД между счетами =====
-    if(tAccName&&tAmtRaw!==''){
-      const tAmt=parseAmount(tAmtRaw);
-      const mainCur=get(r,iCur)||state.currency, tCur=get(r,iTCur)||mainCur, mainName=get(r,iAcc);
-      let from,fromAmt,fromCur,to,toAmt,toCur;
-      if(!isNaN(mainAmt)&&mainAmt<0){from=mainName;fromAmt=-mainAmt;fromCur=mainCur;to=tAccName;toAmt=Math.abs(tAmt);toCur=tCur;}
-      else{from=tAccName;fromAmt=Math.abs(tAmt);fromCur=tCur;to=mainName;toAmt=Math.abs(mainAmt);toCur=mainCur;}
-      if(!(fromAmt>0)&&!(toAmt>0)){skipped++;continue;}
-      added.push(applyTxMeta({id:nextTxId(),type:'transfer',
-        from:ensureAcc(from,fromCur),to:ensureAcc(to,toCur),
-        amount:Math.round(fromAmt*100)/100,toAmount:Math.round(toAmt*100)/100,date,note},meta[0],meta[1],meta[2]));
-      continue;
-    }
-    // ===== ДОХОД / РАСХОД =====
-    let amount,type;
-    if(iAmt>=0){
-      if(isNaN(mainAmt)){skipped++;continue;}
-      if(iType>=0){const tv=get(r,iType).toLowerCase();
-        type=/ingres|income|доход|deposit|credit/.test(tv)?'income':/gasto|expense|расход|debit|withdraw/.test(tv)?'expense':(mainAmt<0?'expense':'income');}
-      else type=mainAmt<0?'expense':'income';
-      amount=Math.abs(mainAmt);
-    }else{
-      const inc=iIncome>=0?parseAmount(get(r,iIncome)):NaN, exp=iExpense>=0?parseAmount(get(r,iExpense)):NaN;
-      if(!isNaN(exp)&&Math.abs(exp)>0){type='expense';amount=Math.abs(exp);}
-      else if(!isNaN(inc)&&Math.abs(inc)>0){type='income';amount=Math.abs(inc);}
-      else{skipped++;continue;}
-    }
-    if(!amount||amount<=0){skipped++;continue;}
-    const rc=resolveCatPath(get(r,iCat),type);
-    added.push(applyTxMeta({id:nextTxId(),type,amount:Math.round(amount*100)/100,
-      cat:rc.cat,subcategoryId:rc.sub,account:ensureAcc(get(r,iAcc),get(r,iCur)),date,note},meta[0],meta[1],meta[2]));
-  }
-  if(!added.length){toast('Не удалось распознать операции');return;}
-  const nT=added.filter(t=>t.type==='transfer').length, nIE=added.length-nT;
-  let msg=`Распознано операций: ${added.length}\n• переводов: ${nT}\n• доходов/расходов: ${nIE}`+(skipped?`\n• пропущено: ${skipped}`:'')+`\n\nДобавить к текущим данным?`;
-  if(!confirm(msg))return;
-  added.forEach(t=>state.tx.push(t));
-  // TASK_026: импорт не считается успешным без физической записи. Откат в
-  // save() убирает и добавленные операции, и созданные по пути категории/
-  // счета — частично импортированного состояния в памяти не остаётся.
-  if(!save().ok)return;
-  // перейти к месяцу последней операции
-  const last=added.map(t=>t.date).sort().pop();
-  if(last)anchor=new Date(last);
-  render();buildAccountSelect();
-  toast(`Импортировано ${added.length} операций ✓`);
 }
 $('#demoBtn').onclick=loadDemo;
 $('#clearBtn').onclick=()=>{

@@ -98,7 +98,10 @@ function assertTrue(cond, msg) {
     ['saveCat', /if\(!save\(\)\.ok\)\{renderCatMgr\(\);return;\}/, 'категория'],
     ['saveGroup', /state\.accountGroups\.push[^\n]*\n\s*if\(!save\(\)\.ok\)return;/, 'группа счетов'],
     ['saveReminder', /state\.reminders\.push\(Object\.assign[^\n]*\n\s*if\(!save\(\)\.ok\)return;/, 'напоминание'],
-    ['importCSV', /added\.forEach\(t=>state\.tx\.push\(t\)\);[\s\S]{0,300}?if\(!save\(\)\.ok\)return;/, 'импорт CSV'],
+    // TASK_038: importCSV() как функция удалена — импорт CSV переехал в мастер
+    // и в AF.Services.Import. Дословная проверка прежней реализации заменена на
+    // её инвариант: успех импорта объявляется только после физической записи.
+    ['impCommit', /const w=AF\.Store\.save\(applied\.value\);[\s\S]{0,200}?if\(!w\.ok\)\{/, 'импорт CSV'],
     ['loadDemo', /if\(!save\(\)\.ok\)return;\s*\/\/ TASK_026: прежние данные/, 'демо-данные'],
     ['clearAll', /state\.cats=\[\];state\.subcats=\[\];state\.taxonomyVersion=0;seedCategories\(\);\s*\n\s*if\(!save\(\)\.ok\)return;/, 'полная очистка'],
   ];
@@ -171,8 +174,15 @@ function assertTrue(cond, msg) {
   assertTrue(/<script src="js\/core\/ids\.js"><\/script>/.test(html), 'Генератор id подключён в index.html');
   ['forTx', 'forAccount', 'forAccountGroup', 'forCategory', 'forSubcategory', 'forGoal', 'forReminder']
     .forEach(fn => assertTrue(new RegExp('AF\\.Ids\\.' + fn + '\\(state\\)').test(html), `Используется AF.Ids.${fn}()`));
-  assertTrue(/const usedTxIds=new Set/.test(html) && /AF\.Ids\.unique\(AF\.Ids\.PREFIX\.tx,usedTxIds\)/.test(html),
+  // TASK_038: тот же инвариант, но проверяется по новому месту жительства —
+  // выдача id импортируемым сущностям переехала в AF.Services.Import.
+  const importSvc = fs.readFileSync(path.join(__dirname, '..', 'js', 'services', 'import_service.js'), 'utf8');
+  assertTrue(/const usedTx = new Set\(\(state\.tx \|\| \[\]\)\.map/.test(importSvc),
+    'Импорт CSV собирает занятые id существующих операций');
+  assertTrue(/AF\.Ids\.unique\(prefix, used\)/.test(importSvc) && /used\.add\(id\)/.test(importSvc),
     'Импорт CSV проверяет уникальность id и против существующих операций, и внутри пачки');
+  ['PREFIX.tx', 'PREFIX.account', 'PREFIX.category', 'PREFIX.subcategory'].forEach(k =>
+    assertTrue(importSvc.indexOf('AF.Ids.' + k) > 0, 'Импорт выдаёт id через общий генератор: ' + k));
   assertTrue(/let nid=Date\.now\(\)/.test(html) === false, 'processAutoPost() больше не стартует счётчик от Date.now()');
   assertTrue(/state\.tx\.push\(\{id:AF\.Ids\.forTx\(state\),type:r\.type/.test(html), 'Авто-операции получают id из общего генератора');
 }
@@ -188,10 +198,18 @@ function assertTrue(cond, msg) {
     'Повторяющиеся id в импортируемых коллекциях перевыдаются (импорт не затирает сущность с тем же id)');
   assertTrue(!/state=Object\.assign\(state,d\)/.test(code), 'Старая подмена состояния до записи удалена');
 
-  const rest = (html.match(/function doBackupRestore\(text\)\{[\s\S]*?\n\}/) || [''])[0];
-  assertTrue(rest.indexOf('AF.Store.save(next)') < rest.indexOf('state=next'),
+  // TASK_038: doBackupRestore() заменена на doRestoreCommit() с предпросмотром,
+  // safety-копией и проверкой записанного. Инвариант TASK_026 сохранён и
+  // усилен: состояние в памяти берётся из хранилища ПОСЛЕ успешной записи
+  // (load()), то есть подмена до записи невозможна конструктивно.
+  const rest = (code.match(/function doRestoreCommit\(\)\{[\s\S]*?\n\}/) || [''])[0];
+  assertTrue(!!rest, 'Восстановление копии реализовано в doRestoreCommit()');
+  assertTrue(rest.indexOf('AF.Store.save(next)') < rest.indexOf('load();'),
     'Восстановление копии: запись раньше подмены состояния — прежняя база не разрушается');
   assertTrue(/if\(!w\.ok\)\{/.test(rest), 'Восстановление копии проверяет результат записи');
+  assertTrue(rest.indexOf('if(!w.ok)') < rest.indexOf("toast('Данные восстановлены"),
+    'Успех восстановления не объявляется без записи');
+  assertTrue(!/function doBackupRestore\(/.test(code), 'Прежняя doBackupRestore() с confirm() удалена');
   assertTrue(!/state=res\.value;AF\.Store\.save\(state\)/.test(code), 'Прежний порядок «подменить, потом писать» удалён');
 }
 

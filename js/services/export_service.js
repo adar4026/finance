@@ -59,6 +59,63 @@ AF.Services.Export = {
       </tr></thead><tbody>${rows}</tbody></table></body></html>`;
   },
 
+  // ===== Excel (.xlsx) — TASK_038 =====
+  // xlsHtml() выше остаётся как есть: это HTML-таблица с расширением .xls,
+  // на неё ссылается regression-тест TASK_015 и её формат больше не меняем.
+  // Экран экспорта пользуется парой xlsxColumns()/xlsxRows(): данные здесь
+  // типизированы (дата — датой, сумма — числом), поэтому в готовом файле
+  // работают сортировка, фильтр и суммирование, чего HTML-таблица не давала.
+  //
+  // Знак суммы — тот же, что в CSV: расход отрицательный, доход
+  // положительный, перевод показывается со стороны счёта-источника. Иначе
+  // сумма столбца в Excel не сошлась бы с итогом приложения.
+  XLSX_COLUMNS: [
+    { title: 'Дата',         type: 'date',  width: 12, key: 'date' },
+    { title: 'Тип',          type: 'text',  width: 10, key: 'type' },
+    { title: 'Сумма',        type: 'money', width: 13, key: 'amount' },
+    { title: 'Валюта',       type: 'text',  width: 8,  key: 'currency' },
+    { title: 'Счёт',         type: 'text',  width: 18, key: 'account' },
+    { title: 'Категория',    type: 'text',  width: 18, key: 'category' },
+    { title: 'Подкатегория', type: 'text',  width: 18, key: 'subcategory' },
+    { title: 'Контрагент',   type: 'text',  width: 18, key: 'payee' },
+    { title: 'Метки',        type: 'text',  width: 16, key: 'tags' },
+    { title: 'Место',        type: 'text',  width: 16, key: 'location' },
+    { title: 'Примечание',   type: 'text',  width: 26, key: 'note' },
+  ],
+
+  xlsxColumns() { return this.XLSX_COLUMNS.slice(); },
+
+  xlsxRows(txList, state) {
+    const TYPE = { income: 'Доход', expense: 'Расход', transfer: 'Перевод' };
+    const baseCur = state.currency || '€';
+    return (txList || []).map(t => {
+      if (t.type === 'transfer') {
+        return [t.date, TYPE.transfer, -Math.abs(t.amount), baseCur,
+          this._accName(state, t.from) + ' → ' + this._accName(state, t.to),
+          '', '', this._payee(t), this._tags(t), this._place(t), t.note || ''];
+      }
+      const acc = (state.accounts || []).find(a => a.id === t.account);
+      const amt = t.type === 'income' ? Math.abs(t.amount) : -Math.abs(t.amount);
+      return [t.date, TYPE[t.type] || t.type, amt, (acc && acc.currency) || baseCur,
+        this._accName(state, t.account), this._catName(state, t.cat), this._subName(state, t.subcategoryId),
+        this._payee(t), this._tags(t), this._place(t), t.note || ''];
+    });
+  },
+
+  // Готовый файл .xlsx (Uint8Array). Сервис писателя может не приехать при
+  // рассинхронизации CDN — тот же инвариант совместимости, что у TxMeta в
+  // TASK_015: тогда возвращаем null, а экран честно говорит, что формат
+  // недоступен, вместо падения обработчика кнопки.
+  xlsx(txList, state, label) {
+    const X = (window.AF && AF.Services && AF.Services.Xlsx);
+    if (!X || typeof X.build !== 'function') return null;
+    return X.build({
+      sheetName: (label ? String(label).slice(0, 28) : 'Операции'),
+      columns: this.xlsxColumns(),
+      rows: this.xlsxRows(txList, state),
+    });
+  },
+
   // PDF-отчёт (печать через window.print)
   reportHTML(state, txList, label) {
     const cur = state.currency || '€';
