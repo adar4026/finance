@@ -14,6 +14,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **App icon replaced with the wallet/"AF" logo** (`TASK_040`). The
+  production icon (`icon-512.png`, `icon-192.png`, `apple-touch-icon.png`,
+  `favicon-32.png`) now uses the user-approved logo — a green leather
+  wallet embossed with "AF" on a white iOS squircle — sourced from
+  `IMG_4615.jpg`, replacing the previous chart/arrow design
+  (`TASK_012`). The artwork itself was not redrawn; processing was limited
+  to converting the embedded Display P3 profile to sRGB, removing the
+  neutral-gray mockup/screenshot background around the squircle (replaced
+  with the same white as the badge itself — not a new color) and padding
+  the 800×787 source to a square without cropping the composition.
+  `manifest.json`/`index.html` needed no changes — file names and sizes
+  are unchanged. `sw.js` cache version bumped (`finance-v169` →
+  `finance-v170`) since the cached icon bytes changed.
+
 - **Main screens background tinted mint-gray-green** (`TASK_039`, small
   point fix, not part of the `TASK_025` plan). The background behind Home,
   Analytics, Accounts and Budgets was almost white (`#f2f2f7`) and gave
