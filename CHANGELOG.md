@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > Version 1.1.0 is the active development milestone, built on top of the
 > stable 1.0.0 foundation.
 
+### Added
+
+- **"Создать резервную копию" can now save through the OS-native "Save
+  As" dialog** (`TASK_038B`, small follow-up to `TASK_038`), via the File
+  System Access API when the browser and platform support it — letting the
+  user pick iCloud Drive, a local folder, or any other system location
+  through the OS's own picker. The app never hardcodes an iCloud path and
+  never calls iCloud APIs directly; the choice is entirely the user's, made
+  in the system dialog. Where the API is unavailable, the existing browser
+  download to Downloads keeps working unchanged. Cancelling the system
+  dialog is treated as a no-op, not an error — no toast, no state change.
+
 ### Changed
 
 - **Export screen copy tweaked** (`TASK_038A`, small follow-up to

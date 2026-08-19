@@ -4042,6 +4042,36 @@ function downloadFile(name,content,mime){const blob=new Blob([content],{type:mim
 // нельзя отдавать как строку — иначе архив портится ещё до сохранения.
 function downloadBytes(name,bytes,mime){downloadBlob(name,new Blob([bytes],{type:mime}));}
 function downloadBlob(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);}
+// TASK_038B: системный диалог «Сохранить как» (File System Access API),
+// когда браузер и платформа его поддерживают, — пользователь может выбрать
+// iCloud Drive или любую другую системную папку через стандартный picker ОС.
+// Приложение не хардкодит путь iCloud и не обращается к её API напрямую:
+// выбор целиком делает пользователь в системном диалоге. Вызывается
+// СИНХРОННО из обработчика клика, без await перед showSaveFilePicker —
+// иначе браузер теряет user activation и бросает SecurityError.
+// Возвращает Promise<'saved'|'cancelled'>: 'cancelled' — пользователь
+// закрыл системный диалог (AbortError), ничего не произошло и не должно
+// восприниматься как ошибка; любая другая ошибка picker'а — тихий откат
+// на обычное скачивание (существующий fallback), тоже 'saved'.
+async function saveOrDownloadFile(name,content,mime){
+  if(typeof window.showSaveFilePicker==='function'){
+    try{
+      const handle=await window.showSaveFilePicker({
+        suggestedName:name,
+        types:[{description:'A-Lex Finance backup',accept:{[mime]:['.afb']}}],
+      });
+      const w=await handle.createWritable();
+      await w.write(content);
+      await w.close();
+      return 'saved';
+    }catch(e){
+      if(e&&e.name==='AbortError')return 'cancelled';
+      console.warn('[backup] Системный диалог сохранения недоступен, скачиваем как обычно',e);
+    }
+  }
+  downloadFile(name,content,mime);
+  return 'saved';
+}
 function stamp(){const d=new Date();return dateKey(d);}
 // Экспорт ничего не пишет в базу. Единственная блокировка — от повторного
 // нажатия во время формирования файла (на длинной истории это заметно).
@@ -4080,15 +4110,26 @@ function doExportPdf(){
   w.document.write(AF.Services.Export.reportHTML(state,list,label));w.document.close();
   setTimeout(()=>{try{w.focus();w.print();}catch(e){}},500);
 }
-function doBackupCreate(){
-  const file=AF.Services.Backup.create(state,{appVersion:(window.AF&&AF.AppInfo&&AF.AppInfo.version)||''});
-  downloadFile('alex_finance_backup_'+stamp()+'.afb',file,'application/json');
-  // Файл уже отдан пользователю — сама копия создана в любом случае; не
-  // сохранилась только отметка о дате (TASK_026: не молчим об этом).
-  state.lastBackup=Date.now();
-  const okSaved=save().ok;
-  if(okSaved)renderBkpLast();
-  if(okSaved)toast('Резервная копия создана ✓');
+let bkpBusy=false;
+async function doBackupCreate(){
+  if(bkpBusy)return;
+  bkpBusy=true;
+  const btn=document.getElementById('bkpCreate');
+  if(btn)btn.setAttribute('disabled','');
+  try{
+    const file=AF.Services.Backup.create(state,{appVersion:(window.AF&&AF.AppInfo&&AF.AppInfo.version)||''});
+    const result=await saveOrDownloadFile('alex_finance_backup_'+stamp()+'.afb',file,'application/json');
+    if(result==='cancelled')return;      // пользователь закрыл системный диалог — ничего не изменилось
+    // Файл уже отдан пользователю — сама копия создана в любом случае; не
+    // сохранилась только отметка о дате (TASK_026: не молчим об этом).
+    state.lastBackup=Date.now();
+    const okSaved=save().ok;
+    if(okSaved)renderBkpLast();
+    if(okSaved)toast('Резервная копия создана ✓');
+  }finally{
+    bkpBusy=false;
+    if(btn)btn.removeAttribute('disabled');
+  }
 }
 
 /* ---------- Восстановление из копии (replace) ---------- */
