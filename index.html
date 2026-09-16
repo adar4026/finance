@@ -52,6 +52,7 @@
 <script src="js/services/category_taxonomy_service.js"></script>
 <script src="js/services/demo_data_service.js"></script>
 <script src="js/services/search_service.js"></script>
+<script src="js/services/haptics_service.js"></script>
 <style>
   /* Alex Finance Design Tokens (Product Book Part 2/4) */
   :root, [data-theme="light"]{
@@ -5764,6 +5765,11 @@ function updateDisplay(){
   fitAmount();
   updateSaveEnabled();
 }
+/* TASK_042: тактильный отклик клавиши — в момент касания (pointerdown), ровно
+   один раз на касание: click-обработчик key() отклик не вызывает, touchstart
+   не используется (Pointer Events покрывают touch). Вторичные кнопки мыши
+   (десктоп) не считаются нажатием клавиши. */
+function keyPressHaptic(e){if(e&&e.button>0)return;AF.Services.Haptics.tap();}
 function openKeypad(){$('#keypadDock').classList.add('show');$('.display').classList.add('active');$('.sheet').classList.add('kp-open');}
 function closeKeypad(){$('#keypadDock').classList.remove('show');$('.display').classList.remove('active');$('.sheet').classList.remove('kp-open');}
 function evalExpr(e){
@@ -5790,7 +5796,8 @@ function key(k){
   } else {
     aExpr=applyKey(aExpr,k);
   }
-  if(navigator.vibrate)navigator.vibrate(8); // тактильный отклик (Android; iOS web игнорирует)
+  // TASK_042: тактильный отклик перенесён на pointerdown клавиши (keyPressHaptic) —
+  // здесь, по click, не дублируем.
   updateDisplay();
 }
 function saveTx(){
@@ -5851,7 +5858,7 @@ function saveTx(){
   txSaving=false;
   if(!res.ok)return;                          // ни success-тоста, ни закрытия, ни haptic
   txCommitted=true;                           // защёлка до следующего openSheet()
-  haptic(14); // успешное сохранение (TASK_014 п. 7.11)
+  AF.Services.Haptics.success(); // успешное сохранение — выраженный отклик (TASK_014 п. 7.11 → TASK_042: iOS/Android)
   closeSheet();
   anchor=new Date(date);render();buildAccountSelect();
   if($('#catTxOverlay').classList.contains('show'))renderCatTx(); // обновить drill-down, если открыт
@@ -6270,7 +6277,8 @@ $('#tagsRow').onclick=e=>{ if(e.target.closest('.tx-chip'))return; const i=$('#f
 
 $('#kdDone').onclick=closeKeypad;
 $('#catToggle').onclick=()=>setCatOpen($('#catStrip').style.display==='none');
-$$('.keypad button[data-k]').forEach(b=>{const k=b.dataset.k;if(k&&k!=='back-hold')b.onclick=()=>key(k);});
+$$('.keypad button[data-k]').forEach(b=>{const k=b.dataset.k;if(k&&k!=='back-hold'){b.onclick=()=>key(k);b.onpointerdown=keyPressHaptic;}});
+$('#kdDone').onpointerdown=keyPressHaptic; // «Готово» — та же лёгкая клавиша; ✓ (#saveBtn) — только success() в saveTx
 
 $('#periods').querySelectorAll('button').forEach(b=>b.onclick=()=>{
   if(b.dataset.p==='custom'){openRange();return;}

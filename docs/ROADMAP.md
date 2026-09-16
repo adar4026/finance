@@ -644,6 +644,18 @@
     не выполнялась в этой сессии. См.
     [`docs/tasks/TASK_041_CATEGORY_TX_SCREEN_HOME_REDESIGN.md`](tasks/TASK_041_CATEGORY_TX_SCREEN_HOME_REDESIGN.md).
 
+37. **TASK_042_KEYPAD_HAPTICS_IOS** — `DONE` (локально, без push).
+    Тактильный отклик цифровой клавиатуры формы операции на iPhone.
+    Анализ: `navigator.vibrate` на iOS/WebKit отсутствует; настоящий
+    системный haptic без Capacitor — через побочный эффект нативного
+    `<input type="checkbox" switch>` (iOS 18+). Новый сервис
+    `AF.Services.Haptics` (`tap()`/`success()`, `vibrate` → switch-приём →
+    no-op), `tap()` на `pointerdown` клавиш и «Готово», `success()` (два
+    импульса) при успешном сохранении; дубль `vibrate` по `click` удалён.
+    `sw.js` `finance-v173` → `finance-v174`. Тесты: **1675 passed, 0
+    failed** (+56). Требует подтверждения ощущения на реальном iPhone.
+    См. [`docs/tasks/TASK_042_KEYPAD_HAPTICS_IOS.md`](tasks/TASK_042_KEYPAD_HAPTICS_IOS.md).
+
 ## Пояснения
 
 - `TASK_001` является первой задачей в новой системе документации, а **не**

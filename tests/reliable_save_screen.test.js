@@ -113,7 +113,7 @@ function assertTrue(cond, msg) {
     'Проверка результата стоит РАНЬШЕ success-тоста «Расход добавлен ✓»');
   assertTrue(saveTxBody.indexOf('if(!res.ok)return;') < saveTxBody.indexOf('closeSheet()'),
     'Проверка результата стоит раньше закрытия формы — введённые данные не теряются');
-  assertTrue(saveTxBody.indexOf('if(!res.ok)return;') < saveTxBody.indexOf('haptic(14)'),
+  assertTrue(saveTxBody.indexOf('if(!res.ok)return;') < saveTxBody.indexOf('AF.Services.Haptics.success()'), // TASK_042: haptic(14) → Haptics.success()
     'Тактильный отклик «успешно» не срабатывает при ошибке записи');
 }
 
