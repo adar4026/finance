@@ -40,6 +40,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Amount entry via the iOS system keyboard** (`TASK_043`). The amount on
+  the transaction page is now a real `<input type="text" inputmode="decimal"
+  enterkeyhint="done">` — tapping it opens the iPhone's native numeric
+  keypad with a decimal key; the keypad's tactile feedback comes from iOS
+  itself (Settings → Sounds & Haptics → Keyboard Feedback → Haptic) — the
+  app does not emulate vibration. Input rules live in a new pure service
+  `AF.Services.AmountInput`: comma as the primary separator (dot accepted),
+  a single separator, at most two decimals, a transient `45,` allowed while
+  typing, and normalisation on "Done" (`45,5 → 45,50`, empty → `0`, never
+  `NaN`). A compact "Калькулятор · Готово" bar sits above the system
+  keyboard (positioned via `visualViewport`); transfer sides are native
+  fields too. The arithmetic calculator is kept as an optional mode opened
+  from a button under the amount, its markup and logic unchanged. Data
+  model, save, export/import and analytics are untouched. `sw.js` cache
+  bumped `finance-v174` → `finance-v175`.
+
 - **Haptic feedback service for the transaction keypad** (`TASK_042`).
   iOS/WebKit has no `navigator.vibrate`, so the keypad's previous
   "vibration" was silent on iPhone. A new `AF.Services.Haptics`

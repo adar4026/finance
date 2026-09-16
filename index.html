@@ -53,6 +53,7 @@
 <script src="js/services/demo_data_service.js"></script>
 <script src="js/services/search_service.js"></script>
 <script src="js/services/haptics_service.js"></script>
+<script src="js/services/amount_input_service.js"></script>
 <style>
   /* Alex Finance Design Tokens (Product Book Part 2/4) */
   :root, [data-theme="light"]{
@@ -588,6 +589,66 @@
     margin-left:6px;opacity:1;letter-spacing:-1px}
   #overlay .disp-sub{font-size:13px;font-weight:500;color:var(--muted);margin-top:10px;min-height:18px}
   #overlay .display:active .disp-main{transform:scale(.99)}
+  /* ---------- TASK_043: нативное поле суммы ----------
+     #dispMain — flex-строка [знак][input][валюта]; ширина input подбирается по
+     скрытому span-измерителю (.amt-measure) с тем же шрифтом, чтобы валюта
+     стояла вплотную к числу и не мешала редактированию. Элементы не сжимаются
+     (flex:0 0 auto) — иначе fitAmount() не увидит переполнения. */
+  #overlay .disp-main{display:flex;align-items:baseline;justify-content:center;position:relative}
+  #overlay .disp-main>*{flex:0 0 auto}
+  #overlay .disp-in{font:inherit;color:inherit;letter-spacing:inherit;background:none;border:none;
+    border-radius:0;outline:none;padding:0 0 2px;margin:0;min-width:1ch;max-width:100%;text-align:center;
+    font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;caret-color:var(--tx-transfer);
+    -webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;
+    border-bottom:2px solid transparent;transition:border-color .18s ease}
+  #overlay .disp-in::placeholder{color:var(--muted2);opacity:1}
+  #overlay .disp-in:focus{border-bottom-color:var(--tx-transfer)}
+  .amt-measure{position:absolute;left:0;top:0;visibility:hidden;white-space:pre;pointer-events:none;
+    font:inherit;letter-spacing:inherit;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+  #overlay .disp-sub{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+  #overlay .disp-sub:empty{display:none}
+  /* калькулятор — дополнительный режим, компактная «таблетка» под суммой */
+  .calc-pill{display:inline-flex;align-items:center;gap:5px;border:none;border-radius:999px;
+    padding:5px 11px 5px 9px;background:var(--tx-fill);color:var(--tx-transfer);font-family:inherit;
+    font-size:12.5px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;
+    transition:transform .1s ease,filter .1s ease}
+  .calc-pill svg{width:13px;height:13px;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;fill:none}
+  .calc-pill:active{transform:scale(.96);filter:brightness(.95)}
+  .calc-pill:focus-visible{outline:2px solid var(--tx-transfer);outline-offset:1px}
+  /* стороны перевода — те же нативные поля в существующем размере .td-amt */
+  #overlay .td-amt{display:flex;align-items:baseline;gap:2px;position:relative;overflow:visible}
+  #overlay .td-amt>*{flex:0 0 auto}
+  #overlay .td-in{font:inherit;color:inherit;letter-spacing:inherit;background:none;border:none;border-radius:0;
+    outline:none;padding:0;margin:0;min-width:1ch;max-width:100%;text-align:left;caret-color:var(--tx-transfer);
+    -webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;
+    font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+  #overlay .td-in::placeholder{color:var(--muted2);opacity:1}
+  #overlay .td-cur{color:var(--muted2);font-weight:600;font-size:.85em;margin-left:2px}
+  /* панель над системной клавиатурой: только «Калькулятор» и «Готово» —
+     не полноразмерная клавиатура; стекло как у футера */
+  .amt-bar{position:fixed;left:0;right:0;bottom:0;z-index:60;max-width:560px;margin:0 auto;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;
+    background:var(--tx-glass-bar);-webkit-backdrop-filter:blur(20px) saturate(180%);
+    backdrop-filter:blur(20px) saturate(180%);box-shadow:0 -.5px 0 var(--tx-hairline)}
+  .amt-bar[hidden]{display:none}
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .amt-bar{background:var(--tx-page-bg)}
+  }
+  .amt-bar button{border:none;border-radius:11px;min-height:38px;padding:8px 16px;font-family:inherit;
+    font-size:14.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;
+    transition:transform .1s ease,filter .1s ease}
+  .amt-bar button:active{transform:scale(.96);filter:brightness(.94)}
+  .amt-bar button:focus-visible{outline:2px solid var(--tx-transfer);outline-offset:1px}
+  .amt-bar-calc{background:var(--tx-fill);color:var(--tx-transfer)}
+  .amt-bar-done{background:var(--tx-cta-expense);color:#fff;min-width:96px}
+  #overlay .sheet[data-txtype="income"] ~ .amt-bar .amt-bar-done{background:var(--tx-cta-income)}
+  #overlay .sheet[data-txtype="transfer"] ~ .amt-bar .amt-bar-done{background:var(--tx-cta-transfer)}
+  /* pressed-state — только визуальный; при reduced-motion без сдвига размеров */
+  @media (prefers-reduced-motion:reduce){
+    .calc-pill,.amt-bar button,#overlay .keypad button,#overlay .kd-done,#overlay .display .disp-main{transition:none}
+    .calc-pill:active,.amt-bar button:active,#overlay .keypad button:active,#overlay .keypad button.flash,
+    #overlay .kd-done:active,#overlay .display:active .disp-main{transform:none}
+  }
 
   /* карточка перевода (двусторонняя сумма) — в том же материале, что и карточки полей */
   #overlay .trans-display{background:var(--tx-card);border:none;border-radius:22px;
@@ -770,7 +831,7 @@
      синхронно с ним (не остаётся наполовину перекрытым), а .tx-body получает
      запас снизу, чтобы поля можно было домотать над доком. */
   #overlay .sheet.kp-open{padding-bottom:0}
-  .sheet.kp-open .tx-footer{transform:translateY(100%)}
+  .sheet.kp-open .tx-footer,.sheet.amt-open .tx-footer{transform:translateY(100%)} /* TASK_043: и при системной клавиатуре */
   .sheet.kp-open .tx-body{padding-bottom:calc(300px + env(safe-area-inset-bottom))}
   @media (prefers-reduced-motion:reduce){ .tx-footer{transition:none} }
   /* Визуальная интеграция циферблата: логика и разметка keypad не тронуты —
@@ -1953,20 +2014,34 @@
         <button id="segTrans" role="tab" aria-selected="false">Перевод</button>
       </div>
 
-      <div class="display" role="button" tabindex="0" aria-label="Сумма операции — открыть клавиатуру">
-        <div class="disp-main" id="dispMain">0 <span class="disp-cur" id="dispCur">€</span></div>
-        <div class="disp-sub" id="dispSub"></div>
+      <!-- TASK_043: сумма — настоящее поле (системная клавиатура iPhone даёт
+           цифры, разделитель и свой тактильный отклик); калькулятор — режим -->
+      <div class="display" id="amtDisplay">
+        <div class="disp-main" id="dispMain">
+          <span class="disp-sign" id="dispSign" aria-hidden="true"></span>
+          <input class="disp-in" id="amtInput" type="text" inputmode="decimal" enterkeyhint="done"
+                 autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                 placeholder="0" value="0" aria-label="Сумма операции">
+          <span class="disp-cur" id="dispCur">€</span>
+          <span class="amt-measure" id="amtMeasure" aria-hidden="true"></span>
+        </div>
+        <div class="disp-sub" id="dispSub">
+          <span id="dispExpr"></span>
+          <button type="button" class="calc-pill" id="calcPill" aria-label="Открыть калькулятор">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="1.5" width="11" height="13" rx="2"/><path d="M5 5h6M5.5 8.5h.01M8 8.5h.01M10.5 8.5h.01M5.5 11.5h.01M8 11.5h.01M10.5 11.5h.01"/></svg>Калькулятор
+          </button>
+        </div>
       </div>
 
       <div class="trans-display" id="transDisplay" style="display:none">
         <div class="td-side from" id="tdFrom">
           <div class="td-acc"><span id="tdFromIc">💳</span><span id="tdFromNm">—</span></div>
-          <div class="td-amt" id="tdFromAmt">−0 €</div>
+          <div class="td-amt" id="tdFromAmt"><span class="td-sign" aria-hidden="true">−</span><input class="td-in" id="amtFrom" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="0" value="0" aria-label="Сумма списания"><span class="td-cur" id="tdFromCur">€</span><span class="amt-measure" id="amtFromMeasure" aria-hidden="true"></span></div>
         </div>
         <div class="td-arrow">›</div>
         <div class="td-side to" id="tdTo">
           <div class="td-acc"><span id="tdToIc">💳</span><span id="tdToNm">—</span></div>
-          <div class="td-amt" id="tdToAmt">+0 €</div>
+          <div class="td-amt" id="tdToAmt"><span class="td-sign" aria-hidden="true">+</span><input class="td-in" id="amtTo" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="0" value="0" aria-label="Сумма зачисления"><span class="td-cur" id="tdToCur">€</span><span class="amt-measure" id="amtToMeasure" aria-hidden="true"></span></div>
         </div>
       </div>
       <div id="transRate" style="display:none;font-size:12px;color:var(--muted);margin:-8px 0 14px;padding:0 6px"></div>
@@ -2123,6 +2198,12 @@
       <button data-k=".">.</button><button data-k="0">0</button><button data-k="back">⌫</button><button class="op" data-k="+">+</button>
       <button class="op" data-k="clear">C</button><button data-k="back-hold" style="visibility:hidden"></button><button class="save" id="saveBtn">✓</button>
     </div>
+  </div>
+  <!-- TASK_043: панель над системной клавиатурой — у цифровой клавиатуры iPhone нет
+       кнопки завершения; позиция — по visualViewport (placeAmtBar) -->
+  <div class="amt-bar" id="amtBar" hidden>
+    <button type="button" class="amt-bar-calc" id="amtBarCalc">Калькулятор</button>
+    <button type="button" class="amt-bar-done" id="amtBarDone">Готово</button>
   </div>
 </div>
 
@@ -5278,14 +5359,14 @@ function openSheet(id){
 }
 function closeSheet(){
   if(!$('#overlay').classList.contains('show'))return;
-  closeKeypad();
+  amtBlurActive();hideAmtBar();closeKeypad();
   if(sheetHistoryPushed){sheetHistoryPushed=false;history.back();}
   else $('#overlay').classList.remove('show');
 }
 window.addEventListener('popstate',()=>{
   if($('#overlay').classList.contains('show')){
     sheetHistoryPushed=false;
-    $('#overlay').classList.remove('show');closeKeypad();
+    $('#overlay').classList.remove('show');amtBlurActive();hideAmtBar();closeKeypad();
   }
 });
 function buildAccountSelect(){
@@ -5444,8 +5525,10 @@ const TX_AMOUNT_SIZES=[56,48,42,36,30,26];
 function fitAmount(){
   const m=$('#dispMain');
   if(!m||m.offsetParent===null)return;
+  const inp=$('#amtInput');
   for(let i=0;i<TX_AMOUNT_SIZES.length;i++){
     m.style.fontSize=TX_AMOUNT_SIZES[i]+'px';
+    if(inp)amtWidth(inp); // TASK_043: ширина поля зависит от размера шрифта
     if(m.scrollWidth<=m.clientWidth)return;
   }
 }
@@ -5726,8 +5809,9 @@ function updateTransDisplay(){
   const fv=evalExpr(aExpr),tv=evalExpr(aToExpr);
   $('#tdFromIc').textContent=fa?fa.emoji:'💳';$('#tdFromNm').textContent=fa?fa.name:'—';
   $('#tdToIc').textContent=ta?ta.emoji:'💳';$('#tdToNm').textContent=ta?ta.name:'—';
-  $('#tdFromAmt').textContent='−'+fmtNum(fv)+' '+fcur;
-  $('#tdToAmt').textContent='+'+fmtNum(tv)+' '+tcur;
+  // TASK_043: стороны — нативные поля; активное (в фокусе) не перезаписываем
+  amtPaint($('#amtFrom'),fv);amtPaint($('#amtTo'),tv);
+  $('#tdFromCur').textContent=fcur;$('#tdToCur').textContent=tcur;
   $('#tdFrom').classList.toggle('active',transFocus==='from');
   $('#tdTo').classList.toggle('active',transFocus==='to');
   // в шапке циферблата — обе стороны перевода (видно при наборе)
@@ -5753,18 +5837,91 @@ function updateDisplay(){
   const amt=(val>0?sign:'')+numStr;
   const m=$('#dispMain'); m.className='disp-main '+cls+(val>0?'':' zero');
   // TASK_014: знак выделен отдельным span — цифры остаются основным цветом
-  // текста, цветным окрашивается только «−»/«+» (иначе сумма кричит на экране)
-  m.innerHTML=(val>0&&sign?'<span class="disp-sign">'+sign+'</span>':'')
-    +numStr+' <span class="disp-cur" id="dispCur">'+sym+'</span>';
+  // текста, цветным окрашивается только «−»/«+» (иначе сумма кричит на экране).
+  // TASK_043: число живёт в нативном поле #amtInput; пока оно в фокусе
+  // (пользователь набирает), его значение не перезаписывается.
+  $('#dispSign').textContent=(val>0&&sign)?sign:'';
+  $('#dispCur').textContent=sym;
+  amtPaint($('#amtInput'),val);
   const kd=$('#kdAmount'); if(kd)kd.textContent=amt+' '+sym; // зеркало суммы в циферблате
-  // Вторая строка: пока набирается выражение (12+5) — показываем его; в
-  // остальное время не дублируем сумму цифрами, а объясняем, что она нажимаемая.
+  // Вторая строка: пока набирается выражение (12+5) — показываем его; при
+  // нулевой сумме — подсказка; иначе пусто (рядом — кнопка «Калькулятор»).
   const raw=aExpr.replace(/\*/g,'×').replace(/\//g,'÷').replace(/\./g,',');
   const hasOp=/[+−×÷]/.test(raw);
-  $('#dispSub').textContent=hasOp?raw:'Нажмите, чтобы изменить сумму';
+  $('#dispExpr').textContent=hasOp?raw:(val>0?'':'Введите сумму');
   fitAmount();
   updateSaveEnabled();
 }
+/* ---- TASK_043: нативное поле суммы ----
+   Основной ввод — <input inputmode="decimal">: системная клавиатура iPhone даёт
+   цифры, разделитель и собственный тактильный отклик (настройка iOS «Отклик
+   клавиатуры → Тактильные сигналы»); приложение вибрацию не имитирует.
+   Правила ввода — AF.Services.AmountInput; модель (aExpr/aToExpr) остаётся
+   канонической строкой, поэтому калькулятор, перевод и saveTx не менялись. */
+const AMT=AF.Services.AmountInput;
+let amtActive=null; // поле суммы в фокусе (для панели над клавиатурой)
+function amtWidth(inp){
+  const m=inp.parentElement&&inp.parentElement.querySelector('.amt-measure');if(!m)return;
+  m.textContent=inp.value||inp.placeholder||'0';
+  inp.style.width=(m.offsetWidth+2)+'px';
+}
+// Записать число в поле, если оно не в фокусе (в фокусе — текст пользователя)
+function amtPaint(inp,val){
+  if(!inp||document.activeElement===inp)return;
+  inp.value=AMT.display(isNaN(val)?0:val);amtWidth(inp);
+}
+function amtCommit(side,expr){
+  if(aType==='transfer'){
+    if(side==='to')aToExpr=expr;
+    else{aExpr=expr;syncTransTo();} // зеркалирование/конвертация — как в key()
+  }else aExpr=expr;
+  updateDisplay();
+}
+function bindAmountInput(inp,side){
+  inp.addEventListener('focus',()=>{
+    amtActive=inp;
+    if(side)transFocus=side;
+    closeKeypad(); // калькулятор — отдельный режим, вместе не показываем
+    // «0» и разрядные пробелы убираем — ввод «45,52» начинается сразу
+    inp.value=AMT.sanitize(inp.value);if(inp.value==='0')inp.value='';
+    amtWidth(inp);
+    if(side)updateDisplay(); // подсветить активную сторону перевода
+    showAmtBar();
+  });
+  inp.addEventListener('input',()=>{
+    const s=AMT.sanitize(inp.value);
+    if(s!==inp.value)inp.value=s; // лишний символ отброшен, каретка — в конец
+    amtWidth(inp);
+    amtCommit(side,AMT.toExpr(s));
+  });
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();inp.blur();}});
+  inp.addEventListener('blur',()=>{
+    if(amtActive===inp)amtActive=null;
+    inp.value=AMT.normalize(inp.value); // 45,5 → 45,50; 45, → 45; пусто → 0
+    amtCommit(side,AMT.toExpr(inp.value));
+    // при переходе на другое поле суммы focus уже назначил amtActive — панель остаётся
+    setTimeout(()=>{if(!amtActive)hideAmtBar();},0);
+  });
+}
+function amtFocus(inp){if(inp&&document.activeElement!==inp)inp.focus();}
+// Панель «Калькулятор · Готово» над системной клавиатурой. iOS не сжимает
+// layout-viewport под клавиатуру в Safari (в standalone — может), поэтому
+// позиция считается от visualViewport: bottom = невидимая часть под клавиатурой.
+function placeAmtBar(){
+  const bar=$('#amtBar');if(!bar||bar.hidden)return;
+  const vv=window.visualViewport;
+  const gap=vv?Math.max(0,Math.round(window.innerHeight-(vv.offsetTop+vv.height))):0;
+  bar.style.bottom=gap+'px';
+}
+function showAmtBar(){const bar=$('#amtBar');if(!bar)return;bar.hidden=false;$('#overlay .sheet').classList.add('amt-open');placeAmtBar();}
+function hideAmtBar(){const bar=$('#amtBar');if(bar)bar.hidden=true;$('#overlay .sheet').classList.remove('amt-open');}
+function amtBlurActive(){if(amtActive)amtActive.blur();}
+function openCalc(){amtBlurActive();openKeypad();}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',placeAmtBar);
+  window.visualViewport.addEventListener('scroll',placeAmtBar);
+}
+
 /* TASK_042: тактильный отклик клавиши — в момент касания (pointerdown), ровно
    один раз на касание: click-обработчик key() отклик не вызывает, touchstart
    не используется (Pointer Events покрывают touch). Вторичные кнопки мыши
@@ -5825,7 +5982,7 @@ function saveTx(){
     // сумма «на счёт»: при одинаковой валюте = сумме списания; при разных — вводится явно (без курса 1:1)
     const diffCur=!sameTransCur();
     const toVal=diffCur?evalExpr(aToExpr):val;
-    if(diffCur&&(!toVal||toVal<=0)){toast('Укажите сумму зачисления');transFocus='to';updateDisplay();openKeypad();return;}
+    if(diffCur&&(!toVal||toVal<=0)){toast('Укажите сумму зачисления');transFocus='to';updateDisplay();amtFocus($('#amtTo'));return;}
     if(editId){const t=state.tx.find(x=>x.id==editId);
       delete t.cat;delete t.account;
       Object.assign(t,{type:'transfer',from,to,amount:val,toAmount:toVal,date,note});
@@ -6220,10 +6377,20 @@ $('#segTrans').onclick=()=>{haptic(8);setType('transfer');};
 $('#saveBtn').onclick=saveTx;
 $('#saveBtn2').onclick=saveTx;
 $('#delBtn').onclick=delTx;
-$('.display').onclick=openKeypad;
-$('.display').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openKeypad();}};
-$('#tdFrom').onclick=()=>{transFocus='from';updateDisplay();openKeypad();};
-$('#tdTo').onclick=()=>{transFocus='to';updateDisplay();openKeypad();};
+// TASK_043: тап по сумме → фокус нативного поля (системная клавиатура);
+// калькулятор — по кнопке. Стороны перевода — свои поля.
+bindAmountInput($('#amtInput'),null);
+bindAmountInput($('#amtFrom'),'from');
+bindAmountInput($('#amtTo'),'to');
+$('.display').onclick=e=>{if(e.target.closest('#calcPill'))return;amtFocus($('#amtInput'));};
+$('#calcPill').onclick=openCalc;
+$('#tdFrom').onclick=e=>{transFocus='from';updateDisplay();amtFocus($('#amtFrom'));};
+$('#tdTo').onclick=e=>{transFocus='to';updateDisplay();amtFocus($('#amtTo'));};
+// pointerdown с preventDefault — поле не теряет фокус до click (иначе панель
+// спрячется по blur раньше, чем сработает кнопка)
+$$('#amtBar button').forEach(b=>b.onpointerdown=e=>e.preventDefault());
+$('#amtBarDone').onclick=amtBlurActive;
+$('#amtBarCalc').onclick=openCalc;
 $('#kdAmount').onclick=e=>{const s=e.target.closest('.kd-side');if(!s||aType!=='transfer')return;transFocus=s.classList.contains('to')?'to':'from';updateDisplay();};
 function syncTransTo(){const v=evalExpr(aExpr);if(sameTransCur())aToExpr=aExpr;else aToExpr=isNaN(v)?'0':String(convertCur(v,curOfAcc($('#fFrom').value),curOfAcc($('#fTo').value)));}
 $('#fFrom').onchange=()=>{haptic(8);syncTransTo();updateDisplay();updateAccBals();};
