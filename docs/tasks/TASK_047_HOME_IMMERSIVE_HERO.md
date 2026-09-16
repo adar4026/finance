@@ -161,6 +161,6 @@ localStorage, список операций (`renderRecent`/`homeGroupedTxHtml`/
 ### Git
 
 - Пользователь подтвердил результат по скриншоту в чате — commit/push разрешены.
-- Коммит реализации: `feat(TASK_047): …` — хэш ниже после коммита.
-- Коммит документации: `docs(TASK_047): record commit hash in task file` — хэш ниже после коммита.
+- Коммит реализации: `971341b` — `feat(TASK_047): Главная — immersive-hero на fluid-фоне вместо карточек`.
+- Коммит документации: `docs(TASK_047): record commit hash in task file` (этот).
 - Push: `origin/main`.
