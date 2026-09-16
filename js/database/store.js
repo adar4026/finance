@@ -5,6 +5,7 @@ window.AF = window.AF || {};
 AF.Store = (function () {
   const KEY = 'finance_app';
   // v3 (TASK_015): у операции появились необязательные payee/tags/location.
+  // TASK_044: необязательное time 'HH:MM' (без подъёма версии, см. migrate).
   // Ветвления по номеру версии нет — migrate идемпотентен и нормализует
   // любое состояние; номер нужен как отметка поколения в backup-файле.
   const SCHEMA_VERSION = 3;
@@ -16,6 +17,7 @@ AF.Store = (function () {
       schemaVersion: SCHEMA_VERSION,
       tx: [],                 // Transactions: {id,type,amount,currency,accountId/account,categoryId/cat,subcategoryId,comment/note,date,from,to,toAmount,originalAmount,exchangeRate}
                               //   + необязательные метаданные (TASK_015, v3): payee (string), tags (string[]), location (string).
+                              //   + необязательное time 'HH:MM' (TASK_044) — локальное время операции; ключ отсутствует у старых записей.
                               //   Принцип «пусто = ключа нет»: пустое значение не хранится, ключ удаляется.
       accounts: [             // Accounts
         { id:'cash', name:'Наличные', emoji:'💵', type:'cash', color:'#22c55e', start:0, isArchived:false, currency:'€' },
@@ -64,6 +66,12 @@ AF.Store = (function () {
     // остальная миграция отрабатывает полностью и данные не теряются.
     const TM = (typeof AF !== 'undefined' && AF && AF.Services) ? AF.Services.TxMeta : null;
     if (TM && typeof TM.normalizeTx === 'function') s.tx.forEach(t => TM.normalizeTx(t));
+    // Время операции (TASK_044): необязательный ключ time 'HH:MM', «пусто =
+    // ключа нет». Старым операциям время НЕ подставляется. SCHEMA_VERSION не
+    // поднимается — тот же приём, что importBatches/settings.security. Проверка
+    // наличия сервиса — инвариант совместимости TASK_015 §0.
+    const TT = (typeof AF !== 'undefined' && AF && AF.Services) ? AF.Services.TxTime : null;
+    if (TT && typeof TT.normalizeTx === 'function') s.tx.forEach(t => TT.normalizeTx(t));
     // Настройки безопасности (TASK_023): lockDelay/biometric/bioCredId живут в
     // s.settings.security. SCHEMA_VERSION не поднимается — ключи необязательны,
     // их отсутствие = безопасные значения по умолчанию, нормализация

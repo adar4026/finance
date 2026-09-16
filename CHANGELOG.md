@@ -40,6 +40,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Transaction time and newest-first order within a day** (`TASK_044`).
+  Transactions now carry an optional `time` field (`'HH:MM'`, device local
+  time; `date` stays `'YYYY-MM-DD'`, schema version unchanged, empty means
+  the key is absent). The transaction page has a new "Время" row after
+  "Дата" — a native `<input type="time">` prefilled with the current local
+  time for a new transaction and editable; the default date is now local
+  too (was UTC via `toISOString`). Old records without a time are left as
+  they are (no time is invented, the date is untouched) and show "—" in
+  the editor. Day-grouped lists (Home, All transactions, category, account,
+  search) sort each day by time descending via a new pure service
+  `AF.Services.TxTime`; entries with a time sit above entries without, and
+  entries without a time keep a stable creation order derived from the id
+  (numeric `Date.now()` ids or the base36 stamp of `t…` ids) — this also
+  fixes the root cause of "new entries at the bottom of the day": the old
+  `b.id-a.id` comparator produced `NaN` for the string ids introduced in
+  `TASK_026`. The time is shown unobtrusively as the first item of the
+  row subtitle (`19:30 · Mercadona`). `sw.js` cache bumped
+  `finance-v175` → `finance-v176`.
+
 - **Amount entry via the iOS system keyboard** (`TASK_043`). The amount on
   the transaction page is now a real `<input type="text" inputmode="decimal"
   enterkeyhint="done">` — tapping it opens the iPhone's native numeric

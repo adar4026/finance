@@ -30,6 +30,9 @@
      первом load(). Если файл не приехал, приложение стартует с прежним
      поведением блокировки (код на входе) и не падает. -->
 <script src="js/services/security_service.js"></script>
+<!-- TASK_044: тоже ДО store.js — migrate() нормализует time операций при
+     первом load(); тот же сервис задаёт порядок операций внутри дня. -->
+<script src="js/services/tx_time_service.js"></script>
 <script src="js/database/store.js"></script>
 <script src="js/services/currency_service.js"></script>
 <script src="js/services/account_service.js"></script>
@@ -285,6 +288,8 @@
   .home-tx .home-main{min-width:0;flex:1}
   .home-tx .home-title{font-size:14.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .home-tx .home-sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* TASK_044: время операции в подзаголовке — тот же цвет/размер, табличные цифры (не «пляшет» по ширине) */
+  .tx-time{font-variant-numeric:tabular-nums}
   .home-tx .home-side{text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
   .home-tx .home-acc{font-size:11.5px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:3px}
   .home-tx .home-amt{font-size:15px;font-weight:700;white-space:nowrap;color:var(--text)}
@@ -2106,6 +2111,18 @@
           <input type="date" id="fDate" class="tx-native" aria-label="Дата операции">
         </div>
 
+        <!-- TASK_044: время операции (ЧЧ:ММ). Новая операция — текущее локальное
+             время устройства; старая запись без времени — «—», время не
+             подставляется. Нативный <input type="time"> лежит поверх строки,
+             как #fDate. -->
+        <div class="tx-row" id="timeRow">
+          <span class="tx-ic">🕒</span>
+          <span class="tx-nm">Время</span>
+          <span class="tx-val" id="timeRowVal">—</span>
+          <span class="tx-chev"><svg viewBox="0 0 8 13" aria-hidden="true"><path d="M1 1l5.5 5.5L1 12"/></svg></span>
+          <input type="time" id="fTime" class="tx-native" aria-label="Время операции">
+        </div>
+
         <!-- TASK_015: Получатель — последняя строка основной карточки.
              Скрыт для перевода (роль адресата занята полем «На счёт»). -->
         <div class="tx-row tx-note tx-ac-wrap" id="payeeRow">
@@ -3206,7 +3223,8 @@ function updateHome(list){
 // Budget Card (используется на экране «Бюджет»; на Home убран в v2)
 function renderRecent(list){
   // все операции за выбранный период, сгруппированы по дням (прокручиваются на странице)
-  const items=[...list].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  // TASK_044: дни по убыванию, внутри дня — время по убыванию (AF.Services.TxTime)
+  const items=AF.Services.TxTime.sortAll(list);
   const el=$('#recentList');
   if(!items.length){el.innerHTML=`<div class="home-daycard"><div class="empty"><div class="big">🗒️</div><p>Нет операций за период.<br>Нажмите «+», чтобы добавить.</p></div></div>`;return;}
   el.innerHTML=homeGroupedTxHtml(items);
@@ -3220,12 +3238,23 @@ function homeGroupedTxHtml(list){
   const byDay={};list.forEach(t=>{(byDay[t.date.slice(0,10)]=byDay[t.date.slice(0,10)]||[]).push(t);});
   const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
   return days.map(day=>{
-    const items=byDay[day].sort((a,b)=>b.id-a.id);
+    const items=AF.Services.TxTime.sortDay(byDay[day]); // TASK_044: время desc, без времени — ниже, по id
     const net=items.reduce((s,t)=>s+(t.type==='transfer'?0:(t.type==='income'?t.amount:-t.amount)),0);
     return `<div class="daygroup"><div class="dayhead"><span class="dl">${dayLabelFull(day)}</span>
       <span class="dr" style="color:${net>=0?'var(--income)':'var(--expense)'}">${(net>=0?'+':'−')+num(Math.abs(net))}</span></div>
       <div class="home-daycard">${items.map(homeTxRow).join('')}</div></div>`;
   }).join('');
+}
+// TASK_044: время операции для подзаголовка строки: '19:30 · ' либо '' (старая запись).
+// Значение нормализовано в migrate, но normalize здесь — защита от сырого объекта.
+function txTimeHtml(t){
+  const s=AF.Services.TxTime.normalize(t&&t.time);
+  return s?`<span class="tx-time">${s}</span> · `:'';
+}
+// TASK_044: запись/удаление ключа time — «пусто = ключа нет», как у метаданных.
+function applyTxTime(t,time){
+  if(time)t.time=time;else delete t.time;
+  return t;
 }
 function homeTxRow(t){
   if(t.type==='transfer'){
@@ -3240,7 +3269,7 @@ function homeTxRow(t){
       <div class="home-body">
         <div class="home-main">
           <div class="home-title">Перевод</div>
-          <div class="home-sub">${from?esc(from.name):'?'} → ${to?esc(to.name):'?'}${t.note?' · '+esc(t.note):''}</div>
+          <div class="home-sub">${txTimeHtml(t)}${from?esc(from.name):'?'} → ${to?esc(to.name):'?'}${t.note?' · '+esc(t.note):''}</div>
         </div>
         <div class="home-side"><div class="home-amt trf">${amtTxt}</div></div>
       </div>
@@ -3252,7 +3281,8 @@ function homeTxRow(t){
   // TASK_015: payee первым — категория уже видна строкой выше, поэтому
   // «Mercadona» информативнее подкатегории. Теги и место в списках не
   // показываются (ОВ-6). Отсутствие поля ничего не меняет: filter(Boolean).
-  const extra=[t.payee||null,sub?sub.name:null,t.note?t.note:null].filter(Boolean).map(esc).join(' · ');
+  // TASK_044: время — первым, ненавязчиво (.home-time); без времени подзаголовок как раньше
+  const extra=txTimeHtml(t)+[t.payee||null,sub?sub.name:null,t.note?t.note:null].filter(Boolean).map(esc).join(' · ');
   return `<div class="home-tx" data-id="${t.id}">
     <div class="home-em" style="background:${c.color}2e">${c.emoji}</div>
     <div class="home-body">
@@ -3412,7 +3442,7 @@ function groupedTxHtml(list){
   const byDay={};list.forEach(t=>{(byDay[t.date.slice(0,10)]=byDay[t.date.slice(0,10)]||[]).push(t);});
   const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
   return days.map(day=>{
-    const items=byDay[day].sort((a,b)=>b.id-a.id);
+    const items=AF.Services.TxTime.sortDay(byDay[day]); // TASK_044: время desc, без времени — ниже, по id
     const net=items.reduce((s,t)=>s+(t.type==='transfer'?0:(t.type==='income'?t.amount:-t.amount)),0);
     return `<div class="daygroup"><div class="dayhead"><span class="dl">${dayLabelFull(day)}</span>
       <span class="dr" style="color:${net>=0?'var(--income)':'var(--expense)'}">${(net>=0?'+':'−')+num(Math.abs(net))}</span></div>
@@ -3435,7 +3465,7 @@ function catxGroupedTxHtml(list){
   const byDay={};list.forEach(t=>{(byDay[t.date.slice(0,10)]=byDay[t.date.slice(0,10)]||[]).push(t);});
   const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
   return days.map(day=>{
-    const items=byDay[day].sort((a,b)=>b.id-a.id);
+    const items=AF.Services.TxTime.sortDay(byDay[day]); // TASK_044: время desc, без времени — ниже, по id
     const net=items.reduce((s,t)=>s+(t.type==='transfer'?0:(t.type==='income'?t.amount:-t.amount)),0);
     return `<div class="daygroup"><div class="dayhead"><span class="dl">${catxDayLabel(day)}</span>
       <span class="dr" style="color:${net>=0?'var(--income)':'var(--expense)'}">${(net>=0?'+':'−')+num(Math.abs(net))}</span></div>
@@ -3460,7 +3490,7 @@ function txRow(t){
     return `<div class="tx" data-id="${t.id}" style="background:var(--accent-soft)">
       <div class="em" style="background:rgba(255,255,255,.55)">🔄</div>
       <div class="info"><div class="t1">Перевод</div>
-        <div class="t2">${from?esc(from.name):'?'} → ${to?esc(to.name):'?'}${t.note?' · '+esc(t.note):''}</div></div>
+        <div class="t2">${txTimeHtml(t)}${from?esc(from.name):'?'} → ${to?esc(to.name):'?'}${t.note?' · '+esc(t.note):''}</div></div>
       <div class="amt" style="color:var(--muted)">${amtTxt}</div>
     </div>`;
   }
@@ -3470,7 +3500,7 @@ function txRow(t){
   return `<div class="tx" data-id="${t.id}" style="background:${c.color}14">
     <div class="em" style="background:${c.color}2e">${c.emoji}</div>
     <div class="info"><div class="t1">${c.name}${sub?' · '+esc(sub.name):''}${t.receiptPath?' <span style="font-size:12px">🧾</span>':''}</div>
-      <div class="t2">${(acc?acc.emoji+' '+acc.name:'')}${t.payee?' · '+esc(t.payee):''}${t.note?' · '+esc(t.note):''}</div></div>
+      <div class="t2">${txTimeHtml(t)}${(acc?acc.emoji+' '+acc.name:'')}${t.payee?' · '+esc(t.payee):''}${t.note?' · '+esc(t.note):''}</div></div>
     <div class="amt ${t.type==='income'?'inc':'exp'}">${signed(t.amount,t.type)}</div>
   </div>`;
 }
@@ -5330,6 +5360,8 @@ function openSheet(id){
     aType=t.type;aExpr=String(t.amount);aCat=t.cat||CATS.expense[0].id;aSubcat=t.subcategoryId||null;aReceipt=t.receiptPath||null;
     aToExpr=String(t.toAmount||t.amount);transFocus='from';
     $('#fDate').value=t.date.slice(0,10);$('#fNote').value=t.note||'';
+    // TASK_044: старой записи без времени ничего не подставляем — поле пустое
+    $('#fTime').value=AF.Services.TxTime.normalize(t.time);
     // TASK_015: метаданные — защитное чтение, отсутствующие поля дают пустоту
     $('#fPayee').value=t.payee||'';$('#fLocation').value=t.location||'';
     aTags=Array.isArray(t.tags)?t.tags.slice():[];
@@ -5338,7 +5370,9 @@ function openSheet(id){
     $('#delBtn').style.display='block';
   }else{
     aType=AF.Services.TxForm.DEFAULT_TYPE;aExpr='0';aToExpr='0';transFocus='from';aCat=CATS.expense[0].id;aSubcat=null;aReceipt=null;
-    $('#fDate').value=new Date().toISOString().slice(0,10);$('#fNote').value='';
+    // TASK_044: дата и время — локальные, из одного момента (toISOString дал бы UTC)
+    const now=new Date();
+    $('#fDate').value=AF.Services.TxTime.localDate(now);$('#fTime').value=AF.Services.TxTime.localTime(now);$('#fNote').value='';
     // TASK_015: обязательный сброс — иначе значения «протекут» между открытиями
     $('#fPayee').value='';$('#fLocation').value='';aTags=[];
     $('#delBtn').style.display='none';
@@ -5416,11 +5450,15 @@ function syncDateRow(){
   const todayIso=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
   $('#dateRowVal').textContent=AF.Services.TxForm.dateLabel($('#fDate').value,todayIso);
 }
+// TASK_044: видимое значение строки «Время»; пусто — «—» (старая запись без времени)
+function syncTimeRow(){
+  $('#timeRowVal').textContent=AF.Services.TxTime.normalize($('#fTime').value)||'—';
+}
 function syncRepeatRow(){
   const sel=$('#fRepeat');
   $('#repeatRowVal').textContent=sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].text:'Не повторять';
 }
-function syncTxRows(){syncAccRows();syncDateRow();syncRepeatRow();}
+function syncTxRows(){syncAccRows();syncDateRow();syncTimeRow();syncRepeatRow();}
 
 /* Разделители внутри карточки — только между фактически видимыми строками.
    Соседство в DOM не совпадает с соседством на экране: часть строк скрыта
@@ -5967,7 +6005,9 @@ function saveTx(){
   if(!val||val<=0){toast('Введите сумму');return;}
   // Категория обязательна для Расход/Доход (Screen 5)
   if(aType!=='transfer'&&!aCat){toast('Выберите категорию');return;}
-  const date=$('#fDate').value||new Date().toISOString().slice(0,10);
+  const date=$('#fDate').value||AF.Services.TxTime.localDate();
+  // TASK_044: время — только если поле заполнено; пусто → ключ удаляется (applyTxTime)
+  const time=AF.Services.TxTime.normalize($('#fTime').value);
   const note=$('#fNote').value.trim();
   // TASK_015: незафиксированный текст в поле меток не теряется при сохранении
   if($('#fTagInput').value.trim()){addTagsFromText($('#fTagInput').value);$('#fTagInput').value='';}
@@ -5986,15 +6026,15 @@ function saveTx(){
     if(editId){const t=state.tx.find(x=>x.id==editId);
       delete t.cat;delete t.account;
       Object.assign(t,{type:'transfer',from,to,amount:val,toAmount:toVal,date,note});
-      applyTxMeta(t,payee,tags,location);}
-    else state.tx.push(applyTxMeta({id:newTxId(),type:'transfer',from,to,amount:val,toAmount:toVal,date,note},payee,tags,location));
+      applyTxTime(applyTxMeta(t,payee,tags,location),time);}
+    else state.tx.push(applyTxTime(applyTxMeta({id:newTxId(),type:'transfer',from,to,amount:val,toAmount:toVal,date,note},payee,tags,location),time));
   }else if(editId){
     const t=state.tx.find(x=>x.id==editId);
     delete t.from;delete t.to;delete t.toAmount;
     Object.assign(t,{type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note,receiptPath:aReceipt||null});
-    applyTxMeta(t,payee,tags,location);
+    applyTxTime(applyTxMeta(t,payee,tags,location),time);
   }else{
-    state.tx.push(applyTxMeta({id:newTxId(),type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note,receiptPath:aReceipt||null},payee,tags,location));
+    state.tx.push(applyTxTime(applyTxMeta({id:newTxId(),type:aType,amount:val,cat:aCat,subcategoryId:aSubcat||null,account:$('#fAccount').value,date,note,receiptPath:aReceipt||null},payee,tags,location),time));
   }
   // Расписание: при выбранном повторе создаём регулярное напоминание (для новой операции)
   const rep=$('#fRepeat').value;
@@ -6399,6 +6439,7 @@ $('#fAccount').onchange=()=>{haptic(8);updateAccBals();};
 // TASK_014: нативные контролы лежат прозрачным слоем поверх строк — при
 // изменении значения перерисовываем видимый текст строки
 $('#fDate').onchange=()=>{haptic(8);syncDateRow();};
+$('#fTime').onchange=()=>{haptic(8);syncTimeRow();};
 $('#fRepeat').onchange=syncRepeatRow;
 $('#txMoreBtn').onclick=()=>setTxMoreOpen($('#scheduleBlock').style.display==='none');
 
