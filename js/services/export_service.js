@@ -12,6 +12,10 @@ AF.Services.Export = {
   // AF.Services.TxMeta: export_service.js — отдельный файл и может приехать
   // с CDN раньше/позже остальных (инвариант совместимости TASK_015 §0, С4).
   _payee(t) { return typeof t.payee === 'string' ? t.payee : ''; },
+  // TASK_045: время операции ('HH:MM'), необязательное — как остальные метаданные,
+  // читается защитно, без обращения к AF.Services.TxTime (тот же приём, что _payee/
+  // _tags/_place: значение уже нормализовано в AF.Store.migrate до того, как попало сюда).
+  _time(t) { return typeof t.time === 'string' ? t.time : ''; },
   _tags(t) { return Array.isArray(t.tags) ? t.tags.join(', ') : ''; },
   _place(t) { return typeof t.location === 'string' ? t.location : ''; },
   // Иерархия «Категория / Подкатегория» в одной колонке — формат Money Flow,
@@ -29,15 +33,19 @@ AF.Services.Export = {
   // ловилась. Подкатегория переехала в колонку «Категория» (через ' / '),
   // позиция 5 отдана payee. Порядок и содержимое полей зафиксированы
   // regression-тестом tests/export_service.test.js.
+  //
+  // TASK_045: «Время» — 13-я колонка, в КОНЦЕ строки. Не встроена рядом с
+  // «Дата», чтобы не сдвигать позиции 0–11 — на них завязан весь контракт
+  // ОВ-3 выше; добавление колонки в конец не требует его пересматривать.
   csv(txList, state) {
-    const head = ['Дата','Счёт','Сумма','Валюта','Категория','Контрагент','Перевод: Счёт','Перевод: Сумма','Перевод: Валюта','Метки','Место','Примечание'];
+    const head = ['Дата','Счёт','Сумма','Валюта','Категория','Контрагент','Перевод: Счёт','Перевод: Сумма','Перевод: Валюта','Метки','Место','Примечание','Время'];
     const esc = v => { v = (v == null ? '' : String(v)); return /[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
     const cur = state.currency || '€';
     const rows = txList.map(t => {
-      if (t.type === 'transfer') return [t.date, this._accName(state, t.from), -t.amount, cur, '', this._payee(t), this._accName(state, t.to), (t.toAmount != null ? t.toAmount : t.amount), cur, this._tags(t), this._place(t), t.note || ''];
+      if (t.type === 'transfer') return [t.date, this._accName(state, t.from), -t.amount, cur, '', this._payee(t), this._accName(state, t.to), (t.toAmount != null ? t.toAmount : t.amount), cur, this._tags(t), this._place(t), t.note || '', this._time(t)];
       const amt = t.type === 'income' ? t.amount : -t.amount;
       const acc = state.accounts.find(a => a.id === t.account);
-      return [t.date, this._accName(state, t.account), amt, (acc && acc.currency) || cur, this._catPath(state, t), this._payee(t), '', '', '', this._tags(t), this._place(t), t.note || ''];
+      return [t.date, this._accName(state, t.account), amt, (acc && acc.currency) || cur, this._catPath(state, t), this._payee(t), '', '', '', this._tags(t), this._place(t), t.note || '', this._time(t)];
     });
     return [head, ...rows].map(r => r.map(esc).join(',')).join('\n');
   },

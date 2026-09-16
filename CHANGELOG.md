@@ -40,6 +40,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Time column in CSV export and import** (`TASK_045`). CSV export now
+  writes a 13th "Время" column at the end of the row (existing column
+  positions 0–11 are untouched, per the `TASK_015` ОВ-3 contract) with the
+  transaction's `time` field, blank when absent. Import recognises the
+  column through the existing column-mapping mechanism (no UI markup
+  changes needed — the mapping screen is driven by the field list) and,
+  when there is no dedicated time column, falls back to extracting `HH:MM`
+  from the date cell itself ("01.02.2024 14:30", common in bank and Money
+  Flow exports). Parsing goes through `AF.Services.TxTime.normalize` with
+  its own fallback when that service is unavailable. Round-trip verified:
+  exporting and re-importing the same file restores `tx.time` exactly;
+  duplicate detection is unaffected (time is intentionally not part of the
+  fingerprint). `sw.js` cache bumped `finance-v176` → `finance-v177`.
+
 - **Transaction time and newest-first order within a day** (`TASK_044`).
   Transactions now carry an optional `time` field (`'HH:MM'`, device local
   time; `date` stays `'YYYY-MM-DD'`, schema version unchanged, empty means

@@ -70,6 +70,28 @@ AF.Services.Import = (function () {
     return y + '-' + pad2(mo) + '-' + pad2(d);
   }
 
+  // ---- Время (TASK_045) -----------------------------------------------
+  // Колонка «Время» (если сопоставлена) или резервно — HH:MM, встроенное в
+  // саму ячейку даты («01.02.2024 14:30», формат Money Flow/банков).
+  // AF.Services.TxTime может не приехать (инвариант совместимости
+  // TASK_015 §0) — тогда работает собственный резервный разбор.
+  function parseTimeCell(raw) {
+    const s = String(raw == null ? '' : raw).trim();
+    if (!s) return '';
+    const TT = (AF.Services && AF.Services.TxTime);
+    if (TT && typeof TT.normalize === 'function') return TT.normalize(s);
+    const m = /^(\d{1,2}):(\d{2})/.exec(s);
+    if (!m) return '';
+    const h = +m[1], mi = +m[2];
+    return (h >= 0 && h <= 23 && mi >= 0 && mi <= 59) ? pad2(h) + ':' + m[2] : '';
+  }
+
+  function extractTimeFromDate(raw) {
+    const s = String(raw == null ? '' : raw);
+    const m = /(\d{1,2}):(\d{2})(?::\d{2})?/.exec(s);
+    return m ? parseTimeCell(m[0]) : '';
+  }
+
   // ---- Сумма и валюта ------------------------------------------------
   function parseAmount(raw) {
     const C = (AF.Services && AF.Services.Currency);
@@ -274,6 +296,8 @@ AF.Services.Import = (function () {
       const mainAmt = mainRaw === '' ? NaN : parseAmount(mainRaw);
       const tAccName = cell(r, 'tAccount');
       const tAmtRaw = cell(r, 'tAmount');
+      // TASK_045: явная колонка «Время», иначе резервно — из ячейки даты
+      const time = parseTimeCell(cell(r, 'time')) || extractTimeFromDate(cell(r, 'date'));
 
       // ===== Перевод между счетами =====
       // Модель переводов проекта: ОДНА операция type:'transfer' с from/to и
@@ -301,6 +325,7 @@ AF.Services.Import = (function () {
           amount: round2(fromAmt), toAmount: round2(toAmt) };
         if (note) tx.note = note;
         applyMeta(tx, payee, tags, location);
+        applyTime(tx, time);
         pushItem(tx, rowNo);
         continue;
       }
@@ -329,6 +354,7 @@ AF.Services.Import = (function () {
       if (rc.sub) tx.subcategoryId = rc.sub;
       if (note) tx.note = note;
       applyMeta(tx, payee, tags, location);
+      applyTime(tx, time);
       pushItem(tx, rowNo);
     }
 
@@ -361,6 +387,18 @@ AF.Services.Import = (function () {
       if (payee) tx.payee = String(payee).trim();
       if (tags) tx.tags = String(tags).split(/[,;]/).map(s => s.trim()).filter(Boolean);
       if (location) tx.location = String(location).trim();
+      return tx;
+    }
+
+    // Время операции (TASK_045): пусто = ключа нет, как остальные метаданные.
+    function applyTime(tx, time) {
+      const TT = (AF.Services && AF.Services.TxTime);
+      if (TT && typeof TT.normalizeTx === 'function') {
+        if (time) tx.time = time;
+        TT.normalizeTx(tx);
+        return tx;
+      }
+      if (time) tx.time = time;
       return tx;
     }
 
@@ -566,6 +604,7 @@ AF.Services.Import = (function () {
   return {
     MAX_ROWS, PROBLEM,
     parseDate, parseAmount, normCurrency, fingerprint, existingFingerprints,
+    parseTimeCell, extractTimeFromDate, // TASK_045
     analyze, collectAccountNames, collectCategoryEntries,
     buildPlan, validate, apply, undo,
   };

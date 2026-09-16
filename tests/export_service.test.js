@@ -35,9 +35,11 @@ function parseCsv(text) {
   return rows;
 }
 
+// TASK_045: «Время» — 13-я колонка, добавлена В КОНЕЦ. Позиции 0–11 (весь
+// контракт ОВ-3 ниже) не сдвинуты.
 const HEAD = ['Дата', 'Счёт', 'Сумма', 'Валюта', 'Категория', 'Контрагент',
-  'Перевод: Счёт', 'Перевод: Сумма', 'Перевод: Валюта', 'Метки', 'Место', 'Примечание'];
-const I = { DATE: 0, ACC: 1, AMT: 2, CUR: 3, CAT: 4, PAYEE: 5, TACC: 6, TAMT: 7, TCUR: 8, TAGS: 9, PLACE: 10, NOTE: 11 };
+  'Перевод: Счёт', 'Перевод: Сумма', 'Перевод: Валюта', 'Метки', 'Место', 'Примечание', 'Время'];
+const I = { DATE: 0, ACC: 1, AMT: 2, CUR: 3, CAT: 4, PAYEE: 5, TACC: 6, TAMT: 7, TCUR: 8, TAGS: 9, PLACE: 10, NOTE: 11, TIME: 12 };
 
 const state = {
   currency: '€',
@@ -52,44 +54,46 @@ const state = {
   subcats: [{ id: 's1', categoryId: 'food', name: 'Супермаркеты' }],
 };
 
-// ---- 1. Заголовок: ровно 12 колонок в утверждённом порядке ----
+// ---- 1. Заголовок: ровно 13 колонок в утверждённом порядке ----
 {
   const rows = parseCsv(E.csv([], state));
-  assertEqual(rows[0], HEAD, 'Заголовок — ровно 12 колонок в утверждённом порядке');
-  assertEqual(rows[0].length, 12, 'Заголовок содержит 12 колонок');
+  assertEqual(rows[0], HEAD, 'Заголовок — ровно 13 колонок в утверждённом порядке');
+  assertEqual(rows[0].length, 13, 'Заголовок содержит 13 колонок');
 }
 
 // ---- 2. Строка расхода: поэлементное сравнение с эталоном ----
 {
   const tx = [{ id: 1, type: 'expense', amount: 54.2, cat: 'food', subcategoryId: 's1', account: 'cash',
-    date: '2026-07-27', note: 'обед', payee: 'Mercadona', tags: ['еда', 'семья'], location: 'Oviedo' }];
+    date: '2026-07-27', time: '19:30', note: 'обед', payee: 'Mercadona', tags: ['еда', 'семья'], location: 'Oviedo' }];
   const r = parseCsv(E.csv(tx, state))[1];
-  assertEqual(r.length, 12, 'Строка расхода — ровно 12 полей');
+  assertEqual(r.length, 13, 'Строка расхода — ровно 13 полей');
   assertEqual(r, ['2026-07-27', 'Наличные', '-54.2', '€', 'Продукты / Супермаркеты', 'Mercadona',
-    '', '', '', 'еда, семья', 'Oviedo', 'обед'], 'Строка расхода поэлементно совпадает с эталоном');
+    '', '', '', 'еда, семья', 'Oviedo', 'обед', '19:30'], 'Строка расхода поэлементно совпадает с эталоном');
 }
 
-// ---- 3. Строка дохода ----
+// ---- 3. Строка дохода (без времени — колонка «Время» пуста) ----
 {
   const tx = [{ id: 2, type: 'income', amount: 2000, cat: 'sal', account: 'card',
     date: '2026-07-05', note: '', payee: 'Inmo Digital', tags: [], location: '' }];
   const r = parseCsv(E.csv(tx, state))[1];
-  assertEqual(r.length, 12, 'Строка дохода — ровно 12 полей');
+  assertEqual(r.length, 13, 'Строка дохода — ровно 13 полей');
   assertEqual(r, ['2026-07-05', 'Карта', '2000', '€', 'Зарплата', 'Inmo Digital',
-    '', '', '', '', '', ''], 'Строка дохода поэлементно совпадает с эталоном');
+    '', '', '', '', '', '', ''], 'Строка дохода поэлементно совпадает с эталоном');
   assertEqual(r[I.AMT], '2000', 'Доход экспортируется положительной суммой');
+  assertEqual(r[I.TIME], '', 'Операция без времени — колонка «Время» пуста');
 }
 
-// ---- 4. Строка перевода ----
+// ---- 4. Строка перевода (со временем) ----
 {
   const tx = [{ id: 3, type: 'transfer', from: 'cash', to: 'card', amount: 100, toAmount: 100,
-    date: '2026-07-10', note: 'на карту', tags: ['накопления'], location: 'дом' }];
+    date: '2026-07-10', time: '08:45', note: 'на карту', tags: ['накопления'], location: 'дом' }];
   const r = parseCsv(E.csv(tx, state))[1];
-  assertEqual(r.length, 12, 'Строка перевода — ровно 12 полей');
+  assertEqual(r.length, 13, 'Строка перевода — ровно 13 полей');
   assertEqual(r, ['2026-07-10', 'Наличные', '-100', '€', '', '',
-    'Карта', '100', '€', 'накопления', 'дом', 'на карту'], 'Строка перевода поэлементно совпадает с эталоном');
+    'Карта', '100', '€', 'накопления', 'дом', 'на карту', '08:45'], 'Строка перевода поэлементно совпадает с эталоном');
   assertEqual(r[I.CAT], '', 'У перевода колонка «Категория» пуста');
   assertTrue(r[I.TACC] !== '' && r[I.TAMT] !== '' && r[I.TCUR] !== '', 'У перевода заполнены колонки 6/7/8');
+  assertEqual(r[I.TIME], '08:45', 'У перевода со временем колонка «Время» заполнена');
 }
 
 // ---- 5. Число полей строки == числу колонок заголовка для всех трёх типов ----
@@ -143,13 +147,13 @@ const state = {
   assertEqual(r[I.CAT], 'Продукты', 'Неизвестная подкатегория не добавляет разделитель " / "');
 }
 
-// ---- 9. ИНВАРИАНТ §0/С4: операция без метаданных → позиции 5/9/10 пусты ----
+// ---- 9. ИНВАРИАНТ §0/С4: операция без метаданных → позиции 5/9/10/12 пусты ----
 {
   const tx = [{ id: 1, type: 'expense', amount: 10, cat: 'food', account: 'cash', date: '2026-07-27', note: 'x' }];
   let threw = null, r = null;
   try { r = parseCsv(E.csv(tx, state))[1]; } catch (e) { threw = e; }
   assertTrue(threw === null, 'С4: экспорт операции без новых полей не падает');
-  assertEqual([r[I.PAYEE], r[I.TAGS], r[I.PLACE]], ['', '', ''], 'С4: позиции 5/9/10 пусты у операции без метаданных');
+  assertEqual([r[I.PAYEE], r[I.TAGS], r[I.PLACE], r[I.TIME]], ['', '', '', ''], 'С4: позиции 5/9/10/12 пусты у операции без метаданных (в т.ч. TASK_045: время)');
 }
 
 // ---- 10. Теги объединяются через ', ' ----
@@ -167,7 +171,7 @@ const state = {
   const raw = E.csv(tx, state);
   assertTrue(raw.indexOf('"Oviedo, Asturias"') !== -1, 'Значение с запятой закавычено в сыром CSV');
   assertEqual(parseCsv(raw)[1][I.PLACE], 'Oviedo, Asturias', 'Значение с запятой корректно читается обратно');
-  assertEqual(parseCsv(raw)[1].length, 12, 'Запятая внутри значения не ломает число полей');
+  assertEqual(parseCsv(raw)[1].length, 13, 'Запятая внутри значения не ломает число полей');
 }
 
 // ---- 12. Кавычки внутри значения удваиваются ----
@@ -194,7 +198,7 @@ const state = {
 {
   const tx = [
     { id: 1, type: 'expense', amount: 12.5, cat: 'food', subcategoryId: 's1', account: 'cash',
-      date: '2026-07-27', note: 'заметка', payee: 'Mercadona', tags: ['еда', 'семья'], location: 'Gijón' },
+      date: '2026-07-27', time: '10:15', note: 'заметка', payee: 'Mercadona', tags: ['еда', 'семья'], location: 'Gijón' },
     { id: 2, type: 'transfer', from: 'cash', to: 'card', amount: 50, toAmount: 50,
       date: '2026-07-20', note: '', payee: 'Себе', tags: ['накопления'], location: 'дом' },
   ];
@@ -203,10 +207,12 @@ const state = {
   assertEqual(rows[1][I.TAGS], 'еда, семья', 'Round-trip: tags расхода');
   assertEqual(rows[1][I.PLACE], 'Gijón', 'Round-trip: location расхода (с диакритикой)');
   assertEqual(rows[1][I.NOTE], 'заметка', 'Round-trip: note расхода отдельно от метаданных');
+  assertEqual(rows[1][I.TIME], '10:15', 'Round-trip: время расхода (TASK_045)');
   assertEqual(rows[2][I.PAYEE], 'Себе', 'Round-trip: payee перевода');
   assertEqual(rows[2][I.TAGS], 'накопления', 'Round-trip: tags перевода');
   assertEqual(rows[2][I.PLACE], 'дом', 'Round-trip: location перевода');
-  rows.forEach(r => assertEqual(r.length, 12, 'Round-trip: каждая строка — 12 полей'));
+  assertEqual(rows[2][I.TIME], '', 'Round-trip: перевод без времени — колонка пуста');
+  rows.forEach(r => assertEqual(r.length, 13, 'Round-trip: каждая строка — 13 полей'));
 }
 
 // ---- XLS: три новые колонки, экспорт не падает без метаданных ----
@@ -239,6 +245,21 @@ const state = {
   assertTrue(threw === null, 'reportHTML не падает на операции с метаданными');
   assertTrue(html.indexOf('Lidl') === -1 && html.indexOf('Oviedo') === -1,
     'PDF-отчёт намеренно не содержит метаданных (компоновка не менялась)');
+}
+
+// ---- TASK_045: колонка «Время» — детально ----
+{
+  // невалидное значение поля time (например, битые данные из старой версии) не падает
+  const tx = [{ id: 1, type: 'expense', amount: 10, cat: 'food', account: 'cash', date: '2026-07-27', note: '', time: 123 }];
+  let threw = null, r = null;
+  try { r = parseCsv(E.csv(tx, state))[1]; } catch (e) { threw = e; }
+  assertTrue(threw === null, 'Нестроковое time не роняет экспорт');
+  assertEqual(r[I.TIME], '', 'Нестроковое time экспортируется как пустая колонка');
+
+  // валидное значение сохраняется как есть, без интерпретации
+  const tx2 = [{ id: 2, type: 'expense', amount: 10, cat: 'food', account: 'cash', date: '2026-07-27', note: '', time: '00:00' }];
+  const r2 = parseCsv(E.csv(tx2, state))[1];
+  assertEqual(r2[I.TIME], '00:00', 'Полночь «00:00» экспортируется как есть');
 }
 
 // ---- toJSON сохраняет новые поля ----

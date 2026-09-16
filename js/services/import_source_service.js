@@ -18,6 +18,7 @@ AF.Services.ImportSource = (function () {
   // required — без них импорт невозможен в принципе.
   const FIELDS = [
     { id: 'date',     label: 'Дата',              required: true },
+    { id: 'time',     label: 'Время',             required: false }, // TASK_045
     { id: 'amount',   label: 'Сумма',             required: true },
     { id: 'account',  label: 'Счёт',              required: false },
     { id: 'currency', label: 'Валюта',            required: false },
@@ -39,6 +40,11 @@ AF.Services.ImportSource = (function () {
   // приложения, поэтому один русский вариант хардкодить нельзя.
   const RULES = {
     date:      { exact: ['дата','date','fecha','datum','дата операции','дата и время','date/time'], like: ['дата','date','fecha','datum'] },
+    // TASK_045: отдельная колонка времени операции ('HH:MM'). Не пересекается
+    // с 'date' выше — там ищутся подстроки 'дата'/'date', здесь — 'время'/'time'
+    // без даты; если дата и время в одной колонке ('дата и время'), время
+    // достаётся резервным разбором из ячейки даты (import_service.js).
+    time:      { exact: ['время','time','hora','uhrzeit','час','время операции','time of day'], like: ['врем','time','hora','uhrzeit'] },
     amount:    { exact: ['сумма','amount','importe','monto','betrag','cantidad','value','сумма операции'], like: ['сумма','amount','importe','monto','betrag'] },
     account:   { exact: ['счёт','счет','account','cuenta','konto','wallet','кошелёк','кошелек','карта'], like: ['счёт','счет','account','cuenta','konto','wallet'] },
     currency:  { exact: ['валюта','currency','moneda','divisa','währung','wahrung'], like: ['валюта','currency','moneda','divisa'] },
@@ -132,7 +138,8 @@ AF.Services.ImportSource = (function () {
   // Money Flow узнаётся по паре «Перевод: Сумма» + «Перевод: Счёт» рядом с
   // основными колонками; наш собственный экспорт — по полному совпадению
   // 12 колонок export_service.csv().
-  const AF_CSV_HEAD = ['дата','счёт','сумма','валюта','категория','контрагент','перевод: счёт','перевод: сумма','перевод: валюта','метки','место','примечание'];
+  // TASK_045: «время» добавлена В КОНЕЦ — как и в export_service.csv(), позиции 0–11 не сдвинуты.
+  const AF_CSV_HEAD = ['дата','счёт','сумма','валюта','категория','контрагент','перевод: счёт','перевод: сумма','перевод: валюта','метки','место','примечание','время'];
 
   function detect(header) {
     const heads = (header || []).map(norm);

@@ -682,6 +682,15 @@
     `finance-v176`. Тесты: **1908 passed, 0 failed** (+107). См.
     [`docs/tasks/TASK_044_TX_TIME_AND_DAY_ORDER.md`](tasks/TASK_044_TX_TIME_AND_DAY_ORDER.md).
 
+40. **TASK_045_CSV_TIME_COLUMN** — `DONE`. Известное ограничение `TASK_044`
+    закрыто: CSV-экспорт и импорт получили колонку «Время» (13-я, добавлена
+    в конец — позиции 0–11 не сдвинуты). Импорт читает её через общий
+    механизм `FIELDS`/`RULES` и резервно достаёт `HH:MM` из ячейки «Дата»,
+    если отдельной колонки нет. Round-trip подтверждён, дубликаты
+    по-прежнему не учитывают время. `sw.js` `finance-v176` → `finance-v177`.
+    Тесты: **1935 passed, 0 failed** (+27). См.
+    [`docs/tasks/TASK_045_CSV_TIME_COLUMN.md`](tasks/TASK_045_CSV_TIME_COLUMN.md).
+
 ## Пояснения
 
 - `TASK_001` является первой задачей в новой системе документации, а **не**

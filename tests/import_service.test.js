@@ -10,7 +10,7 @@
 //   4. ошибка разбора, валидации или записи оставляет базу без изменений.
 global.window = global;
 ['../js/core/result.js', '../js/core/ids.js', '../js/services/currency_service.js',
- '../js/services/tx_meta_service.js', '../js/services/csv_parser_service.js',
+ '../js/services/tx_meta_service.js', '../js/services/tx_time_service.js', '../js/services/csv_parser_service.js',
  '../js/services/import_source_service.js', '../js/services/import_mapping_service.js',
  '../js/services/import_service.js'].forEach(f => require(f));
 
@@ -26,6 +26,12 @@ function assertEqual(actual, expected, msg) {
 function assertTrue(cond, msg) { if (cond) passed++; else { failed++; console.error(`FAIL: ${msg}`); } }
 
 const MF_HEAD = 'Дата,Счёт,Сумма,Валюта,Категория,Контрагент,Перевод: Счёт,Перевод: Сумма,Перевод: Валюта,Метки,Место,Примечание';
+// TASK_045: собственный экспорт с колонкой «Время» (добавлена в конец).
+// Строки ниже, собранные на базе MF_HEAD (12 колонок, без «Время»), при
+// разборе по этому заголовку (13 колонок) просто получают пустую 13-ю ячейку
+// (cell() возвращает '' для индекса за пределами строки) — менять сами
+// строки не нужно.
+const MF_HEAD_TIME = MF_HEAD + ',Время';
 
 function baseState() {
   return {
@@ -54,11 +60,16 @@ function planFor(text, state, opts) {
 
 // ============ 1. Определение источника ============
 {
-  // Наш собственный CSV-экспорт пишет ровно формат Money Flow (12 колонок в
-  // утверждённом порядке), поэтому точное совпадение подписывается как
-  // «A-Lex Finance» — это более точный ответ для того же файла.
-  const own = SRC.detect(MF_HEAD.split(','));
-  assertEqual(own.name, 'A-Lex Finance', 'Точное совпадение с собственным экспортом распознано как A-Lex Finance');
+  // Наш собственный CSV-экспорт (TASK_045: 13 колонок — «Время» добавлена в
+  // конец) при точном совпадении подписывается как «A-Lex Finance» — это
+  // более точный ответ для того же файла.
+  const own = SRC.detect(MF_HEAD_TIME.split(','));
+  assertEqual(own.name, 'A-Lex Finance', 'Точное совпадение с собственным экспортом (с колонкой «Время») распознано как A-Lex Finance');
+  // Файл без колонки «Время» (экспорт версии до TASK_045, либо чужой формат
+  // без времени) — уже не точное совпадение с 13-колоночным AF_CSV_HEAD, но
+  // опознаётся как Money Flow (transfer-пара + дата/сумма/счёт), а не теряется.
+  const noTime = SRC.detect(MF_HEAD.split(','));
+  assertEqual(noTime.name, 'Money Flow', 'Файл без колонки «Время» (12 колонок) распознан как Money Flow, не как A-Lex Finance');
   const mf = SRC.detect(['Дата', 'Время', 'Счёт', 'Сумма', 'Валюта', 'Категория', 'Перевод: Счёт', 'Перевод: Сумма']);
   assertEqual(mf.name, 'Money Flow', 'Вариант Money Flow с другим набором колонок распознан как Money Flow');
   const en = SRC.detect(['Date','Account','Amount','Currency','Category','Payee','Transfer: Account','Transfer: Amount','Note']);
@@ -347,6 +358,78 @@ function planFor(text, state, opts) {
   assertEqual(IMP.fingerprint(Object.assign({}, t, { payee: '  LIDL ' })), IMP.fingerprint(t), 'Регистр и пробелы контрагента не создают ложного различия');
   const tr = { type: 'transfer', date: '2024-02-01', amount: 100, toAmount: 100, from: 'a1', to: 'a2' };
   assertTrue(IMP.fingerprint(tr) !== IMP.fingerprint(Object.assign({}, tr, { to: 'a3' })), 'Счёт-получатель входит в отпечаток перевода');
+}
+
+// ============ 12а. TASK_045 — колонка «Время» ============
+{
+  const st = baseState();
+  // Явная колонка «Время», сопоставленная автоматически
+  const file = MF_HEAD_TIME +
+    '\n01.02.2024,ING,-10,EUR,Продукты,,,,,,,,19:30' +
+    '\n02.02.2024,ING,-20,EUR,Продукты,,,,,,,,';
+  const r = planFor(file, st);
+  assertEqual(r.mapping.time, 12, 'Колонка «Время» найдена автосопоставлением по заголовку MF_HEAD_TIME');
+  assertEqual(r.plan.items[0].tx.time, '19:30', 'Операция со временем в колонке получает tx.time');
+  assertTrue(!('time' in r.plan.items[1].tx), 'Пустая колонка «Время» — ключ tx.time не создаётся');
+
+  // Round-trip: наш же экспорт, обратно через импорт
+  const E = require('../js/services/export_service.js') || AF.Services.Export;
+  const state2 = { currency: '€', accounts: st.accounts, cats: st.cats, subcats: [] };
+  const csvText = AF.Services.Export.csv(
+    [{ id: 1, type: 'expense', amount: 10, cat: 'c_food', account: 'a_ing', date: '2024-02-01', time: '14:05', note: '' }],
+    state2);
+  const rt = planFor(csvText, baseState());
+  assertEqual(rt.plan.items[0].tx.time, '14:05', 'Round-trip: время нашего же экспорта восстановлено импортом');
+
+  // Резервное извлечение времени из ячейки «Дата», когда отдельной колонки нет
+  const noTimeCol = MF_HEAD + '\n01.02.2024 09:15,ING,-10,EUR,Продукты,,,,,,,';
+  const r2 = planFor(noTimeCol, baseState());
+  assertEqual(r2.mapping.time, -1, 'Отдельной колонки «Время» нет — не сопоставлена');
+  assertEqual(r2.plan.items[0].tx.date, '2024-02-01', 'Дата разобрана из ячейки с встроенным временем как обычно');
+  assertEqual(r2.plan.items[0].tx.time, '09:15', 'Время извлечено резервно из той же ячейки «Дата»');
+
+  // Перевод тоже получает время
+  const trFile = MF_HEAD_TIME + '\n03.02.2024,ING,-100,EUR,,,Наличные,100,EUR,,,снятие,07:00';
+  const r3 = planFor(trFile, baseState());
+  assertEqual(r3.plan.items[0].tx.type, 'transfer', 'Строка перевода распознана как перевод');
+  assertEqual(r3.plan.items[0].tx.time, '07:00', 'Перевод со временем в колонке получает tx.time');
+
+  // Невалидное значение времени — ключ не создаётся, строка не бракуется
+  const badTime = MF_HEAD_TIME + '\n01.02.2024,ING,-10,EUR,Продукты,,,,,,,,25:99';
+  const r4 = planFor(badTime, baseState());
+  assertEqual(r4.plan.counts.toImport, 1, 'Невалидное время не бракует строку');
+  assertTrue(!('time' in r4.plan.items[0].tx), 'Невалидное время («25:99») не попадает в tx.time');
+
+  // Дубликаты по-прежнему определяются без учёта времени (TASK_038 не регрессирует)
+  const dupFile = MF_HEAD_TIME + '\n01.02.2024,ING,-10,EUR,Продукты,,,,,,,,10:00';
+  const first = planFor(dupFile, baseState());
+  const applied = IMP.apply(baseState(), first.plan, {});
+  const dupFile2 = MF_HEAD_TIME + '\n01.02.2024,ING,-10,EUR,Продукты,,,,,,,,23:59'; // то же, но другое время
+  const second = planFor(dupFile2, applied.value);
+  assertEqual(second.plan.counts.duplicates, 1, 'Одна и та же операция с ДРУГИМ временем в файле — всё ещё дубликат (время не входит в отпечаток)');
+}
+
+// ============ 12б. TASK_045 — устойчивость без AF.Services.TxTime (инвариант TASK_015 §0) ============
+{
+  // Сервис может не приехать (рассинхронизация CDN) — parseTimeCell/extractTimeFromDate
+  // не должны падать и обязаны работать резервным разбором без него.
+  const saved = AF.Services.TxTime;
+  delete AF.Services.TxTime;
+  try {
+    assertEqual(IMP.parseTimeCell('19:30'), '19:30', 'Без сервиса: резервный разбор понимает HH:MM');
+    assertEqual(IMP.parseTimeCell('9:05'), '09:05', 'Без сервиса: резервный разбор нормализует H:MM');
+    assertEqual(IMP.parseTimeCell('25:00'), '', 'Без сервиса: невалидный час отклонён');
+    assertEqual(IMP.parseTimeCell(''), '', 'Без сервиса: пусто → пусто');
+    assertEqual(IMP.extractTimeFromDate('01.02.2024 14:30'), '14:30', 'Без сервиса: время достаётся из даты');
+    const st = baseState();
+    const file = MF_HEAD_TIME + '\n01.02.2024,ING,-10,EUR,Продукты,,,,,,,,08:00';
+    let threw = null, r = null;
+    try { r = planFor(file, st); } catch (e) { threw = e; }
+    assertTrue(threw === null, 'Без сервиса: buildPlan не падает на колонке «Время»');
+    assertEqual(r.plan.items[0].tx.time, '08:00', 'Без сервиса: tx.time всё равно заполняется резервным разбором');
+  } finally {
+    AF.Services.TxTime = saved;
+  }
 }
 
 // ============ 12. Разделитель «;» и колонки доход/расход ============
