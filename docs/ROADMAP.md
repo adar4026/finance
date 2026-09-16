@@ -691,6 +691,17 @@
     Тесты: **1935 passed, 0 failed** (+27). См.
     [`docs/tasks/TASK_045_CSV_TIME_COLUMN.md`](tasks/TASK_045_CSV_TIME_COLUMN.md).
 
+41. **TASK_046_HOME_TX_FULL_TEXT_WRAP** — `DONE`. Заголовок/подзаголовок
+    операции на Главной (`.home-title`/`.home-sub`) больше не обрезаются
+    многоточием — переносятся на нужное число строк
+    (`white-space:normal;overflow-wrap:break-word`), карточка дня растёт
+    под контент автоматически. `.home-acc` (способ оплаты) намеренно
+    сохранил ellipsis+`max-width` — защита от горизонтального скролла, это
+    не «описание операции». `sw.js` `finance-v177` → `finance-v178`.
+    Тесты: **1969 passed, 0 failed** (+34, новый
+    `tests/home_tx_wrap_screen.test.js`). См.
+    [`docs/tasks/TASK_046_HOME_TX_FULL_TEXT_WRAP.md`](tasks/TASK_046_HOME_TX_FULL_TEXT_WRAP.md).
+
 ## Пояснения
 
 - `TASK_001` является первой задачей в новой системе документации, а **не**

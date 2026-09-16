@@ -38,6 +38,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   and the transaction page) is untouched. Dark theme is pixel-identical to
   before.
 
+### Changed
+
+- **Home transaction cards show the full description instead of truncating it** (`TASK_046`). The transaction title (category) and subtitle
+  (time · subcategory/payee · note) on the Home screen no longer clip with
+  an ellipsis — they wrap onto as many lines as needed, and the day card
+  grows to fit automatically (no container had a fixed height, so no
+  markup or JS changes were needed). The icon and the account/amount
+  column stay vertically centered against the taller row and never overlap
+  the wrapped text. The account/payment-method label intentionally keeps
+  its single-line ellipsis with a bounded width — unlike the description,
+  it is a short tag, and this guards against horizontal scrolling from an
+  abnormally long account name. `sw.js` cache bumped `finance-v177` →
+  `finance-v178`.
+
 ### Added
 
 - **Time column in CSV export and import** (`TASK_045`). CSV export now
