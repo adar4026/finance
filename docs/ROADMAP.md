@@ -702,6 +702,22 @@
     `tests/home_tx_wrap_screen.test.js`). См.
     [`docs/tasks/TASK_046_HOME_TX_FULL_TEXT_WRAP.md`](tasks/TASK_046_HOME_TX_FULL_TEXT_WRAP.md).
 
+42. **TASK_047_HOME_IMMERSIVE_HERO** — `DONE`. Верхняя часть Главной
+    (сегмент периода, переключатель месяца, общий баланс, Доходы/Расходы/
+    Поток) переведена из белых карточек (`.periods`, `.fincard#finCard`,
+    плитки `.cib2`) в цельную сцену на спокойном fluid-фоне: новый слой
+    `.finance-ambient` (4 blob'а на `radial-gradient`, анимация только
+    `transform`, 16/21/25/30s, `prefers-reduced-motion` → статичный
+    градиент), виден только на Главной, под sticky-шапкой и списком.
+    Header — прозрачный (поиск/графики — стеклянные капсулы), баланс —
+    без карточки, крупный (`clamp(34px,11vw,46px)`); Доходы/Расходы/Поток
+    — `grid 3×1fr` с разделителями вместо плиток. Финансовая логика,
+    список операций, нижняя навигация — не изменены; `.fincard` сохранён
+    для «Операций по категории». `sw.js` `finance-v178` → `finance-v179`.
+    Тесты: **2070 passed, 0 failed** (+101, новый
+    `tests/home_hero_screen.test.js`). См.
+    [`docs/tasks/TASK_047_HOME_IMMERSIVE_HERO.md`](tasks/TASK_047_HOME_IMMERSIVE_HERO.md).
+
 ## Пояснения
 
 - `TASK_001` является первой задачей в новой системе документации, а **не**

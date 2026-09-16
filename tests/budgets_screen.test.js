@@ -40,9 +40,11 @@ function assertEqual(actual, expected, msg) {
 // --main-bg-grad (мягкий мятно-серо-зелёный градиент); инвариант — все четыре
 // экрана и их зона под навигацией используют ОДИН И ТОТ ЖЕ токен, каким бы он
 // ни был, а не дословно "--home-bg".
+// TASK_047: эталон — #scrCharts (Аналитика): сама Главная (#scrRecords) теперь
+// прозрачна поверх fluid-слоя .finance-ambient и токен фона не несёт.
 {
-  const recM = html.match(/#scrRecords\{background:var\((--[\w-]+)\)\}/);
-  assertTrue(!!recM, '#scrRecords{background:var(--...)} найден в index.html (эталон)');
+  const recM = html.match(/#scrCharts\{background:var\((--[\w-]+)\)\}/);
+  assertTrue(!!recM, '#scrCharts{background:var(--...)} найден в index.html (эталон)');
   const bgToken = recM && recM[1];
   const budEsc = bgToken ? bgToken.replace(/[-]/g, '\\-') : '';
   assertTrue(!!bgToken && new RegExp(`#scrBudgets\\{background:var\\(${budEsc}\\)\\}`).test(html),

@@ -14,6 +14,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Home redesigned as an immersive hero dashboard instead of stacked
+  white cards** (`TASK_047`). The top of the Home screen — the period
+  segment, month switcher, total balance and the Income/Expenses/Cash
+  Flow row — used to sit inside separate white cards (`.periods`,
+  `.fincard`, three `.cib2` tiles). It is now one continuous scene over a
+  calm animated fluid background (four soft radial-gradient blobs in the
+  app's existing blue/cyan palette, motion limited to `transform` at four
+  independent durations — 16/21/25/30s — compositor-only, `filter:blur`
+  avoided for Safari/PWA performance, and a `prefers-reduced-motion`
+  fallback keeps the layered gradient static instead of removing it). The
+  header goes transparent with a compact glass search capsule and a glass
+  analytics button, the period segment loses its card background (the
+  active tab becomes a soft glass capsule on the same indicator element),
+  the month arrows grow to a full 44×44 touch target, and the balance
+  becomes the page's visual centerpiece — large, card-free — with Income/
+  Expenses/Cash Flow laid out in a three-column grid with hairline
+  dividers instead of tiles. The transaction list below keeps its
+  existing cards (entities still benefit from separation) and is
+  functionally untouched, as is every other screen. The background layer
+  sits behind the sticky header and scrollable content, is
+  `aria-hidden`/`pointer-events:none`, and only renders while Home is
+  active. `sw.js` cache bumped `finance-v178` → `finance-v179`.
+
 - **App icon replaced with the wallet/"AF" logo** (`TASK_040`). The
   production icon (`icon-512.png`, `icon-192.png`, `apple-touch-icon.png`,
   `favicon-32.png`) now uses the user-approved logo — a green leather

@@ -92,6 +92,22 @@
     --main-bg-top:#D1E4DB;
     --main-bg-bottom:#EBF0ED;
     --main-bg-grad:linear-gradient(180deg,var(--main-bg-top) 0%,var(--main-bg-bottom) 380px);
+    /* TASK_047: immersive hero Главной — fluid-фон из голубой/синей палитры (--nav-blue,
+       sky/cyan/turquoise) + лёгкое стекло для header/сегмента. Низ сцены приходит к
+       --hero-bottom — базовому фону списка операций Главной (холодный светло-серый). */
+    --hero-h:460px;                                   /* высота сцены с blob'ами (включая topbar) */
+    --hero-top:#dbeafe;                               /* верх сцены — бледно-голубой */
+    --hero-bottom:#eef2f8;                            /* базовый фон Главной под списком */
+    --hero-glow:rgba(255,255,255,.55);                /* белое свечение */
+    --hero-b1:rgba(96,165,250,.72);                   /* sky blue */
+    --hero-b2:rgba(34,211,238,.55);                   /* cyan */
+    --hero-b3:rgba(45,212,191,.50);                   /* turquoise */
+    --hero-b4:rgba(79,125,240,.52);                   /* medium blue (= --nav-blue) */
+    --hero-glass:rgba(255,255,255,.55);
+    --hero-glass-border:rgba(255,255,255,.75);
+    --hero-capsule:rgba(255,255,255,.62);
+    --hero-capsule-border:rgba(255,255,255,.8);
+    --hero-sep:rgba(22,24,31,.12);
     /* ===== Страница операции (TASK_014) — локальные семантические токены экрана.
        Глобальные --expense/--income намеренно НЕ переопределяются: они управляют
        цветом сумм в списках, на Главной и в аналитике и остаются как были. ===== */
@@ -137,6 +153,19 @@
     --main-bg-top:var(--home-bg);
     --main-bg-bottom:var(--home-bg);
     --main-bg-grad:var(--home-bg);
+    /* TASK_047: тёмный вариант fluid-фона — темнее и менее яркий, текст остаётся читаемым */
+    --hero-top:#111827;
+    --hero-bottom:var(--home-bg);
+    --hero-glow:rgba(120,160,255,.10);
+    --hero-b1:rgba(59,130,246,.34);
+    --hero-b2:rgba(6,182,212,.22);
+    --hero-b3:rgba(20,184,166,.18);
+    --hero-b4:rgba(91,139,255,.30);
+    --hero-glass:rgba(255,255,255,.10);
+    --hero-glass-border:rgba(255,255,255,.16);
+    --hero-capsule:rgba(255,255,255,.14);
+    --hero-capsule-border:rgba(255,255,255,.20);
+    --hero-sep:rgba(255,255,255,.14);
     /* Страница операции (TASK_014) — тёмная тема не инверсия светлой, а
        отдельный набор: глубокий графитовый фон, карточки отделены по тону. */
     --tx-page-bg:#121317;
@@ -180,6 +209,7 @@
   /* Единственный скроллящийся контейнер контента (.subhead + все .screen) — .topbar остаётся
      снаружи, поэтому физически не может сдвинуться при rubber-band внутри .scroll-area. */
   .scroll-area{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    position:relative;z-index:1; /* TASK_047: контент над .finance-ambient (z-index:0) */
     overscroll-behavior-y:contain;
     padding-bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 26px)}
 
@@ -1645,7 +1675,10 @@
   .ci2-s{font-size:9.5px;color:var(--muted2);margin-top:2px;white-space:nowrap}
 
   /* ===== Главная финансовая карточка (TASK_003) ===== */
-  #scrRecords{background:var(--main-bg-grad)}
+  /* TASK_047: на Главной фон рисует .finance-ambient (слой в .app за контентом, покрывает и
+     зону под навигацией) — сам экран и .scroll-area прозрачны, иначе закрыли бы сцену.
+     Остальные экраны (#scrCharts/#scrAccounts/#scrBudgets) по-прежнему на --main-bg-grad. */
+  #scrRecords{background:transparent}
   /* TASK_009: фон #scrRecords покрывает только собственный бокс экрана — резерв под
      плавающую .nav (padding-bottom на .scroll-area, включает env(safe-area-inset-bottom))
      лежит уже вне #scrRecords и просвечивал белым фоном body/.app. Пока активна Главная,
@@ -1655,7 +1688,7 @@
      TASK_039: --home-bg заменён на --main-bg-grad (мягкий мятно-серо-зелёный градиент,
      см. :root) — оба правила используют один и тот же токен, поэтому зона под sticky
      навигацией остаётся тем же плоским цветом, что нижняя часть градиента, без шва. */
-  .scroll-area:has(>#scrRecords.active){background:var(--main-bg-grad)}
+  .scroll-area:has(>#scrRecords.active){background:transparent} /* TASK_047: см. #scrRecords выше */
   /* TASK_019: тот же приём для «Аналитики» — фон экрана и зона под навигацией
      приведены к единому фону Главной (TASK_039 — тот же --main-bg-grad); карточки .panel
      внутри #scrCharts получают тень/радиус .fincard (scoped-override, глобальный
@@ -1715,6 +1748,91 @@
   .fc-bottom{background:var(--card);display:flex;padding:14px 2px 17px;border-top:1px solid var(--line);margin-top:14px}
   .fc-bottom .ci2-v.inc{color:var(--income)} .fc-bottom .ci2-v.exp{color:var(--expense)}
   .fc-bottom .ci2-v.flow-pos{color:var(--income)} .fc-bottom .ci2-v.flow-neg{color:var(--expense)}
+
+  /* ===== TASK_047: Главная — immersive hero на fluid-фоне =====
+     Принцип: HEADER / BALANCE — без крупных белых карточек, TRANSACTIONS — карточки остаются.
+     Слои: .finance-ambient (0) < .scroll-area/контент (1) < .topbar (20) < .nav (30) < overlays (60+). */
+  .finance-ambient{display:none;position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+    background:
+      radial-gradient(120% 60% at 50% 18%,var(--hero-glow) 0%,transparent 60%),
+      linear-gradient(180deg,var(--hero-top) 0%,var(--hero-bottom) var(--hero-h),var(--hero-bottom) 100%)}
+  .app:has(#scrRecords.active) .finance-ambient{display:block}
+  /* Blob'ы — radial-gradient без filter:blur (мягкий край даёт сам градиент, дешевле для
+     Safari/PWA). Анимируются только transform (translate3d + scale) — compositor-only. */
+  .ambient-blob{position:absolute;display:block;border-radius:50%;will-change:transform;
+    transform:translate3d(0,0,0)}
+  .blob-1{width:min(140vw,540px);height:min(140vw,540px);left:-32%;top:-26%;
+    background:radial-gradient(circle at 50% 50%,var(--hero-b1) 0%,transparent 64%);
+    animation:hero-drift-1 21s ease-in-out infinite alternate}
+  .blob-2{width:min(120vw,470px);height:min(120vw,470px);right:-38%;top:-14%;
+    background:radial-gradient(circle at 50% 50%,var(--hero-b2) 0%,transparent 64%);
+    animation:hero-drift-2 25s ease-in-out infinite alternate}
+  .blob-3{width:min(110vw,430px);height:min(110vw,430px);left:-22%;top:120px;
+    background:radial-gradient(circle at 50% 50%,var(--hero-b3) 0%,transparent 64%);
+    animation:hero-drift-3 30s ease-in-out infinite alternate}
+  .blob-4{width:min(100vw,400px);height:min(100vw,400px);right:-20%;top:150px;
+    background:radial-gradient(circle at 50% 50%,var(--hero-b4) 0%,transparent 64%);
+    animation:hero-drift-4 16s ease-in-out infinite alternate}
+  @keyframes hero-drift-1{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(46px,34px,0) scale(1.10)}}
+  @keyframes hero-drift-2{from{transform:translate3d(0,0,0) scale(1.06)}to{transform:translate3d(-54px,28px,0) scale(.96)}}
+  @keyframes hero-drift-3{from{transform:translate3d(0,0,0) scale(.98)}to{transform:translate3d(38px,-30px,0) scale(1.08)}}
+  @keyframes hero-drift-4{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-30px,-42px,0) scale(1.12)}}
+  /* мягкий переход сцены в базовый фон списка — без резкой линии */
+  .ambient-fade{position:absolute;left:0;right:0;top:0;height:var(--hero-h);display:block;
+    background:linear-gradient(180deg,transparent 52%,var(--hero-bottom) 100%)}
+  @media (prefers-reduced-motion:reduce){
+    .ambient-blob{animation:none;will-change:auto}   /* статичный multi-gradient, слои остаются */
+  }
+
+  /* Header на Главной: прозрачный, элементы прямо на сцене; при прокрутке — прежнее стекло .scrolled */
+  .app:has(#scrRecords.active) .topbar:not(.scrolled){background:transparent}
+  .app:has(#scrRecords.active) .topbar .row1{justify-content:space-between}
+  /* компактная овальная капсула поиска по центру (аватар и кнопка графиков равной ширины → центр) */
+  .app:has(#scrRecords.active) .hdr-search{flex:0 1 auto;width:min(54%,208px);justify-content:center;
+    background:var(--hero-glass);border-color:var(--hero-glass-border);color:var(--text);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  .app:has(#scrRecords.active) .hdr-search svg{stroke:var(--text)}
+  .app:has(#scrRecords.active) .hdr-ana{background:var(--hero-glass);border-color:var(--hero-glass-border);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+
+  /* Сегмент периода на Главной: без белой карточки, активный пункт — лёгкая полупрозрачная capsule */
+  .app:has(#scrRecords.active) .subhead{padding-top:6px}
+  .app:has(#scrRecords.active) .periods{background:transparent;border-color:transparent;padding:0;gap:0}
+  .app:has(#scrRecords.active) .periods button{padding:9px 2px;font-size:13px;color:var(--muted)}
+  .app:has(#scrRecords.active) .periods button.on{color:var(--text);font-weight:700}
+  .app:has(#scrRecords.active) .periods-indicator{top:0;height:100%;border-radius:11px;
+    background:var(--hero-capsule);border-color:var(--hero-capsule-border);box-shadow:none;
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+
+  /* «‹ Сентябрь 2026 ›» — крупные удобные стрелки (touch 44×44, шеврон ~30px), без карточки */
+  #scrRecords .month-switch{margin:4px 0 10px;gap:6px}
+  #scrRecords .month-switch .m-arrow{width:44px;height:44px;flex:0 0 44px;border-radius:50%;color:var(--text)}
+  #scrRecords .month-switch .m-arrow svg{width:30px;height:30px;stroke-width:2.1}
+  #scrRecords .month-switch .m-arrow:disabled{color:var(--muted2);opacity:.45}
+  #scrRecords .month-switch .m-label{font-size:16px;font-weight:700;letter-spacing:-.2px}
+
+  /* Баланс — главный визуальный объект, без карточки/капсулы/рамок */
+  .hero-balance{text-align:center;padding:10px 0 4px}
+  .hb-head{display:flex;align-items:center;justify-content:center;gap:2px;min-height:28px;margin-left:24px}
+  .hb-label{font-size:14px;font-weight:600;color:var(--muted);letter-spacing:.1px}
+  .hero-balance .fc-eye{width:44px;height:44px;margin:-8px 0 -8px -8px;opacity:.75;color:var(--muted)}
+  .hb-val{font-size:clamp(34px,11vw,46px);font-weight:800;letter-spacing:-1.2px;line-height:1.1;color:var(--text);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;font-variant-numeric:tabular-nums;
+    text-shadow:0 1px 0 rgba(255,255,255,.35)}
+  [data-theme="dark"] .hb-val{text-shadow:0 1px 8px rgba(0,0,0,.35)}
+  .hero-balance .fc-chg{font-size:13px;margin-top:6px;min-height:18px}
+  /* Доходы / Расходы / Поток — в одну строку на любой ширине (320+), тонкие разделители, без плиток */
+  .hb-stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:18px;padding:2px 0}
+  .hb-stat{min-width:0;padding:0 4px;border-left:1px solid var(--hero-sep)}
+  .hb-stat:first-child{border-left:none}
+  .hb-l{font-size:12px;font-weight:600;color:var(--muted)}
+  .hb-stat .ci2-v{font-size:clamp(14px,4.4vw,17px);font-weight:800;letter-spacing:-.3px;margin-top:3px;color:var(--text)}
+  .hb-stat .ci2-v.inc{color:var(--income)} .hb-stat .ci2-v.exp{color:var(--expense)}
+  .hb-stat .ci2-v.flow-pos{color:var(--income)} .hb-stat .ci2-v.flow-neg{color:var(--expense)}
+  .hb-s{font-size:10.5px;color:var(--muted2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Заголовок секции списка */
+  .home-list-head{font-size:17px;font-weight:800;letter-spacing:-.2px;color:var(--text);margin:26px 2px 8px}
+  #scrRecords .daygroup:first-child .dayhead{padding-top:6px}
 
   .ranges{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap}
   .ranges button{border:1px solid var(--line);background:var(--card2);color:var(--muted);font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:9px;cursor:pointer;transition:.15s}
@@ -1833,6 +1951,17 @@
 </head>
 <body>
 <div class="app">
+  <!-- TASK_047: декоративный fluid-фон Главной. Лежит в .app ЗА всем контентом (не внутри
+       .scroll-area — иначе не смог бы оказаться под sticky .topbar), фиксирован, контент
+       прокручивается поверх. Виден только пока активна Главная (CSS :has). Анимируются только
+       transform/opacity четырёх blob-слоёв; слой не перехватывает касания. -->
+  <div class="finance-ambient" id="financeAmbient" aria-hidden="true">
+    <span class="ambient-blob blob-1"></span>
+    <span class="ambient-blob blob-2"></span>
+    <span class="ambient-blob blob-3"></span>
+    <span class="ambient-blob blob-4"></span>
+    <span class="ambient-fade"></span>
+  </div>
   <!-- Top bar — закреплённая строка: Аватар → Поиск → Аналитика -->
   <div class="topbar" id="topbar">
     <div class="row1">
@@ -1878,23 +2007,25 @@
       <button type="button" class="m-arrow" id="fcMonthNext" aria-label="Вперёд"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
 
-    <div class="fincard" id="finCard">
-      <div class="fc-top">
-        <div class="fc-head">
-          <span class="fc-label">Общий баланс</span>
-          <button type="button" class="fc-eye" id="fcEye" aria-label="Скрыть суммы" aria-pressed="false">👁</button>
-        </div>
-        <div class="fc-val" id="fcVal">€0</div>
-        <div class="fc-chg" id="fcChg"></div>
+    <!-- TASK_047: финансовый блок без карточки — прямо на fluid-фоне. Все id (#fcVal, #fcChg,
+         #fcEye, #fcInc/#fcExp/#fcFlow, #fcIncN/#fcExpN/#fcFlowN) и класс .ci2-v у значений
+         сохранены: renderFinanceCard() не менялась. .fincard остаётся для #catTxOverlay. -->
+    <div class="hero-balance" id="finCard">
+      <div class="hb-head">
+        <span class="hb-label">Общий баланс</span>
+        <button type="button" class="fc-eye" id="fcEye" aria-label="Скрыть суммы" aria-pressed="false">👁</button>
       </div>
-      <div class="fc-bottom">
-        <div class="cib2"><span class="ci2-ic inc">↗</span><div class="ci2-l">Доходы</div><div class="ci2-v inc" id="fcInc">+€0</div><div class="ci2-s" id="fcIncN">0 операций</div></div>
-        <div class="cib2"><span class="ci2-ic exp">↘</span><div class="ci2-l">Расходы</div><div class="ci2-v exp" id="fcExp">−€0</div><div class="ci2-s" id="fcExpN">0 операций</div></div>
-        <div class="cib2"><span class="ci2-ic flow">⇄</span><div class="ci2-l">Поток</div><div class="ci2-v" id="fcFlow">+€0</div><div class="ci2-s" id="fcFlowN">за период</div></div>
+      <div class="hb-val" id="fcVal">€0</div>
+      <div class="fc-chg" id="fcChg"></div>
+      <div class="hb-stats">
+        <div class="hb-stat"><div class="hb-l">Доходы</div><div class="ci2-v inc" id="fcInc">+€0</div><div class="hb-s" id="fcIncN">0 операций</div></div>
+        <div class="hb-stat"><div class="hb-l">Расходы</div><div class="ci2-v exp" id="fcExp">−€0</div><div class="hb-s" id="fcExpN">0 операций</div></div>
+        <div class="hb-stat"><div class="hb-l">Поток</div><div class="ci2-v" id="fcFlow">+€0</div><div class="hb-s" id="fcFlowN">за период</div></div>
       </div>
     </div>
 
-    <div id="recentList" style="margin-top:14px"></div>
+    <div class="home-list-head">Записи</div>
+    <div id="recentList"></div>
   </div>
 
   <!-- Screen: Analytics (Product Book Screen 2) -->
