@@ -40,14 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Haptic feedback on the transaction keypad, now working on iPhone**
-  (`TASK_042`). iOS/WebKit has no `navigator.vibrate`, so the keypad's
-  previous "vibration" was silent on iPhone. A new `AF.Services.Haptics`
-  (`js/services/haptics_service.js`) triggers the system Taptic Engine
-  "switch" click on iOS 18+ by toggling a hidden native
-  `<input type="checkbox" switch>` (an undocumented WebKit side effect, not a
-  public API), falling back to `navigator.vibrate` on Android and to a
-  silent no-op elsewhere. Every keypad key (digits, decimal, ⌫, C,
+- **Haptic feedback service for the transaction keypad** (`TASK_042`).
+  iOS/WebKit has no `navigator.vibrate`, so the keypad's previous
+  "vibration" was silent on iPhone. A new `AF.Services.Haptics`
+  (`js/services/haptics_service.js`) centralises tactile feedback:
+  `navigator.vibrate` on Android, an attempted iOS WebKit `<input switch>`
+  toggle trick, and a silent no-op elsewhere. **Field test on iPhone
+  (iOS 26.6.2, Home-Screen PWA) showed no haptic** — there is no working
+  web mechanism for the Taptic Engine on iPhone; real haptics require a
+  native shell (Capacitor `@capacitor/haptics`), for which this service is
+  the single call site. Every keypad key (digits, decimal, ⌫, C,
   `+ − × ÷`) and "Готово" give one light tap at touch-down (`pointerdown`,
   no duplicate on `click`); a successful save (✓ / "Сохранить") gives a
   slightly stronger two-pulse success feedback, only after the write

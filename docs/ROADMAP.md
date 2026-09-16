@@ -653,7 +653,9 @@
     no-op), `tap()` на `pointerdown` клавиш и «Готово», `success()` (два
     импульса) при успешном сохранении; дубль `vibrate` по `click` удалён.
     `sw.js` `finance-v173` → `finance-v174`. Тесты: **1675 passed, 0
-    failed** (+56). Требует подтверждения ощущения на реальном iPhone.
+    failed** (+56). **Полевая проверка на iPhone (iOS 26.6.2, PWA): отклика
+    нет** — веб-механизма настоящего haptic на iPhone не существует, нужна
+    нативная оболочка (Capacitor); код оставлен как no-op / точка вызова.
     См. [`docs/tasks/TASK_042_KEYPAD_HAPTICS_IOS.md`](tasks/TASK_042_KEYPAD_HAPTICS_IOS.md).
 
 ## Пояснения
