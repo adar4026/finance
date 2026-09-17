@@ -815,7 +815,10 @@
     test.js` и блок в `tests/finance_card_service.test.js`). Проверено в
     preview на 320/375/390/430 px, light/dark: пропорция сегментов
     совпадает со сводкой, синхронный пересчёт при смене периода, без
-    горизонтального overflow. См.
+    горизонтального overflow. Опубликовано коммитом `fab137e`
+    (`98a04f4..fab137e`); деплой GitHub Pages подтверждён, production
+    отдаёт `finance-v185`, пример из постановки (€285/€1 106,65 →
+    20,5%/79,5%) воспроизведён 1-в-1. См.
     [`docs/tasks/TASK_053_HOME_INCOME_EXPENSE_RATIO_BAR.md`](tasks/TASK_053_HOME_INCOME_EXPENSE_RATIO_BAR.md).
 
 ## Пояснения

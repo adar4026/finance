@@ -251,7 +251,32 @@ txBaseFn)` (`js/services/finance_card_service.js`), диапазон — общ�
 
 ### Публикация
 
-- Коммит и продакшен-проверка — см. ниже после `git push`.
+- Коммит: `feat(TASK_053): тонкая шкала соотношения доходов/расходов на
+  Главной` — **`fab137e`**. В коммит вошли только 11 файлов задачи
+  (`index.html`, `js/services/finance_card_service.js`, `sw.js`,
+  `tests/home_income_expense_ratio.test.js` (новый),
+  `tests/finance_card_service.test.js`,
+  `tests/home_balance_drawer.test.js`,
+  `tests/drawer_balance_inline.test.js`, TASK-файл,
+  `docs/PROJECT_STATUS.md`, `docs/ROADMAP.md`, `CHANGELOG.md`);
+  `.claude/launch.json`, удалённый `icon.svg`, `.DS_Store` — не включены.
+- Push в `origin/main`: `98a04f4..fab137e`.
+- Деплой: GitHub Actions «pages build and deployment» (run
+  `35201599061`) — `completed`/`success`.
+- **Production-проверка** (https://adar4026.github.io/finance/, браузер,
+  чистая сессия: SW/кэш инвалидированы вручную перед загрузкой):
+  `sw.js` отдаёт `CACHE = 'finance-v185'`; единственный кэш
+  `["finance-v185"]` (старый `finance-v184` вычищен); `#fcRatio`
+  присутствует в DOM с `role="img"`; на пустом аккаунте (`0 операций`) —
+  `aria-label="Нет доходов и расходов за период"`, оба сегмента `width:
+  0%`, консоль без ошибок. Точный пример из постановки (доходы €285,
+  расходы €1 106,65, введены через консоль в той же production-сессии,
+  без сохранения в реальный аккаунт) воспроизведён 1-в-1: `aria-label`
+  → «Доходы 20%, расходы 80%», ширины сегментов `20.4793%`/`79.5207%`,
+  скриншот подтверждает зелёный сегмент ≈20,5% / красный ≈79,5% сразу
+  под Доходы/Расходы/Поток, без карточки и видимого текста. Тестовые
+  данные очищены (`localStorage.clear()`) после проверки — production
+  не затронут постоянно.
 
 ### Известные ограничения
 
