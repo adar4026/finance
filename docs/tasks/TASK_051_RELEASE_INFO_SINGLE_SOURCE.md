@@ -187,7 +187,26 @@ A-Lex Finance · v1.1.0
 
 ### Публикация
 
-_(заполняется после commit/push/деплоя)_
+- Коммит реализации: `feat(TASK_051): единый источник версии и даты
+  релиза, footer шторки v1.1.0` — **`652460f`**. В коммит вошли только
+  12 файлов задачи (`js/core/app_info.js`, `index.html`, `sw.js`,
+  `tests/release_info.test.js`, `tests/drawer_redesign.test.js`,
+  `tests/backup_service.test.js`, `tests/export_import_screen.test.js`,
+  `AGENTS.md`, `CHANGELOG.md`, `docs/PROJECT_STATUS.md`,
+  `docs/ROADMAP.md`, TASK-файл); `.claude/launch.json`, удалённый
+  `icon.svg`, `.DS_Store` не включены.
+- Push в `origin/main`: `b2b2963..652460f`.
+- Деплой: GitHub Actions «pages build and deployment» (run
+  `35196503468`) — `completed`/`success` для `652460f`.
+- **Production-проверка** (https://adar4026.github.io/finance/, браузер
+  390×844, чистая сессия): `sw.js` отдаёт `CACHE = 'finance-v183'`;
+  `js/core/app_info.js` отдаёт `version: '1.1.0'`, `releasedAt:
+  '2026-09-17'`; `AF.AppInfo.displayVersion()` → `v1.1.0`,
+  `displayReleaseDate()` → `сентябрь 2026`; footer шторки —
+  «A-Lex Finance · v1.1.0» / «Обновлено: сентябрь 2026» (скриншот);
+  SW `activated` на scope `/finance/`, единственный кэш
+  `["finance-v183"]` — старый `finance-v182` вычищен; 9 пунктов шторки
+  на месте; горизонтального overflow нет; консоль без ошибок.
 
 ### Известные ограничения
 

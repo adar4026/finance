@@ -68,7 +68,12 @@ Version 1.1.0` закрыт как `[1.1.0] — 2026-09-17`, новый пуст
 элемент потока, `footer.top ≥ lastCard.bottom`), pinned на 430
 (`scrollH == clientH`), в прокрутке на 320/390; все 9 пунктов, профиль,
 цикл темы, `#fcEye`, backdrop/Escape — как в `TASK_050`; консоль без
-ошибок. Публикация — см. TASK-файл.
+ошибок. Опубликовано коммитом **`652460f`** (`b2b2963..652460f` в
+`origin/main`), деплой GitHub Pages (run `35196503468`) — `success`;
+production проверен напрямую: `sw.js` → `finance-v183`, `app_info.js` →
+`1.1.0`/`2026-09-17`, footer «A-Lex Finance · v1.1.0 / Обновлено:
+сентябрь 2026», единственный кэш `finance-v183` (старый вычищен),
+консоль без ошибок.
 См. [`docs/tasks/TASK_051_RELEASE_INFO_SINGLE_SOURCE.md`](tasks/TASK_051_RELEASE_INFO_SINGLE_SOURCE.md).
 
 ## TASK_050 — Боковая шторка: компактный премиальный редизайн (DONE)

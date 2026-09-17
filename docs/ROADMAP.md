@@ -780,7 +780,9 @@
     релиза — в `AGENTS.md`; `CHANGELOG.md` закрыт как `[1.1.0] —
     2026-09-17`. `sw.js` `finance-v182` → `finance-v183`. Тесты: **2361
     passed, 0 failed** (+101, новый `tests/release_info.test.js`).
-    Публикация — см. TASK-файл. См.
+    Опубликовано коммитом `652460f` (`b2b2963..652460f`); деплой GitHub
+    Pages подтверждён, production отдаёт `finance-v183` и footer
+    `v1.1.0` / «сентябрь 2026». См.
     [`docs/tasks/TASK_051_RELEASE_INFO_SINGLE_SOURCE.md`](tasks/TASK_051_RELEASE_INFO_SINGLE_SOURCE.md).
 
 ## Пояснения
