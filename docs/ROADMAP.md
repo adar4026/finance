@@ -793,7 +793,9 @@
     `.pos`/`.neg`. Разметка/id и `renderFinanceCard()`/`updateFcEye()`
     не менялись. `sw.js` `finance-v183` → `finance-v184`. Тесты: **2429
     passed, 0 failed** (+68, новый `tests/drawer_balance_inline.test.js`).
-    Публикация — см. TASK-файл. См.
+    Опубликовано коммитом `bc1b8ea` (`a7fc678..bc1b8ea`); деплой GitHub
+    Pages подтверждён, production отдаёт `finance-v184` без карточки
+    баланса. См.
     [`docs/tasks/TASK_052_DRAWER_BALANCE_INLINE.md`](tasks/TASK_052_DRAWER_BALANCE_INLINE.md).
 
 ## Пояснения

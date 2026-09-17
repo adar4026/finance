@@ -62,7 +62,11 @@ release_info.test.js`: устаревшие ассерции про стекля
 тема, backdrop, Escape — без регрессий. Версия приложения
 (`AF.AppInfo.version`) не менялась — задача не требовала её обновления
 (только CSS шторки), изменение зафиксировано в `CHANGELOG.md` под
-`[Unreleased]`. Публикация — см. TASK-файл.
+`[Unreleased]`. Опубликовано коммитом **`bc1b8ea`** (`a7fc678..bc1b8ea`
+в `origin/main`), деплой GitHub Pages (run `35198195992`) — `success`;
+production проверен напрямую: `sw.js` → `finance-v184`, `#drawerBalance` без
+фона/рамки/тени/скругления, тап-зона глаза 44×44, единственный кэш
+`finance-v184` (старый вычищен), консоль без ошибок.
 См. [`docs/tasks/TASK_052_DRAWER_BALANCE_INLINE.md`](tasks/TASK_052_DRAWER_BALANCE_INLINE.md).
 
 ## TASK_051 — Единый источник версии и даты релиза в footer шторки, v1.1.0 (DONE)

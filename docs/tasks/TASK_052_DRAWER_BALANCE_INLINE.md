@@ -219,7 +219,27 @@ header-зоны, а не отдельная плитка.
 
 ### Публикация
 
-_(заполняется после commit/push/деплоя)_
+- Коммит: `feat(TASK_052): убрать карточку «Общий баланс» в шторке,
+  сделать inline-блоком` — **`bc1b8ea`**. В коммит вошли только 9
+  файлов задачи (`index.html`, `sw.js`, `tests/
+  drawer_balance_inline.test.js`, `tests/drawer_redesign.test.js`,
+  `tests/release_info.test.js`, TASK-файл, `docs/PROJECT_STATUS.md`,
+  `docs/ROADMAP.md`, `CHANGELOG.md`); `.claude/launch.json`, удалённый
+  `icon.svg`, `.DS_Store` не включены.
+- Push в `origin/main`: `a7fc678..bc1b8ea`.
+- Деплой: GitHub Actions «pages build and deployment» (run
+  `35198195992`) — `completed`/`success` для `bc1b8ea`.
+- **Production-проверка** (https://adar4026.github.io/finance/, браузер
+  390×844, чистая сессия без локальных данных, HTTP-кэш сброшен): `sw.js`
+  отдаёт `CACHE = 'finance-v184'`; единственный кэш `["finance-v184"]`
+  (старый `finance-v183` вычищен); SW `activated` на scope `/finance/`;
+  `getComputedStyle(#drawerBalance)` → `background-color:
+  rgba(0,0,0,0)`, `border-style: none`, `box-shadow: none`,
+  `border-radius: 0px` — карточка отсутствует; тап-зона `#fcEye` — 44×44
+  px; 9 пунктов меню на месте; `#fcVal`/`#fcChg` корректно показывают
+  `€0`/`€0 за месяц` на чистых данных (расчёт не сломан); footer
+  `A-Lex Finance · v1.1.0` / `Обновлено: сентябрь 2026` не затронут;
+  горизонтального overflow нет; консоль без ошибок.
 
 ### Известные ограничения
 
