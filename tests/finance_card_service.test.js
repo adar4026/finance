@@ -229,5 +229,44 @@ function rangeFor(period, anchor, cf, ct) { return P.range(period, anchor, cf, c
   assertClose(t.income, 300, 'Период: учитывает обе границы, операция за пределами диапазона исключена');
 }
 
+// ---- 14 (TASK_053). ratio() — доли доходов/расходов для шкалы Главной ----
+{
+  // Пример из задачи: доходы €285, расходы €1 106,65 → ~20,5% / ~79,5%
+  const r = FC.ratio({ income: 285, expense: 1106.65 });
+  assertTrue(r.hasData, '14. смешанный период — hasData=true');
+  assertClose(r.incomePct, 20.478, '14. доля дохода ≈ 20,5%', 0.01);
+  assertClose(r.expensePct, 79.522, '14. доля расхода ≈ 79,5%', 0.01);
+  assertClose(r.incomePct + r.expensePct, 100, '14. сумма долей ровно 100 (без зазора в pill)');
+  assertEqual(r.incomeLabelPct, 20, '14. aria-label доля дохода округлена до 20%');
+  assertEqual(r.expenseLabelPct, 80, '14. aria-label доля расхода = 100 - округлённый доход (не отдельное округление 79,5→80 случайно, а гарантированная сумма 100)');
+}
+// ---- 15. Только доходы — шкала полностью зелёная ----
+{
+  const r = FC.ratio({ income: 500, expense: 0 });
+  assertEqual(r, { hasData: true, incomePct: 100, expensePct: 0, incomeLabelPct: 100, expenseLabelPct: 0 }, '15. только доходы — 100%/0%');
+}
+// ---- 16. Только расходы — шкала полностью красная ----
+{
+  const r = FC.ratio({ income: 0, expense: 250 });
+  assertEqual(r, { hasData: true, incomePct: 0, expensePct: 100, incomeLabelPct: 0, expenseLabelPct: 100 }, '16. только расходы — 0%/100%');
+}
+// ---- 17. Пустой период — нейтральная линия, без зелёного/красного ----
+{
+  const r = FC.ratio({ income: 0, expense: 0 });
+  assertEqual(r, { hasData: false, incomePct: 0, expensePct: 0, incomeLabelPct: 0, expenseLabelPct: 0 }, '17. пустой период — hasData=false, обе доли 0');
+}
+// ---- 18. ratio() — производная от totals(), переводы уже исключены на уровне totals() ----
+{
+  const state = { tx: [
+    tx(1, 'income', 1000, '2026-07-05T10:00:00'),
+    { id: 2, type: 'transfer', amount: 200, from: 'cash', to: 'card', date: '2026-07-06T10:00:00' },
+    tx(3, 'expense', 500, '2026-07-07T10:00:00'),
+  ] };
+  const { from, to } = rangeFor('month', new Date(2026, 6, 1));
+  const t = FC.totals(state, from, to, base);
+  const r = FC.ratio(t);
+  assertClose(r.incomePct, 66.667, '18. перевод не искажает долю (1000 из 1500 = 66,7%)', 0.01);
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

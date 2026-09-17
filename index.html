@@ -1878,6 +1878,12 @@
   .hb-stat .ci2-v.inc{color:var(--income)} .hb-stat .ci2-v.exp{color:var(--expense)}
   .hb-stat .ci2-v.flow-pos{color:var(--income)} .hb-stat .ci2-v.flow-neg{color:var(--expense)}
   .hb-s{font-size:10.5px;color:var(--muted2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* TASK_053: тонкая шкала доходы/расходы под .hb-stats — без карточки/рамки/тени, компактный
+     отступ сверху, без нижнего (не сдвигает «Записи» лишним воздухом). Нейтральный var(--line),
+     когда нет ни доходов, ни расходов — сегменты тогда нулевой ширины и фон просвечивает. */
+  .hb-ratio{display:flex;height:8px;margin-top:8px;border-radius:999px;overflow:hidden;background:var(--line)}
+  .hb-ratio-inc{height:100%;background:var(--income)}
+  .hb-ratio-exp{height:100%;background:var(--expense)}
   /* TASK_048: «Общий капитал» на Счетах — тот же .hero-balance; глаз — inline в label, валюта — мелкой строкой */
   .acc-hero{padding:6px 0 4px}
   .acc-hero .hb-head{margin-left:0}
@@ -2083,6 +2089,13 @@
         <div class="hb-stat"><div class="hb-l">Доходы</div><div class="ci2-v inc" id="fcInc">+€0</div><div class="hb-s" id="fcIncN">0 операций</div></div>
         <div class="hb-stat"><div class="hb-l">Расходы</div><div class="ci2-v exp" id="fcExp">−€0</div><div class="hb-s" id="fcExpN">0 операций</div></div>
         <div class="hb-stat"><div class="hb-l">Поток</div><div class="ci2-v" id="fcFlow">+€0</div><div class="hb-s" id="fcFlowN">за период</div></div>
+      </div>
+      <!-- TASK_053: чисто визуальная шкала соотношения доходов/расходов — без видимого текста/
+           процентов/легенды, ширины сегментов и aria-label пишет renderFinanceCard() из уже
+           посчитанного totals() (вторая агрегация не создаётся). -->
+      <div class="hb-ratio" id="fcRatio" role="img" aria-label="Нет доходов и расходов за период">
+        <div class="hb-ratio-inc" id="fcRatioInc" aria-hidden="true"></div>
+        <div class="hb-ratio-exp" id="fcRatioExp" aria-hidden="true"></div>
       </div>
     </div>
 
@@ -3597,6 +3610,12 @@ function renderFinanceCard(){
   $('#fcIncN').textContent=totals.incomeCount+' '+plural(totals.incomeCount,'операция','операции','операций');
   $('#fcExpN').textContent=totals.expenseCount+' '+plural(totals.expenseCount,'операция','операции','операций');
   $('#fcFlowN').textContent=suf;
+
+  // TASK_053: шкала доходы/расходы — из того же totals(), без своей агрегации.
+  const ratio=FC.ratio(totals);
+  $('#fcRatioInc').style.width=ratio.incomePct+'%';
+  $('#fcRatioExp').style.width=ratio.expensePct+'%';
+  $('#fcRatio').setAttribute('aria-label',ratio.hasData?`Доходы ${ratio.incomeLabelPct}%, расходы ${ratio.expenseLabelPct}%`:'Нет доходов и расходов за период');
 }
 function capPoints(range){
   // конец графика = позже из (сегодня, последняя операция) — чтобы пузырёк совпадал с капиталом

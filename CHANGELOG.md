@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Home: thin income/expense ratio bar under the summary row**
+  (`TASK_053`). A minimal horizontal pill (`#fcRatio`, 8px tall, no
+  text/numbers/legend/card) sits between "Доходы/Расходы/Поток" and
+  "Записи" — a green segment (`var(--income)`) for the income share, red
+  (`var(--expense)`) for the expense share of the already-selected
+  period. New pure `AF.Services.FinanceCard.ratio(totals)` derives the
+  shares from the existing `totals()` — no second aggregation, transfers
+  already excluded there. Income-only/expense-only periods render a
+  solid green/red bar; a period with neither renders a neutral
+  `var(--line)` line. `renderFinanceCard()` writes the segment widths and
+  a dynamic `aria-label` (e.g. "Доходы 20%, расходы 80%", not shown
+  visually) in the same pass already triggered by period/month switching
+  and after transaction CRUD — the bar stays in sync with the summary
+  without new handlers. `sw.js` cache bumped `finance-v184` →
+  `finance-v185`. New `tests/home_income_expense_ratio.test.js` (38
+  checks) plus a new block in `tests/finance_card_service.test.js` (10
+  checks).
+
 ### Changed
 
 - **Side-drawer "Total Balance" card removed — now an inline text block

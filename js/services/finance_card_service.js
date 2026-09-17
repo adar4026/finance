@@ -46,4 +46,25 @@ AF.Services.FinanceCard = {
     const pct = Math.abs(startCapital) > 0.5 ? (change / Math.abs(startCapital)) * 100 : null;
     return { change, pct, startCapital, endCapital };
   },
+
+  // TASK_053: доли доходов/расходов для тонкой шкалы под Доходы/Расходы/Поток —
+  // производная от уже посчитанного totals(), вторая агрегация не создаётся.
+  // incomePct+expensePct===100 при hasData, чтобы сегменты без зазора заполняли pill.
+  // *LabelPct — целые проценты для aria-label (та же гарантия суммы, независимого
+  // округления второго значения нет — не даёт 99%/101%).
+  ratio(totals) {
+    const income = totals.income > 0 ? totals.income : 0;
+    const expense = totals.expense > 0 ? totals.expense : 0;
+    const total = income + expense;
+    if (total <= 0) {
+      return { hasData: false, incomePct: 0, expensePct: 0, incomeLabelPct: 0, expenseLabelPct: 0 };
+    }
+    const incomePct = (income / total) * 100;
+    const incomeLabelPct = Math.round(incomePct);
+    return {
+      hasData: true,
+      incomePct, expensePct: 100 - incomePct,
+      incomeLabelPct, expenseLabelPct: 100 - incomeLabelPct,
+    };
+  },
 };

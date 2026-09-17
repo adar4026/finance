@@ -192,8 +192,10 @@ const balanceCss = block(/\.drawer-balance\{/, '/* Заголовок секци
 }
 
 // ============ §12 — sw.js: cache version — новая, отдельная от semver ============
+// TASK_053: точная версия ослаблена до формата/порога (та же схема, что между TASK_050→051) —
+// последующие точечные задачи поднимают её дальше без изменений в этом файле.
 {
-  assertTrue(/const CACHE = 'finance-v184';/.test(sw), 'sw.js: cache version finance-v184 (был v183 — PWA получит новый вид баланса)');
+  assertTrue(/const CACHE = 'finance-v(\d+)';/.test(sw) && parseInt(sw.match(/finance-v(\d+)/)[1], 10) >= 184, 'sw.js: cache version ≥ finance-v184 (был v183 — PWA получит новый вид баланса)');
 }
 
 console.log(`${passed} passed, ${failed} failed`);

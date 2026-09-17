@@ -58,10 +58,12 @@ const drawerBlock = block(/<div class="overlay drawer-ov" id="drawerOverlay">/, 
   assertTrue(monthIdx > -1 && statsIdx > monthIdx, '#fcMonthSwitch идёт раньше .hb-stats');
   assertTrue(statsIdx > -1 && listHeadIdx > statsIdx, '.hb-stats идёт раньше .home-list-head («Записи»)');
   assertTrue(listHeadIdx > -1 && recentIdx > listHeadIdx, '«Записи» идёт раньше #recentList');
-  // .hero-balance#finCard содержит ровно три .hb-stat и сразу закрывается — сразу после него «Записи»
+  // .hero-balance#finCard содержит ровно три .hb-stat, затем (TASK_053) визуальную шкалу
+  // .hb-ratio, и сразу закрывается — сразу после него «Записи». Без .hb-head/.hb-val/.fc-chg —
+  // они остаются перенесёнными в шторку (TASK_049), .hb-ratio не их возврат.
   assertTrue(
-    /<div class="hero-balance" id="finCard">\s*<div class="hb-stats">\s*<div class="hb-stat">.*?<\/div>\s*<div class="hb-stat">.*?<\/div>\s*<div class="hb-stat">.*?<\/div>\s*<\/div>\s*<\/div>\s*<div class="home-list-head">Записи<\/div>\s*<div id="recentList"><\/div>/.test(homeBlock),
-    '.hero-balance#finCard — сразу .hb-stats (ровно 3 показателя, без .hb-head/.hb-val/.fc-chg), сразу за ним «Записи» и #recentList — без промежуточных блоков');
+    /<div class="hero-balance" id="finCard">\s*<div class="hb-stats">\s*<div class="hb-stat">.*?<\/div>\s*<div class="hb-stat">.*?<\/div>\s*<div class="hb-stat">.*?<\/div>\s*<\/div>\s*(?:<!--[\s\S]*?-->\s*)?<div class="hb-ratio" id="fcRatio"[\s\S]*?<\/div>\s*<\/div>\s*<div class="home-list-head">Записи<\/div>\s*<div id="recentList"><\/div>/.test(homeBlock),
+    '.hero-balance#finCard — .hb-stats (ровно 3 показателя, без .hb-head/.hb-val/.fc-chg) + шкала .hb-ratio (TASK_053), сразу за ним «Записи» и #recentList — без прочих промежуточных блоков');
 }
 
 // ============ §3 — «Общий баланс» перенесён (не продублирован) в шторку ============

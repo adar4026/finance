@@ -797,6 +797,26 @@
     Pages подтверждён, production отдаёт `finance-v184` без карточки
     баланса. См.
     [`docs/tasks/TASK_052_DRAWER_BALANCE_INLINE.md`](tasks/TASK_052_DRAWER_BALANCE_INLINE.md).
+48. **TASK_053_HOME_INCOME_EXPENSE_RATIO_BAR** — `DONE`. Главная: тонкая
+    горизонтальная pill-шкала (`#fcRatio`, 8px, без текста/цифр/легенды/
+    карточки) между строкой «Доходы/Расходы/Поток» и «Записи» — зелёный
+    сегмент (`var(--income)`) — доля доходов, красный (`var(--expense)`) —
+    доля расходов за уже выбранный период. Новый чистый метод
+    `AF.Services.FinanceCard.ratio(totals)` — производная от уже
+    посчитанного `totals()`, вторая агрегация не создаётся; переводы уже
+    исключены на уровне `totals()`. Только доходы/только расходы — шкала
+    полностью зелёная/красная; пустой период — нейтральная `var(--line)`.
+    `renderFinanceCard()` пишет ширины сегментов и динамический
+    `aria-label` («Доходы NN%, расходы NN%», не выводится визуально) в
+    том же проходе, что уже вызывается при переключении периода/месяца и
+    после CRUD — шкала синхронна со сводкой без новых обработчиков.
+    `sw.js` `finance-v184` → `finance-v185`. Тесты: **2478 passed, 0
+    failed** (было 2429, +49 — новый `tests/home_income_expense_ratio.
+    test.js` и блок в `tests/finance_card_service.test.js`). Проверено в
+    preview на 320/375/390/430 px, light/dark: пропорция сегментов
+    совпадает со сводкой, синхронный пересчёт при смене периода, без
+    горизонтального overflow. См.
+    [`docs/tasks/TASK_053_HOME_INCOME_EXPENSE_RATIO_BAR.md`](tasks/TASK_053_HOME_INCOME_EXPENSE_RATIO_BAR.md).
 
 ## Пояснения
 
