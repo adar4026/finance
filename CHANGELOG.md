@@ -14,6 +14,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Home made more compact: the Total Balance block removed from the
+  screen, Income/Expenses/Cash Flow moved up, Total Balance relocated to
+  the side drawer** (`TASK_049`). The Home screen used to show, right
+  under the month switcher, a `.hero-balance` block with the "Total
+  Balance" label, the large sum, the month-over-month change line, and
+  then the Income/Expenses/Cash Flow row. The label/sum/change part is
+  removed from Home entirely — Income/Expenses/Cash Flow now sits
+  directly under the month switcher, immediately followed by the
+  "Records" section. The removed elements are not deleted or
+  recalculated: `#fcVal`/`#fcChg`/`#fcEye` are moved as-is into a new
+  compact card in the side drawer (`#drawerBalance`, between the profile
+  card and the "Planning" group) — same ids, same `renderFinanceCard()`,
+  same eye toggle, no duplicated calculation logic. `sw.js` cache bumped
+  `finance-v180` → `finance-v181`.
+
 - **Analytics, Accounts and Budgets brought into the same immersive
   design language as Home** (`TASK_048`). The fluid ambient background,
   transparent header, card-free period segment and the Home month

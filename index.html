@@ -1809,8 +1809,10 @@
     text-shadow:0 1px 0 rgba(255,255,255,.35)}
   [data-theme="dark"] .hb-val{text-shadow:0 1px 8px rgba(0,0,0,.35)}
   .hero-balance .fc-chg{font-size:13px;margin-top:6px;min-height:18px}
-  /* Доходы / Расходы / Поток — в одну строку на любой ширине (320+), тонкие разделители, без плиток */
-  .hb-stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:18px;padding:2px 0}
+  /* Доходы / Расходы / Поток — в одну строку на любой ширине (320+), тонкие разделители, без плиток.
+     TASK_049: margin-top обнулён — блок больше не идёт следом за .hb-val/.fc-chg (перенесены в
+     шторку), а сразу под переключателем месяца; .hero-balance{padding-top:10px} даёт весь отступ. */
+  .hb-stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:0;padding:2px 0}
   .hb-stat{min-width:0;padding:0 4px;border-left:1px solid var(--hero-sep)}
   .hb-stat:first-child{border-left:none}
   .hb-l{font-size:12px;font-weight:600;color:var(--muted)}
@@ -1823,6 +1825,17 @@
   .acc-hero .hb-head{margin-left:0}
   .acc-hero .hb-eye{opacity:.75;margin-left:2px}
   .hb-cur{font-size:12.5px;font-weight:700;color:var(--muted);margin-top:8px;letter-spacing:.4px}
+  /* TASK_049: «Общий баланс» — компактный вторичный блок в шторке (переехал с Главной).
+     Переиспользует .hb-head/.hb-label/.fc-eye/.hb-val/.fc-chg — только масштаб уменьшен
+     под карточку шторки, сама разметка/расчёт (#fcVal/#fcChg/#fcEye) не дублируются. */
+  .drawer-balance{margin:10px 14px 0;padding:14px 16px;border-radius:18px;background:var(--card);
+    box-shadow:0 1px 2px rgba(20,25,55,.04),0 8px 22px rgba(20,25,55,.05);text-align:center;
+    animation:drawerFadeIn .32s .10s cubic-bezier(.22,.61,.36,1) both}
+  .drawer-balance .hb-head{min-height:auto;margin-left:0}
+  .drawer-balance .hb-label{font-size:12.5px}
+  .drawer-balance .fc-eye{width:32px;height:32px;margin:-4px -6px -4px 0}
+  .drawer-balance .hb-val{font-size:26px;margin-top:2px}
+  .drawer-balance .fc-chg{font-size:12px;margin-top:3px;min-height:auto}
   /* Заголовок секции списка */
   .home-list-head{font-size:17px;font-weight:800;letter-spacing:-.2px;color:var(--text);margin:26px 2px 8px}
   #scrRecords .daygroup:first-child .dayhead{padding-top:6px}
@@ -2002,16 +2015,12 @@
       <button type="button" class="m-arrow" id="fcMonthNext" aria-label="Вперёд"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
 
-    <!-- TASK_047: финансовый блок без карточки — прямо на fluid-фоне. Все id (#fcVal, #fcChg,
-         #fcEye, #fcInc/#fcExp/#fcFlow, #fcIncN/#fcExpN/#fcFlowN) и класс .ci2-v у значений
-         сохранены: renderFinanceCard() не менялась. .fincard остаётся для #catTxOverlay. -->
+    <!-- TASK_049: метка «Общий баланс» + сумма + строка изменения (#fcVal/#fcChg/#fcEye)
+         перенесены в боковую шторку (#drawerBalance) — не продублированы, тот же
+         renderFinanceCard() пишет в те же id независимо от их места в DOM. На Главной
+         остаётся только Доходы/Расходы/Поток, первым блоком под переключателем месяца.
+         Id (#fcInc/#fcExp/#fcFlow, #fcIncN/#fcExpN/#fcFlowN) и класс .ci2-v сохранены. -->
     <div class="hero-balance" id="finCard">
-      <div class="hb-head">
-        <span class="hb-label">Общий баланс</span>
-        <button type="button" class="fc-eye" id="fcEye" aria-label="Скрыть суммы" aria-pressed="false">👁</button>
-      </div>
-      <div class="hb-val" id="fcVal">€0</div>
-      <div class="fc-chg" id="fcChg"></div>
       <div class="hb-stats">
         <div class="hb-stat"><div class="hb-l">Доходы</div><div class="ci2-v inc" id="fcInc">+€0</div><div class="hb-s" id="fcIncN">0 операций</div></div>
         <div class="hb-stat"><div class="hb-l">Расходы</div><div class="ci2-v exp" id="fcExp">−€0</div><div class="hb-s" id="fcExpN">0 операций</div></div>
@@ -2606,6 +2615,18 @@
         </div>
         <svg class="dh-chev" viewBox="0 0 8 14" aria-hidden="true"><path d="M1 1l6 6-6 6"/></svg>
       </button>
+
+      <!-- TASK_049: «Общий баланс» переехал сюда с Главной — компактный вторичный блок.
+           #fcVal/#fcChg/#fcEye перенесены (не продублированы): те же id, тот же
+           renderFinanceCard()/updateFcEye(), значение и метод расчёта не менялись. -->
+      <div class="drawer-balance" id="drawerBalance">
+        <div class="hb-head">
+          <span class="hb-label">Общий баланс</span>
+          <button type="button" class="fc-eye" id="fcEye" aria-label="Скрыть суммы" aria-pressed="false">👁</button>
+        </div>
+        <div class="hb-val" id="fcVal">€0</div>
+        <div class="fc-chg" id="fcChg"></div>
+      </div>
 
       <div class="drawer-group" style="--i:0">
         <div class="drawer-group-title">Планирование</div>
