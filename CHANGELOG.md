@@ -9,7 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- **Side-drawer "Total Balance" card removed — now an inline text block
+  under the profile row** (`TASK_052`). The glass card wrapper around
+  `#drawerBalance` (background, border, shadow, border-radius, blur —
+  added in `TASK_050`) is gone; the balance now sits directly on the
+  drawer's shared immersive background, right under the profile. The
+  "Общий баланс" label lost its uppercase/bold card styling (normal
+  case, medium weight); the eye toggle (`#fcEye`) dropped its shrunken
+  32×32 override and now uses the same 44×44 base `.fc-eye` as
+  Home/Accounts (a real tap target, no circular plaque); the amount
+  (`#fcVal`) got a touch larger and bolder (29px/800). No markup, ids,
+  or calculation logic changed — `renderFinanceCard()`/`updateFcEye()`
+  are untouched. `sw.js` cache bumped `finance-v183` → `finance-v184`.
+  New `tests/drawer_balance_inline.test.js` (68 checks).
 
 ## [1.1.0] — 2026-09-17
 

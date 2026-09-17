@@ -1883,20 +1883,17 @@
   .acc-hero .hb-head{margin-left:0}
   .acc-hero .hb-eye{opacity:.75;margin-left:2px}
   .hb-cur{font-size:12.5px;font-weight:700;color:var(--muted);margin-top:8px;letter-spacing:.4px}
-  /* TASK_049: «Общий баланс» — компактный вторичный блок в шторке (переехал с Главной).
-     Переиспользует .hb-head/.hb-label/.fc-eye/.hb-val/.fc-chg — только масштаб уменьшен
-     под карточку шторки, сама разметка/расчёт (#fcVal/#fcChg/#fcEye) не дублируются. */
-  /* TASK_050: та же стеклянная карточка, что группы шторки (--hero-glass), выровнена влево,
-     без крупного акцента — спокойный вторичный блок. */
-  .drawer-balance{margin:10px 16px 0;padding:11px 16px 12px;border-radius:22px;text-align:left;
-    background:var(--hero-glass);border:1px solid var(--hero-glass-border);box-shadow:var(--tx-card-shadow);
-    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  /* TASK_049: «Общий баланс» переехал в шторку с Главной, переиспользуя .hb-head/.hb-label/
+     .fc-eye/.hb-val/.fc-chg (#fcVal/#fcChg/#fcEye не дублируются). TASK_050 временно оформил его
+     отдельной стеклянной карточкой. TASK_052: карточка убрана — блок стал inline-текстом прямо
+     на общем immersive-фоне шторки, естественной частью header-зоны под профилем (без своего
+     background/border/box-shadow/border-radius/blur). Разметка и расчёт — прежние. */
+  .drawer-balance{margin:4px 16px 8px;text-align:left;
     animation:drawerFadeIn .32s .10s cubic-bezier(.22,.61,.36,1) both}
   .drawer-balance .hb-head{justify-content:space-between;min-height:auto;margin-left:0}
-  .drawer-balance .hb-label{font-size:12.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
-  .drawer-balance .fc-eye{width:32px;height:32px;margin:-6px -8px -6px 0;font-size:15px;opacity:.7}
-  .drawer-balance .hb-val{font-size:26px;font-weight:700;letter-spacing:-.6px;margin-top:2px;text-shadow:none}
-  .drawer-balance .fc-chg{font-size:12px;font-weight:500;margin-top:2px;min-height:auto}
+  .drawer-balance .hb-label{font-size:13px;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0}
+  .drawer-balance .hb-val{font-size:29px;font-weight:800;letter-spacing:-.6px;margin-top:3px;text-shadow:none}
+  .drawer-balance .fc-chg{font-size:12.5px;font-weight:500;margin-top:3px;min-height:auto}
   /* Заголовок секции списка */
   .home-list-head{font-size:17px;font-weight:800;letter-spacing:-.2px;color:var(--text);margin:26px 2px 8px}
   #scrRecords .daygroup:first-child .dayhead{padding-top:6px}
@@ -2690,7 +2687,8 @@
 
       <!-- TASK_049: «Общий баланс» переехал сюда с Главной — компактный вторичный блок.
            #fcVal/#fcChg/#fcEye перенесены (не продублированы): те же id, тот же
-           renderFinanceCard()/updateFcEye(), значение и метод расчёта не менялись. -->
+           renderFinanceCard()/updateFcEye(), значение и метод расчёта не менялись.
+           TASK_052: разметка не менялась — карточный вид убран только в CSS (.drawer-balance). -->
       <div class="drawer-balance" id="drawerBalance">
         <div class="hb-head">
           <span class="hb-label">Общий баланс</span>

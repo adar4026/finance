@@ -184,7 +184,9 @@ const info = loadAppInfo();
 
 // ============ §7 — sw.js: cache version — отдельная сущность ============
 {
-  assertTrue(/const CACHE = 'finance-v183';/.test(sw), 'sw.js: cache version finance-v183 (был v182 — PWA получит новый footer)');
+  // TASK_051 поднял кэш до v183; последующие задачи поднимают дальше — проверяем только формат
+  // (точное значение — в тесте актуальной задачи, см. tests/drawer_balance_inline.test.js)
+  assertTrue(/const CACHE = 'finance-v\d+';/.test(sw), "sw.js: версия кэша в формате finance-vNNN");
   assertTrue(!/AppInfo|1\.1\.0/.test(sw), 'sw.js: cache version не выводится из semantic version');
   assertTrue(/'\.\/js\/core\/app_info\.js'/.test(sw), 'sw.js: app_info.js в списке кэшируемых ASSETS');
   assertTrue(!/finance-v1\d\d|CACHE/.test(appInfoSrc), 'app_info.js: не ссылается на cache version SW');

@@ -784,6 +784,17 @@
     Pages подтверждён, production отдаёт `finance-v183` и footer
     `v1.1.0` / «сентябрь 2026». См.
     [`docs/tasks/TASK_051_RELEASE_INFO_SINGLE_SOURCE.md`](tasks/TASK_051_RELEASE_INFO_SINGLE_SOURCE.md).
+47. **TASK_052_DRAWER_BALANCE_INLINE** — `DONE`. Шторка: карточка
+    «Общего баланса» (`#drawerBalance`, стекло/рамка/тень/скругление из
+    `TASK_050`) убрана — блок стал inline-текстом на общем immersive-фоне
+    шторки под профилем: метка обычным регистром и умеренным весом,
+    сумма крупнее и полужирнее (`29px/800`), глаз наследует базовый
+    `.fc-eye` (тап-зона 44×44, без плашки), строка изменения сохраняет
+    `.pos`/`.neg`. Разметка/id и `renderFinanceCard()`/`updateFcEye()`
+    не менялись. `sw.js` `finance-v183` → `finance-v184`. Тесты: **2429
+    passed, 0 failed** (+68, новый `tests/drawer_balance_inline.test.js`).
+    Публикация — см. TASK-файл. См.
+    [`docs/tasks/TASK_052_DRAWER_BALANCE_INLINE.md`](tasks/TASK_052_DRAWER_BALANCE_INLINE.md).
 
 ## Пояснения
 

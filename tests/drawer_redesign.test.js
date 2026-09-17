@@ -128,8 +128,9 @@ const balanceCss = block(/\.drawer-balance\{/, '/* Заголовок секци
     'Фон шторки: prefers-reduced-motion отключает дрейф');
   assertTrue(/\.drawer-card\{background:var\(--hero-glass\);border:1px solid var\(--hero-glass-border\)/.test(drawerCss),
     'Карточки: лёгкое стекло на токенах --hero-glass');
-  assertTrue(/\.drawer-balance\{[^}]*background:var\(--hero-glass\)/.test(balanceCss), 'Баланс: та же стеклянная карточка');
-  assertTrue(!/\.drawer-balance\{[^}]*background:var\(--card\)/.test(balanceCss), 'Баланс: старый белый --card заменён');
+  // TASK_052 убрал карточный вид «Общего баланса» (был на этих же токенах --hero-glass) —
+  // теперь это inline-текст на общем фоне шторки; подробная проверка — tests/drawer_balance_inline.test.js.
+  assertTrue(!/\.drawer-balance\{[^}]*background:/.test(balanceCss), 'Баланс: без собственного фона (не карточка, TASK_052)');
   assertTrue(/\.drawer-sep\{[^}]*background:var\(--hero-sep\)/.test(drawerCss), 'Разделители: токен --hero-sep (обе темы)');
   // хардкод цветов: допускается только #fff текста бейджа и pre-existing backdrop .drawer-ov
   const cssNoBackdrop = drawerCss.replace(/\.overlay\.drawer-ov\{[^}]*\}/, '');
