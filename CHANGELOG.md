@@ -14,6 +14,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Side drawer redesigned: compact, calm, iOS / Apple Wallet style**
+  (`TASK_050`). The large gradient profile banner is replaced by a
+  compact row (50 px avatar, bold name, muted "Личный профиль", thin
+  chevron — same `#drawerHead` → profile). The theme action moved from
+  the "Application" group into the header as a small round glass
+  sun/moon button — it is the same `#drTheme`/`#drThemeLbl` with the
+  same `toggleTheme()` handler (light → dark → system), the icon
+  follows `data-theme` via CSS. The coloured square icon tiles are
+  replaced by one set of thin graphite line icons (22 px, stroke 1.8,
+  `var(--text)`); the three groups (Planning / Analytics / Application)
+  are light glass cards on the same `--hero-glass` tokens as the Home
+  header, 56 px rows, hairline separators starting after the icon
+  area, thin grey chevrons, the notification badge as the only
+  coloured element. The drawer background is the same immersive scene
+  as Home (`--hero-*` tokens, two softly drifting blobs,
+  `prefers-reduced-motion` aware) with a lighter panel shadow; dark
+  theme adapts through the same tokens (no hard-coded colours). The
+  Total Balance card from `TASK_049` stays in place, restyled as the
+  same glass card; the old "Total capital" sparkline card is not
+  brought back. The footer is one centred muted line
+  ("A-Lex Finance · Version 1.0.0"), pinned to the bottom when content
+  fits and scrolling on small screens. A ≤359 px media query keeps all
+  labels untruncated at 320 px. No routes, data, menu items or handlers
+  changed. `sw.js` cache bumped `finance-v181` → `finance-v182`.
+
 - **Home made more compact: the Total Balance block removed from the
   screen, Income/Expenses/Cash Flow moved up, Total Balance relocated to
   the side drawer** (`TASK_049`). The Home screen used to show, right

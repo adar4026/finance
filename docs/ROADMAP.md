@@ -753,6 +753,21 @@
     («feat: move home balance to drawer», `2f7b525..1ee87bc`); деплой
     GitHub Pages подтверждён, production отдаёт `finance-v181`. См.
     [`docs/tasks/TASK_049_HOME_COMPACT_MOVE_BALANCE_TO_DRAWER.md`](tasks/TASK_049_HOME_COMPACT_MOVE_BALANCE_TO_DRAWER.md).
+45. **TASK_050_DRAWER_COMPACT_REDESIGN** — `DONE`. Компактный премиальный
+    редизайн существующей боковой шторки (`#drawerOverlay`) в стиле iOS /
+    Apple Wallet: компактная строка профиля вместо градиентного баннера,
+    кнопка темы (тот же `#drTheme`/`#drThemeLbl`) круглой кнопкой в header,
+    тонкие графитовые line-icons вместо цветных плиток, стеклянные карточки
+    групп и «Общего баланса» на токенах `--hero-glass`, фон — immersive-
+    сцена Главной (`--hero-*`), спокойный однострочный footer pinned к низу;
+    все пункты, id, маршруты, обработчики, `openDrawer()`/`closeDrawer()`/
+    `renderFinanceCard()`/`renderReleaseInfo()` не изменены. `sw.js`
+    `finance-v181` → `finance-v182`. Тесты: **2260 passed, 0 failed**
+    (+81, новый `tests/drawer_redesign.test.js`; инвариант группы
+    «Приложение» в `tests/profile_screen.test.js` 4/3 → 3/2). Проверено в
+    preview на 320/390/430, светлая/тёмная тема, функционально по всем
+    пунктам, SW/кэш. Публикация — см. TASK-файл. См.
+    [`docs/tasks/TASK_050_DRAWER_COMPACT_REDESIGN.md`](tasks/TASK_050_DRAWER_COMPACT_REDESIGN.md).
 
 ## Пояснения
 

@@ -119,11 +119,13 @@ const drawerBlock = block(/<div class="overlay drawer-ov" id="drawerOverlay">/, 
     'Шторка: карточка «Личный профиль» (#drawerHead) сохранена');
   assertTrue(/\$\('#drawerHead'\)\.onclick=\(\)=>\{closeDrawer\(\);openProfile\(\);\}/.test(html),
     'Шторка: карточка профиля открывает экран «Профиль» (openProfile)');
-  // группа «Приложение»: было 5 пунктов и 4 разделителя, стало 4 и 3
+  // группа «Приложение»: было 5 пунктов и 4 разделителя, стало 4 и 3 (TASK_021);
+  // TASK_050: пункт темы (#drTheme) переехал из группы в header шторки круглой
+  // кнопкой — в группе 3 пункта и 2 разделителя, сам #drTheme проверен выше.
   const appGroup = drawerBlock.slice(drawerBlock.indexOf('Приложение'));
-  assertEqual((appGroup.match(/class="drawer-row"/g) || []).length, 4,
-    'Шторка: в группе «Приложение» осталось 4 пункта');
-  assertEqual((appGroup.match(/class="drawer-sep"/g) || []).length, 3,
+  assertEqual((appGroup.match(/class="drawer-row"/g) || []).length, 3,
+    'Шторка: в группе «Приложение» 3 пункта (тема — в header, TASK_050)');
+  assertEqual((appGroup.match(/class="drawer-sep"/g) || []).length, 2,
     'Шторка: лишний разделитель после удалённого пункта тоже убран');
 }
 
