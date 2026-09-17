@@ -833,6 +833,16 @@
     passed, 0 failed** (+99 новый `tests/home_hero_webgl.test.js`).
     Опубликовано коммитом `98f26ed`. См.
     [`docs/tasks/TASK_054_HOME_HERO_WEBGL_LIQUID_FABRIC.md`](tasks/TASK_054_HOME_HERO_WEBGL_LIQUID_FABRIC.md).
+50. **TASK_055_HOME_HERO_WEBGL_SILK_WAVES** — `DONE`. Главная: WebGL-hero
+    — от glossy-бликов к объёмным шёлковым волнам. Только shader look
+    (GLSL `FRAG` + токены `--hero-gl-*`), инфраструктура `TASK_054` не
+    тронута. Каждая волна — отдельная форма: изогнутая центр-линия
+    (дуга + шум), переменная ширина, заострённый гребень + впадина на
+    одном склоне, протекание через экран без шва; две доминирующие + одна
+    вторичная, свет от суммарного рельефа (grayscale-проверка пройдена),
+    highlight в молочную лаванду без белых пятен. `sw.js` `finance-v186`
+    → `finance-v187`. Тесты: **2609 passed, 0 failed**. См.
+    [`docs/tasks/TASK_055_HOME_HERO_WEBGL_SILK_WAVES.md`](tasks/TASK_055_HOME_HERO_WEBGL_SILK_WAVES.md).
 
 ## Пояснения
 

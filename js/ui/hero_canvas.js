@@ -30,8 +30,8 @@ AF.HeroCanvas = (function () {
   const FALLBACK_PALETTE = {
     top: [0.894, 0.878, 0.980], bot: [0.933, 0.949, 0.973],
     c1: [0.427, 0.365, 0.965], c2: [0.710, 0.671, 0.976],
-    c3: [0.957, 0.945, 1.000], deep: [0.290, 0.227, 0.749],
-    alpha: [0.46, 0.40, 0.52], light: 0.75,
+    c3: [0.914, 0.890, 1.000], deep: [0.290, 0.227, 0.749],
+    alpha: [0.44, 0.40, 0.36], light: 0.55,
   };
 
   const VERT = `
@@ -77,33 +77,46 @@ float snoise(vec2 v) {
   return 130.0 * dot(m, g);
 }
 
-// height field одной складки: крупная синусоида, изогнутая низкочастотным шумом.
-// dir — направление дрейфа (складка входит с одного края и уходит с другого),
-// seed — своя фаза/форма у каждого слоя.
-float fold(vec2 p, float t, vec2 dir, float seed) {
-  vec2 q = p - dir * t * 0.05;
-  float n1 = snoise(vec2(q.x * 0.75 + seed * 11.0, q.y * 1.05 + t * 0.03 + seed));
-  float n2 = snoise(vec2(q.x * 1.3 - t * 0.02 + seed * 3.0, q.y * 1.4 + seed * 5.0));
-  float w  = sin(q.x * 1.5 + q.y * 1.1 + n1 * 1.9 + t * 0.14 + seed * 2.0);
-  return w * 0.58 + n1 * 0.45 + n2 * 0.06;
+// TASK_055: поворот в систему координат волны — x вдоль гребня, y поперёк.
+mat2 rot(float a) { float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+
+// ОДНА ВОЛНА — отдельная крупная форма (height field), а не синусоида:
+//   • центр-линия гребня c(x): широкая дуга (кривизна) + локальное отклонение шумом,
+//     обе компоненты медленно эволюционируют по t — каждый следующий проход волны
+//     имеет другую кривизну;
+//   • ширина w(x): меняется вдоль гребня (шум) — волна то шире, то уже, «закручивается»;
+//   • профиль поперёк: гауссов гребень exp(-d²) (crest) минус гауссова впадина на одном
+//     склоне (valley) — выраженный гребень, мягкая ложбина рядом, асимметрия;
+//   • движение: поперечная координата уходит как y − t·speed — волна входит с одного
+//     края, проходит экран и уходит; поперечное расстояние периодизировано через
+//     sin (гладко, без шва) с периодом per — следующая волна приходит уже с другой
+//     формой, т.к. c(x) и w(x) к тому времени эволюционировали.
+// ang — базовое направление, per — интервал между волнами, w0 — базовая ширина,
+// seed — своя фаза/форма.
+float waveShape(vec2 p, float t, float ang, float speed, float per, float w0, float seed) {
+  vec2 q = rot(ang) * p;
+  float y = q.y - t * speed;
+  // кривизна центр-линии: дуга + шумовое отклонение (медленно меняются во времени)
+  float c = 0.30 * sin(q.x * 0.9 + seed * 2.1 + t * 0.045)
+          + 0.42 * snoise(vec2(q.x * 0.55 + seed * 5.0, t * 0.035 + seed * 3.0));
+  // ширина вдоль гребня
+  float w = w0 * (1.0 + 0.40 * snoise(vec2(q.x * 0.7 + seed * 3.0, t * 0.025 - seed * 2.0)));
+  // поперечное расстояние до гребня, периодизированное гладко (sin-warp: около гребня
+  // ≈ линейно, вдали ограничено per/π → без разрыва между соседними волнами)
+  float d = (per / 3.14159) * sin(3.14159 * (y - c) / per) / w;
+  float crest  = exp(-pow(abs(d), 1.5));                       // ГРЕБЕНЬ (заострённый верх)
+  float valley = exp(-(d - 1.6) * (d - 1.6) * 0.9);            // ВПАДИНА на одном склоне
+  return crest - 0.55 * valley;
 }
 
-// один слой ткани: band — где складка видна, N — псевдонормаль поверхности
-vec3 layer(vec3 col, vec2 p, float t, vec2 dir, float seed, vec3 tint, float alpha) {
-  const float e = 0.035;
-  float h  = fold(p, t, dir, seed);
-  float hx = fold(p + vec2(e, 0.0), t, dir, seed);
-  float hy = fold(p + vec2(0.0, e), t, dir, seed);
-  vec3 N = normalize(vec3(-(hx - h) / e * 0.30, -(hy - h) / e * 0.30, 1.0));
-  vec3 L = normalize(vec3(-0.45, 0.75, 0.55));      // свет сверху-слева
-  vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
-  float diff = clamp(dot(N, L), 0.0, 1.0);
-  float spec = pow(clamp(dot(N, H), 0.0, 1.0), 12.0);
-  float band = smoothstep(-0.35, 0.45, h) * (1.0 - smoothstep(0.55, 1.25, h));
-  vec3 shaded = tint * (0.82 + 0.28 * diff);          // объём
-  shaded = mix(shaded, u_deep, (1.0 - diff) * 0.26);  // мягкая тень на обратной стороне
-  shaded += vec3(1.0) * spec * u_light;               // светлая кромка складки
-  return mix(col, shaded, band * alpha);
+// суммарный рельеф трёх волн (два доминирующих + одна вторичная); h1..h3 — вклад
+// каждой (для окраски), возвращается сумма — по ней считается освещение, поэтому
+// в местах пересечения волны реально взаимодействуют (гребни складываются)
+float relief(vec2 p, float t, out float h1, out float h2, out float h3) {
+  h1 = 1.00 * waveShape(p, t, -0.78, 0.055, 1.6, 0.17, 0.0);   // волна A: доминирующая (~35 % ширины)
+  h2 = 0.85 * waveShape(p, t, -0.50, 0.042, 1.8, 0.24, 1.0);   // волна B: шире (~50 %), медленнее
+  h3 = 0.45 * waveShape(p, t, -1.05, 0.070, 1.4, 0.13, 2.0);   // волна C: вторичная, уже
+  return h1 + h2 + h3;
 }
 
 void main() {
@@ -112,10 +125,32 @@ void main() {
   vec2 p = (uv - 0.5) * vec2(aspect, 1.0) * 1.15;
   float t = u_t;
 
+  // 1. геометрия: суммарный рельеф и псевдонормаль через конечные разности
+  const float e = 0.04;
+  float h1, h2, h3, d1, d2, d3;
+  float H  = relief(p, t, h1, h2, h3);
+  float Hx = relief(p + vec2(e, 0.0), t, d1, d2, d3);
+  float Hy = relief(p + vec2(0.0, e), t, d1, d2, d3);
+  vec3 N = normalize(vec3(-(Hx - H) / e * 0.50, -(Hy - H) / e * 0.50, 1.0));
+
+  // 2. освещение ОТ ФОРМЫ (в grayscale рельеф читается сам по себе)
+  vec3 L = normalize(vec3(-0.50, 0.62, 0.60));     // свет сверху-слева
+  vec3 Hv = normalize(L + vec3(0.0, 0.0, 1.0));
+  float diff = clamp(dot(N, L), 0.0, 1.0);
+  float lit    = clamp(diff - L.z, 0.0, 1.0);      // склон к свету (0 на плоскости)
+  float shadow = clamp(L.z - diff, 0.0, 1.0);      // склон от света
+  float spec   = pow(clamp(dot(N, Hv), 0.0, 1.0), 8.0);
+  float rim    = pow(1.0 - N.z, 1.3) * (0.4 + 0.6 * diff);   // кромка на крутых склонах
+  float valley = smoothstep(0.0, -0.40, H);        // впадина между волнами
+
+  // 3. цвет: база + окраска каждой волны по её гребню, затем свет/тень от рельефа
   vec3 col = mix(u_top, u_bot, uv.y);
-  col = layer(col, p, t, vec2( 1.0, -0.35), 0.0, u_c1, u_alpha.x);  // violet: слева-снизу вправо-вверх
-  col = layer(col, p, t, vec2(-0.85, 0.30), 1.0, u_c2, u_alpha.y);  // lavender: справа влево
-  col = layer(col, p, t, vec2( 0.55, 0.85), 2.0, u_c3, u_alpha.z);  // lilac white: через центр
+  col = mix(col, u_c1, clamp(h1, 0.0, 1.0) * u_alpha.x);
+  col = mix(col, u_c2, clamp(h2, 0.0, 1.0) * u_alpha.y);
+  col = mix(col, u_c3, clamp(h3, 0.0, 1.0) * u_alpha.z);
+  col *= 1.0 + 0.45 * lit;                                     // освещённый склон
+  col = mix(col, u_deep, shadow * 0.65 + valley * 0.25);       // теневой склон + ложбина
+  col = mix(col, u_c3, (spec * 0.9 + rim * 0.35) * u_light);   // highlight гребня + кромка
 
   // плавно уходим в фон страницы к нижнему краю hero — без резкой линии;
   // заодно облегчаем зону показателей (низ hero) для читаемости

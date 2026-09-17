@@ -47,6 +47,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   checks) plus a new block in `tests/finance_card_service.test.js` (10
   checks).
 
+- **Home hero WebGL: volumetric silk waves instead of glossy highlights**
+  (`TASK_055`). Shader look only — the `TASK_054` infrastructure
+  (lifecycle, pause/resume, context-loss handling, reduced-motion,
+  fallback, DPR cap, 30 fps) is untouched. Each wave is now its own large
+  shape: a curved crest line (arc + slow noise), width varying along the
+  crest, a sharpened ridge with a soft valley on one flank, flowing across
+  the hero without a visible seam or loop. Two dominant waves plus a
+  weaker third one overlap and add up; lighting is computed once from the
+  summed relief (lit/shadow flanks, valley darkening, rim on steep slopes,
+  a broad crest highlight tinted milky lavender — no white hotspots). A
+  grayscale check confirmed the relief reads as waves without colour.
+  Palette tokens tuned (`--hero-gl-top/c3/alpha/light`). `sw.js` cache
+  bumped `finance-v186` → `finance-v187`.
+
 ### Changed
 
 - **Side-drawer "Total Balance" card removed — now an inline text block
