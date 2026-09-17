@@ -733,8 +733,8 @@
     failed** (+73, новый `tests/immersive_screens.test.js`). См.
     [`docs/tasks/TASK_048_IMMERSIVE_MAIN_SCREENS.md`](tasks/TASK_048_IMMERSIVE_MAIN_SCREENS.md).
 
-44. **TASK_049_HOME_COMPACT_MOVE_BALANCE_TO_DRAWER** — `DONE` (локально,
-    без push). По прямому запросу пользователя: блок `.hero-balance#finCard`
+44. **TASK_049_HOME_COMPACT_MOVE_BALANCE_TO_DRAWER** — `DONE`. По прямому
+    запросу пользователя: блок `.hero-balance#finCard`
     на Главной (метка «Общий баланс» + сумма + строка изменения, затем
     Доходы/Расходы/Поток) занимал слишком много места. Метка/сумма/изменение
     (`.hb-head`/`#fcVal`/`#fcChg`) убраны с Главной — Доходы/Расходы/Поток
@@ -748,7 +748,10 @@
     не изменены. Фильтры, переключение месяцев, счета, операции — не
     затронуты. `sw.js` `finance-v180` → `finance-v181`. Тесты: **2179 passed,
     0 failed** (+36, новый `tests/home_balance_drawer.test.js`). Проверено в
-    preview на 320/375/390, светлая/тёмная тема. См.
+    preview на 320/375/390, светлая/тёмная тема, и повторно на production
+    после публикации. Опубликовано коммитом `1ee87bc`
+    («feat: move home balance to drawer», `2f7b525..1ee87bc`); деплой
+    GitHub Pages подтверждён, production отдаёт `finance-v181`. См.
     [`docs/tasks/TASK_049_HOME_COMPACT_MOVE_BALANCE_TO_DRAWER.md`](tasks/TASK_049_HOME_COMPACT_MOVE_BALANCE_TO_DRAWER.md).
 
 ## Пояснения
