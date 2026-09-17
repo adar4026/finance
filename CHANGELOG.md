@@ -7,10 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — Version 1.1.0 (in development)
+## [Unreleased]
 
-> Version 1.1.0 is the active development milestone, built on top of the
-> stable 1.0.0 foundation.
+_Nothing yet._
+
+## [1.1.0] — 2026-09-17
+
+**A-Lex Finance 1.1.0 — first minor release after 1.0.0.** Everything
+listed below (`TASK_001` … `TASK_051`) is published on
+https://adar4026.github.io/finance/. The version and release date shown
+in the side-drawer footer now come from one place — `js/core/app_info.js`
+(`AF.AppInfo.version` / `releasedAt`); see "Версии и релизы" in
+`AGENTS.md` for the versioning policy (PATCH / MINOR / MAJOR) and the
+release checklist.
+
+### Added
+
+- **Single source of version and release date; drawer footer shows
+  «A-Lex Finance · v1.1.0 / Обновлено: сентябрь 2026»** (`TASK_051`).
+  `AF.AppInfo` (`js/core/app_info.js`) gains `releasedAt` (fixed ISO
+  release date, replaces the unused English `releaseDate` string) and
+  the display helpers `displayVersion()` → `v1.1.0` and
+  `displayReleaseDate()` → `сентябрь 2026` (parsed from the ISO string
+  without `Date`, so the device's time zone, locale or current date
+  never change the release month). `renderReleaseInfo()` builds the
+  two-line footer only from that object and degrades gracefully if a
+  stale cached `app_info.js` without helpers is served next to a new
+  `index.html`. Footer colour switched to `--muted` (contrast ≥ 3:1 in
+  both themes, checked by test), still compact, centred and pinned to
+  the bottom. Version policy and release checklist added to
+  `AGENTS.md`. New `tests/release_info.test.js` (99 checks). `sw.js`
+  cache bumped `finance-v182` → `finance-v183` (cache version is a
+  separate entity from the app version).
 
 ### Changed
 
@@ -1110,5 +1138,6 @@ This version represents the first stable public release of A-Lex Finance.
 - **Release date:** June 2026
 - **Status:** Production Release
 
-[Unreleased]: https://github.com/adar4026/finance/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/adar4026/finance/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/adar4026/finance/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/adar4026/finance/releases/tag/v1.0.0

@@ -150,9 +150,10 @@ const balanceCss = block(/\.drawer-balance\{/, '/* Заголовок секци
     'Footer: #drawerRelease — последний элемент .drawer-scroll');
   assertTrue(/\.drawer-footer\{margin-top:auto;text-align:center;[^}]*env\(safe-area-inset-bottom\)/.test(drawerCss),
     'Footer: pinned к низу (margin-top:auto), центрирован, учитывает safe-area');
-  assertTrue(/\.drawer-footer \.rel-name,\.drawer-footer \.rel-ver\{display:inline/.test(drawerCss), 'Footer: название и версия в одну спокойную строку');
-  assertTrue(/function renderReleaseInfo\(\)\{\n  const a=AF\.AppInfo,el=\$\('#drawerRelease'\);if\(!el\)return;\n  el\.innerHTML=`<div class="rel-name">\$\{a\.name\}<\/div>`\n    \+`<div class="rel-ver">Version \$\{a\.version\}<\/div>`;/.test(html),
-    'renderReleaseInfo() не изменён');
+  assertTrue(/\.drawer-footer \.rel-name\{/.test(drawerCss) && /\.drawer-footer \.rel-date\{/.test(drawerCss), 'Footer: строка названия/версии и строка даты (TASK_051)');
+  // TASK_051: footer — две строки только из AF.AppInfo (подробно — tests/release_info.test.js)
+  assertTrue(/function renderReleaseInfo\(\)\{\n  const a=AF\.AppInfo,el=\$\('#drawerRelease'\);if\(!el\|\|!a\)return;[\s\S]{0,700}?el\.innerHTML=`<div class="rel-name">\$\{a\.name\} · \$\{ver\}<\/div>`\n    \+\(date\?`<div class="rel-date">Обновлено: \$\{date\}<\/div>`:''\);/.test(html),
+    'renderReleaseInfo() формирует footer только из AF.AppInfo');
   assertTrue(/\.drawer-top\{[^}]*margin:max\(14px,env\(safe-area-inset-top\)\)/.test(drawerCss), 'Safe Area: верхний отступ как раньше');
   assertTrue(/\.drawer\{position:relative;width:86%;max-width:360px;height:100%/.test(drawerCss), 'Панель: ширина 86% / 360px сохранена');
   assertTrue(/border-radius:0 28px 28px 0/.test(drawerCss), 'Панель: крупные скругления сохранены');
@@ -166,7 +167,9 @@ const balanceCss = block(/\.drawer-balance\{/, '/* Заголовок секци
 
 // ============ §7 — sw.js ============
 {
-  assertTrue(/const CACHE = 'finance-v182';/.test(sw), 'sw.js: версия кэша finance-v182');
+  // TASK_050 поднял кэш до v182; последующие задачи поднимают дальше — проверяем только формат
+  // (точное значение — в тесте актуальной задачи, см. tests/release_info.test.js)
+  assertTrue(/const CACHE = 'finance-v\d+';/.test(sw), 'sw.js: версия кэша в формате finance-vNNN');
 }
 
 console.log(`${passed} passed, ${failed} failed`);

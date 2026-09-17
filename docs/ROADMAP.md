@@ -770,6 +770,18 @@
     (`83a1b01..964a3fd`); деплой GitHub Pages подтверждён, production
     отдаёт `finance-v182`. См.
     [`docs/tasks/TASK_050_DRAWER_COMPACT_REDESIGN.md`](tasks/TASK_050_DRAWER_COMPACT_REDESIGN.md).
+46. **TASK_051_RELEASE_INFO_SINGLE_SOURCE** — `DONE`. Единый источник
+    версии и даты релиза: `AF.AppInfo` (`js/core/app_info.js`) →
+    `version: '1.1.0'`, `releasedAt: '2026-09-17'`, helper'ы
+    `displayVersion()`/`displayReleaseDate()` (без `Date`/TZ/локали);
+    footer шторки «A-Lex Finance · v1.1.0» / «Обновлено: сентябрь 2026»
+    формируется только из него (`renderReleaseInfo()`, защита от
+    рассинхрона кэша). Политика версий PATCH/MINOR/MAJOR и чек-лист
+    релиза — в `AGENTS.md`; `CHANGELOG.md` закрыт как `[1.1.0] —
+    2026-09-17`. `sw.js` `finance-v182` → `finance-v183`. Тесты: **2361
+    passed, 0 failed** (+101, новый `tests/release_info.test.js`).
+    Публикация — см. TASK-файл. См.
+    [`docs/tasks/TASK_051_RELEASE_INFO_SINGLE_SOURCE.md`](tasks/TASK_051_RELEASE_INFO_SINGLE_SOURCE.md).
 
 ## Пояснения
 

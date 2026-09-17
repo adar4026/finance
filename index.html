@@ -577,10 +577,12 @@
   /* Footer — спокойный, центрированный, второстепенный; прижат к низу (margin-top:auto в flex-колонке
      .drawer-scroll), на маленьких экранах уходит в прокрутку вместе с контентом */
   .drawer-footer{margin-top:auto;text-align:center;padding:14px 20px calc(14px + env(safe-area-inset-bottom));
-    color:var(--muted2);background:none;border:none;width:100%;font-family:inherit;font-size:11.5px;letter-spacing:.1px;
-    -webkit-user-select:none;user-select:none}
-  .drawer-footer .rel-name,.drawer-footer .rel-ver{display:inline;font-size:inherit;font-weight:500;color:var(--muted2)}
-  .drawer-footer .rel-ver::before{content:"\00b7";margin:0 6px}
+    color:var(--muted);background:none;border:none;width:100%;font-family:inherit;font-size:11.5px;letter-spacing:.1px;
+    line-height:1.35;-webkit-user-select:none;user-select:none}
+  /* TASK_051: две строки из renderReleaseInfo() — «Название · vX.Y.Z» и «Обновлено: месяц год»;
+     цвет --muted (читаем в обеих темах, контраст ≥3:1 к --hero-bottom), визуально второстепенный */
+  .drawer-footer .rel-name{font-weight:600}
+  .drawer-footer .rel-date{margin-top:1px;font-weight:500;opacity:.85}
   .drawer-footer.tappable{cursor:pointer;transition:opacity .15s}
   .drawer-footer.tappable:active{opacity:.55}
   .sheet{background:var(--bg);width:100%;max-width:560px;border-radius:26px 26px 0 0;
@@ -3382,11 +3384,18 @@ function openDrawer(){
   $('#drawerOverlay').classList.add('show');
 }
 function closeDrawer(){$('#drawerOverlay').classList.remove('show');document.body.classList.remove('drawer-open');}
-/* ReleaseInfo — блок версии внизу drawer. Источник истины: AF.AppInfo (единственное место правок). */
+/* ReleaseInfo — блок версии внизу drawer. Источник истины: AF.AppInfo (единственное место правок).
+   TASK_051: две строки — «Название · vX.Y.Z» и «Обновлено: месяц год»; версия и дата
+   берутся только из AF.AppInfo (displayVersion()/displayReleaseDate() — фиксированная дата
+   релиза, не дата устройства). Литералов версии/месяца в разметке/CSS нет. */
 function renderReleaseInfo(){
-  const a=AF.AppInfo,el=$('#drawerRelease');if(!el)return;
-  el.innerHTML=`<div class="rel-name">${a.name}</div>`
-    +`<div class="rel-ver">Version ${a.version}</div>`;
+  const a=AF.AppInfo,el=$('#drawerRelease');if(!el||!a)return;
+  // Защита от рассинхрона кэша (новый index.html + ещё старый app_info.js без helper'ов, HTTP-кэш
+  // GitHub Pages max-age=600): footer деградирует до сырых полей, старт приложения не прерывается.
+  const ver=typeof a.displayVersion==='function'?a.displayVersion():'v'+a.version;
+  const date=typeof a.displayReleaseDate==='function'?a.displayReleaseDate():(a.releasedAt||'');
+  el.innerHTML=`<div class="rel-name">${a.name} · ${ver}</div>`
+    +(date?`<div class="rel-date">Обновлено: ${date}</div>`:'');
   // Future-proof: появятся заметки релиза → блок станет тапабельным «Что нового» без правок вёрстки.
   if(a.releaseNotes){ el.classList.add('tappable'); el.onclick=()=>openWhatsNew&&openWhatsNew(); }
 }

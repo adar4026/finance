@@ -183,7 +183,7 @@ function planFor(text, state) {
 // ---- A8. Восстановление: успешная замена ----
 {
   const st = seed();
-  const backupFile = B.create(st, { appVersion: '1.0.0' });
+  const backupFile = B.create(st, { appVersion: '0.0.0-test' });
   // меняем данные после копии
   const changed = JSON.parse(JSON.stringify(st));
   changed.tx.push({ id: 't9', type: 'income', amount: 999, date: '2024-03-01', account: 'a_ing', cat: 'c_food' });

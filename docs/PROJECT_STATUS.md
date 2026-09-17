@@ -1,6 +1,6 @@
 # PROJECT_STATUS — A-Lex Finance
 
-**Обновлено:** 2026-09-17 (`TASK_050`)
+**Обновлено:** 2026-09-17 (`TASK_051`)
 
 ## Состояние приложения
 
@@ -14,9 +14,62 @@
   https://adar4026.github.io/finance/.
 - Опубликованная версия проверена напрямую (production `sw.js`).
 
+## Версия приложения
+
+- **v1.1.0**, релиз **2026-09-17** («Обновлено: сентябрь 2026») —
+  единственный источник: `js/core/app_info.js` (`AF.AppInfo.version` /
+  `releasedAt`). Политика версий (PATCH / MINOR / MAJOR) и обязательный
+  чек-лист релиза — [`AGENTS.md`](../AGENTS.md), раздел «Версии и релизы».
+- Cache version Service Worker (`sw.js`) — отдельная сущность, сейчас
+  `finance-v183`.
+
 ## Активная задача
 
-- Нет. Последняя закрытая задача — `TASK_050` (см. ниже; опубликовано).
+- Нет. Последняя закрытая задача — `TASK_051` (см. ниже; опубликовано).
+
+## TASK_051 — Единый источник версии и даты релиза в footer шторки, v1.1.0 (DONE)
+
+`AF.AppInfo` (`js/core/app_info.js`) — единственное место правок версии и
+даты: `version: '1.1.0'`, `releasedAt: '2026-09-17'` (неиспользуемое
+английское `releaseDate: 'June 2026'` убрано), helper'ы
+`displayVersion()` → `v1.1.0` и `displayReleaseDate()` → `сентябрь 2026`
+(разбор ISO-строки без `Date`/`Intl` — часовой пояс, локаль и текущая дата
+устройства не влияют; 12 русских месяцев в именительном падеже;
+некорректная строка возвращается как есть). `renderReleaseInfo()` в
+`index.html` формирует footer шторки только из этого объекта — две
+строки «A-Lex Finance · v1.1.0» и «Обновлено: сентябрь 2026» — и
+защищён от рассинхрона кэша (новый `index.html` + ещё старый
+`app_info.js` без helper'ов из HTTP-кэша GitHub Pages `max-age=600`):
+деградирует до сырых полей без исключения, т.к. вызывается до
+`showScreen()`/`secMaybeLock()` при старте. CSS footer: цвет `--muted`
+(контраст к `--hero-bottom` 4.3:1 light / 5.6:1 dark, проверяется
+тестом), две строки `.rel-name`/`.rel-date`, по-прежнему 11.5px,
+центрирован, `margin-top:auto` (pinned при коротком контенте, в
+прокрутке на маленьких экранах); остальная шторка `TASK_050` не
+менялась. `sw.js` `finance-v182` → `finance-v183` (cache version не
+выводится из semver и наоборот). Политика версий и чек-лист релиза
+добавлены в `AGENTS.md` (раздел 7); `CHANGELOG.md`: `[Unreleased] —
+Version 1.1.0` закрыт как `[1.1.0] — 2026-09-17`, новый пустой
+`[Unreleased]`. Новый тест `tests/release_info.test.js` (99 проверок:
+поля/helper'ы, единственное определение `AF.AppInfo` в проекте,
+независимость от `Date` (глобальный `Date` подменён на бросающий),
+граничные даты, реальный `renderReleaseInfo()` на фейковом DOM →
+ожидаемые строки и реакция на другую версию/дату, устойчивость к
+старому AppInfo, отсутствие `Version 1.0.0`/`1.0.0`/`June 2026`/месяца в
+`index.html` и во всех тестах, контраст footer light/dark, footer в
+потоке и последний в `.drawer-scroll`, структура шторки `TASK_050`,
+`sw.js`). Fixture-строки `'1.0.0'` в `tests/backup_service.test.js` /
+`tests/export_import_screen.test.js` заменены на `'0.0.0-test'` (они
+проверяют passthrough явной опции `appVersion`, не версию приложения);
+инвариант cache version в `tests/drawer_redesign.test.js` ослаблен до
+формата. Тесты: **2361 passed, 0 failed** (было 2260, +101). Preview
+320×568 / 390×844 / 430×932, light/dark: две строки footer, без
+горизонтального overflow, footer не перекрывает пункты (последний
+элемент потока, `footer.top ≥ lastCard.bottom`), pinned на 430
+(`scrollH == clientH`), в прокрутке на 320/390; все 9 пунктов, профиль,
+цикл темы, `#fcEye`, backdrop/Escape — как в `TASK_050`; консоль без
+ошибок. Публикация — см. TASK-файл.
+См. [`docs/tasks/TASK_051_RELEASE_INFO_SINGLE_SOURCE.md`](tasks/TASK_051_RELEASE_INFO_SINGLE_SOURCE.md).
 
 ## TASK_050 — Боковая шторка: компактный премиальный редизайн (DONE)
 

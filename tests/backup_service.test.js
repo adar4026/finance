@@ -45,13 +45,13 @@ function sample() {
 // ============ 1. Конверт ============
 {
   const st = sample();
-  const file = B.create(st, { appVersion: '1.0.0', createdAt: 1700000000001 });
+  const file = B.create(st, { appVersion: '0.0.0-test', createdAt: 1700000000001 });
   const p = JSON.parse(file);
   assertEqual(p.format, 'alex-finance-backup', 'В конверте есть идентификатор формата');
   assertEqual(p.app, 'Alex Finance', 'Ключ старого формата app сохранён для совместимости');
   assertEqual(p.backupVersion, 2, 'Версия конверта');
   assertEqual(p.schemaVersion, 3, 'Версия схемы данных');
-  assertEqual(p.appVersion, '1.0.0', 'Версия приложения');
+  assertEqual(p.appVersion, '0.0.0-test', 'Версия приложения (передана явно — passthrough опции, не AF.AppInfo)');
   assertEqual(p.createdAt, 1700000000001, 'Время создания');
   assertEqual(p.checksum.algo, 'fnv1a32', 'Алгоритм контрольной суммы указан');
   assertTrue(/^[0-9a-f]{8}$/.test(p.checksum.value), 'Контрольная сумма — 8 hex-символов');
