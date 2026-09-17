@@ -1,6 +1,6 @@
 # PROJECT_STATUS — A-Lex Finance
 
-**Обновлено:** 2026-09-17 (`TASK_053`)
+**Обновлено:** 2026-09-17 (`TASK_054`)
 
 ## Состояние приложения
 
@@ -21,11 +21,42 @@
   `releasedAt`). Политика версий (PATCH / MINOR / MAJOR) и обязательный
   чек-лист релиза — [`AGENTS.md`](../AGENTS.md), раздел «Версии и релизы».
 - Cache version Service Worker (`sw.js`) — отдельная сущность, сейчас
-  `finance-v185`.
+  `finance-v186`.
 
 ## Активная задача
 
-- Нет. Последняя закрытая задача — `TASK_053` (см. ниже; опубликовано).
+- Нет. Последняя закрытая задача — `TASK_054` (см. ниже; опубликовано).
+
+## TASK_054 — Главная: WebGL-фон hero «жидкая ткань» (DONE)
+
+В слой `.finance-ambient` (TASK_047/048) добавлен один WebGL `<canvas
+id="heroCanvas">` строго в границах hero (`height:var(--hero-h)`, не
+`inset:0`) — перенос проверенной реализации Lexcar
+(`LexCar/src/components/HeroCanvas.js`, `8a6b74d`) без React: новый
+модуль `AF.HeroCanvas` (`js/ui/hero_canvas.js`, 17.4 KB / 6.6 KB gzip,
+без зависимостей). Шейдер побайтно тот же: три деформируемых
+height-field складки (2D simplex noise + синусоидальный displacement),
+псевдонормаль через конечные разности, diffuse + specular (светлая
+кромка) + мягкая тень к глубокому пурпурному, нижний fade к
+`--hero-bottom`. Палитра — фирменная violet/lavender гамма Finance из
+новых CSS-токенов `--hero-gl-*` (light/dark; `c1 = --accent`, `bot =
+--hero-bottom`), читается `getComputedStyle` → uniforms и обновляется по
+`MutationObserver` на `data-theme` без перезагрузки. Производительность:
+DPR ≤ 1.5, ~30 fps, `low-power`, один triangle, один draw/кадр, resize
+только при реальном изменении размера/DPR; пауза при `document.hidden` и
+вне viewport (`IntersectionObserver`), время накапливается по кадрам —
+без скачка после фона. Fallback: нет WebGL / shader failure / reduced
+motion / context lost → canvas прозрачен, CSS-blob'ы TASK_047 остаются;
+при успехе canvas fade-in 0.9s, blob'ы и `.ambient-fade` гаснут
+синхронно; `webglcontextrestored` → реинициализация. Эвристика
+`deviceMemory`/`hardwareConcurrency` из Lexcar намеренно не перенесена.
+UI поверх не анимируется. `sw.js` `finance-v185` → `finance-v186`.
+Тесты: **2578 passed, 0 failed** (+99 новый
+`tests/home_hero_webgl.test.js`, одно утверждение TASK_047 «без WebGL»
+скорректировано). Проверено в preview на 320/375/390/430 px, light/dark:
+без overflow, canvas = 460 px, lifecycle (IO / hidden / context loss /
+restore / no-WebGL / reduced-motion) — по счётчику RAF. См.
+[`docs/tasks/TASK_054_HOME_HERO_WEBGL_LIQUID_FABRIC.md`](tasks/TASK_054_HOME_HERO_WEBGL_LIQUID_FABRIC.md).
 
 ## TASK_053 — Главная: тонкая шкала соотношения доходов/расходов (DONE)
 

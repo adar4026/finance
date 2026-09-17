@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Home hero: live WebGL "liquid fabric" background** (`TASK_054`). A
+  single WebGL canvas confined to the hero (`var(--hero-h)`) inside the
+  existing `.finance-ambient` layer renders three slowly deforming satin
+  folds (2D simplex noise + sinusoidal displacement as a height field,
+  finite-difference pseudo-normal, diffuse + specular rim + soft shadow,
+  bottom fade into `--hero-bottom`). The shader and lifecycle are ported
+  1:1 from Lexcar's `HeroCanvas`; only the palette differs — Finance's own
+  violet/lavender set from new `--hero-gl-*` theme tokens (light/dark),
+  read into uniforms and updated live on theme change. Performance for
+  the iPhone PWA: DPR ≤ 1.5, ~30 fps, `low-power` context, one triangle,
+  one draw per frame, paused when the tab is hidden or the hero is out of
+  view. If WebGL is unavailable, the shader fails, `prefers-reduced-motion`
+  is on or the context is lost, the existing CSS blob background stays as
+  the fallback; on success the canvas fades in over 0.9s while the CSS
+  layers fade out. UI on top is static. New module `js/ui/hero_canvas.js`
+  (17.4 KB / 6.6 KB gzip, no dependencies). `sw.js` cache bumped
+  `finance-v185` → `finance-v186`. New `tests/home_hero_webgl.test.js` (99
+  checks).
 - **Home: thin income/expense ratio bar under the summary row**
   (`TASK_053`). A minimal horizontal pill (`#fcRatio`, 8px tall, no
   text/numbers/legend/card) sits between "Доходы/Расходы/Поток" and

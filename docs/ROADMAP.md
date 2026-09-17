@@ -820,6 +820,19 @@
     отдаёт `finance-v185`, пример из постановки (€285/€1 106,65 →
     20,5%/79,5%) воспроизведён 1-в-1. См.
     [`docs/tasks/TASK_053_HOME_INCOME_EXPENSE_RATIO_BAR.md`](tasks/TASK_053_HOME_INCOME_EXPENSE_RATIO_BAR.md).
+49. **TASK_054_HOME_HERO_WEBGL_LIQUID_FABRIC** — `DONE`. Главная: WebGL-фон
+    hero «жидкая ткань» — перенос реализации Lexcar (`HeroCanvas.js`,
+    `8a6b74d`) без React в модуль `AF.HeroCanvas` (`js/ui/hero_canvas.js`).
+    Один canvas в границах hero (`var(--hero-h)`), тот же шейдер: три
+    height-field складки (simplex noise + sin displacement), псевдонормаль,
+    diffuse/specular/тень, нижний fade. Палитра — фирменная violet/lavender
+    из CSS-токенов `--hero-gl-*` (light/dark), живое обновление при смене
+    темы. DPR ≤ 1.5, ~30 fps, low-power, пауза при `document.hidden`/вне
+    viewport, CSS-fallback TASK_047 при отсутствии WebGL / reduced motion /
+    context lost. `sw.js` `finance-v185` → `finance-v186`. Тесты: **2578
+    passed, 0 failed** (+99 новый `tests/home_hero_webgl.test.js`).
+    Опубликовано коммитом `98f26ed`. См.
+    [`docs/tasks/TASK_054_HOME_HERO_WEBGL_LIQUID_FABRIC.md`](tasks/TASK_054_HOME_HERO_WEBGL_LIQUID_FABRIC.md).
 
 ## Пояснения
 
