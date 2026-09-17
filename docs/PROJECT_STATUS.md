@@ -53,7 +53,10 @@
 Бюджет шейдера тот же (18 `snoise`/фрагмент), 52 draw за 2 с. `sw.js`
 `finance-v186` → `finance-v187`. Тесты: **2609 passed, 0 failed** (§5
 `tests/home_hero_webgl.test.js` переписан под новую геометрию, 130
-проверок). См.
+проверок). Опубликовано коммитом `1ef02ac` (`c8b2fd4..1ef02ac`); деплой
+GitHub Pages подтверждён, production отдаёт `finance-v187`, WebGL-hero
+активен на всех четырёх immersive-экранах, lifecycle/fallback проверены
+на production. См.
 [`docs/tasks/TASK_055_HOME_HERO_WEBGL_SILK_WAVES.md`](tasks/TASK_055_HOME_HERO_WEBGL_SILK_WAVES.md).
 
 ## TASK_054 — Главная: WebGL-фон hero «жидкая ткань» (DONE)

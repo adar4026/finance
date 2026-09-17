@@ -174,8 +174,20 @@ hotspots, `pow(…, 12)` + чисто белый `vec3(1.0)`), которые з
 
 ### Git / публикация
 
-- Реализация + документация: один коммит `feat(TASK_055): refine WebGL
-  hero silk waves` (hash — см. `docs/PROJECT_STATUS.md`); только файлы
-  задачи, посторонние незакоммиченные изменения не тронуты.
-- Публикация: push в `origin/main` (GitHub Pages); результат проверки
-  production — ниже.
+- Реализация + документация: один коммит `1ef02ac` (`feat(TASK_055):
+  refine WebGL hero silk waves`), push `c8b2fd4..1ef02ac` в `origin/main`;
+  только файлы задачи, посторонние незакоммиченные изменения не тронуты.
+- Production (https://adar4026.github.io/finance/, проверено 2026-09-17,
+  390 px, Chrome): `sw.js` отдаёт `finance-v187`, единственный кэш
+  `finance-v187` (старый вычищен), `js/ui/hero_canvas.js` 200 / 20 874 байт
+  с новым шейдером (`waveShape`/`relief`), `index.html` с новыми токенами.
+  WebGL-hero активен на Главной, Аналитике, Счетах и Бюджетах (на каждом:
+  `hero-canvas--on`, canvas 390×460 → 585×690, ~26 draw/с при 120 RAF/с);
+  один `<canvas.hero-canvas>`, один WebGL-контекст (`getContext` возвращает
+  тот же объект); `scrollWidth === clientWidth` (390) на всех четырёх
+  экранах; не-immersive экран → RAF 0, назад → 121 RAF/с (один loop, не
+  два); `document.hidden` → 0, visible → 121; `loseContext()` → класс
+  снят, RAF 0, CSS-fallback виден; `restoreContext()` → активен, один
+  loop; `getContext → null` → `mount() === false`, blob'ы `visible`;
+  reduced-motion → `mount() === false`; повторный `mount()` → активен.
+  Консоль без ошибок.

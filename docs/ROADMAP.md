@@ -841,7 +841,8 @@
     одном склоне, протекание через экран без шва; две доминирующие + одна
     вторичная, свет от суммарного рельефа (grayscale-проверка пройдена),
     highlight в молочную лаванду без белых пятен. `sw.js` `finance-v186`
-    → `finance-v187`. Тесты: **2609 passed, 0 failed**. См.
+    → `finance-v187`. Тесты: **2609 passed, 0 failed**. Опубликовано
+    коммитом `1ef02ac`; production отдаёт `finance-v187`. См.
     [`docs/tasks/TASK_055_HOME_HERO_WEBGL_SILK_WAVES.md`](tasks/TASK_055_HOME_HERO_WEBGL_SILK_WAVES.md).
 
 ## Пояснения
