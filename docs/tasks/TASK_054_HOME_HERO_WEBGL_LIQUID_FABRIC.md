@@ -228,5 +228,10 @@ inset:0`, `display:block` только при активном `.screen.immersiv
 
 - Реализация: `98f26ed` (`feat(TASK_054): …`), `37a2392..98f26ed`.
 - Документация: следующий коммит `docs(TASK_054): …`.
-- Публикация: push в `main` (GitHub Pages); production проверка —
-  `sw.js` отдаёт `finance-v186` (см. ниже).
+- Документация: `0fc5cdf` (`docs(TASK_054): …`); push `37a2392..0fc5cdf`.
+- Публикация: GitHub Pages, деплой подтверждён 2026-09-17 — production
+  `sw.js` отдаёт `finance-v186`, `js/ui/hero_canvas.js` — 200 / 17 382
+  байт; на https://adar4026.github.io/finance/ (390 px) `AF.HeroCanvas.
+  isActive() === true`, canvas 390×460 (585×690), `hero-canvas--on`,
+  единственный кэш `finance-v186`, старый вычищен, без overflow, консоль
+  без ошибок.
