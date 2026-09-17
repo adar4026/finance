@@ -53,7 +53,12 @@ TASK_049) по решению пользователя остался на ме�
 пунктов открывают свои экраны и закрывают шторку, профиль, цикл темы
 light → dark → system, `#fcEye`, бейдж, backdrop/Escape — работают; SW
 `activated`, единственный кэш `finance-v182`, `index.html` в кэше,
-`manifest.json` не менялся. Публикация — см. TASK-файл.
+`manifest.json` не менялся. Опубликовано коммитом **`964a3fd`**
+(`83a1b01..964a3fd` в `origin/main`), деплой GitHub Pages (run
+`35194813002`) — `success`, production отдаёт `finance-v182`; production
+проверен напрямую (новая шторка, SW `activated`, единственный кэш
+`finance-v182`, консоль без ошибок). Реальная проверка на физическом
+iPhone не выполнялась.
 См. [`docs/tasks/TASK_050_DRAWER_COMPACT_REDESIGN.md`](tasks/TASK_050_DRAWER_COMPACT_REDESIGN.md).
 
 ## TASK_049 — Главная: убрать «Общий баланс» с экрана, перенести в шторку (DONE)

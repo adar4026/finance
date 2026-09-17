@@ -766,7 +766,9 @@
     (+81, новый `tests/drawer_redesign.test.js`; инвариант группы
     «Приложение» в `tests/profile_screen.test.js` 4/3 → 3/2). Проверено в
     preview на 320/390/430, светлая/тёмная тема, функционально по всем
-    пунктам, SW/кэш. Публикация — см. TASK-файл. См.
+    пунктам, SW/кэш. Опубликовано коммитом `964a3fd`
+    (`83a1b01..964a3fd`); деплой GitHub Pages подтверждён, production
+    отдаёт `finance-v182`. См.
     [`docs/tasks/TASK_050_DRAWER_COMPACT_REDESIGN.md`](tasks/TASK_050_DRAWER_COMPACT_REDESIGN.md).
 
 ## Пояснения

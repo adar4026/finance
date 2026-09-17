@@ -279,7 +279,27 @@ iOS / Apple Wallet.
 
 ### Публикация
 
-_(заполняется после commit/push/деплоя)_
+- Коммит реализации: `feat(TASK_050): компактный премиальный редизайн
+  боковой шторки` — **`964a3fd`**. В коммит вошли только 8 файлов задачи
+  (`index.html`, `sw.js`, `tests/drawer_redesign.test.js`,
+  `tests/profile_screen.test.js`, TASK-файл, `docs/PROJECT_STATUS.md`,
+  `docs/ROADMAP.md`, `CHANGELOG.md`); посторонние изменения рабочего
+  дерева (`.claude/launch.json`, удалённый `icon.svg`, `.DS_Store`) не
+  включены.
+- Push в `origin/main`: `83a1b01..964a3fd`.
+- Деплой: GitHub Actions «pages build and deployment» (run
+  `35194813002`) — `completed`/`success` для `964a3fd`. Production
+  https://adar4026.github.io/finance/ отдаёт `sw.js` с
+  `CACHE = 'finance-v182'`.
+- **Production-проверка** (браузер, 390×844, чистая сессия без локальных
+  данных): шторка в новом виде — компактная строка профиля без фона
+  (`background-image: none` у `#drawerHead`), кнопка темы в header,
+  9 строк меню с прозрачными `.dr-ic` (без плиток), стеклянные группы,
+  «Общий баланс» `€0`, footer «A-Lex Finance · Version 1.0.0»; бейдж
+  уведомлений скрыт при 0; цикл темы light → dark → system → light;
+  SW `activated` на scope `/finance/`, после перезагрузки единственный
+  кэш `["finance-v182"]` (старый `finance-v181` вычищен); консоль без
+  ошибок; горизонтального overflow нет.
 
 ### Известные ограничения
 
