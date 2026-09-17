@@ -1,5 +1,5 @@
 // Service worker — офлайн-кэш приложения
-const CACHE = 'finance-v185';
+const CACHE = 'finance-v186';
 const ASSETS = [
   './',
   './index.html',
@@ -37,6 +37,7 @@ const ASSETS = [
   './js/services/amount_input_service.js',
   './js/services/tx_time_service.js',
   './js/services/security_service.js',
+  './js/ui/hero_canvas.js',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'
 ];
 

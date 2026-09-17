@@ -135,7 +135,9 @@ const css = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
   assertTrue(/\$\('#fcMonthPrev'\)\.onclick=\(\)=>\{if\(period==='custom'\)return;fcMonthAnimDir=-1;shiftPeriod\(-1\);\};/.test(html), 'стрелка назад — прежний shiftPeriod(-1)');
   assertTrue(/function shiftPeriod\(dir\)\{anchor=AF\.Services\.Period\.shiftAnchor\(period,anchor,dir\);render\(\);\}/.test(html), 'shiftPeriod() не изменён');
   assertTrue(/function renderRecent\(list\)\{/.test(html) && /function homeGroupedTxHtml\(list\)\{/.test(html), 'список операций (renderRecent/homeGroupedTxHtml) на месте');
-  assertTrue(!/<video|WebGL|requestAnimationFrame\(heroLoop/.test(html), 'без видео/WebGL/JS-анимационного цикла для фона');
+  // TASK_054: WebGL-слой hero (AF.HeroCanvas) — осознанное дополнение к CSS-фону, живёт в отдельном
+  // модуле js/ui/hero_canvas.js с CSS-fallback; в index.html по-прежнему нет видео и inline-loop'а.
+  assertTrue(!/<video|requestAnimationFrame\(heroLoop/.test(html), 'без видео/inline JS-анимационного цикла для фона в index.html');
   assertTrue(/const CACHE = 'finance-v(\d+)';/.test(sw) && parseInt(sw.match(/finance-v(\d+)/)[1], 10) >= 179, 'sw.js: версия кэша ≥ finance-v179');
 }
 

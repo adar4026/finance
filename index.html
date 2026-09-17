@@ -57,6 +57,7 @@
 <script src="js/services/search_service.js"></script>
 <script src="js/services/haptics_service.js"></script>
 <script src="js/services/amount_input_service.js"></script>
+<script src="js/ui/hero_canvas.js"></script>
 <style>
   /* Alex Finance Design Tokens (Product Book Part 2/4) */
   :root, [data-theme="light"]{
@@ -108,6 +109,18 @@
     --hero-capsule:rgba(255,255,255,.62);
     --hero-capsule-border:rgba(255,255,255,.8);
     --hero-sep:rgba(22,24,31,.12);
+    /* TASK_054: палитра WebGL-слоя hero («жидкая ткань», AF.HeroCanvas) — фирменная
+       violet/purple/lavender гамма Finance (--accent/--accent2/--cap-grad), а не голубая
+       палитра CSS-fallback выше. Читается getComputedStyle → uniforms шейдера; низ сцены
+       (--hero-gl-bot) обязан совпадать с --hero-bottom — там canvas растворяется в фон списка. */
+    --hero-gl-top:#e6e1fb;                            /* верх сцены — бледная лаванда */
+    --hero-gl-bot:var(--hero-bottom);                 /* низ сцены = фон под списком */
+    --hero-gl-c1:var(--accent);                       /* primary fold — фирменный violet */
+    --hero-gl-c2:#b5abf9;                             /* secondary fold — lavender (= --cap-grad) */
+    --hero-gl-c3:#f4f1ff;                             /* highlight — почти белая сирень */
+    --hero-gl-deep:#4a3ac0;                           /* deep purple — тень/глубина складки */
+    --hero-gl-alpha:.46 .40 .52;                      /* непрозрачность слоёв c1 c2 c3 */
+    --hero-gl-light:.75;                              /* сила светлой кромки (specular) */
     /* ===== Страница операции (TASK_014) — локальные семантические токены экрана.
        Глобальные --expense/--income намеренно НЕ переопределяются: они управляют
        цветом сумм в списках, на Главной и в аналитике и остаются как были. ===== */
@@ -166,6 +179,15 @@
     --hero-capsule:rgba(255,255,255,.14);
     --hero-capsule-border:rgba(255,255,255,.20);
     --hero-sep:rgba(255,255,255,.14);
+    /* TASK_054: тёмный вариант палитры WebGL-слоя — глубже и тише, текст остаётся читаемым */
+    --hero-gl-top:#161331;
+    --hero-gl-bot:var(--hero-bottom);
+    --hero-gl-c1:var(--accent);
+    --hero-gl-c2:var(--accent2);
+    --hero-gl-c3:#cfc6ff;
+    --hero-gl-deep:#1c1646;
+    --hero-gl-alpha:.34 .24 .16;
+    --hero-gl-light:.22;
     /* Страница операции (TASK_014) — тёмная тема не инверсия светлой, а
        отдельный набор: глубокий графитовый фон, карточки отделены по тону. */
     --tx-page-bg:#121317;
@@ -1834,6 +1856,18 @@
   @media (prefers-reduced-motion:reduce){
     .ambient-blob{animation:none;will-change:auto}   /* статичный multi-gradient, слои остаются */
   }
+  /* TASK_054: WebGL-слой «жидкой ткани» (AF.HeroCanvas, js/ui/hero_canvas.js) — один canvas
+     строго в границах hero (высота var(--hero-h), не inset:0 — не тянется на всю страницу),
+     первый ребёнок .finance-ambient, т.е. за blob'ами. Пока не активен — прозрачен, видны
+     CSS-blob'ы (fallback: нет WebGL / shader не собрался / reduced motion / context lost).
+     После активации плавно проявляется, а CSS-слои гаснут тем же 0.9s и уходят из
+     композитинга (visibility:hidden, animation:none). UI поверх не двигается. */
+  .hero-canvas{position:absolute;left:0;top:0;width:100%;height:var(--hero-h);display:block;
+    pointer-events:none;opacity:0;transition:opacity .9s ease}
+  .hero-canvas--on{opacity:1}
+  .hero-canvas--on ~ .ambient-blob,
+  .hero-canvas--on ~ .ambient-fade{animation:none;will-change:auto;opacity:0;visibility:hidden;
+    transition:opacity .9s ease,visibility 0s linear .9s}
 
   /* Header на Главной: прозрачный, элементы прямо на сцене; при прокрутке — прежнее стекло .scrolled */
   .app:has(.immersive.active) .topbar:not(.scrolled){background:transparent}
@@ -2026,6 +2060,8 @@
        прокручивается поверх. Виден только пока активна Главная (CSS :has). Анимируются только
        transform/opacity четырёх blob-слоёв; слой не перехватывает касания. -->
   <div class="finance-ambient" id="financeAmbient" aria-hidden="true">
+    <!-- TASK_054: WebGL «жидкая ткань» (AF.HeroCanvas); если не активируется — ниже остаются CSS-blob'ы -->
+    <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
     <span class="ambient-blob blob-1"></span>
     <span class="ambient-blob blob-2"></span>
     <span class="ambient-blob blob-3"></span>
@@ -7460,6 +7496,7 @@ updateEye();
 updateFcEye();
 secCheckBio();          // доступность платформенной биометрии — узнаём заранее, тихо
 secMaybeLock();         // блокировка на входе (TASK_023: с учётом настройки «Запрашивать»)
+AF.HeroCanvas.mount($('#heroCanvas')); // TASK_054: WebGL-фон hero; при любой неудаче остаётся CSS-fallback
 // при возврате в приложение — догнать пропущенные авто-операции
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(processAutoPost())render(); } });
 // TASK_023: отметка ухода в фон + повторный запрос кода по настройке «Запрашивать»
