@@ -40,42 +40,33 @@ function assertEqual(actual, expected, msg) {
 // --main-bg-grad (мягкий мятно-серо-зелёный градиент); инвариант — все четыре
 // экрана и их зона под навигацией используют ОДИН И ТОТ ЖЕ токен, каким бы он
 // ни был, а не дословно "--home-bg".
-// TASK_047: эталон — #scrCharts (Аналитика): сама Главная (#scrRecords) теперь
-// прозрачна поверх fluid-слоя .finance-ambient и токен фона не несёт.
+// TASK_047/048: инвариант тот же — один фон на четыре экрана — но теперь его
+// рисует общий слой .finance-ambient (.app:has(.immersive.active)), а сами
+// экраны и .scroll-area под ними прозрачны; «Бюджеты» — в том же списке.
 {
-  const recM = html.match(/#scrCharts\{background:var\((--[\w-]+)\)\}/);
-  assertTrue(!!recM, '#scrCharts{background:var(--...)} найден в index.html (эталон)');
-  const bgToken = recM && recM[1];
-  const budEsc = bgToken ? bgToken.replace(/[-]/g, '\\-') : '';
-  assertTrue(!!bgToken && new RegExp(`#scrBudgets\\{background:var\\(${budEsc}\\)\\}`).test(html),
-    'index.html: #scrBudgets получил тот же фон, что #scrRecords/#scrCharts/#scrAccounts');
-  assertTrue(!!bgToken && new RegExp(`\\.scroll-area:has\\(>#scrBudgets\\.active\\)\\{background:var\\(${budEsc}\\)\\}`).test(html),
-    'index.html: зона под нижней навигацией на «Бюджетах» тоже покрыта тем же токеном (тот же приём TASK_009/019/020)');
+  assertTrue(/<div class="screen immersive" id="scrBudgets">/.test(html), 'index.html: #scrBudgets помечен .immersive (общий ambient-фон четырёх экранов)');
+  assertTrue(/#scrRecords,#scrCharts,#scrAccounts,#scrBudgets\{background:transparent\}/.test(html),
+    'index.html: #scrBudgets прозрачен вместе с #scrRecords/#scrCharts/#scrAccounts (фон рисует .finance-ambient)');
+  assertTrue(/\.scroll-area:has\(>\.immersive\.active\)\{background:transparent\}/.test(html),
+    'index.html: зона под нижней навигацией на «Бюджетах» покрыта тем же слоем (.scroll-area прозрачна над .finance-ambient)');
+  assertTrue(/\.app:has\(\.immersive\.active\) \.finance-ambient\{display:block\}/.test(html),
+    'index.html: .finance-ambient показывается для любого .immersive-экрана, в т.ч. «Бюджетов»');
 }
 
-// ============ §2 — карточка «Осталось в бюджете» = тот же градиент, что «Счета» ============
+// ============ §2 — герой «Осталось в бюджете» = тот же компонент, что «Счета»/Главная ============
+// TASK_048: сиреневые .capital-карточки на «Счетах» и «Бюджетах» заменены общим
+// компонентом .hero-balance (баланс Главной, TASK_047) — без фона/рамки/тени, прямо
+// на ambient-слое. Инвариант «один и тот же компонент, не похожий клон» сохранён.
 {
-  const accM = html.match(/#scrAccounts \.capital\{background:([^}]*?padding:[^;]+;?)\}/);
-  const budM = html.match(/#scrBudgets \.capital\{background:([^}]*?padding:[^;]+;?)\}/);
-  assertTrue(!!accM, '#scrAccounts .capital{...} найден в index.html (эталон)');
-  assertTrue(!!budM, '#scrBudgets .capital{...} найден в index.html');
-  if (accM && budM) {
-    // Оба правила должны использовать один и тот же градиент/тень — сверяем
-    // саму background-строку (без учёта различающегося конечного padding).
-    const accBg = accM[1].split(/;\s*box-shadow:/)[0];
-    const budBg = budM[1].split(/;\s*box-shadow:/)[0];
-    assertEqual(budBg, accBg, '#scrBudgets .capital использует БУКВАЛЬНО тот же градиент, что #scrAccounts .capital (не новый похожий цвет)');
-    const accShadow = accM[1].match(/box-shadow:([^;]+);/);
-    const budShadow = budM[1].match(/box-shadow:([^;]+);/);
-    assertTrue(!!accShadow && !!budShadow, 'оба правила задают box-shadow явно');
-    if (accShadow && budShadow) {
-      assertEqual(budShadow[1], accShadow[1], '#scrBudgets .capital использует ту же тень, что #scrAccounts .capital');
-    }
-  }
-  assertTrue(/#scrBudgets \.capital\{background:linear-gradient\(135deg,#a79cf7 0%,#8fb0f6 55%,#8fdde3 100%\)/.test(html),
-    'index.html: #scrBudgets .capital — точный градиент карточки «Личный профиль A-Lex» (.drawer-head, TASK_017), как и на «Счетах»');
-  assertTrue(/bt\.className='capital bud-hero'/.test(html),
-    'renderBudgets(): герой-карточка получает класс .capital (переиспользование общего компонента), не только собственный .bud-hero');
+  assertTrue(!/#scrAccounts \.capital\{/.test(html), 'index.html: правила #scrAccounts .capital удалены (карточка капитала больше не сиреневая)');
+  assertTrue(!/#scrBudgets \.capital\{/.test(html), 'index.html: правила #scrBudgets .capital удалены');
+  assertTrue(/<div class="hero-balance acc-hero">/.test(html), 'index.html: «Общий капитал» на «Счетах» — компонент .hero-balance');
+  assertTrue(/bt\.className='hero-balance bud-hero'/.test(html),
+    'renderBudgets(): герой бюджета получает общий .hero-balance (тот же компонент, что баланс Главной и капитал «Счетов»), не .capital');
+  assertTrue(/\.hero-balance\{text-align:center;padding:[^}]*\}/.test(html) && !/\.hero-balance\{[^}]*(background|border|box-shadow)/.test(html),
+    'index.html: .hero-balance без фона/рамки/тени — не карточка');
+  assertTrue(/\.bud-hero \.bh-fill\{height:100%;background:var\(--nav-blue\)/.test(html), 'index.html: прогресс бюджета — существующий --nav-blue, не новый цвет');
+  assertTrue(/\.bud-hero \.bh-badge\{[^}]*background:var\(--hero-capsule\)/.test(html), 'index.html: badge «% использовано» — та же стеклянная capsule, что активный пункт сегмента');
   // Старое отдельное правило .bud-hero{background:var(--cap-grad);...} (свой подобранный
   // фиолетовый, общий с .ana-hero/.cashflow-card/goals-summary) больше не существует —
   // цвет карточки идёт исключительно от .capital.
@@ -141,14 +132,15 @@ function assertEqual(actual, expected, msg) {
   if (m) assertTrue(parseInt(m[1], 10) >= 165, 'sw.js: версия кэша поднята до finance-v165 или выше (TASK_022)');
 }
 
-// ============ §8 — TASK_024: «Потрачено/Лимит» в герой-карточке — белый текст ============
-// Общий .bh-foot{color:var(--muted2)} побеждает унаследованный от .capital
-// белый (color, заданный прямо на элементе, всегда выигрывает у наследования
-// от предка). Без явного color:#fff на .bud-hero .bh-foot текст читался бы
-// приглушённым серым на фиолетово-голубом градиенте.
+// ============ §8 — «Потрачено/Лимит» в герое — читаемый контраст ============
+// TASK_024 требовала явный color на .bud-hero .bh-foot (иначе побеждал общий
+// .bh-foot{color:var(--muted2)}). TASK_048: герой больше не на сиреневом
+// градиенте, а на светлом/тёмном ambient-фоне — явный цвет остаётся, но это
+// токен --muted (тема-зависимый), а не захардкоженный белый.
 {
-  assertTrue(/\.bud-hero \.bh-foot\{[^}]*color:#fff/.test(html),
-    'TASK_024: .bud-hero .bh-foot задаёт color:#fff (переопределяет общий .bh-foot{color:var(--muted2)})');
+  assertTrue(/\.bud-hero \.bh-foot\{[^}]*color:var\(--muted\)/.test(html),
+    'TASK_024/048: .bud-hero .bh-foot задаёт явный color:var(--muted) (переопределяет общий .bh-foot{color:var(--muted2)}, читаем в обеих темах)');
+  assertTrue(!/\.bud-hero \.bh-foot\{[^}]*color:#fff/.test(html), 'index.html: .bud-hero .bh-foot больше не белый (не на градиенте)');
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

@@ -42,8 +42,8 @@ const css = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
   assertTrue(/pointer-events:none/.test(amb || ''), '.finance-ambient не перехватывает касания (pointer-events:none)');
   assertTrue(/z-index:0/.test(amb || ''), '.finance-ambient — нижний слой (z-index:0)');
   assertTrue(/position:absolute;inset:0/.test(amb || ''), '.finance-ambient фиксирован за контентом (absolute inset:0 в .app)');
-  assertTrue(/display:none/.test(amb || '') && /\.app:has\(#scrRecords\.active\) \.finance-ambient\{display:block\}/.test(css),
-    'слой показывается только пока активна Главная (:has(#scrRecords.active))');
+  assertTrue(/display:none/.test(amb || '') && /\.app:has\(\.immersive\.active\) \.finance-ambient\{display:block\}/.test(css),
+    'слой показывается только на immersive-экранах (Главная и, с TASK_048, Аналитика/Счета/Бюджеты — :has(.immersive.active))');
   const sa = css.match(/\.scroll-area\{([^}]*)\}/);
   assertTrue(!!sa && /position:relative;z-index:1/.test(sa[1]), '.scroll-area (контент) поднят над слоем: z-index:1');
   assertTrue(/\.topbar\{position:sticky;top:0;z-index:20/.test(css), '.topbar остаётся над контентом (z-index:20)');
@@ -95,14 +95,14 @@ const css = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
   assertTrue(/font-size:clamp\(/.test(val) && /font-weight:800/.test(val), 'баланс — крупный, responsive через clamp()');
   assertTrue(/\.hb-stat \.ci2-v\{font-size:clamp\(/.test(css), 'показатели — responsive font-size через clamp()');
   // header на Главной
-  assertTrue(/\.app:has\(#scrRecords\.active\) \.topbar:not\(\.scrolled\)\{background:transparent\}/.test(css), 'header на Главной прозрачный (стекло .scrolled при прокрутке сохранено)');
-  assertTrue(/\.app:has\(#scrRecords\.active\) \.hdr-search\{flex:0 1 auto;width:min\(54%,208px\)/.test(css), 'поиск — компактная капсула по центру, не на всю ширину');
+  assertTrue(/\.app:has\(\.immersive\.active\) \.topbar:not\(\.scrolled\)\{background:transparent\}/.test(css), 'header на Главной прозрачный (стекло .scrolled при прокрутке сохранено)');
+  assertTrue(/\.app:has\(\.immersive\.active\) \.hdr-search\{flex:0 1 auto;width:min\(54%,208px\)/.test(css), 'поиск — компактная капсула по центру, не на всю ширину');
   assertTrue(/id="searchTop"/.test(html) && /\$\('#searchTop'\)\.onclick=openSearch;/.test(html), 'кнопка поиска использует существующий openSearch');
   assertTrue(/\$\('#anaTop'\)\.onclick=\(\)=>showScreen\('scrCharts'\);/.test(html), 'кнопка графиков — существующий переход на Аналитику');
-  assertTrue(/\.app:has\(#scrRecords\.active\) \.periods\{background:transparent;border-color:transparent;padding:0;gap:0\}/.test(css), 'сегмент периода на Главной без белой карточки');
-  assertTrue(/\.app:has\(#scrRecords\.active\) \.periods-indicator\{top:0;height:100%/.test(css), 'активный пункт — capsule на том же #periodsIndicator (логика не дублируется)');
-  assertTrue(/#scrRecords \.month-switch \.m-arrow\{width:44px;height:44px/.test(css), 'стрелки периода: touch target 44×44');
-  assertTrue(/#scrRecords \.month-switch \.m-arrow svg\{width:30px;height:30px/.test(css), 'шеврон стрелок ~30px');
+  assertTrue(/\.app:has\(\.immersive\.active\) \.periods\{background:transparent;border-color:transparent;padding:0;gap:0\}/.test(css), 'сегмент периода на Главной без белой карточки');
+  assertTrue(/\.app:has\(\.immersive\.active\) \.periods-indicator\{top:0;height:100%/.test(css), 'активный пункт — capsule на том же #periodsIndicator (логика не дублируется)');
+  assertTrue(/\.month-switch \.m-arrow\{width:44px;height:44px/.test(css), 'стрелки периода: touch target 44×44 (TASK_048: базовое правило .month-switch, общее с #navrow)');
+  assertTrue(/\.month-switch \.m-arrow svg\{width:30px;height:30px/.test(css), 'шеврон стрелок ~30px');
   assertTrue(/<div class="home-list-head">Записи<\/div>\s*<div id="recentList"><\/div>/.test(html), 'заголовок «Записи» перед списком, список не изменён');
   // .periods вне Главной (Аналитика) — базовое правило не тронуто
   assertTrue(/^\s*\.periods\{position:relative;display:flex;background:var\(--card\);border:1px solid var\(--line\);border-radius:12px;padding:3px;gap:2px\}/m.test(css),
@@ -112,10 +112,11 @@ const css = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
 
 // ============ §4 — фон Главной: прозрачный экран над слоем; остальные экраны — прежний токен; dark ============
 {
-  assertTrue(/#scrRecords\{background:transparent\}/.test(css), '#scrRecords прозрачен (фон рисует .finance-ambient)');
-  assertTrue(/\.scroll-area:has\(>#scrRecords\.active\)\{background:transparent\}/.test(css), '.scroll-area на Главной прозрачна');
-  ['#scrCharts', '#scrAccounts', '#scrBudgets'].forEach(id =>
-    assertTrue(new RegExp(`${id}\\{background:var\\(--main-bg-grad\\)\\}`).test(css), `${id} — прежний фон --main-bg-grad`));
+  // TASK_048: прозрачны все четыре immersive-экрана (общий слой), --main-bg-grad остаётся токеном .catx-page
+  assertTrue(/#scrRecords,#scrCharts,#scrAccounts,#scrBudgets\{background:transparent\}/.test(css), '#scrRecords прозрачен (фон рисует .finance-ambient)');
+  assertTrue(/\.scroll-area:has\(>\.immersive\.active\)\{background:transparent\}/.test(css), '.scroll-area на immersive-экранах прозрачна');
+  assertTrue(/<div class="screen immersive active" id="scrRecords">/.test(html), '#scrRecords помечен .immersive');
+  assertTrue(/\.catx-page\{background:var\(--main-bg-grad\)/.test(css), '.catx-page — прежний фон --main-bg-grad');
   const light = css.slice(css.indexOf(':root, [data-theme="light"]{'), css.indexOf('[data-theme="dark"]{'));
   const dark = css.slice(css.indexOf('[data-theme="dark"]{'), css.indexOf('*{box-sizing'));
   ['--hero-top', '--hero-bottom', '--hero-b1', '--hero-b2', '--hero-b3', '--hero-b4', '--hero-glass', '--hero-capsule', '--hero-sep'].forEach(t => {
@@ -135,7 +136,7 @@ const css = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
   assertTrue(/function shiftPeriod\(dir\)\{anchor=AF\.Services\.Period\.shiftAnchor\(period,anchor,dir\);render\(\);\}/.test(html), 'shiftPeriod() не изменён');
   assertTrue(/function renderRecent\(list\)\{/.test(html) && /function homeGroupedTxHtml\(list\)\{/.test(html), 'список операций (renderRecent/homeGroupedTxHtml) на месте');
   assertTrue(!/<video|WebGL|requestAnimationFrame\(heroLoop/.test(html), 'без видео/WebGL/JS-анимационного цикла для фона');
-  assertTrue(/const CACHE = 'finance-v179';/.test(sw), 'sw.js: версия кэша поднята до finance-v179');
+  assertTrue(/const CACHE = 'finance-v(\d+)';/.test(sw) && parseInt(sw.match(/finance-v(\d+)/)[1], 10) >= 179, 'sw.js: версия кэша ≥ finance-v179');
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

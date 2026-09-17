@@ -1514,22 +1514,21 @@
   .goals-empty .big{font-size:40px;margin-bottom:10px}
 
   /* ===== Budgets (Screen 6, TASK_022 Apple redesign) ===== */
-  /* Budgets v2 — герой: базовый фон/радиус/тень/цвет теперь приходят от
-     общего .capital (см. #scrBudgets .capital ниже — точный градиент
-     .drawer-head/#scrAccounts .capital, TASK_017/TASK_020); .bud-hero
-     несёт только собственную внутреннюю структуру. */
-  .bud-hero .bh-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .bud-hero .bh-lbl{font-size:15px;opacity:.92}
-  .bud-hero .bh-badge{font-size:12.5px;font-weight:700;background:rgba(255,255,255,.2);padding:4px 10px;border-radius:9px;white-space:nowrap}
-  .bud-hero .bh-val{font-size:44px;font-weight:800;letter-spacing:-1px;margin:6px 0 16px;white-space:nowrap}
-  .bud-hero .bh-bar{height:12px;background:rgba(255,255,255,.22);border-radius:7px;overflow:hidden}
-  .bud-hero .bh-fill{height:100%;background:#fff;border-radius:7px;transition:width .4s}
-  /* color явный: общий .bh-foot{color:var(--muted2)} иначе выигрывает у
-     унаследованного белого от .capital — свойство задано прямо на элементе,
-     наследование от предка всегда проигрывает такому правилу независимо
-     от специфичности предка. Без этой строки текст читался серым на градиенте. */
-  .bud-hero .bh-foot{display:flex;justify-content:space-between;font-size:13.5px;margin-top:10px;opacity:.92;color:#fff}
-  .bud-hero .bh-empty{font-size:14px;opacity:.92;margin-top:8px}
+  /* TASK_048: герой бюджета — без карточки, прямо на ambient-фоне (контейнер получает
+     общий .hero-balance, как баланс Главной); .bud-hero несёт только внутреннюю структуру:
+     label + стеклянный badge → крупный остаток → прогресс → «Потрачено / Лимит». */
+  .hero-balance.bud-hero{padding:4px 0 8px}
+  .bud-hero .bh-top{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;min-height:28px}
+  .bud-hero .bh-lbl{font-size:14px;font-weight:600;color:var(--muted)}
+  .bud-hero .bh-badge{font-size:12px;font-weight:700;color:var(--text);background:var(--hero-capsule);border:1px solid var(--hero-capsule-border);
+    padding:3px 10px;border-radius:999px;white-space:nowrap}
+  .bud-hero .bh-val{font-size:clamp(34px,11vw,46px);font-weight:800;letter-spacing:-1.2px;line-height:1.1;color:var(--text);
+    margin:6px 0 16px;white-space:nowrap;font-variant-numeric:tabular-nums;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+  [data-theme="dark"] .bud-hero .bh-val{text-shadow:0 1px 8px rgba(0,0,0,.35)}
+  .bud-hero .bh-bar{height:10px;background:var(--hero-sep);border-radius:6px;overflow:hidden;margin:0 6px}
+  .bud-hero .bh-fill{height:100%;background:var(--nav-blue);border-radius:6px;transition:width .4s}
+  .bud-hero .bh-foot{display:flex;justify-content:space-between;font-size:13px;margin-top:10px;padding:0 6px;color:var(--muted)}
+  .bud-hero .bh-empty{font-size:14px;color:var(--muted);margin-top:8px}
   /* Budgets v2 — карточки категорий: белые карточки в стиле .acc-cat/.fincard
      (тень var(--fincard-shadow), без рамки); перерасход сигналит цветом
      текста/прогресс-бара (.bc-rl.over/.bc-rv.over/.bc-fill), не толстой
@@ -1675,10 +1674,11 @@
   .ci2-s{font-size:9.5px;color:var(--muted2);margin-top:2px;white-space:nowrap}
 
   /* ===== Главная финансовая карточка (TASK_003) ===== */
-  /* TASK_047: на Главной фон рисует .finance-ambient (слой в .app за контентом, покрывает и
-     зону под навигацией) — сам экран и .scroll-area прозрачны, иначе закрыли бы сцену.
-     Остальные экраны (#scrCharts/#scrAccounts/#scrBudgets) по-прежнему на --main-bg-grad. */
-  #scrRecords{background:transparent}
+  /* TASK_047/048: на четырёх основных экранах (.screen.immersive — Главная, Аналитика, Счета,
+     Бюджеты) фон рисует общий слой .finance-ambient (в .app за контентом, покрывает и зону под
+     навигацией) — сами экраны и .scroll-area прозрачны, иначе закрыли бы сцену. --main-bg-grad
+     остаётся токеном для .catx-page («Операции по категории») и не переопределяется. */
+  #scrRecords,#scrCharts,#scrAccounts,#scrBudgets{background:transparent}
   /* TASK_009: фон #scrRecords покрывает только собственный бокс экрана — резерв под
      плавающую .nav (padding-bottom на .scroll-area, включает env(safe-area-inset-bottom))
      лежит уже вне #scrRecords и просвечивал белым фоном body/.app. Пока активна Главная,
@@ -1688,45 +1688,36 @@
      TASK_039: --home-bg заменён на --main-bg-grad (мягкий мятно-серо-зелёный градиент,
      см. :root) — оба правила используют один и тот же токен, поэтому зона под sticky
      навигацией остаётся тем же плоским цветом, что нижняя часть градиента, без шва. */
-  .scroll-area:has(>#scrRecords.active){background:transparent} /* TASK_047: см. #scrRecords выше */
-  /* TASK_019: тот же приём для «Аналитики» — фон экрана и зона под навигацией
-     приведены к единому фону Главной (TASK_039 — тот же --main-bg-grad); карточки .panel
-     внутри #scrCharts получают тень/радиус .fincard (scoped-override, глобальный
-     .panel на других экранах — бюджеты/счета/health score и т.д. — не тронут). */
-  #scrCharts{background:var(--main-bg-grad)}
-  .scroll-area:has(>#scrCharts.active){background:var(--main-bg-grad)}
+  .scroll-area:has(>.immersive.active){background:transparent} /* TASK_048: см. выше */
+  /* TASK_019: карточки .panel внутри #scrCharts получают тень/радиус .fincard (scoped-override,
+     глобальный .panel на других экранах — бюджеты/счета/health score и т.д. — не тронут). */
   #scrCharts .panel{border-radius:22px;box-shadow:var(--fincard-shadow)}
-  /* TASK_020: тот же приём для «Счета» — фон и зона под навигацией приведены к
-     единому фону Главной (TASK_039 — тот же --main-bg-grad); карточка «Общий капитал»
-     переиспользует точный градиент карточки «Личный профиль» (.drawer-head, TASK_017) —
-     не новый похожий цвет, а тот же самый; глобальные .capital (используется на
-     «Статистике», #statsHero) и .panel (Бюджеты/Аналитика/Health Score) — не тронуты. */
-  #scrAccounts{background:var(--main-bg-grad)}
-  .scroll-area:has(>#scrAccounts.active){background:var(--main-bg-grad)}
+  /* TASK_048: первая панель Аналитики (сегмент Расходы/Доходы + donut) — без карточки, на
+     ambient-фоне; легенда категорий остаётся карточкой (сущности — строки списка). */
+  #scrCharts .panel.ana-top{background:transparent;border:none;box-shadow:none;padding:2px 0 0;margin-bottom:14px}
+  #scrCharts .ana-top .cat-donut-top{margin:6px 0 14px}
+  #scrCharts .ana-top .catlist2{background:var(--card);border-radius:22px;box-shadow:var(--fincard-shadow);padding:4px 16px}
+  /* TASK_020: карточки .panel «Счетов» — тень/радиус .fincard (scoped-override). TASK_048:
+     сиреневая карточка «Общий капитал» (#scrAccounts .capital) заменена компонентом
+     .hero-balance (см. TASK_047-блок ниже); глобальные .capital (#statsHero) и .panel не тронуты. */
   #scrAccounts .panel{border-radius:22px;box-shadow:var(--fincard-shadow);padding:22px 20px}
   #scrAccounts .panel h3{font-size:17px;letter-spacing:-.2px}
-  #scrAccounts .capital{background:linear-gradient(135deg,#a79cf7 0%,#8fb0f6 55%,#8fdde3 100%);
-    box-shadow:0 12px 28px rgba(110,120,220,.28),inset 0 1px 0 rgba(255,255,255,.5);padding:18px 20px}
-  /* TASK_022: тот же приём для «Бюджетов» — фон и зона под навигацией приведены к
-     единому фону Главной (TASK_039 — тот же --main-bg-grad); карточка «Осталось в бюджете»
-     переиспользует точно тот же градиент, что «Общий капитал» на «Счетах» (не новый похожий
-     цвет) — .bud-hero получает в JS класс .capital, здесь только scoped-override фона/тени. */
-  #scrBudgets{background:var(--main-bg-grad)}
-  .scroll-area:has(>#scrBudgets.active){background:var(--main-bg-grad)}
-  #scrBudgets .capital{background:linear-gradient(135deg,#a79cf7 0%,#8fb0f6 55%,#8fdde3 100%);
-    box-shadow:0 12px 28px rgba(110,120,220,.28),inset 0 1px 0 rgba(255,255,255,.5);padding:22px 20px}
-  /* Компактный переключатель месяца — над карточкой */
-  .month-switch{display:flex;align-items:center;justify-content:center;gap:2px;margin-bottom:10px}
-  /* TASK_005: только SVG-шеврон, без круга/фона/обводки — системный синий (активна) /
-     светло-серый с пониженной прозрачностью (disabled), зона нажатия та же (38×38) */
-  .month-switch .m-arrow{width:38px;height:38px;flex:0 0 38px;border:none;background:none;color:var(--nav-blue);
+  /* Переключатель периода «‹ Сентябрь 2026 ›» — единый компонент для #fcMonthSwitch (Главная)
+     и #navrow (Аналитика/Бюджеты), TASK_048. TASK_005: только SVG-шеврон, без круга/фона/обводки;
+     TASK_047/048: touch target 44×44, шеврон 30px, цвет текста (disabled — --muted2). */
+  .month-switch{display:flex;align-items:center;justify-content:center;gap:6px;margin:4px 0 10px}
+  .month-switch .m-arrow{width:44px;height:44px;flex:0 0 44px;border:none;background:none;color:var(--text);border-radius:50%;
     cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
-  .month-switch .m-arrow svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+  .month-switch .m-arrow svg{width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
   .month-switch .m-arrow:active{opacity:.55}
   .month-switch .m-arrow:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-  .month-switch .m-arrow:disabled{color:var(--muted2);opacity:.5;cursor:default;pointer-events:none}
-  .month-switch .m-label{min-width:0;font-size:15.5px;font-weight:700;color:var(--text);padding:0 4px;
+  .month-switch .m-arrow:disabled{color:var(--muted2);opacity:.45;cursor:default;pointer-events:none}
+  .month-switch .m-label{min-width:0;font-size:16px;font-weight:700;letter-spacing:-.2px;color:var(--text);padding:0 4px;
     text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* #periodLabel заполняется periodLabel() в нижнем регистре («сентябрь 2026 г.») — прежний
+     text-transform:capitalize давал «Сентябрь 2026 Г.»; первая буква — как fcCapFirst() на Главной */
+  #navrow{margin:8px 0 0}
+  #navrow .m-label::first-letter{text-transform:uppercase}
   @media (prefers-reduced-motion:no-preference){
     .month-switch .m-label{transition:opacity .16s ease,transform .16s ease}
   }
@@ -1751,12 +1742,14 @@
 
   /* ===== TASK_047: Главная — immersive hero на fluid-фоне =====
      Принцип: HEADER / BALANCE — без крупных белых карточек, TRANSACTIONS — карточки остаются.
-     Слои: .finance-ambient (0) < .scroll-area/контент (1) < .topbar (20) < .nav (30) < overlays (60+). */
+     Слои: .finance-ambient (0) < .scroll-area/контент (1) < .topbar (20) < .nav (30) < overlays (60+).
+     TASK_048: scope расширен с #scrRecords на .screen.immersive — одна и та же система (слой,
+     header, сегмент периода, month-switch, hero-показатели) для Главной/Аналитики/Счетов/Бюджетов. */
   .finance-ambient{display:none;position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;
     background:
       radial-gradient(120% 60% at 50% 18%,var(--hero-glow) 0%,transparent 60%),
       linear-gradient(180deg,var(--hero-top) 0%,var(--hero-bottom) var(--hero-h),var(--hero-bottom) 100%)}
-  .app:has(#scrRecords.active) .finance-ambient{display:block}
+  .app:has(.immersive.active) .finance-ambient{display:block}
   /* Blob'ы — radial-gradient без filter:blur (мягкий край даёт сам градиент, дешевле для
      Safari/PWA). Анимируются только transform (translate3d + scale) — compositor-only. */
   .ambient-blob{position:absolute;display:block;border-radius:50%;will-change:transform;
@@ -1785,31 +1778,26 @@
   }
 
   /* Header на Главной: прозрачный, элементы прямо на сцене; при прокрутке — прежнее стекло .scrolled */
-  .app:has(#scrRecords.active) .topbar:not(.scrolled){background:transparent}
-  .app:has(#scrRecords.active) .topbar .row1{justify-content:space-between}
+  .app:has(.immersive.active) .topbar:not(.scrolled){background:transparent}
+  .app:has(.immersive.active) .topbar .row1{justify-content:space-between}
   /* компактная овальная капсула поиска по центру (аватар и кнопка графиков равной ширины → центр) */
-  .app:has(#scrRecords.active) .hdr-search{flex:0 1 auto;width:min(54%,208px);justify-content:center;
+  .app:has(.immersive.active) .hdr-search{flex:0 1 auto;width:min(54%,208px);justify-content:center;
     background:var(--hero-glass);border-color:var(--hero-glass-border);color:var(--text);
     -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
-  .app:has(#scrRecords.active) .hdr-search svg{stroke:var(--text)}
-  .app:has(#scrRecords.active) .hdr-ana{background:var(--hero-glass);border-color:var(--hero-glass-border);
+  .app:has(.immersive.active) .hdr-search svg{stroke:var(--text)}
+  .app:has(.immersive.active) .hdr-ana{background:var(--hero-glass);border-color:var(--hero-glass-border);
     -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 
   /* Сегмент периода на Главной: без белой карточки, активный пункт — лёгкая полупрозрачная capsule */
-  .app:has(#scrRecords.active) .subhead{padding-top:6px}
-  .app:has(#scrRecords.active) .periods{background:transparent;border-color:transparent;padding:0;gap:0}
-  .app:has(#scrRecords.active) .periods button{padding:9px 2px;font-size:13px;color:var(--muted)}
-  .app:has(#scrRecords.active) .periods button.on{color:var(--text);font-weight:700}
-  .app:has(#scrRecords.active) .periods-indicator{top:0;height:100%;border-radius:11px;
+  .app:has(.immersive.active) .subhead{padding-top:6px}
+  .app:has(.immersive.active) .periods{background:transparent;border-color:transparent;padding:0;gap:0}
+  .app:has(.immersive.active) .periods button{padding:9px 2px;font-size:13px;color:var(--muted)}
+  .app:has(.immersive.active) .periods button.on{color:var(--text);font-weight:700}
+  .app:has(.immersive.active) .periods-indicator{top:0;height:100%;border-radius:11px;
     background:var(--hero-capsule);border-color:var(--hero-capsule-border);box-shadow:none;
     -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 
-  /* «‹ Сентябрь 2026 ›» — крупные удобные стрелки (touch 44×44, шеврон ~30px), без карточки */
-  #scrRecords .month-switch{margin:4px 0 10px;gap:6px}
-  #scrRecords .month-switch .m-arrow{width:44px;height:44px;flex:0 0 44px;border-radius:50%;color:var(--text)}
-  #scrRecords .month-switch .m-arrow svg{width:30px;height:30px;stroke-width:2.1}
-  #scrRecords .month-switch .m-arrow:disabled{color:var(--muted2);opacity:.45}
-  #scrRecords .month-switch .m-label{font-size:16px;font-weight:700;letter-spacing:-.2px}
+  /* «‹ Сентябрь 2026 ›» — общий .month-switch (44×44, шеврон 30px), см. базовое правило выше (TASK_048) */
 
   /* Баланс — главный визуальный объект, без карточки/капсулы/рамок */
   .hero-balance{text-align:center;padding:10px 0 4px}
@@ -1830,6 +1818,11 @@
   .hb-stat .ci2-v.inc{color:var(--income)} .hb-stat .ci2-v.exp{color:var(--expense)}
   .hb-stat .ci2-v.flow-pos{color:var(--income)} .hb-stat .ci2-v.flow-neg{color:var(--expense)}
   .hb-s{font-size:10.5px;color:var(--muted2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* TASK_048: «Общий капитал» на Счетах — тот же .hero-balance; глаз — inline в label, валюта — мелкой строкой */
+  .acc-hero{padding:6px 0 4px}
+  .acc-hero .hb-head{margin-left:0}
+  .acc-hero .hb-eye{opacity:.75;margin-left:2px}
+  .hb-cur{font-size:12.5px;font-weight:700;color:var(--muted);margin-top:8px;letter-spacing:.4px}
   /* Заголовок секции списка */
   .home-list-head{font-size:17px;font-weight:800;letter-spacing:-.2px;color:var(--text);margin:26px 2px 8px}
   #scrRecords .daygroup:first-child .dayhead{padding-top:6px}
@@ -1992,15 +1985,17 @@
       <button data-p="year">Год</button>
       <button data-p="custom">Период</button>
     </div>
-    <div class="navrow" id="navrow">
-      <button id="prevP">‹</button>
-      <div class="lbl" id="periodLabel">—</div>
-      <button id="nextP">›</button>
+    <!-- TASK_048: тот же компонент .month-switch, что #fcMonthSwitch на Главной (SVG-шеврон,
+         touch 44×44); ids #prevP/#nextP/#periodLabel и обработчики без изменений. -->
+    <div class="month-switch" id="navrow">
+      <button type="button" class="m-arrow" id="prevP" aria-label="Назад"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <div class="m-label" id="periodLabel" aria-live="polite">—</div>
+      <button type="button" class="m-arrow" id="nextP" aria-label="Вперёд"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
   </div>
 
   <!-- Screen: Home dashboard (Product Book Screen 1) -->
-  <div class="screen active" id="scrRecords">
+  <div class="screen immersive active" id="scrRecords">
     <div class="month-switch" id="fcMonthSwitch">
       <button type="button" class="m-arrow" id="fcMonthPrev" aria-label="Назад"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
       <div class="m-label" id="fcMonthLabel" aria-live="polite">—</div>
@@ -2035,8 +2030,10 @@
        фиолетовая карточка результата (.capital.cap-ana) удалена из рендера
        полностью. Общие переключатель периода (#periods) и строка навигации
        (#navrow) — в #subhead выше, не дублируются здесь (TASK_002/003A). -->
-  <div class="screen" id="scrCharts">
-    <div class="panel">
+  <div class="screen immersive" id="scrCharts">
+    <!-- TASK_048: сегмент Расходы/Доходы + donut — прямо на ambient-фоне (.ana-top без
+         карточки), легенда — карточка; остальные .panel не тронуты. -->
+    <div class="panel ana-top">
       <div class="periods" id="anaCatSeg" style="margin:0 0 14px">
         <div class="periods-indicator" id="anaCatSegInd" aria-hidden="true"></div>
         <button class="on" data-t="expense">Расходы</button>
@@ -2072,7 +2069,7 @@
   </div>
 
   <!-- Screen: Budgets (TASK_022 Apple redesign) -->
-  <div class="screen" id="scrBudgets">
+  <div class="screen immersive" id="scrBudgets">
     <div id="budgetTotal"></div>
     <div class="sec-head"><span>По категориям</span></div>
     <div id="budCards"></div>
@@ -2081,10 +2078,13 @@
   </div>
 
   <!-- Screen: Accounts (TASK_020 Apple redesign) -->
-  <div class="screen" id="scrAccounts">
-    <div class="capital cap-simple">
-      <div class="cap-head"><span class="cap-l">Общий капитал <span id="capEye2" style="cursor:pointer">👁</span></span><span class="cap-cur" id="accCapCur">EUR</span></div>
-      <div class="cap-val" id="accTotalCapital">€0</div>
+  <div class="screen immersive" id="scrAccounts">
+    <!-- TASK_048: общий капитал — тот же компонент .hero-balance, что баланс на Главной,
+         без сиреневой карточки; ids #capEye2/#accCapCur/#accTotalCapital сохранены. -->
+    <div class="hero-balance acc-hero">
+      <div class="hb-head"><span class="hb-label">Общий капитал <span id="capEye2" class="hb-eye" style="cursor:pointer">👁</span></span></div>
+      <div class="hb-val" id="accTotalCapital">€0</div>
+      <div class="hb-cur" id="accCapCur">EUR</div>
     </div>
     <div class="sec-head" style="margin-top:20px"><span>Счета</span><button id="accEditBtn">Изменить</button></div>
     <div id="accList"></div>
@@ -3923,7 +3923,7 @@ function renderBudgets(){
   const {limit,spent}=budgetTotals();
   const mr=budgetMonthRange();
   const monthLbl=(m=>m.charAt(0).toUpperCase()+m.slice(1))(mr.from.toLocaleDateString('ru-RU',{month:'long'}));
-  const bt=$('#budgetTotal'); bt.className='capital bud-hero';
+  const bt=$('#budgetTotal'); bt.className='hero-balance bud-hero'; // TASK_048: без карточки, на ambient-фоне
   if(!limit){
     bt.innerHTML=`<div class="bh-top"><span class="bh-lbl">Бюджет · ${monthLbl}</span></div>
       <div class="bh-empty">Бюджеты не заданы — добавьте лимит для категории ниже.</div>`;

@@ -718,6 +718,21 @@
     `tests/home_hero_screen.test.js`). См.
     [`docs/tasks/TASK_047_HOME_IMMERSIVE_HERO.md`](tasks/TASK_047_HOME_IMMERSIVE_HERO.md).
 
+43. **TASK_048_IMMERSIVE_MAIN_SCREENS** — `DONE`. Визуальный язык
+    immersive-hero Главной (`TASK_047`) распространён на Аналитику, Счета
+    и Бюджеты (класс `.immersive`, общий scope `.app:has(.immersive.active)`
+    вместо Home-only селектора — один слой `.finance-ambient` и одно
+    правило header/сегмента/периода на четыре экрана, без per-screen
+    копий). `#navrow` переведён на тот же `.month-switch`, что
+    `#fcMonthSwitch`. Сиреневые `.capital`-карточки капитала (Счета) и
+    остатка бюджета (Бюджеты) заменены общим `.hero-balance` — без
+    фона/рамки, прямо на фоне; на Аналитике сегмент+donut лишены карточки
+    (`.ana-top`). Единственная правка JS — класс контейнера в
+    `renderBudgets()`; все id/обработчики/расчёты/графики не изменены.
+    `sw.js` `finance-v179` → `finance-v180`. Тесты: **2143 passed, 0
+    failed** (+73, новый `tests/immersive_screens.test.js`). См.
+    [`docs/tasks/TASK_048_IMMERSIVE_MAIN_SCREENS.md`](tasks/TASK_048_IMMERSIVE_MAIN_SCREENS.md).
+
 ## Пояснения
 
 - `TASK_001` является первой задачей в новой системе документации, а **не**

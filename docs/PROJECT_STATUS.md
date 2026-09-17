@@ -16,7 +16,51 @@
 
 ## Активная задача
 
-- Нет. Последняя закрытая задача — `TASK_047` (см. ниже).
+- Нет. Последняя закрытая задача — `TASK_048` (см. ниже).
+
+## TASK_048 — Аналитика / Счета / Бюджеты: единая immersive UI-система Главной
+
+Визуальный язык immersive-hero с Главной (`TASK_047`) распространён на три
+оставшихся основных экрана — Аналитику (`#scrCharts`), Счета
+(`#scrAccounts`) и Бюджеты (`#scrBudgets`), которым добавлен класс
+`.immersive`. Общий слой `.finance-ambient` и все его правила (видимость,
+прозрачный header/поиск/кнопка графиков, сегмент периода без карточки,
+capsule на `#periodsIndicator`) переведены с Home-only scope
+`.app:has(#scrRecords.active)` на общий `.app:has(.immersive.active)` — одно
+правило на четыре экрана, без per-screen копий; токены/анимация/dark/
+`prefers-reduced-motion` переиспользуются как есть. Четыре экрана и их
+`.scroll-area` стали прозрачными; старые плоские фоны `--main-bg-grad` на
+`#scrCharts/#scrAccounts/#scrBudgets` удалены (токен остаётся у
+`.catx-page`). Общий текстовый `#navrow` (Аналитика/Бюджеты) переведён на
+тот же компонент `.month-switch`, что `#fcMonthSwitch` Главной — SVG-шеврон,
+44×44, единое базовое CSS-правило вместо Home-only override; ids
+`#prevP/#nextP/#periodLabel` и `shiftPeriod()` не изменены. На Аналитике
+первая панель (сегмент Расходы/Доходы + donut) лишена карточки
+(`.ana-top`, класс переименован во избежание конфликта с существующим
+`.ana-hero`), легенда осталась карточкой, остальные три `.panel`
+(«Сравнение», «Доходы и расходы», «Динамика капитала») не тронуты. На
+Счетах сиреневая `.capital.cap-simple` заменена тем же `.hero-balance`, что
+баланс Главной («Общий капитал 👁 / крупная сумма / EUR»,
+`renderAccountsScreen()` не менялась). На Бюджетах — единственная правка
+JS во всей задаче: `renderBudgets()` меняет класс контейнера героя с
+`'capital bud-hero'` на `'hero-balance bud-hero'`; внутренние `.bh-*`
+переписаны с захардкоженного белого на токены темы (`--muted`,
+`--hero-capsule`, `--hero-sep`, `--nav-blue`). Мёртвые правила
+`#scrAccounts .capital`/`#scrBudgets .capital` удалены. `sw.js`
+`finance-v179` → `finance-v180`. Новый тест `tests/immersive_screens.test.js`
+(72 проверки: единый слой без дублирования, общий scope header/сегмента,
+единый month-switch, сохранность всех id/обработчиков на трёх экранах,
+отсутствие захардкоженных цветов, версия кэша); актуализированы эталоны
+старого дизайна в `tests/budgets_screen.test.js`, `tests/
+category_tx_screen.test.js`, `tests/home_hero_screen.test.js`,
+`tests/analytics_screen.test.js`. Тесты: **2143 passed, 0 failed** (+73).
+Проверено в preview (демо-данные) на 320/390/430, светлая/тёмная тема:
+скриншоты Analytics/Accounts/Budgets, Home — без визуальных регрессий;
+период/месяц на Аналитике и Бюджетах пересчитывают donut/остаток
+корректно, капитал и глаз на Счетах работают, overlays добавления
+открываются поверх фона; `scrollWidth === clientWidth` на всех четырёх
+экранах. На реальном iPhone (standalone PWA) не проверялось. См.
+[`docs/tasks/TASK_048_IMMERSIVE_MAIN_SCREENS.md`](tasks/TASK_048_IMMERSIVE_MAIN_SCREENS.md).
 
 ## TASK_047 — Главная: цельный immersive-hero вместо карточек (fluid background)
 

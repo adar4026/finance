@@ -64,12 +64,13 @@ function assertTrue(cond, msg) {
     'index.html: .catx-title — длинные названия переносятся до 2 строк с аккуратной обрезкой, без разрушения layout');
 }
 
-// ============ §3 — фон экрана = тот же токен, что основные экраны ============
-// TASK_047: эталон — #scrCharts (Аналитика): сама Главная (#scrRecords) теперь
-// прозрачна поверх fluid-слоя .finance-ambient и токен фона не несёт.
+// ============ §3 — фон экрана = общий токен фона основных экранов ============
+// TASK_047/048: все четыре основных экрана прозрачны поверх общего fluid-слоя
+// .finance-ambient и токен фона не несут; эталон — само определение токена
+// --main-bg-grad в :root (он остаётся источником фона «Операций по категории»).
 {
-  const recM = html.match(/#scrCharts\{background:var\((--[\w-]+)\)\}/);
-  assertTrue(!!recM, '#scrCharts{background:var(--...)} найден в index.html (эталон)');
+  const recM = html.match(/^\s*(--main-bg-grad):linear-gradient\(/m);
+  assertTrue(!!recM, '--main-bg-grad определён в :root (эталон)');
   const bgToken = recM && recM[1];
   assertTrue(!!bgToken && new RegExp(`\\.catx-page\\{background:var\\(${bgToken.replace(/-/g, '\\-')}\\)`).test(html),
     'index.html: .catx-page использует тот же фон-токен, что #scrRecords (Home), не новый подобранный цвет');

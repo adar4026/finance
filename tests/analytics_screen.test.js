@@ -85,7 +85,8 @@ function assertTrue(cond, msg) {
   assertTrue(!/class="seg-ie ana-cat-seg"/.test(html), 'index.html: старый класс .seg-ie.ana-cat-seg удалён');
 
   // 5.2 — правильный порядок секций внутри #scrCharts
-  const scrM = html.match(/<div class="screen" id="scrCharts">([\s\S]*?)\n  <\/div>\n\n  <!-- Screen: Budgets/);
+  // TASK_048: экран получил класс .immersive (общая ambient-система четырёх основных экранов)
+  const scrM = html.match(/<div class="screen immersive" id="scrCharts">([\s\S]*?)\n  <\/div>\n\n  <!-- Screen: Budgets/);
   assertTrue(!!scrM, '#scrCharts найден в index.html и закрывается перед экраном «Бюджеты»');
   if (scrM) {
     const body = scrM[1];

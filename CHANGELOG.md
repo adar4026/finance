@@ -14,6 +14,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Analytics, Accounts and Budgets brought into the same immersive
+  design language as Home** (`TASK_048`). The fluid ambient background,
+  transparent header, card-free period segment and the Home month
+  switcher (`TASK_047`) now extend to all four main screens through one
+  shared scope instead of Home-only rules — one background layer, one
+  header/segment ruleset, one month-switch component, reused as-is (same
+  tokens, animation, dark theme, `prefers-reduced-motion`). The purple
+  "Total capital" card on Accounts and the "Budget remaining" card on
+  Budgets are replaced by the same card-free `.hero-balance` component
+  the Home balance uses; on Analytics, the expense/income segment and
+  donut chart sit directly on the background instead of inside a white
+  panel, while the category legend and the three chart panels below keep
+  their cards. The only JS touched is the container class name in
+  `renderBudgets()` — every id, handler, calculation and chart is
+  unchanged. `sw.js` cache bumped `finance-v179` → `finance-v180`.
+
 - **Home redesigned as an immersive hero dashboard instead of stacked
   white cards** (`TASK_047`). The top of the Home screen — the period
   segment, month switcher, total balance and the Income/Expenses/Cash
