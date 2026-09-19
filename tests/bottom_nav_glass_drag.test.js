@@ -36,6 +36,7 @@ function ruleBody(selector, src) {
   return m ? m[1] : null;
 }
 const css = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
+const val = (src, t) => (src.match(new RegExp(`(?:^|[\\s;])${t}:([^;]+);`, 'm')) || [])[1];
 const light = block(/:root, \[data-theme="light"\]\{/, '[data-theme="dark"]{', 'светлые токены');
 const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные токены');
 
@@ -63,18 +64,24 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
 // ---------- §2. Токены: отдельные light/dark значения стекла, палитра Finance ----------
 {
   const need = ['--nav-bg', '--nav-bg-solid', '--nav-border', '--nav-highlight', '--nav-blur', '--nav-saturate',
-    '--nav-pill-bg', '--nav-glint', '--nav-pill-edge-light', '--nav-pill-edge-dark',
+    '--nav-muted', '--nav-active', '--nav-pill-bg', '--nav-pill-border', '--nav-pill-shadow',
+    '--nav-glint', '--nav-pill-edge-light', '--nav-pill-edge-dark',
     '--nav-add-bg', '--nav-add-bg-solid', '--nav-add-border', '--nav-add-shadow'];
   need.forEach(t => {
     assertTrue(new RegExp(`(^|[\\s;])${t}:`, 'm').test(light), `light: токен ${t}`);
     assertTrue(new RegExp(`(^|[\\s;])${t}:`, 'm').test(dark), `dark: токен ${t}`);
   });
-  const val = (src, t) => (src.match(new RegExp(`(?:^|[\\s;])${t}:([^;]+);`, 'm')) || [])[1];
-  assertTrue(/rgba\(255,255,255,\.1[0-6]\)/.test(val(light, '--nav-bg')), 'light --nav-bg — прозрачное светлое стекло rgba(255,255,255,.10–.16)');
-  assertTrue(/rgba\(2[0-9],2[0-9],3[0-9],\.4\d\)/.test(val(dark, '--nav-bg')), 'dark --nav-bg — отдельное тёмное стекло, не белый rgba');
+  // TASK_057: почти прозрачное стекло по финальному LexCar (light .03 / blur 2px; dark .42 / blur 16px)
+  assertEqual(val(light, '--nav-bg'), 'rgba(255,255,255,.03)', 'light --nav-bg — почти прозрачное светлое стекло');
+  assertEqual(val(light, '--nav-blur'), '2px', 'light blur 2px');
+  assertEqual(val(light, '--nav-border'), 'rgba(22,24,31,.42)', 'light — заметный тонкий контур держит капсулу');
+  assertEqual(val(dark, '--nav-bg'), 'rgba(30,30,36,.42)', 'dark --nav-bg — отдельное тёмное стекло, не белый rgba');
+  assertEqual(val(dark, '--nav-blur'), '16px', 'dark blur 16px');
   assertTrue(val(light, '--nav-bg') !== val(dark, '--nav-bg'), 'light/dark стекло различаются');
-  assertTrue(/var\(--nav-blue-soft\)/.test(val(light, '--nav-pill-bg')) && /var\(--nav-blue-soft\)/.test(val(dark, '--nav-pill-bg')),
-    'pill опирается на существующий синий акцент навигации --nav-blue-soft (не цвета LexCar)');
+  assertEqual(val(light, '--nav-pill-bg'), 'rgba(79,125,240,.18)', 'light pill — синий акцент навигации (#4f7df0) .18, не цвета LexCar');
+  assertEqual(val(dark, '--nav-pill-bg'), 'rgba(91,139,255,.30)', 'dark pill — синий акцент (#5b8bff) .30');
+  assertEqual(val(light, '--nav-active'), 'var(--nav-blue2)', 'light: активная вкладка — более глубокий синий --nav-blue2');
+  assertEqual(val(dark, '--nav-active'), 'var(--nav-blue)', 'dark: активная вкладка — --nav-blue');
   assertTrue(/--nav-blue:#4f7df0;/.test(light) && /--nav-blue:#5b8bff;/.test(dark), 'акцент --nav-blue не подменён');
   assertTrue(/--accent:#6d5df6;/.test(light), 'фирменный --accent не тронут');
   assertTrue(/--nav-glass-bg:linear-gradient\(180deg,rgba\(255,255,255,\.68\),rgba\(255,255,255,\.30\)\),var\(--nav-active-bg\);/.test(light),
@@ -100,11 +107,19 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
   assertTrue(/overflow:hidden/.test(nav), 'pill не выходит за скругление капсулы');
   assertTrue(/@supports not \(\(backdrop-filter:blur\(1px\)\) or \(-webkit-backdrop-filter:blur\(1px\)\)\)\{\s*\.nav\{background:var\(--nav-bg-solid\)\}\s*\.nav-add\{background:var\(--nav-add-bg-solid\)\}/.test(css),
     '@supports fallback без backdrop-filter — плотные --nav-bg-solid / --nav-add-bg-solid');
-  assertTrue(/\.nav button\.on,\.nav button\.preview\{color:var\(--nav-blue\)\}/.test(css), 'активная и preview-вкладка — синий акцент');
-  assertTrue(/\.nav button:focus-visible\{outline:2px solid var\(--nav-blue\)/.test(css), 'focus state для keyboard-навигации');
+  assertTrue(/\.nav button\.on,\.nav button\.preview\{color:var\(--nav-active\)\}/.test(css), 'активная и preview-вкладка — синий акцент --nav-active');
+  assertTrue(/\.nav button:focus-visible\{outline:2px solid var\(--nav-active\)/.test(css), 'focus state для keyboard-навигации');
+  // TASK_057: компактная капсула и вкладки по LexCar b2e5423/e387441
+  assertTrue(/border-radius:32px/.test(nav), 'капсула 64px с radius 32px — полностью скруглённые торцы');
+  const btn = ruleBody('.nav button', css);
+  assertTrue(/color:var\(--nav-muted\)/.test(btn) && /gap:3px/.test(btn) && /font-size:11px;font-weight:600;letter-spacing:0/.test(btn) && /border-radius:999px/.test(btn),
+    'вкладка: --nav-muted, gap 3px, подпись 11px/600, скругление 999px');
+  assertTrue(/\.nav button \.ic svg\{width:22px;height:22px/.test(css), 'иконка 22px');
+  assertTrue(/\.nav button\.on \.lb\{font-weight:700\}/.test(css) && /\.nav button\.on \.ic svg\{stroke-width:2\.4\}/.test(css), 'активная: подпись 700, штрих иконки 2.4');
+  assertTrue(/@media \(max-width:340px\)\{\.nav\{left:12px;right:12px\}\.nav button\{font-size:9\.5px;padding:0 1px\}\}/.test(css), '≤340px: подпись 9.5px, отступы 12px');
   assertTrue(/\.nav\.dragging button\[data-s\]\{transform:none\}/.test(css), 'во время drag :active-scale кнопок отключён');
   assertTrue(/\.scroll-area\{[^}]*padding-bottom:calc\(var\(--navh\) \+ env\(safe-area-inset-bottom\) \+ 26px\)/.test(css), 'нижний отступ scroll-контента не изменён');
-  assertTrue(/--navh:76px/.test(light), 'высота капсулы --navh не изменена');
+  assertTrue(/--navh:64px/.test(light), 'высота капсулы --navh 64px (TASK_057, LexCar b2e5423)');
 }
 
 // ---------- §4. Pill, «живое стекло», reduced motion, кнопка «＋» ----------
@@ -113,8 +128,10 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
   assertTrue(!!pill, '.nav-indicator найдена');
   assertTrue(/top:7px;bottom:7px;left:7px/.test(pill) && /width:calc\(\(100% - 14px\) \/ var\(--nav-count,5\)\)/.test(pill), 'pill = одна колонка внутри padding 7px');
   assertTrue(/transform:translate3d\(calc\(var\(--nav-index,0\) \* 100%\),0,0\)/.test(pill), 'положение pill — CSS по --nav-index (без измерения DOM)');
-  assertTrue(/background:var\(--nav-pill-bg\);border:1px solid var\(--nav-glass-border\);box-shadow:var\(--nav-glass-shadow\)/.test(pill),
-    'pill: лёгкая заливка + существующие граница/тень TASK_002 (внутренний блик, мягкая тень)');
+  assertTrue(/border-radius:999px/.test(pill), 'pill полностью скруглена (999px)');
+  assertTrue(/background:var\(--nav-pill-bg\);border:1px solid var\(--nav-pill-border\);box-shadow:var\(--nav-pill-shadow\)/.test(pill),
+    'pill: полупрозрачная заливка на акценте + светлый контур + inset-блик/свечение (--nav-pill-*)');
+  assertTrue(/inset 0 1px 0 rgba\(255,255,255,\.30\),0 3px 12px rgba\(79,125,240,\.14\)/.test(val(light, '--nav-pill-shadow')), 'light pill shadow: inset блик + синее свечение');
   assertTrue(!/backdrop-filter/.test(pill), 'у pill нет своего backdrop-filter (второй blur в Safari лишний)');
   assertTrue(/pointer-events:none/.test(pill) && /overflow:hidden/.test(pill), 'pill декоративна, слои блика обрезаются по радиусу');
   assertTrue(!/will-change/.test(pill), 'will-change не задан постоянно');
@@ -189,7 +206,7 @@ const navJs = html.slice(jsStart, jsEnd);
   assertTrue(!/reduce\(|amount/.test(rj), 'renderJournal не добавляет финансовых расчётов');
   assertTrue(/updateHome\(list\);\n  renderJournal\(\); \/\/ TASK_056\n  renderFinanceCard\(\);/.test(html), 'render(): renderJournal() рядом с updateHome(); Главная не изменена');
   assertTrue(/function renderRecent\(list\)\{[\s\S]*?el\.innerHTML=homeGroupedTxHtml\(items\);\n  \$\$\('#recentList \.home-tx'\)/.test(html), 'renderRecent() Главной — без изменений');
-  assertTrue(/const CACHE = 'finance-v188';/.test(sw), 'sw.js: cache version поднят до finance-v188');
+  assertTrue(/const CACHE = 'finance-v189';/.test(sw), 'sw.js: cache version поднят до finance-v189 (TASK_057)');
   assertTrue(!/<script src="[^"]*(react|vue|framer|gsap|hammer)/i.test(html), 'без сторонних библиотек');
 }
 

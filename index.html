@@ -70,7 +70,7 @@
     --warn:#f59e0b; --warn-soft:#f59e0b1f;
     --info:#4dabf7; --info-soft:#4dabf71f;
     --shadow:0 8px 30px rgba(40,50,120,.08);
-    --radius:20px; --navh:76px;
+    --radius:20px; --navh:64px; /* TASK_057: компактная капсула (LexCar b2e5423) */
     /* полупрозрачный фон закреплённой шапки (material-эффект при прокрутке) */
     --bg-blur:rgba(255,255,255,.82);
     --nav-shadow:0 10px 30px rgba(40,50,120,.10);
@@ -84,23 +84,29 @@
     /* TASK_056: floating glass capsule нижней навигации — прозрачное светлое стекло (фон/карточки
        просвечивают), тонкий контур, верхний блик; --nav-bg-solid — плотный fallback без backdrop-filter.
        Прозрачность только в background (rgba) — иконки/подписи/badge остаются непрозрачными. */
-    --nav-bg:rgba(255,255,255,.14);
+    --nav-bg:rgba(255,255,255,.03);        /* TASK_057: почти прозрачное стекло (LexCar 4cff324) */
     --nav-bg-solid:rgba(255,255,255,.94);
-    --nav-border:rgba(22,24,31,.12);
-    --nav-highlight:rgba(255,255,255,.55);
-    --nav-blur:10px; --nav-saturate:150%;
-    /* pill активной вкладки — лёгкая стеклянная линза на акценте --nav-blue (не плотное пятно);
-       граница/тень — существующие --nav-glass-border/--nav-glass-shadow (TASK_002) */
-    --nav-pill-bg:linear-gradient(180deg,rgba(255,255,255,.46),rgba(255,255,255,.16)),var(--nav-blue-soft);
+    --nav-border:rgba(22,24,31,.42);       /* заметный тонкий контур — капсулу держит контур, не заливка */
+    --nav-highlight:rgba(255,255,255,.10);
+    --nav-blur:2px; --nav-saturate:130%;
+    /* цвета вкладок: неактивная — чуть темнее --muted (читаемость на прозрачном стекле),
+       активная — более глубокий синий --nav-blue2 (LexCar e387441: deeper accent) */
+    --nav-muted:#4f5a68;
+    --nav-active:var(--nav-blue2);
+    /* pill активной вкладки — полупрозрачная линза на акценте (.18), светлый контур, inset-блик,
+       мягкое синее свечение (LexCar e387441 на палитре Finance) */
+    --nav-pill-bg:rgba(79,125,240,.18);
+    --nav-pill-border:rgba(255,255,255,.36);
+    --nav-pill-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 3px 12px rgba(79,125,240,.14);
     /* «живое стекло» pill при удержании/drag: блик под пальцем, передний/задний край по движению */
     --nav-glint:rgba(255,255,255,.44);
     --nav-pill-edge-light:rgba(255,255,255,.34);
     --nav-pill-edge-dark:rgba(22,24,31,.06);
     /* отдельная floating glass-кнопка «＋» (нейтральная, не primary) */
-    --nav-add-bg:rgba(255,255,255,.34);
+    --nav-add-bg:rgba(255,255,255,.10);
     --nav-add-bg-solid:rgba(255,255,255,.96);
-    --nav-add-border:rgba(22,24,31,.12);
-    --nav-add-shadow:0 6px 18px rgba(40,50,120,.14),inset 0 1px 0 rgba(255,255,255,.7);
+    --nav-add-border:rgba(22,24,31,.42);
+    --nav-add-shadow:0 6px 18px rgba(28,32,60,.10),inset 0 1px 0 rgba(255,255,255,.35);
     /* Главная финансовая карточка (TASK_003) — системный светлый grouped-фон экрана и белая карточка */
     --home-bg:#f2f2f7;
     --fincard-shadow:0 10px 26px rgba(30,41,80,.08);
@@ -179,18 +185,22 @@
     --nav-glass-border:rgba(255,255,255,.20);
     --nav-glass-shadow:0 6px 18px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -8px 10px -8px rgba(91,139,255,.16);
     /* TASK_056: тёмное стекло капсулы — отдельный набор, не тот же белый rgba */
-    --nav-bg:rgba(24,27,36,.44);
+    --nav-bg:rgba(30,30,36,.42);
     --nav-bg-solid:rgba(28,32,41,.96);
-    --nav-border:rgba(255,255,255,.12);
+    --nav-border:rgba(255,255,255,.16);
     --nav-highlight:rgba(255,255,255,.10);
     --nav-blur:16px; --nav-saturate:150%;
-    --nav-pill-bg:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04)),var(--nav-blue-soft);
+    --nav-muted:var(--muted);
+    --nav-active:var(--nav-blue);
+    --nav-pill-bg:rgba(91,139,255,.30);
+    --nav-pill-border:rgba(255,255,255,.18);
+    --nav-pill-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 3px 12px rgba(91,139,255,.20);
     --nav-glint:rgba(255,255,255,.20);
     --nav-pill-edge-light:rgba(255,255,255,.18);
     --nav-pill-edge-dark:rgba(0,0,0,.18);
-    --nav-add-bg:rgba(36,40,52,.52);
+    --nav-add-bg:rgba(30,30,36,.42);
     --nav-add-bg-solid:rgba(36,40,52,.97);
-    --nav-add-border:rgba(255,255,255,.14);
+    --nav-add-border:rgba(255,255,255,.16);
     --nav-add-shadow:0 6px 18px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.12);
     /* Главная финансовая карточка (TASK_003) — тёмная тема переиспользует существующий --bg2, не инверсия светлой */
     --home-bg:var(--bg2);
@@ -500,7 +510,8 @@
     bottom:max(6px,env(safe-area-inset-bottom));z-index:30;
     max-width:500px;height:var(--navh);
     display:grid;grid-template-columns:repeat(var(--nav-count,5),minmax(0,1fr));padding:7px;
-    background:var(--nav-bg);border:1px solid var(--nav-border);border-radius:30px;
+    /* TASK_057: 64px + radius 32px — полностью скруглённые торцы капсулы (LexCar) */
+    background:var(--nav-bg);border:1px solid var(--nav-border);border-radius:32px;
     box-shadow:var(--nav-shadow),inset 0 1px 0 var(--nav-highlight);
     -webkit-backdrop-filter:blur(var(--nav-blur)) saturate(var(--nav-saturate));
     backdrop-filter:blur(var(--nav-blur)) saturate(var(--nav-saturate));
@@ -512,29 +523,34 @@
     .nav{background:var(--nav-bg-solid)}
     .nav-add{background:var(--nav-add-bg-solid)}
   }
-  .nav button{position:relative;z-index:1;background:none;border:none;color:var(--text);display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:4px;
-    cursor:pointer;font-size:clamp(8px,2.7vw,11px);font-weight:700;letter-spacing:-.2px;min-width:0;padding:0 1px;
-    border-radius:18px;transition:color .15s,transform .15s}
+  /* TASK_057: вкладки по LexCar b2e5423/e387441 — подпись 11px/600 (активная 700), иконка 22px
+     (активная — штрих 2.4), gap 3px, неактивный --nav-muted, активный --nav-active */
+  .nav button{position:relative;z-index:1;background:none;border:none;color:var(--nav-muted);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:3px;
+    cursor:pointer;font-size:11px;font-weight:600;letter-spacing:0;line-height:1.1;min-width:0;padding:0 2px;
+    border-radius:999px;transition:color .2s ease,transform .15s}
   .nav button .lb{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .nav button .ic{display:flex;align-items:center;justify-content:center;height:23px}
-  .nav button .ic svg{width:23px;height:23px;stroke:currentColor;fill:none;
+  .nav button .ic{display:flex;align-items:center;justify-content:center;height:22px;line-height:0}
+  .nav button .ic svg{width:22px;height:22px;stroke:currentColor;fill:none;
     stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+  .nav button.on .lb{font-weight:700}
+  .nav button.on .ic svg{stroke-width:2.4}
+  @media (max-width:340px){.nav{left:12px;right:12px}.nav button{font-size:9.5px;padding:0 1px}} /* «Аналитика» на 320px без обрезки */
   .nav button[data-s]:active{transform:scale(.94)}
   .nav.dragging button[data-s]{transform:none} /* во время drag кнопка под пальцем не «проседает» */
-  .nav button:focus-visible{outline:2px solid var(--nav-blue);outline-offset:-3px}
-  /* активная вкладка — синяя, по референсу Ministry (--nav-blue, отдельно от фирменного фиолетового --accent);
-     .preview — мягкое предварительное active-состояние ближайшей вкладки во время drag */
-  .nav button.on,.nav button.preview{color:var(--nav-blue)}
+  .nav button:focus-visible{outline:2px solid var(--nav-active);outline-offset:-3px}
+  /* активная вкладка — синий акцент навигации (--nav-active: light --nav-blue2 / dark --nav-blue; отдельно
+     от фирменного фиолетового --accent); .preview — мягкое предварительное active-состояние во время drag */
+  .nav button.on,.nav button.preview{color:var(--nav-active)}
   /* ===== Glass pill — подложка активной вкладки (TASK_002 → TASK_056) =====
      Одна на всех, ширина = колонка, положение — --nav-index (пишет moveNavIndicator()) через
-     transform; во время drag положение задаётся inline translate3d (см. navDrag). Лёгкая
-     стеклянная линза на акценте: тонкая граница, внутренний блик, мягкая тень (токены TASK_002),
-     без своего backdrop-filter — стекло уже даёт капсула (второй blur в Safari лишний). */
+     transform; во время drag положение задаётся inline translate3d (см. navDrag). Полупрозрачная
+     линза на акценте (TASK_057: --nav-pill-bg/-border/-shadow по LexCar e387441): светлый контур,
+     inset-блик, мягкое синее свечение; без своего backdrop-filter — стекло уже даёт капсула. */
   .nav-indicator{position:absolute;top:7px;bottom:7px;left:7px;z-index:0;
     width:calc((100% - 14px) / var(--nav-count,5));
-    border-radius:18px;pointer-events:none;opacity:0;overflow:hidden;
-    background:var(--nav-pill-bg);border:1px solid var(--nav-glass-border);box-shadow:var(--nav-glass-shadow);
+    border-radius:999px;pointer-events:none;opacity:0;overflow:hidden;
+    background:var(--nav-pill-bg);border:1px solid var(--nav-pill-border);box-shadow:var(--nav-pill-shadow);
     transform:translate3d(calc(var(--nav-index,0) * 100%),0,0);
     transition:opacity .18s ease,transform .24s cubic-bezier(.32,.72,0,1)}
   .nav-indicator.ready{opacity:1}
@@ -575,7 +591,7 @@
     touch-action:manipulation}
   .nav-add svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
   .nav-add:active{transform:scale(.92)}
-  .nav-add:focus-visible{outline:2px solid var(--nav-blue);outline-offset:3px}
+  .nav-add:focus-visible{outline:2px solid var(--nav-active);outline-offset:3px}
 
   /* ===== Add sheet ===== */
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);display:none;
