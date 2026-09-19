@@ -844,6 +844,19 @@
     → `finance-v187`. Тесты: **2609 passed, 0 failed**. Опубликовано
     коммитом `1ef02ac`; production отдаёт `finance-v187`. См.
     [`docs/tasks/TASK_055_HOME_HERO_WEBGL_SILK_WAVES.md`](tasks/TASK_055_HOME_HERO_WEBGL_SILK_WAVES.md).
+51. **TASK_056_BOTTOM_NAV_GLASS_DRAG_JOURNAL** — `DONE`. Нижняя навигация по финальному подходу LexCar на
+    палитре Finance: прозрачная floating glass capsule (backdrop-filter +
+    `@supports` fallback, light/dark токены `--nav-*`), пять вкладок
+    Главная · Аналитика · **Записи** · Счета · Бюджеты, glass pill на
+    `--nav-blue` с CSS-положением по `--nav-index`, drag-жест на Pointer
+    Events (порог 8px, rAF + `translate3d`, пружина, preview, переход через
+    `showScreen()`), CSS-имитация блика/преломления на pill только при
+    удержании/drag, отдельная нейтральная floating glass-кнопка «＋» вне
+    капсулы (`openSheet(null)` прежний). Новый экран «Записи» — полный
+    журнал операций на рендере строк Главной. `sw.js` `finance-v187` →
+    `finance-v188`. Тесты: **2782 passed, 0 failed**. Опубликовано
+    коммитом `04f3972`. См.
+    [`docs/tasks/TASK_056_BOTTOM_NAV_GLASS_DRAG_JOURNAL.md`](tasks/TASK_056_BOTTOM_NAV_GLASS_DRAG_JOURNAL.md).
 
 ## Пояснения
 

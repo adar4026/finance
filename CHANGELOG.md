@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Bottom navigation: floating glass capsule, draggable glass pill,
+  "Записи" tab and a separate "＋" button** (`TASK_056`). The bottom bar
+  is now a real translucent glass capsule (rgba fill + `backdrop-filter`
+  with both prefixes, thin outline, top highlight, soft shadow; separate
+  light/dark `--nav-*` tokens; solid `@supports` fallback) holding five
+  equal tabs — Главная · Аналитика · **Записи** · Счета · Бюджеты. The
+  active pill is a light glass lens on the existing blue nav accent,
+  positioned purely by CSS (`--nav-index`). A horizontal drag on the
+  capsule (Pointer Events, 8px threshold, rAF + `translate3d`, clamped to
+  the capsule) previews the nearest tab and springs to it on release,
+  routing through the existing `showScreen()`; while held/dragged the pill
+  shows a CSS-only "living glass" glint and edge highlight (disabled under
+  reduced motion). New **Записи** screen — the full transaction journal in
+  chronological order, reusing the Home row renderer and `openSheet()`.
+  The "＋" action moves out of the capsule into a small neutral floating
+  glass button above it (same `openSheet(null)`). `sw.js` cache bumped
+  `finance-v187` → `finance-v188`. New `tests/bottom_nav_glass_drag.test.js`
+  (172 checks, incl. a `vm` unit emulation of the gesture).
 - **Home hero: live WebGL "liquid fabric" background** (`TASK_054`). A
   single WebGL canvas confined to the hero (`var(--hero-h)`) inside the
   existing `.finance-ambient` layer renders three slowly deforming satin

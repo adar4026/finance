@@ -1,6 +1,6 @@
 # PROJECT_STATUS — A-Lex Finance
 
-**Обновлено:** 2026-09-17 (`TASK_055`)
+**Обновлено:** 2026-09-19 (`TASK_056`)
 
 ## Состояние приложения
 
@@ -21,11 +21,45 @@
   `releasedAt`). Политика версий (PATCH / MINOR / MAJOR) и обязательный
   чек-лист релиза — [`AGENTS.md`](../AGENTS.md), раздел «Версии и релизы».
 - Cache version Service Worker (`sw.js`) — отдельная сущность, сейчас
-  `finance-v187`.
+  `finance-v188`.
 
 ## Активная задача
 
-- Нет. Последняя закрытая задача — `TASK_055` (см. ниже; опубликовано).
+- Нет. Последняя закрытая задача — `TASK_056` (см. ниже; опубликовано).
+
+## TASK_056 — Нижняя навигация: floating glass capsule, glass pill с drag-жестом, вкладка «Записи», отдельная кнопка «＋» (DONE)
+
+Перенос утверждённого подхода LexCar (`57fe0df`) на vanilla JS Finance с
+палитрой Finance (синий акцент навигации `--nav-blue`, не цвета LexCar).
+Капсула `.nav` — настоящее прозрачное стекло: `background:var(--nav-bg)`
+(light `rgba(255,255,255,.14)`, dark `rgba(24,27,36,.44)`), оба префикса
+`backdrop-filter: blur(10/16px) saturate(150%)`, тонкий контур
+`--nav-border`, верхний блик `--nav-highlight`, тень `--nav-shadow`; без
+`opacity` на панели; `@supports not (backdrop-filter)` → плотный
+`--nav-bg-solid`. Пять равных grid-колонок: Главная · Аналитика ·
+**Записи** · Счета · Бюджеты; pill `#navIndicator` — одна на всех, положение
+CSS по `--nav-index` (`moveNavIndicator()` больше не измеряет DOM), лёгкая
+стеклянная линза `--nav-pill-bg` + существующие `--nav-glass-border/shadow`.
+Новый экран `#scrJournal` — полный журнал всех операций
+(`TxTime.sortAll(state.tx)` → `homeGroupedTxHtml()` → `openSheet(id)`),
+без фильтра периода; Главная не изменена. Кнопка «＋» вынесена из капсулы в
+отдельную floating glass-кнопку `.nav-add#addBtn` (48px, нейтральное стекло
+`--nav-add-*`, справа над капсулой, `z-index:31`), действие прежнее
+`openSheet(null)`. Drag-жест `navDrag`: Pointer Events на `.nav`,
+геометрия на `pointerdown`, порог 8px по X (вертикаль — не drag,
+`touch-action:pan-y`), `setPointerCapture` только после порога, rAF +
+`translate3d`, зажим в границах капсулы, `.preview` ближайшей вкладки,
+`.snap` пружина 0.38s → `showScreen()` только при смене вкладки, click
+после drag глотается capture-guard'ом. «Живое стекло» pill только в
+`.live`: `::before` блик `radial-gradient` по `--glint-x/--glint-y`,
+`::after` передний/задний край по `--drag-dir/--drag-v`, лёгкий
+`saturate/brightness`, `scaleX` ≤ +5 %; reduced motion — без блика,
+пружины, растяжения. `sw.js` `finance-v187` → `finance-v188`. Тесты:
+**2782 passed, 0 failed** (+172 `tests/bottom_nav_glass_drag.test.js`,
+включая юнит-эмуляцию жеста в `vm`). Preview 320/375/390/430 px, light/dark,
+пять экранов: без обрезки подписей и overflow, tap/drag/«＋» проверены,
+консоль без ошибок. Опубликовано коммитом `04f3972`. См.
+[`docs/tasks/TASK_056_BOTTOM_NAV_GLASS_DRAG_JOURNAL.md`](tasks/TASK_056_BOTTOM_NAV_GLASS_DRAG_JOURNAL.md).
 
 ## TASK_055 — Главная: WebGL-hero — объёмные шёлковые волны (DONE)
 
