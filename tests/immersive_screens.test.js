@@ -27,7 +27,8 @@ const SCOPE = '\\.app:has\\(\\.immersive\\.active\\)';
 {
   ['scrRecords', 'scrCharts', 'scrAccounts', 'scrBudgets'].forEach(id =>
     assertTrue(new RegExp(`<div class="screen immersive( active)?" id="${id}">`).test(html), `#${id} помечен классом .immersive`));
-  assertEqual((html.match(/class="screen immersive/g) || []).length, 4, 'ровно четыре immersive-экрана (Профиль/Настройки — нет)');
+  // TASK_056: пятый immersive-экран — «Записи» (#scrJournal); Профиль/Настройки по-прежнему нет
+  assertEqual((html.match(/class="screen immersive/g) || []).length, 5, 'ровно пять immersive-экранов (Главная/Аналитика/Записи/Счета/Бюджеты; Профиль/Настройки — нет)');
   assertTrue(!/<div class="screen immersive" id="scrMore">/.test(html), '#scrMore не immersive');
   assertEqual((html.match(/id="financeAmbient"/g) || []).length, 1, 'единственный слой .finance-ambient — в .app, не по одному на экран');
   assertTrue(new RegExp(`${SCOPE} \\.finance-ambient\\{display:block\\}`).test(css), 'видимость слоя — одно правило по .immersive, не четыре');

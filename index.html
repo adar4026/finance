@@ -81,6 +81,26 @@
     --nav-glass-bg:linear-gradient(180deg,rgba(255,255,255,.68),rgba(255,255,255,.30)),var(--nav-active-bg);
     --nav-glass-border:rgba(255,255,255,.75);
     --nav-glass-shadow:0 6px 16px rgba(79,125,240,.22),inset 0 1px 0 rgba(255,255,255,.65),inset 0 -8px 10px -8px rgba(79,125,240,.18);
+    /* TASK_056: floating glass capsule нижней навигации — прозрачное светлое стекло (фон/карточки
+       просвечивают), тонкий контур, верхний блик; --nav-bg-solid — плотный fallback без backdrop-filter.
+       Прозрачность только в background (rgba) — иконки/подписи/badge остаются непрозрачными. */
+    --nav-bg:rgba(255,255,255,.14);
+    --nav-bg-solid:rgba(255,255,255,.94);
+    --nav-border:rgba(22,24,31,.12);
+    --nav-highlight:rgba(255,255,255,.55);
+    --nav-blur:10px; --nav-saturate:150%;
+    /* pill активной вкладки — лёгкая стеклянная линза на акценте --nav-blue (не плотное пятно);
+       граница/тень — существующие --nav-glass-border/--nav-glass-shadow (TASK_002) */
+    --nav-pill-bg:linear-gradient(180deg,rgba(255,255,255,.46),rgba(255,255,255,.16)),var(--nav-blue-soft);
+    /* «живое стекло» pill при удержании/drag: блик под пальцем, передний/задний край по движению */
+    --nav-glint:rgba(255,255,255,.44);
+    --nav-pill-edge-light:rgba(255,255,255,.34);
+    --nav-pill-edge-dark:rgba(22,24,31,.06);
+    /* отдельная floating glass-кнопка «＋» (нейтральная, не primary) */
+    --nav-add-bg:rgba(255,255,255,.34);
+    --nav-add-bg-solid:rgba(255,255,255,.96);
+    --nav-add-border:rgba(22,24,31,.12);
+    --nav-add-shadow:0 6px 18px rgba(40,50,120,.14),inset 0 1px 0 rgba(255,255,255,.7);
     /* Главная финансовая карточка (TASK_003) — системный светлый grouped-фон экрана и белая карточка */
     --home-bg:#f2f2f7;
     --fincard-shadow:0 10px 26px rgba(30,41,80,.08);
@@ -158,6 +178,20 @@
     --nav-glass-bg:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04)),var(--nav-active-bg);
     --nav-glass-border:rgba(255,255,255,.20);
     --nav-glass-shadow:0 6px 18px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -8px 10px -8px rgba(91,139,255,.16);
+    /* TASK_056: тёмное стекло капсулы — отдельный набор, не тот же белый rgba */
+    --nav-bg:rgba(24,27,36,.44);
+    --nav-bg-solid:rgba(28,32,41,.96);
+    --nav-border:rgba(255,255,255,.12);
+    --nav-highlight:rgba(255,255,255,.10);
+    --nav-blur:16px; --nav-saturate:150%;
+    --nav-pill-bg:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04)),var(--nav-blue-soft);
+    --nav-glint:rgba(255,255,255,.20);
+    --nav-pill-edge-light:rgba(255,255,255,.18);
+    --nav-pill-edge-dark:rgba(0,0,0,.18);
+    --nav-add-bg:rgba(36,40,52,.52);
+    --nav-add-bg-solid:rgba(36,40,52,.97);
+    --nav-add-border:rgba(255,255,255,.14);
+    --nav-add-shadow:0 6px 18px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.12);
     /* Главная финансовая карточка (TASK_003) — тёмная тема переиспользует существующий --bg2, не инверсия светлой */
     --home-bg:var(--bg2);
     --fincard-shadow:0 10px 26px rgba(0,0,0,.32);
@@ -453,46 +487,95 @@
     color:var(--text);font-size:13.5px;cursor:pointer;font-family:inherit}
   .setrow button.danger{color:var(--expense);border-color:var(--expense)}
 
-  /* ===== Bottom nav — светлая плавающая капсула (референс: Ministry) ===== */
-  .nav{position:fixed;left:50%;transform:translateX(-50%);
+  /* ===== Bottom nav — floating glass capsule (TASK_056; подход LexCar, палитра Finance) =====
+     Капсула — настоящее прозрачное стекло: минимальная rgba-заливка + backdrop-filter (оба
+     префикса — Safari/iPhone понимает только -webkit-), тонкий контур, верхний блик, мягкая тень.
+     Прозрачность только в background — иконки/подписи остаются непрозрачными (никакого opacity
+     на всей панели). Пять равных колонок (grid) — pill активной вкладки переезжает по ним через
+     transform без измерения DOM. Центрирование через left/right + margin:auto (а не
+     translateX(-50%)): дробный сдвиг transform + backdrop-filter размывал текст в Safari. */
+  .nav{position:fixed;left:16px;right:16px;margin:0 auto;
     /* на iPhone с home-indicator (safe-area ~34pt) капсула садится вплотную к safe area, без «двойного» отступа;
        на устройствах без safe-area — минимум 6px от края, чтобы не липнуть к самому краю экрана */
     bottom:max(6px,env(safe-area-inset-bottom));z-index:30;
-    width:calc(100% - 32px);max-width:500px;height:var(--navh);
-    display:flex;align-items:stretch;padding:0 6px;
-    background:var(--card);border:1px solid var(--line);border-radius:30px;box-shadow:var(--nav-shadow)}
+    max-width:500px;height:var(--navh);
+    display:grid;grid-template-columns:repeat(var(--nav-count,5),minmax(0,1fr));padding:7px;
+    background:var(--nav-bg);border:1px solid var(--nav-border);border-radius:30px;
+    box-shadow:var(--nav-shadow),inset 0 1px 0 var(--nav-highlight);
+    -webkit-backdrop-filter:blur(var(--nav-blur)) saturate(var(--nav-saturate));
+    backdrop-filter:blur(var(--nav-blur)) saturate(var(--nav-saturate));
+    overflow:hidden;
+    /* drag pill — горизонтальный; вертикальный pan отдаём браузеру */
+    touch-action:pan-y}
+  /* без backdrop-filter стекло не работает — плотная лёгкая капсула с достаточным контрастом */
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .nav{background:var(--nav-bg-solid)}
+    .nav-add{background:var(--nav-add-bg-solid)}
+  }
   .nav button{position:relative;z-index:1;background:none;border:none;color:var(--text);display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:4px;
-    cursor:pointer;font-size:clamp(8px,2.7vw,11px);font-weight:700;letter-spacing:-.2px;flex:1 1 0;min-width:0;padding:0 1px;transition:.15s}
-  .nav button[data-s]{margin:9px 1px;border-radius:18px}
+    cursor:pointer;font-size:clamp(8px,2.7vw,11px);font-weight:700;letter-spacing:-.2px;min-width:0;padding:0 1px;
+    border-radius:18px;transition:color .15s,transform .15s}
   .nav button .lb{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .nav button .ic{display:flex;align-items:center;justify-content:center;height:23px}
   .nav button .ic svg{width:23px;height:23px;stroke:currentColor;fill:none;
     stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
   .nav button[data-s]:active{transform:scale(.94)}
-  /* активная вкладка — синяя, по референсу Ministry (--nav-blue, отдельно от фирменного фиолетового --accent); заливку теперь несёт .nav-indicator */
-  .nav button.on{color:var(--nav-blue)}
-  /* ===== Liquid Glass — общий перемещающийся индикатор активной вкладки (TASK_002) =====
-     Позиционируется через JS (moveNavIndicator) по фактической geometry активной кнопки:
-     .nav — position:fixed, поэтому служит offsetParent для .nav-indicator (position:absolute). */
-  .nav-indicator{position:absolute;top:0;left:0;z-index:0;width:0;height:0;
-    border-radius:18px;pointer-events:none;opacity:0;
-    background:var(--nav-glass-bg);border:1px solid var(--nav-glass-border);box-shadow:var(--nav-glass-shadow);
-    -webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);
-    transition:opacity .18s ease,width .2s ease,height .2s ease,background .2s ease,border-color .2s ease}
+  .nav.dragging button[data-s]{transform:none} /* во время drag кнопка под пальцем не «проседает» */
+  .nav button:focus-visible{outline:2px solid var(--nav-blue);outline-offset:-3px}
+  /* активная вкладка — синяя, по референсу Ministry (--nav-blue, отдельно от фирменного фиолетового --accent);
+     .preview — мягкое предварительное active-состояние ближайшей вкладки во время drag */
+  .nav button.on,.nav button.preview{color:var(--nav-blue)}
+  /* ===== Glass pill — подложка активной вкладки (TASK_002 → TASK_056) =====
+     Одна на всех, ширина = колонка, положение — --nav-index (пишет moveNavIndicator()) через
+     transform; во время drag положение задаётся inline translate3d (см. navDrag). Лёгкая
+     стеклянная линза на акценте: тонкая граница, внутренний блик, мягкая тень (токены TASK_002),
+     без своего backdrop-filter — стекло уже даёт капсула (второй blur в Safari лишний). */
+  .nav-indicator{position:absolute;top:7px;bottom:7px;left:7px;z-index:0;
+    width:calc((100% - 14px) / var(--nav-count,5));
+    border-radius:18px;pointer-events:none;opacity:0;overflow:hidden;
+    background:var(--nav-pill-bg);border:1px solid var(--nav-glass-border);box-shadow:var(--nav-glass-shadow);
+    transform:translate3d(calc(var(--nav-index,0) * 100%),0,0);
+    transition:opacity .18s ease,transform .24s cubic-bezier(.32,.72,0,1)}
   .nav-indicator.ready{opacity:1}
+  /* ---- «живое стекло» pill при удержании/drag (только CSS-имитация, без Canvas/WebGL/SVG) ----
+     ::before — мягкий блик под пальцем (radial-gradient, позиция через --glint-x/--glint-y);
+     ::after  — передний край чуть светлее, задний едва темнее по направлению движения
+     (--drag-dir: 1 вправо / -1 влево), интенсивность — сглаженная скорость (--drag-v).
+     Оба слоя декоративные, pointer-events:none, вне live-состояния невидимы. */
+  .nav-indicator::before,.nav-indicator::after{content:"";position:absolute;inset:0;border-radius:inherit;
+    pointer-events:none;opacity:0;transition:opacity .22s ease}
+  .nav-indicator::before{background:radial-gradient(28px 24px at var(--glint-x,50%) var(--glint-y,50%),var(--nav-glint) 0%,transparent 72%)}
+  .nav-indicator::after{background:linear-gradient(90deg,var(--nav-pill-edge-dark) 0%,transparent 38%,transparent 62%,var(--nav-pill-edge-light) 100%);
+    transform:scaleX(var(--drag-dir,1))}
+  .nav-indicator.live::before{opacity:1}
+  .nav-indicator.live::after{opacity:var(--drag-v,0)}
+  .nav-indicator.live{filter:saturate(calc(1 + .12 * var(--drag-v,0))) brightness(calc(1 + .03 * var(--drag-v,0)))}
+  /* во время drag положение — inline translate3d, transition выключаем; will-change только на время жеста */
+  .nav.dragging .nav-indicator{transition:opacity .18s ease;will-change:transform}
+  /* пружинное прилипание к ближайшей вкладке после отпускания (длительность = NAV_SNAP_MS в JS) */
+  .nav-indicator.snap{transition:opacity .18s ease,transform .38s cubic-bezier(.22,1.25,.36,1)}
   @media (prefers-reduced-motion: reduce){
-    .nav-indicator{transition:width .01s,height .01s,background .2s ease,border-color .2s ease}
+    .nav-indicator{transition:opacity .18s ease,transform .01s}
+    .nav-indicator.snap{transition:opacity .18s ease,transform .2s ease}
+    .nav-indicator::before,.nav-indicator::after{display:none}
+    .nav-indicator.live{filter:none}
   }
-  /* центральная кнопка добавления: отдельный крупный круг, выступает над капсулой и опущен ближе к подписи «Добавить» (референс Ministry) */
-  .nav .addbtn{position:relative;flex:0 0 68px;justify-content:flex-end;padding-bottom:7px}
-  .nav .addbtn .plus{position:absolute;top:-16px;left:50%;margin-left:-30px;
-    width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--nav-blue),var(--nav-blue2));
-    color:#fff;display:flex;align-items:center;justify-content:center;
-    box-shadow:0 10px 26px rgba(79,125,240,.5);transition:.15s}
-  .nav .addbtn .plus svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round}
-  .nav .addbtn .lb{color:var(--text)}
-  .nav .addbtn:active .plus{transform:scale(.92)}
+  /* ===== Отдельная floating glass-кнопка «＋ Добавить» (вне капсулы, справа над ней) =====
+     Нейтральное полупрозрачное стекло (не синяя primary), тот же blur, что капсула; выше капсулы по
+     z-index, правый край совпадает с краем капсулы (16px / safe-area / центрирование при max-width). */
+  .nav-add{position:fixed;z-index:31;
+    right:max(16px,env(safe-area-inset-right),calc((100% - 500px) / 2));
+    bottom:calc(max(6px,env(safe-area-inset-bottom)) + var(--navh) + 12px);
+    width:48px;height:48px;border-radius:50%;padding:0;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:var(--text);
+    background:var(--nav-add-bg);border:1px solid var(--nav-add-border);box-shadow:var(--nav-add-shadow);
+    -webkit-backdrop-filter:blur(var(--nav-blur)) saturate(var(--nav-saturate));
+    backdrop-filter:blur(var(--nav-blur)) saturate(var(--nav-saturate));
+    touch-action:manipulation}
+  .nav-add svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+  .nav-add:active{transform:scale(.92)}
+  .nav-add:focus-visible{outline:2px solid var(--nav-blue);outline-offset:3px}
 
   /* ===== Add sheet ===== */
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);display:none;
@@ -508,6 +591,9 @@
   /* Главный экран позади drawer — лёгкое затемнение/blur/уменьшение масштаба, включается через body.drawer-open (см. openDrawer/closeDrawer) */
   .app,.nav{transition:filter .28s cubic-bezier(.22,.61,.36,1),transform .28s cubic-bezier(.22,.61,.36,1)}
   body.drawer-open .app,body.drawer-open .nav{filter:blur(6px) brightness(.92);transform:scale(.98)}
+  /* TASK_056: отдельная кнопка «＋» вне капсулы — тот же blur/scale при открытой шторке */
+  .nav-add{transition:filter .28s cubic-bezier(.22,.61,.36,1),transform .28s cubic-bezier(.22,.61,.36,1),background .15s}
+  body.drawer-open .nav-add{filter:blur(6px) brightness(.92);transform:scale(.98)}
   .drawer{position:relative;width:86%;max-width:360px;height:100%;display:flex;flex-direction:column;
     border-radius:0 28px 28px 0;overflow:hidden;box-shadow:var(--nav-shadow);
     animation:drawerSlide .3s cubic-bezier(.22,.61,.36,1);
@@ -1759,6 +1845,10 @@
      навигацией) — сами экраны и .scroll-area прозрачны, иначе закрыли бы сцену. --main-bg-grad
      остаётся токеном для .catx-page («Операции по категории») и не переопределяется. */
   #scrRecords,#scrCharts,#scrAccounts,#scrBudgets{background:transparent}
+  #scrJournal{background:transparent} /* TASK_056: пятый immersive-экран «Записи» */
+  .journal-head{margin-top:8px;display:flex;align-items:baseline;gap:8px}
+  .journal-count{font-size:13px;font-weight:500;color:var(--muted)}
+  #scrJournal .daygroup:first-child .dayhead{padding-top:6px}
   /* TASK_009: фон #scrRecords покрывает только собственный бокс экрана — резерв под
      плавающую .nav (padding-bottom на .scroll-area, включает env(safe-area-inset-bottom))
      лежит уже вне #scrRecords и просвечивал белым фоном body/.app. Пока активна Главная,
@@ -2220,6 +2310,15 @@
     <div style="height:20px"></div>
   </div>
 
+  <!-- Screen: Записи (TASK_056) — полный журнал всех операций в хронологическом порядке.
+       Переиспользует рендер строк Главной (homeGroupedTxHtml → .home-tx, полный текст без
+       обрезки, TASK_046) и существующий переход к операции (openSheet(id)); без фильтра
+       периода — журнал целиком, Главная остаётся обзором операций выбранного периода. -->
+  <div class="screen immersive" id="scrJournal">
+    <div class="home-list-head journal-head">Все записи <span class="journal-count" id="journalCount"></span></div>
+    <div id="journalList"></div>
+  </div>
+
   <!-- Screen: Settings (через меню аватара) -->
   <div class="screen" id="scrMore">
     <h3 style="font-size:14px;color:var(--muted);margin:4px 4px 12px">Настройки</h3>
@@ -2244,15 +2343,18 @@
   </div><!-- /.scroll-area -->
 </div>
 
-<!-- Bottom nav -->
-<div class="nav">
+<!-- Bottom nav — TASK_056: floating glass capsule, пять вкладок (Записи — по центру), одна glass pill
+     (#navIndicator) переезжает между колонками; drag-жест — navDrag. Кнопка «＋» вынесена из капсулы
+     (отдельная floating glass-кнопка ниже), действие то же — openSheet(null). -->
+<div class="nav" role="navigation" aria-label="Разделы" style="--nav-count:5">
   <div class="nav-indicator" id="navIndicator" aria-hidden="true"></div>
-  <button class="on" data-s="scrRecords"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 10v9h12v-9"/></svg></span><span class="lb">Главная</span></button>
+  <button class="on" data-s="scrRecords" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 10v9h12v-9"/></svg></span><span class="lb">Главная</span></button>
   <button data-s="scrCharts"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V11"/><path d="M12 19V5"/><path d="M19 19v-6"/></svg></span><span class="lb">Аналитика</span></button>
-  <button class="addbtn" id="addBtn" aria-label="Добавить операцию"><span class="plus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="lb">Добавить</span></button>
+  <button data-s="scrJournal"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4.5"/></svg></span><span class="lb">Записи</span></button>
   <button data-s="scrAccounts"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10.5h18"/></svg></span><span class="lb">Счета</span></button>
   <button data-s="scrBudgets"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/></svg></span><span class="lb">Бюджеты</span></button>
 </div>
+<button class="nav-add" id="addBtn" type="button" aria-label="Добавить операцию"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
 
 <!-- Add / edit page (fullscreen, TASK_013) -->
 <div class="overlay" id="overlay" style="z-index:90;align-items:flex-start">
@@ -3489,6 +3591,7 @@ function render(){
   const list=state.tx.filter(inPeriod);
 
   updateHome(list);
+  renderJournal(); // TASK_056
   renderFinanceCard();
   renderAnalytics();
   renderBudgets();
@@ -3511,6 +3614,21 @@ function renderRecent(list){
   if(!items.length){el.innerHTML=`<div class="home-daycard"><div class="empty"><div class="big">🗒️</div><p>Нет операций за период.<br>Нажмите «+», чтобы добавить.</p></div></div>`;return;}
   el.innerHTML=homeGroupedTxHtml(items);
   $$('#recentList .home-tx').forEach(r=>r.onclick=()=>openSheet(r.dataset.id));
+}
+// TASK_056: экран «Записи» — полный журнал всех операций (без фильтра периода), тот же
+// порядок (AF.Services.TxTime.sortAll: дни по убыванию, внутри дня — время по убыванию) и
+// та же разметка строк, что на Главной (homeGroupedTxHtml → .home-tx, полный текст без
+// обрезки); tap по строке — существующий openSheet(id). Новых расчётов нет. Полный список
+// собирается только пока экран активен (render() вызывается из showScreen() и после каждого
+// CRUD, поэтому при входе на экран он всегда актуален).
+function renderJournal(){
+  const el=$('#journalList');if(!el)return;
+  if(curScreen!=='scrJournal')return;
+  const items=AF.Services.TxTime.sortAll(state.tx);
+  const cnt=$('#journalCount');if(cnt)cnt.textContent=items.length?items.length+' '+plural(items.length,'операция','операции','операций'):'';
+  if(!items.length){el.innerHTML=`<div class="home-daycard"><div class="empty"><div class="big">🗒️</div><p>Пока нет операций.<br>Нажмите «+», чтобы добавить.</p></div></div>`;return;}
+  el.innerHTML=homeGroupedTxHtml(items);
+  $$('#journalList .home-tx').forEach(r=>r.onclick=()=>openSheet(r.dataset.id));
 }
 // TASK_004: разметка списка операций только для Главной (iOS light) — отдельно от
 // groupedTxHtml()/txRow(), которые остаются без изменений для остальных экранов
@@ -5518,58 +5636,195 @@ function renderDetail(){
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
 /* ============ Экраны ============ */
-/* ============ Liquid Glass — индикатор активной вкладки (TASK_002) ============
-   Один общий элемент .nav-indicator скользит между кнопками .nav button[data-s].
-   Позиция берётся из фактической geometry активной кнопки (не из фиксированных
-   координат), поэтому корректна на любой ширине экрана и после ресайза. */
+/* ============ Glass pill — индикатор активной вкладки (TASK_002 → TASK_056) ============
+   Один общий элемент .nav-indicator (#navIndicator) переезжает между пятью равными
+   колонками капсулы. Положение — CSS: transform:translate3d(calc(--nav-index * 100%))
+   при ширине calc((100% - 14px)/--nav-count), поэтому геометрия не измеряется и
+   корректна на любой ширине экрана/после ресайза без JS. moveNavIndicator() лишь
+   пишет индекс активной кнопки; instant — без transition (ресайз/первая загрузка). */
+const NAV_TABS=()=>Array.from($$('.nav button[data-s]'));
 function moveNavIndicator(instant){
   const ind=$('#navIndicator');
   const nav=$('.nav');
   if(!ind||!nav)return;
-  const activeBtn=nav.querySelector('button[data-s].on');
-  if(!activeBtn){ind.classList.remove('ready');return;} // напр. экран scrMore — вкладки нет
+  const tabs=NAV_TABS();
+  const idx=tabs.findIndex(b=>b.classList.contains('on'));
+  if(idx<0){ind.classList.remove('ready');return;} // напр. экран scrMore — вкладки нет
+  // во время drag/snap положением владеет inline transform navDrag — индекс всё равно пишем,
+  // чтобы после снятия inline CSS-положение совпало с целевой вкладкой
+  if(navDrag.active()){nav.style.setProperty('--nav-index',idx);ind.classList.add('ready');return;}
   const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const navRect=nav.getBoundingClientRect();
-  const btnRect=activeBtn.getBoundingClientRect();
-  const toX=btnRect.left-navRect.left, toY=btnRect.top-navRect.top;
-  const toW=btnRect.width, toH=btnRect.height;
   const wasReady=ind.classList.contains('ready');
-  const canAnimate=typeof ind.animate==='function';
-  // геометрию текущего (возможно, ещё анимирующегося) положения читаем ДО cancel(),
-  // иначе canel() откатит рендер к старой inline-позиции и вызовет видимый скачок
-  const fromRect=ind.getBoundingClientRect();
-  if(canAnimate&&typeof ind.getAnimations==='function')ind.getAnimations().forEach(a=>a.cancel());
-  if(instant||reduced||!wasReady||!canAnimate){
-    // ресайз/смена ориентации/первая загрузка — переносим мгновенно, без CSS-transition
-    // на width/height, иначе капсула на миг «отстаёт» шириной от новой geometry панели
-    // и может визуально выйти за её пределы во время transition
+  if(instant||reduced||!wasReady){
     ind.style.transition='none';
-    ind.style.width=toW+'px';
-    ind.style.height=toH+'px';
-    ind.style.transform=`translate(${toX}px,${toY}px)`;
+    nav.style.setProperty('--nav-index',idx);
     ind.classList.add('ready');
     void ind.offsetWidth; // форсируем reflow, чтобы transition:none применился до возврата стилей
     ind.style.transition='';
     return;
   }
-  ind.style.width=toW+'px';
-  ind.style.height=toH+'px';
+  nav.style.setProperty('--nav-index',idx);
   ind.classList.add('ready');
-  const fromX=fromRect.left-navRect.left, fromY=fromRect.top-navRect.top;
-  if(Math.abs(fromX-toX)<0.5&&Math.abs(fromY-toY)<0.5){
-    ind.style.transform=`translate(${toX}px,${toY}px)`;
-    return;
-  }
-  const dir=toX>fromX?1:-1;
-  const stretch=Math.min(1.16,1+Math.abs(toX-fromX)/(toW*3));
-  ind.style.transformOrigin=dir>0?'left center':'right center';
-  ind.animate([
-    {transform:`translate(${fromX}px,${fromY}px) scaleX(1)`},
-    {transform:`translate(${(fromX+toX)/2}px,${(fromY+toY)/2}px) scaleX(${stretch})`,offset:.55},
-    {transform:`translate(${toX}px,${toY}px) scaleX(1)`}
-  ],{duration:270,easing:'cubic-bezier(.34,1.1,.4,1)',fill:'forwards'});
-  ind.style.transform=`translate(${toX}px,${toY}px)`; // конечное состояние после завершения анимации
 }
+/* ============ Drag-жест нижней навигации (TASK_056; подход LexCar) ============
+   Pointer Events на капсуле .nav: после горизонтального смещения NAV_DRAG_THRESHOLD
+   pill следует за пальцем по X (inline translate3d через rAF, в границах капсулы),
+   ближайшая вкладка получает .preview, на отпускании pill пружиной прилипает к
+   ближайшей вкладке и только тогда вызывается существующий showScreen(). Геометрия
+   читается один раз на pointerdown (не на каждом pointermove). Вертикальное движение —
+   не drag (touch-action:pan-y, |dy|>|dx| до порога игнорируется). Отдельная кнопка
+   «＋» (#addBtn) — вне .nav, поэтому в жесте не участвует: drag, начатый на ней,
+   не доходит до обработчиков капсулы, а pointer capture на .nav во время drag не
+   даёт ей получить click. Обычный tap (без порога) идёт по прежним onclick кнопок. */
+const NAV_PAD=7;             // внутренний отступ капсулы (см. .nav padding / .nav-indicator top/left)
+const NAV_DRAG_THRESHOLD=8;  // px по X, после которых жест — drag, а не tap
+const NAV_SNAP_MS=380;       // = .nav-indicator.snap transition
+const NAV_STRETCH_MAX=0.05;  // максимальное растяжение pill по направлению движения
+const navDrag=(()=>{
+  const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
+  const s={id:null,dragging:false,live:false,moved:false,startX:0,startY:0,lastX:0,lastY:0,
+    left:0,top:0,pillW:0,pillH:0,maxX:0,baseX:0,x:0,v:0,dir:1,nearest:-1,index:-1,
+    raf:0,snapTimer:0,movedTimer:0,snapping:false,reduceMotion:false};
+  let nav=null,pill=null;
+  const tabs=()=>NAV_TABS();
+  function setPreview(i){
+    if(s.nearest===i)return;
+    const items=tabs();
+    if(s.nearest>=0&&items[s.nearest])items[s.nearest].classList.remove('preview');
+    if(i>=0&&i!==s.index&&items[i])items[i].classList.add('preview');
+    s.nearest=i;
+  }
+  // применяем накопленное положение пальца одним кадром
+  function frame(){
+    s.raf=0;
+    if(!pill)return;
+    if(s.dragging){
+      const prev=s.x;
+      s.x=clamp(s.baseX+(s.lastX-s.startX),0,s.maxX);
+      const delta=s.x-prev;
+      if(Math.abs(delta)>0.5)s.dir=delta>0?1:-1;
+      const inst=clamp(Math.abs(delta)/14,0,1); // скорость сглаживаем — подсветка края не мигает
+      s.v=s.v*0.7+inst*0.3;
+      const stretch=s.reduceMotion?1:1+NAV_STRETCH_MAX*s.v;
+      pill.style.transform=`translate3d(${s.x}px,0,0) scaleX(${stretch.toFixed(4)})`;
+      pill.style.setProperty('--drag-dir',String(s.dir));
+      pill.style.setProperty('--drag-v',s.v.toFixed(3));
+      setPreview(Math.round(s.x/s.pillW));
+    }
+    if(s.live){ // блик — под пальцем, в координатах pill
+      const gx=clamp(s.lastX-s.left-NAV_PAD-s.x,0,s.pillW);
+      const gy=clamp(s.lastY-s.top-NAV_PAD,0,s.pillH);
+      pill.style.setProperty('--glint-x',gx.toFixed(1)+'px');
+      pill.style.setProperty('--glint-y',gy.toFixed(1)+'px');
+    }
+  }
+  function schedule(){if(!s.raf)s.raf=requestAnimationFrame(frame);}
+  // завершение жеста: пружиной к target (индекс вкладки), затем отдать положение CSS
+  function settle(target){
+    if(s.raf){cancelAnimationFrame(s.raf);s.raf=0;}
+    setPreview(-1);
+    if(s.id!==null&&nav){try{nav.releasePointerCapture(s.id);}catch(e){}}
+    s.id=null;s.live=false;
+    // click после drag (если браузер его пошлёт) приходит сразу за pointerup; затем guard
+    // снимаем, чтобы не съесть следующий клик/Enter с клавиатуры
+    clearTimeout(s.movedTimer);
+    s.movedTimer=setTimeout(()=>{s.moved=false;},400);
+    nav&&nav.classList.remove('dragging');
+    if(!pill)return;
+    pill.classList.remove('live');
+    pill.style.removeProperty('--glint-x');
+    pill.style.removeProperty('--glint-y');
+    if(!s.dragging){pill.style.removeProperty('--drag-v');return;} // без drag pill не двигалась
+    s.dragging=false;s.snapping=true;
+    pill.classList.add('snap');
+    pill.style.setProperty('--drag-v','0');
+    void pill.offsetWidth; // принудительный reflow — transition стартует с текущего px-положения
+    pill.style.transform=`translate3d(${target*s.pillW}px,0,0)`;
+    clearTimeout(s.snapTimer);
+    s.snapTimer=setTimeout(()=>{
+      // к этому моменту --nav-index уже указывает на target: CSS-значение совпадает с inline,
+      // убираем inline без визуального скачка
+      s.snapping=false;
+      pill.classList.remove('snap');
+      pill.style.removeProperty('transform');
+      pill.style.removeProperty('--drag-dir');
+      pill.style.removeProperty('--drag-v');
+      moveNavIndicator(true);
+    },s.reduceMotion?200:NAV_SNAP_MS);
+  }
+  function onDown(e){
+    if(s.id!==null||!e.isPrimary||(e.pointerType==='mouse'&&e.button!==0))return;
+    if(!nav||!pill)return;
+    const items=tabs();
+    const index=items.findIndex(b=>b.classList.contains('on'));
+    if(index<0)return;
+    clearTimeout(s.snapTimer);
+    if(s.snapping){s.snapping=false;pill.classList.remove('snap');pill.style.removeProperty('transform');moveNavIndicator(true);}
+    // геометрия капсулы — один раз на pointerdown
+    const r=nav.getBoundingClientRect();
+    const count=items.length;
+    s.index=index;s.left=r.left;s.top=r.top;
+    s.pillW=(r.width-NAV_PAD*2)/count;s.pillH=r.height-NAV_PAD*2;
+    s.maxX=s.pillW*(count-1);
+    s.baseX=index*s.pillW;s.x=s.baseX;
+    s.startX=s.lastX=e.clientX;s.startY=s.lastY=e.clientY;
+    s.moved=false;s.dragging=false;s.v=0;s.id=e.pointerId;
+    // удержание прямо на pill сразу «оживляет» стекло; drag — из любой точки капсулы
+    const inPill=e.clientX>=r.left+NAV_PAD+s.x&&e.clientX<=r.left+NAV_PAD+s.x+s.pillW;
+    if(inPill&&!s.reduceMotion){s.live=true;pill.classList.add('live');schedule();}
+  }
+  function onMove(e){
+    if(e.pointerId!==s.id)return;
+    s.lastX=e.clientX;s.lastY=e.clientY;
+    if(!s.dragging){
+      const dx=e.clientX-s.startX, dy=e.clientY-s.startY;
+      if(Math.abs(dx)<NAV_DRAG_THRESHOLD){if(s.live)schedule();return;}
+      if(Math.abs(dy)>Math.abs(dx))return; // вертикальное движение — не наш жест
+      s.dragging=true;s.moved=true;
+      // порог не должен давать рывок: сдвигаем начало ровно на порог, а не в текущую точку
+      s.startX+=Math.sign(dx)*NAV_DRAG_THRESHOLD;
+      s.live=!s.reduceMotion;
+      // capture — только с момента drag: до порога обычный tap/click кнопок остаётся нетронутым
+      try{nav.setPointerCapture(e.pointerId);}catch(err){}
+      nav.classList.add('dragging');
+      pill.classList.remove('snap');
+      if(s.live)pill.classList.add('live');
+    }
+    schedule();
+  }
+  function onUp(e){
+    if(e.pointerId!==s.id)return;
+    const wasDragging=s.dragging;
+    if(wasDragging)s.x=clamp(s.baseX+(s.lastX-s.startX),0,s.maxX); // финальное положение — без ожидания кадра
+    const target=wasDragging?Math.round(s.x/s.pillW):s.index;
+    settle(target);
+    if(wasDragging&&target!==s.index){const b=tabs()[target];if(b)showScreen(b.dataset.s);}
+  }
+  function onCancel(e){
+    if(e.pointerId!==s.id)return;
+    settle(s.index); // возврат на текущую вкладку, экран не трогаем
+  }
+  function onClickCapture(e){
+    // click после drag приходит уже после showScreen() из pointerup — глотаем, чтобы
+    // onclick кнопки под пальцем не переключил экран второй раз (или на другую вкладку)
+    if(s.moved){s.moved=false;e.stopPropagation();e.preventDefault();}
+  }
+  function init(){
+    nav=$('.nav');pill=$('#navIndicator');
+    if(!nav||!pill||!('PointerEvent' in window))return;
+    const mq=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)');
+    if(mq){s.reduceMotion=mq.matches;if(mq.addEventListener)mq.addEventListener('change',()=>{s.reduceMotion=mq.matches;});}
+    nav.addEventListener('pointerdown',onDown);
+    nav.addEventListener('pointermove',onMove);
+    nav.addEventListener('pointerup',onUp);
+    nav.addEventListener('pointercancel',onCancel);
+    // палец/курсор ушёл с капсулы до порога и отпущен снаружи — завершаем жест
+    window.addEventListener('pointerup',onUp);
+    window.addEventListener('pointercancel',onCancel);
+    nav.addEventListener('click',onClickCapture,true);
+  }
+  return {init,active:()=>s.dragging||s.snapping,_state:s};
+})();
 let navIndicatorResizeTimer=null;
 window.addEventListener('resize',()=>{
   clearTimeout(navIndicatorResizeTimer);
@@ -5621,10 +5876,10 @@ function movePeriodsIndicator(instant){
 function showScreen(id){
   curScreen=id;
   $$('.screen').forEach(s=>s.classList.toggle('active',s.id===id));
-  $$('.nav button[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
+  $$('.nav button[data-s]').forEach(b=>{const on=b.dataset.s===id;b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   moveNavIndicator();
   // глобальный период не нужен на «Счета»/«Настройки»; на «Бюджетах» — только навигация по месяцам
-  const noPeriod=(id==='scrMore'||id==='scrAccounts');
+  const noPeriod=(id==='scrMore'||id==='scrAccounts'||id==='scrJournal'); // TASK_056: «Записи» — журнал целиком, без периода
   if(id==='scrBudgets')period='month'; // бюджеты всегда месячные → навигация по месяцам
   $('.periods').style.display=(noPeriod||id==='scrBudgets')?'none':'flex';
   // На «Главной» строка «‹ Месяц Год ›» общего subhead скрыта — над финансовой карточкой уже есть
@@ -6655,6 +6910,7 @@ function dstr(b,d){return new Date(b.getFullYear(),b.getMonth(),d).toISOString()
 
 /* ============ События ============ */
 $$('.nav button[data-s]').forEach(b=>b.onclick=()=>showScreen(b.dataset.s));
+navDrag.init(); // TASK_056: drag-жест pill по капсуле (tap по кнопкам — прежние onclick выше)
 // Аналитика: селектор периода
 // Вкладки Расходы/Доходы в блоке «Категории» — перерисовывают только кольцо+список
 $$('#anaCatSeg button').forEach(b=>b.onclick=()=>{anaCatType=b.dataset.t;
