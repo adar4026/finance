@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Bottom navigation: compact 64px capsule per the final LexCar system**
+  (`TASK_057`). Capsule height 76 → 64px with fully rounded ends
+  (`border-radius:32px`), 48px pill (`999px`); near-clear glass material
+  (light fill .03 / blur 2px with a visible thin outline, dark
+  `rgba(30,30,36,.42)` / blur 16px); stronger translucent blue active pill
+  with a light outline, inset highlight and soft glow; tab labels 11px/600
+  (active 700, icon stroke 2.4), icons 22px; all five tabs fit at 320px.
+  The «＋» button shares the capsule material. Drag/glint mechanics
+  unchanged. `sw.js` cache bumped `finance-v188` → `finance-v189`.
 - **Bottom navigation: floating glass capsule, draggable glass pill,
   "Записи" tab and a separate "＋" button** (`TASK_056`). The bottom bar
   is now a real translucent glass capsule (rgba fill + `backdrop-filter`

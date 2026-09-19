@@ -857,6 +857,15 @@
     `finance-v188`. Тесты: **2782 passed, 0 failed**. Опубликовано
     коммитом `04f3972`. См.
     [`docs/tasks/TASK_056_BOTTOM_NAV_GLASS_DRAG_JOURNAL.md`](tasks/TASK_056_BOTTOM_NAV_GLASS_DRAG_JOURNAL.md).
+52. **TASK_057_BOTTOM_NAV_LEXCAR_COMPACT_CAPSULE** — `DONE`. Капсула нижней
+    навигации приведена к финальной системе LexCar (`e387441`, `b2e5423`):
+    64px с полностью скруглёнными торцами (radius 32px), pill 48px/999px,
+    почти прозрачное стекло с заметным контуром, усиленная синяя pill,
+    подписи 11px/600 (активная 700, штрих иконки 2.4), «＋» в том же
+    материале; механика drag/блика без изменений. `sw.js` `finance-v188` →
+    `finance-v189`. Тесты: **2803 passed, 0 failed**. Опубликовано коммитом
+    `ad572fb`. См.
+    [`docs/tasks/TASK_057_BOTTOM_NAV_LEXCAR_COMPACT_CAPSULE.md`](tasks/TASK_057_BOTTOM_NAV_LEXCAR_COMPACT_CAPSULE.md).
 
 ## Пояснения
 
