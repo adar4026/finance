@@ -58,7 +58,9 @@ CSS по `--nav-index` (`moveNavIndicator()` больше не измеряет 
 **2782 passed, 0 failed** (+172 `tests/bottom_nav_glass_drag.test.js`,
 включая юнит-эмуляцию жеста в `vm`). Preview 320/375/390/430 px, light/dark,
 пять экранов: без обрезки подписей и overflow, tap/drag/«＋» проверены,
-консоль без ошибок. Опубликовано коммитом `04f3972`. См.
+консоль без ошибок. Опубликовано коммитом `04f3972`
+(`2ce750f..1bf5d53`); деплой GitHub Pages подтверждён — production отдаёт
+`finance-v188`, старый кэш вычищен, консоль без ошибок. См.
 [`docs/tasks/TASK_056_BOTTOM_NAV_GLASS_DRAG_JOURNAL.md`](tasks/TASK_056_BOTTOM_NAV_GLASS_DRAG_JOURNAL.md).
 
 ## TASK_055 — Главная: WebGL-hero — объёмные шёлковые волны (DONE)

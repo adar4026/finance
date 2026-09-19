@@ -114,7 +114,16 @@ pill во время удержания/drag. Нужно перенести ег
 ### Git
 
 - Реализация: `04f3972` — `feat(TASK_056): floating glass bottom nav — draggable glass pill, «Записи» tab, separate «＋» button`.
-- Документация: коммит `docs(TASK_056)` (см. `git log`).
+- Документация: `1bf5d53` — `docs(TASK_056): task file, status, roadmap, changelog`.
+- Push: `2ce750f..1bf5d53` → `origin/main`.
+
+### Production-проверка (2026-09-19)
+
+https://adar4026.github.io/finance/ после деплоя GitHub Pages: `sw.js`
+отдаёт `finance-v188`, в браузере единственный кэш `finance-v188` (старый
+вычищен), в DOM пять вкладок `scrRecords/scrCharts/scrJournal/scrAccounts/
+scrBudgets`, `#addBtn` вне `.nav`, `backdrop-filter: blur(10px)
+saturate(1.5)` на капсуле применён, консоль без ошибок.
 
 ### Изменённые файлы
 
