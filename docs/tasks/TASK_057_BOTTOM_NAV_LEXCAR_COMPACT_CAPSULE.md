@@ -109,3 +109,12 @@ cache version; `tests/bottom_nav_glass_drag.test.js` (ожидания знач�
   нет; «＋» на 12px выше капсулы; сквозь капсулу видны карточки и текст
   (near-clear стекло LexCar); drag Главная→Счета и tap «Записи» работают;
   новых ошибок консоли нет.
+
+### Git и production
+
+- `ad572fb` — `feat(TASK_057)`; `ed40ce8` — `docs(TASK_057)`; push
+  `49a51fb..ed40ce8` → `origin/main`.
+- Production https://adar4026.github.io/finance/ после деплоя GitHub Pages:
+  `sw.js` отдаёт `finance-v189`, единственный кэш `finance-v189`, капсула
+  64px / radius 32px, `backdrop-filter: blur(2px) saturate(1.3)` применён,
+  консоль без ошибок.
