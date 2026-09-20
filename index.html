@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Финансы — Money Flow</title>
+<title>LexMoney</title>
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
@@ -15,7 +15,7 @@
      физическую дыру той же высоты (env(safe-area-inset-top)) внизу экрана — веб-вью занимало
      0…(экран - inset-top) вместо 0…экран. "default" убирает это смещение. -->
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Финансы">
+<meta name="apple-mobile-web-app-title" content="LexMoney">
 <meta name="mobile-web-app-capable" content="yes">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <!-- Архитектура (feature-ready для Flutter): core → database → services. UI ниже использует только AF.Store / AF.Services -->
@@ -2353,7 +2353,7 @@
       <input type="file" id="importFile" accept=".json,.csv,text/csv,application/json" hidden></div>
     <div class="setrow"><span>Демо-данные</span><button id="demoBtn">Заполнить</button></div>
     <div class="setrow"><span style="color:var(--expense)">Удалить всё</span><button class="danger" id="clearBtn">Очистить</button></div>
-    <p style="text-align:center;color:var(--muted2);font-size:11.5px;margin-top:14px">Финансы · в стиле Alex Finance</p>
+    <p style="text-align:center;color:var(--muted2);font-size:11.5px;margin-top:14px">LexMoney</p>
   </div>
 
   </div><!-- /.scroll-area -->
@@ -4694,7 +4694,7 @@ async function saveOrDownloadFile(name,content,mime){
     try{
       const handle=await window.showSaveFilePicker({
         suggestedName:name,
-        types:[{description:'A-Lex Finance backup',accept:{[mime]:['.afb']}}],
+        types:[{description:'LexMoney backup',accept:{[mime]:['.afb']}}],
       });
       const w=await handle.createWritable();
       await w.write(content);
@@ -4720,7 +4720,7 @@ function doExportCsv(){
   if(expBusy)return;
   const list=exportTx();if(!list.length){toast('Нет операций за период');return;}
   expLock(true);
-  try{downloadFile('alex_finance_'+stamp()+'.csv','﻿'+AF.Services.Export.csv(list,state),'text/csv');toast('CSV сохранён ✓');}
+  try{downloadFile('lexmoney_'+stamp()+'.csv','﻿'+AF.Services.Export.csv(list,state),'text/csv');toast('CSV сохранён ✓');}
   finally{expLock(false);}
 }
 function doExportXls(){
@@ -4734,7 +4734,7 @@ function doExportXls(){
     // CDN (инвариант совместимости TASK_015 §0). Тогда честно говорим об этом,
     // а не роняем обработчик кнопки.
     if(!bytes){toast('Формат Excel сейчас недоступен');return;}
-    downloadBytes('alex_finance_'+stamp()+'.xlsx',bytes,AF.Services.Xlsx.MIME);
+    downloadBytes('lexmoney_'+stamp()+'.xlsx',bytes,AF.Services.Xlsx.MIME);
     toast('Excel сохранён ✓');
   }finally{expLock(false);}
 }
@@ -4754,7 +4754,7 @@ async function doBackupCreate(){
   if(btn)btn.setAttribute('disabled','');
   try{
     const file=AF.Services.Backup.create(state,{appVersion:(window.AF&&AF.AppInfo&&AF.AppInfo.version)||''});
-    const result=await saveOrDownloadFile('alex_finance_backup_'+stamp()+'.afb',file,'application/json');
+    const result=await saveOrDownloadFile('lexmoney_backup_'+stamp()+'.afb',file,'application/json');
     if(result==='cancelled')return;      // пользователь закрыл системный диалог — ничего не изменилось
     // Файл уже отдан пользователю — сама копия создана в любом случае; не
     // сохранилась только отметка о дате (TASK_026: не молчим об этом).
@@ -4786,7 +4786,7 @@ function renderRestorePreview(){
   $('#rstBody').innerHTML=
     '<div class="imp-warn">Восстановление заменит текущие данные приложения: '+cur.tx+' операций, '+
       cur.accounts+' счетов, '+cur.categories+' категорий. Перед заменой будет автоматически сохранена копия текущих данных.</div>'+
-    '<div class="imp-card"><h4>Резервная копия A-Lex Finance</h4>'+
+    '<div class="imp-card"><h4>Резервная копия LexMoney</h4>'+
       (rstCtx.fileName?kv('Файл',esc(rstCtx.fileName)):'')+
       kv('Создана',created)+
       kv('Операций',c.tx)+kv('Счетов',c.accounts)+kv('Категорий',c.categories)+
@@ -4808,7 +4808,7 @@ function doRestoreCommit(){
   try{
     const safetyJson=AF.Store.snapshot();
     const safetyFile=AF.Services.Backup.create(state,{appVersion:(window.AF&&AF.AppInfo&&AF.AppInfo.version)||''});
-    downloadFile('alex_finance_safety_'+stamp()+'.afb',safetyFile,'application/json');
+    downloadFile('lexmoney_safety_'+stamp()+'.afb',safetyFile,'application/json');
     const mig=AF.Services.Backup.migrateBackup(rstCtx.data);
     if(!mig.ok){toastError(mig.error.message);return;}
     const next=mig.value;
@@ -5114,7 +5114,7 @@ async function secBioRegister(){
   const name=(state.profileName||'A-Lex');
   const cred=await navigator.credentials.create({publicKey:{
     challenge:crypto.getRandomValues(new Uint8Array(32)),
-    rp:{name:'A-Lex Finance'},
+    rp:{name:'LexMoney'},
     user:{id:crypto.getRandomValues(new Uint8Array(16)),name,displayName:name},
     pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
     authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},
@@ -5163,7 +5163,7 @@ function renderSecurity(){
   html+=`<div class="secp-card">
     <div class="secp-row"><span class="secp-lbl">Разрешить виджетам доступ к данным<i class="secp-sub2">Веб-версия не поддерживает виджеты</i></span>${sw('swWidgets','Разрешить виджетам доступ к данным',false,true)}</div>
   </div>
-  <div class="secp-note">Виджеты доступны только в нативных приложениях. Веб-версия A-Lex Finance не передаёт данные виджетам, поэтому разрешать здесь нечего.</div>`;
+  <div class="secp-note">Виджеты доступны только в нативных приложениях. Веб-версия LexMoney не передаёт данные виджетам, поэтому разрешать здесь нечего.</div>`;
 
   html+=`<div class="secp-group-title">Приватность</div>
   <div class="secp-card">
@@ -7166,7 +7166,7 @@ function deleteAccount(id){
 function exportData(){
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='finance-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  a.download='lexmoney-'+new Date().toISOString().slice(0,10)+'.json';a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   toast('Файл сохранён ✓');
 }

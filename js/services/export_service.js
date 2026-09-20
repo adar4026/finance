@@ -140,7 +140,7 @@ AF.Services.Export = {
       return `<tr><td>${t.date}</td><td>${name}${t.note ? ' · ' + t.note : ''}</td><td style="text-align:right;color:${col};white-space:nowrap">${sign}${f(t.amount)}</td></tr>`;
     }).join('');
     const topHtml = top.map(([id, v]) => `<tr><td>${this._catName(state, id)}</td><td style="text-align:right">${f(v)}</td><td style="text-align:right;color:#888">${Math.round(v / (exp || 1) * 100)}%</td></tr>`).join('');
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Alex Finance — отчёт</title>
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>LexMoney — отчёт</title>
       <style>body{font-family:-apple-system,Arial,sans-serif;color:#16181f;padding:24px;max-width:760px;margin:0 auto}
       h1{font-size:22px;margin:0 0 2px}.sub{color:#6b7180;font-size:13px;margin-bottom:20px}
       .cards{display:flex;gap:12px;margin-bottom:22px}.card{flex:1;border:1px solid #e6eaf2;border-radius:10px;padding:12px 14px}
@@ -148,7 +148,7 @@ AF.Services.Export = {
       h2{font-size:15px;margin:22px 0 8px}table{width:100%;border-collapse:collapse;font-size:13px}
       th{text-align:left;color:#6b7180;font-weight:600;border-bottom:2px solid #e6eaf2;padding:6px 4px}
       td{padding:6px 4px;border-bottom:1px solid #f0f1f5}@media print{body{padding:0}}</style></head><body>
-      <h1>💰 Alex Finance</h1><div class="sub">Финансовый отчёт · ${label} · сформировано ${new Date().toLocaleDateString('ru-RU')}</div>
+      <h1>💰 LexMoney</h1><div class="sub">Финансовый отчёт · ${label} · сформировано ${new Date().toLocaleDateString('ru-RU')}</div>
       <div class="cards">
         <div class="card"><div class="l">Доходы</div><div class="v" style="color:#1aa179">+${f(inc)}</div></div>
         <div class="card"><div class="l">Расходы</div><div class="v" style="color:#e23b48">−${f(exp)}</div></div>

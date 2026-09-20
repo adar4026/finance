@@ -1,5 +1,5 @@
 // tests/release_info.test.js — TASK_051: единый источник версии и даты релиза
-// (js/core/app_info.js) и footer боковой шторки «A-Lex Finance · v1.1.0» /
+// (js/core/app_info.js) и footer боковой шторки «LexMoney · v1.1.0» /
 // «Обновлено: сентябрь 2026». Проверяет: версия и дата берутся только из
 // AF.AppInfo; дата не зависит от Date/часового пояса/локали устройства;
 // реальный renderReleaseInfo() из index.html выводит две ожидаемые строки;
@@ -39,7 +39,7 @@ function loadAppInfo(extraGlobals) {
 // ============ §1 — единственный источник: поля и helper'ы ============
 const info = loadAppInfo();
 {
-  assertEqual(info.name, 'A-Lex Finance', 'AppInfo.name');
+  assertEqual(info.name, 'LexMoney', 'AppInfo.name');
   assertEqual(info.version, '1.1.0', 'AppInfo.version — semantic version 1.1.0 (редизайн шторки TASK_050 = MINOR)');
   assertEqual(info.releasedAt, '2026-09-17', 'AppInfo.releasedAt — фиксированная ISO-дата релиза');
   assertTrue(/^\d+\.\d+\.\d+$/.test(info.version), 'version — строго MAJOR.MINOR.PATCH');
@@ -96,23 +96,23 @@ const info = loadAppInfo();
   vm.createContext(ctx);
   vm.runInContext(fnSrc + '\nrenderReleaseInfo();', ctx);
   const lines = [...el.innerHTML.matchAll(/<div class="([\w-]+)">([^<]*)<\/div>/g)].map(m => [m[1], m[2]]);
-  assertEqual(lines, [['rel-name', 'A-Lex Finance · v1.1.0'], ['rel-date', 'Обновлено: сентябрь 2026']],
-    'Footer: ровно две строки — «A-Lex Finance · v1.1.0» и «Обновлено: сентябрь 2026»');
+  assertEqual(lines, [['rel-name', 'LexMoney · v1.1.0'], ['rel-date', 'Обновлено: сентябрь 2026']],
+    'Footer: ровно две строки — «LexMoney · v1.1.0» и «Обновлено: сентябрь 2026»');
   // при другой версии/дате в AppInfo footer меняется сам — без правок index.html
   const el2 = { innerHTML: '', classList: { add() {} } };
   const other = loadAppInfo(); other.version = '1.2.3'; other.releasedAt = '2027-02-10';
   const ctx2 = { AF: { AppInfo: other }, $: () => el2 };
   vm.createContext(ctx2); vm.runInContext(fnSrc + '\nrenderReleaseInfo();', ctx2);
-  assertTrue(el2.innerHTML.includes('A-Lex Finance · v1.2.3') && el2.innerHTML.includes('Обновлено: февраль 2027'),
+  assertTrue(el2.innerHTML.includes('LexMoney · v1.2.3') && el2.innerHTML.includes('Обновлено: февраль 2027'),
     'Footer следует за AF.AppInfo (единственное место правок)');
   assertTrue(/renderReleaseInfo\(\); \/\/ блок версии в drawer/.test(html), 'renderReleaseInfo() по-прежнему вызывается при старте');
   // рассинхрон кэша: старый app_info.js (без helper'ов) + новый index.html — не бросает, старт не прерывается
   const el3 = { innerHTML: '', classList: { add() {} } };
-  const legacy = { name: 'A-Lex Finance', version: '0.9.0', releaseNotes: null };
+  const legacy = { name: 'LexMoney', version: '0.9.0', releaseNotes: null };
   const ctx3 = { AF: { AppInfo: legacy }, $: () => el3 };
   vm.createContext(ctx3);
   let threw = false; try { vm.runInContext(fnSrc + '\nrenderReleaseInfo();', ctx3); } catch (e) { threw = true; }
-  assertTrue(!threw && el3.innerHTML.includes('A-Lex Finance · v0.9.0') && !/Обновлено/.test(el3.innerHTML),
+  assertTrue(!threw && el3.innerHTML.includes('LexMoney · v0.9.0') && !/Обновлено/.test(el3.innerHTML),
     'renderReleaseInfo() устойчив к старому AppInfo без helper\'ов (деградация без исключения)');
   assertTrue(/renderReleaseInfo\(\);[^\n]*\nshowScreen\('scrRecords'\);/.test(html),
     'renderReleaseInfo() вызывается до showScreen()/secMaybeLock() — исключение здесь сорвало бы старт, поэтому защита обязательна');

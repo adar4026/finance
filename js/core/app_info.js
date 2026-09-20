@@ -11,7 +11,7 @@
 // приложения и наоборот), записать релиз в CHANGELOG.md.
 window.AF = window.AF || {};
 AF.AppInfo = {
-  name: 'A-Lex Finance',
+  name: 'LexMoney',
   version: '1.1.0',        // semantic version — MAJOR.MINOR.PATCH
   releasedAt: '2026-09-17', // фиксированная дата релиза, ISO YYYY-MM-DD (не дата устройства)
   // Зарезервировано под будущий экран «Что нового». Когда появится —

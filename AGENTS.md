@@ -1,7 +1,7 @@
-# AGENTS.md — рабочий процесс A-Lex Finance
+# AGENTS.md — рабочий процесс LexMoney
 
-Этот файл фиксирует обязательный порядок работы над проектом A-Lex Finance
-по принципу TASK-системы (аналогично проекту Ministry).
+Этот файл фиксирует обязательный порядок работы над проектом LexMoney
+(ранее A-Lex Finance) по принципу TASK-системы (аналогично проекту Ministry).
 
 ## 1. В начале каждой новой рабочей сессии прочитать
 
@@ -71,7 +71,7 @@ docs/tasks/TASK_XXX_SHORT_NAME.md
 `js/core/app_info.js` (`AF.AppInfo`): `version` (semantic version) и
 `releasedAt` (фиксированная ISO-дата релиза `YYYY-MM-DD`). Footer боковой
 шторки формируется только из него (`renderReleaseInfo()` →
-`A-Lex Finance · v1.1.0` / `Обновлено: сентябрь 2026`); литералов версии
+`LexMoney · v1.1.0` / `Обновлено: сентябрь 2026`); литералов версии
 или месяца в HTML/CSS/тестах быть не должно (проверяется
 `tests/release_info.test.js`). Дата — дата релиза, а не текущая дата
 устройства.

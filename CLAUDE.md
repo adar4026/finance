@@ -1,4 +1,4 @@
-# CLAUDE.md — A-Lex Finance
+# CLAUDE.md — LexMoney (репозиторий adar4026/finance)
 
 Обязательная точка входа для Claude Code перед любыми изменениями в этом
 репозитории. Полный рабочий процесс — в [`AGENTS.md`](AGENTS.md).

@@ -181,7 +181,7 @@ assertTrue(/^secMaybeLock\(\);/m.test(html) && !/if\(state\.pinHash\)pinStart\('
 assertTrue(/Разрешить виджетам доступ к данным/.test(renderSec), 'Отдельная карточка «Разрешить виджетам доступ к данным»');
 assertTrue(/sw\('swWidgets','[^']*',false,true\)/.test(renderSec),
   'Переключатель виджетов выключен и disabled (функции нет — включать нечего)');
-assertTrue(/Веб-версия A-Lex Finance не передаёт данные виджетам/.test(renderSec),
+assertTrue(/Веб-версия LexMoney не передаёт данные виджетам/.test(renderSec),
   'Пользователю объяснено, почему настройка недоступна (без заявления несуществующей защиты)');
 // Комментарии сервиса объясняют, ПОЧЕМУ виджетов тут нет — проверяем сам код.
 const svcCode = svc.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');

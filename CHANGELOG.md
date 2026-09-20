@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **A-Lex Finance** are documented in this file.
+All notable changes to **LexMoney** (formerly A-Lex Finance) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
@@ -100,6 +100,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **App rebranded to LexMoney** (`TASK_059`). Every user-visible name
+  changed from «Финансы» / "A-Lex Finance" / "Alex Finance" to
+  **LexMoney**: `<title>`, `apple-mobile-web-app-title` (Home Screen name
+  on iPhone), manifest `name`/`short_name`/`description`, `AF.AppInfo.name`
+  (drawer footer "LexMoney · v1.1.0"), backup/restore labels, exported
+  HTML report title, import-source label, Security screen note, WebAuthn
+  `rp.name`, and download file prefixes (`lexmoney_*.csv/.xlsx/.afb`,
+  `lexmoney-*.json`). New app icon: `apple-touch-icon.png` (180),
+  `favicon-32.png` (32), `icon-192.png`, `icon-512.png` are regenerated
+  from the master `lexmoney.png` (1254×1254, Lanczos, no frames/padding).
+  `sw.js` cache bumped `finance-v190` → `finance-v191`; `favicon-32.png`
+  added to precache, dead `wave-card.jpg` removed from it. Internal
+  identifiers (cache prefix `finance-v`, storage key `finance_app`, backup
+  format key `app: 'Alex Finance'`, import-source id `alexfinance`, file
+  names such as `finance_card_service.js`), the GitHub Pages URL
+  `/finance/` and the repository name are intentionally unchanged. New
+  `tests/rebrand_lexmoney.test.js` (98 checks).
 - **Side-drawer "Total Balance" card removed — now an inline text block
   under the profile row** (`TASK_052`). The glass card wrapper around
   `#drawerBalance` (background, border, shadow, border-radius, blur —

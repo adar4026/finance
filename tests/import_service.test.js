@@ -61,15 +61,15 @@ function planFor(text, state, opts) {
 // ============ 1. Определение источника ============
 {
   // Наш собственный CSV-экспорт (TASK_045: 13 колонок — «Время» добавлена в
-  // конец) при точном совпадении подписывается как «A-Lex Finance» — это
+  // конец) при точном совпадении подписывается как «LexMoney» — это
   // более точный ответ для того же файла.
   const own = SRC.detect(MF_HEAD_TIME.split(','));
-  assertEqual(own.name, 'A-Lex Finance', 'Точное совпадение с собственным экспортом (с колонкой «Время») распознано как A-Lex Finance');
+  assertEqual(own.name, 'LexMoney', 'Точное совпадение с собственным экспортом (с колонкой «Время») распознано как LexMoney');
   // Файл без колонки «Время» (экспорт версии до TASK_045, либо чужой формат
   // без времени) — уже не точное совпадение с 13-колоночным AF_CSV_HEAD, но
   // опознаётся как Money Flow (transfer-пара + дата/сумма/счёт), а не теряется.
   const noTime = SRC.detect(MF_HEAD.split(','));
-  assertEqual(noTime.name, 'Money Flow', 'Файл без колонки «Время» (12 колонок) распознан как Money Flow, не как A-Lex Finance');
+  assertEqual(noTime.name, 'Money Flow', 'Файл без колонки «Время» (12 колонок) распознан как Money Flow, не как LexMoney');
   const mf = SRC.detect(['Дата', 'Время', 'Счёт', 'Сумма', 'Валюта', 'Категория', 'Перевод: Счёт', 'Перевод: Сумма']);
   assertEqual(mf.name, 'Money Flow', 'Вариант Money Flow с другим набором колонок распознан как Money Flow');
   const en = SRC.detect(['Date','Account','Amount','Currency','Category','Payee','Transfer: Account','Transfer: Amount','Note']);

@@ -1,6 +1,6 @@
-# PROJECT_STATUS — A-Lex Finance
+# PROJECT_STATUS — LexMoney
 
-**Обновлено:** 2026-09-20 (`TASK_058`)
+**Обновлено:** 2026-09-20 (`TASK_059`)
 
 ## Состояние приложения
 
@@ -21,11 +21,40 @@
   `releasedAt`). Политика версий (PATCH / MINOR / MAJOR) и обязательный
   чек-лист релиза — [`AGENTS.md`](../AGENTS.md), раздел «Версии и релизы».
 - Cache version Service Worker (`sw.js`) — отдельная сущность, сейчас
-  `finance-v190`.
+  `finance-v191`.
 
 ## Активная задача
 
-- Нет. Последняя закрытая задача — `TASK_058` (см. ниже; опубликовано).
+- Нет. Последняя закрытая задача — `TASK_059` (см. ниже; опубликовано).
+
+## TASK_059 — Ребрендинг PWA в LexMoney, новая иконка, подготовка к переименованию папки (DONE)
+
+Пользовательское название приложения везде — **LexMoney**: `<title>`,
+`apple-mobile-web-app-title` (имя на экране «Домой» iPhone), manifest
+`name`/`short_name`/`description`, `AF.AppInfo.name` (footer шторки
+«LexMoney · v1.1.0»), подписи резервных копий/восстановления, HTML-отчёт
+экспорта, имя источника импорта (`id: 'alexfinance'` сохранён), примечание
+экрана «Безопасность», WebAuthn `rp.name`, префиксы скачиваемых файлов
+`lexmoney_*` / `lexmoney-*`. Иконки `apple-touch-icon.png` 180×180,
+`favicon-32.png` 32×32, `icon-192.png`, `icon-512.png` пересобраны из
+мастер-файла `lexmoney.png` (1254×1254 RGB, центрированный square crop —
+уже квадрат, Lanczos, без рамок/полей/alpha). `sw.js` `finance-v190` →
+`finance-v191`; `favicon-32.png` добавлен в precache, мёртвый
+`wave-card.jpg` (не используется с `TASK_003`) убран из precache (файл на
+диске не удалён). **Не менялись** (внутренние идентификаторы / deployment):
+cache prefix `finance-v`, ключ localStorage `finance_app`, ключ формата
+резервной копии `app: 'Alex Finance'`, `finance_card_service.js`,
+CSS-классы, GitHub Pages URL `https://adar4026.github.io/finance/`, имя
+репозитория `adar4026/finance`, локальная папка `Projects/Finance`.
+Жёсткой зависимости от абсолютного пути папки в репозитории нет (нет CI,
+hooks, IDE-конфигов, package.json; тесты — через `__dirname`); абсолютные
+пути есть только в локальном незакоммиченном `.claude/launch.json`
+(конфиг превью) и в состоянии Claude Code (`~/.claude/projects/…`,
+`~/.claude.json`), ключуемом по пути. Новый
+`tests/rebrand_lexmoney.test.js` (98 проверок: title/meta/manifest/ссылки
+на иконки/реальные размеры PNG по IHDR/precache/старые названия). Тесты:
+**2887 passed, 0 failed** (36 файлов). См.
+[`docs/tasks/TASK_059_REBRAND_LEXMONEY_ICONS.md`](tasks/TASK_059_REBRAND_LEXMONEY_ICONS.md).
 
 ## TASK_058 — Главная: WebGL-hero — единая шёлковая поверхность по финальной реализации LexCar (DONE)
 

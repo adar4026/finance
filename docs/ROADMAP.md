@@ -1,4 +1,4 @@
-# ROADMAP — A-Lex Finance
+# ROADMAP — LexMoney
 
 ## Последовательность
 
@@ -875,6 +875,21 @@
     0 failed**. Опубликовано коммитом `8ad605b`; production отдаёт
     `finance-v190`. См.
     [`docs/tasks/TASK_058_HOME_HERO_LEXCAR_FINAL_SURFACE.md`](tasks/TASK_058_HOME_HERO_LEXCAR_FINAL_SURFACE.md).
+54. **TASK_059_REBRAND_LEXMONEY_ICONS** — `DONE`. Ребрендинг PWA в
+    **LexMoney**: `<title>`, `apple-mobile-web-app-title`, manifest
+    `name`/`short_name`/`description`, `AF.AppInfo.name` (footer шторки
+    «LexMoney · v1.1.0»), подписи резервных копий / отчёта экспорта /
+    источника импорта / экрана «Безопасность», префиксы скачиваемых файлов
+    `lexmoney_*`. Иконки `apple-touch-icon.png` 180 / `favicon-32.png` 32 /
+    `icon-192.png` / `icon-512.png` пересобраны из мастер-файла
+    `lexmoney.png` (1254², Lanczos, без рамок/полей). `sw.js`
+    `finance-v190` → `finance-v191`, `favicon-32.png` добавлен в precache,
+    мёртвый `wave-card.jpg` убран. Внутренние идентификаторы (`finance-v`,
+    `finance_app`, `app: 'Alex Finance'`, `id: 'alexfinance'`,
+    `finance_card_service.js`), GitHub Pages URL `/finance/` и имя
+    репозитория не менялись. Новый `tests/rebrand_lexmoney.test.js`
+    (98 проверок). Тесты: **2887 passed, 0 failed**. См.
+    [`docs/tasks/TASK_059_REBRAND_LEXMONEY_ICONS.md`](tasks/TASK_059_REBRAND_LEXMONEY_ICONS.md).
 
 ## Пояснения
 

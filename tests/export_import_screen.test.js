@@ -309,7 +309,7 @@ const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 {
   const body = code.slice(code.indexOf('function doRestoreCommit'), code.indexOf('function restoreSafety'));
   const iSnapshot = body.indexOf('AF.Store.snapshot()');
-  const iSafetyFile = body.indexOf('alex_finance_safety_');
+  const iSafetyFile = body.indexOf('lexmoney_safety_');
   const iSave = body.indexOf('AF.Store.save(next)');
   const iLoad = body.indexOf('load();');
   const iCheck = body.indexOf('actual.tx!==expected.tx');

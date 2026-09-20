@@ -1,10 +1,10 @@
 // Service worker — офлайн-кэш приложения
-const CACHE = 'finance-v190';
+const CACHE = 'finance-v191';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './wave-card.jpg',
+  './favicon-32.png',
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',

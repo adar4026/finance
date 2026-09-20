@@ -1,7 +1,7 @@
 {
-  "name": "Финансы — учёт доходов и расходов",
-  "short_name": "Финансы",
-  "description": "Личный учёт доходов и расходов с графиками",
+  "name": "LexMoney",
+  "short_name": "LexMoney",
+  "description": "LexMoney — личный учёт доходов и расходов с графиками",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -14,7 +14,7 @@
 window.AF = window.AF || {}; AF.Services = AF.Services || {};
 AF.Services.ImportSource = (function () {
 
-  // Поля модели A-Lex Finance, которые умеет заполнять импорт.
+  // Поля модели LexMoney (A-Lex Finance), которые умеет заполнять импорт.
   // required — без них импорт невозможен в принципе.
   const FIELDS = [
     { id: 'date',     label: 'Дата',              required: true },
@@ -144,7 +144,7 @@ AF.Services.ImportSource = (function () {
   function detect(header) {
     const heads = (header || []).map(norm);
     if (heads.length === AF_CSV_HEAD.length && AF_CSV_HEAD.every((h, i) => heads[i] === h)) {
-      return { id: 'alexfinance', name: 'A-Lex Finance', confident: true };
+      return { id: 'alexfinance', name: 'LexMoney', confident: true };
     }
     const hasTransferPair = heads.filter(h => TRANSFER_RE.test(h)).length >= 2;
     const m = autoMap(header).map;

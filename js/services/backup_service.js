@@ -111,7 +111,7 @@ AF.Services.Backup = {
     }
     let parsed;
     try { parsed = JSON.parse(raw); }
-    catch (e) { return AF.Result.err({ code: E.NOT_JSON, message: 'Файл повреждён: это не резервная копия A-Lex Finance.' }); }
+    catch (e) { return AF.Result.err({ code: E.NOT_JSON, message: 'Файл повреждён: это не резервная копия LexMoney.' }); }
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return AF.Result.err({ code: E.NOT_BACKUP, message: 'Файл не похож на резервную копию.' });
     }
