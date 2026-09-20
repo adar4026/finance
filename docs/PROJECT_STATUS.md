@@ -53,7 +53,10 @@ hooks, IDE-конфигов, package.json; тесты — через `__dirname`
 `~/.claude.json`), ключуемом по пути. Новый
 `tests/rebrand_lexmoney.test.js` (98 проверок: title/meta/manifest/ссылки
 на иконки/реальные размеры PNG по IHDR/precache/старые названия). Тесты:
-**2887 passed, 0 failed** (36 файлов). См.
+**2887 passed, 0 failed** (36 файлов). Опубликовано коммитом `56a3b47`;
+деплой GitHub Pages подтверждён 2026-09-20 — production отдаёт
+`<title>LexMoney</title>`, manifest `LexMoney`, `finance-v191`, новые
+иконки (SHA-256 совпадают с локальными). См.
 [`docs/tasks/TASK_059_REBRAND_LEXMONEY_ICONS.md`](tasks/TASK_059_REBRAND_LEXMONEY_ICONS.md).
 
 ## TASK_058 — Главная: WebGL-hero — единая шёлковая поверхность по финальной реализации LexCar (DONE)

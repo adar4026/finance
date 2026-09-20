@@ -888,7 +888,8 @@
     `finance_app`, `app: 'Alex Finance'`, `id: 'alexfinance'`,
     `finance_card_service.js`), GitHub Pages URL `/finance/` и имя
     репозитория не менялись. Новый `tests/rebrand_lexmoney.test.js`
-    (98 проверок). Тесты: **2887 passed, 0 failed**. См.
+    (98 проверок). Тесты: **2887 passed, 0 failed**. Опубликовано
+    коммитом `56a3b47`; production отдаёт `finance-v191`. См.
     [`docs/tasks/TASK_059_REBRAND_LEXMONEY_ICONS.md`](tasks/TASK_059_REBRAND_LEXMONEY_ICONS.md).
 
 ## Пояснения

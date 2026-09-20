@@ -220,4 +220,19 @@ Code заведёт новый проект по новому пути — ис�
 
 ### Git / публикация
 
-_(заполняется после коммита и деплоя)_
+- Коммит реализации: `56a3b47`
+  (`56a3b4776b8a72d63db862a9312d117bde442e24`) —
+  `feat(TASK_059): rebrand PWA to LexMoney, new wallet icons, cache
+  finance-v191`; 23 файла, только файлы задачи (`.claude/launch.json`,
+  удалённый `icon.svg`, `.DS_Store` в коммит не входят).
+- Push: `cd2216d..56a3b47 main -> main`, `origin/main` синхронизирован.
+- GitHub Pages: сборка `56a3b47` — `built` 2026-09-20 08:19 (через ~1 мин
+  после push).
+- Production (`https://adar4026.github.io/finance/`, cache-busting):
+  `<title>LexMoney</title>`; `apple-mobile-web-app-title` = `LexMoney`;
+  `manifest.json` — `name`/`short_name` `LexMoney`, icons
+  `icon-192.png 192x192`, `icon-512.png 512x512`; `sw.js` →
+  `finance-v191`, precache `favicon-32.png`/`icon-192.png`/
+  `icon-512.png`/`apple-touch-icon.png`, `wave-card.jpg` отсутствует;
+  четыре PNG — HTTP 200, размеры 180/32/192/512, SHA-256 совпадают с
+  локальными; `app_info.js` — `name: 'LexMoney'`.
