@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Home hero: single liquid-silk WebGL surface per the final LexCar
+  implementation** (`TASK_058`). The fragment shader is byte-identical to
+  LexCar's final `HeroCanvas.js` (`fold`/`layer`: one continuous
+  height-field surface with soft folds, pseudo-normal lighting, specular
+  edge and deep-tone shadow, bottom fade) — the "separate silk waves" look
+  of `TASK_055` is removed. Lifecycle (DPR ≤ 1.5, ~30 fps, low-power,
+  pause when hidden/off-screen, context restore, reduced motion, CSS
+  fallback) is unchanged; only the Finance violet/lavender palette tokens
+  `--hero-gl-*` differ (softer specular). `sw.js` cache bumped
+  `finance-v189` → `finance-v190`.
 - **Bottom navigation: compact 64px capsule per the final LexCar system**
   (`TASK_057`). Capsule height 76 → 64px with fully rounded ends
   (`border-radius:32px`), 48px pill (`999px`); near-clear glass material

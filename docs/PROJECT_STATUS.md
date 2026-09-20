@@ -1,6 +1,6 @@
 # PROJECT_STATUS — A-Lex Finance
 
-**Обновлено:** 2026-09-19 (`TASK_057`)
+**Обновлено:** 2026-09-20 (`TASK_058`)
 
 ## Состояние приложения
 
@@ -21,11 +21,28 @@
   `releasedAt`). Политика версий (PATCH / MINOR / MAJOR) и обязательный
   чек-лист релиза — [`AGENTS.md`](../AGENTS.md), раздел «Версии и релизы».
 - Cache version Service Worker (`sw.js`) — отдельная сущность, сейчас
-  `finance-v189`.
+  `finance-v190`.
 
 ## Активная задача
 
-- Нет. Последняя закрытая задача — `TASK_057` (см. ниже; опубликовано).
+- Нет. Последняя закрытая задача — `TASK_058` (см. ниже).
+
+## TASK_058 — Главная: WebGL-hero — единая шёлковая поверхность по финальной реализации LexCar (DONE)
+
+Возврат фрагментного шейдера к финальной реализации LexCar
+(`HeroCanvas.js`, единственный коммит `8a6b74d`; рабочее дерево LexCar
+идентично): `FRAG` (`fold`/`layer` — одна непрерывная поверхность из трёх
+height-field складок, псевдонормаль, diffuse/specular/тень, band, нижний
+fade) **побайтно** равен LexCar — проверяется тестом; look «отдельные
+волны» TASK_055 (`waveShape`/`relief`) снят. JS-обвязка TASK_054 (DPR ≤ 1.5,
+~30 fps, low-power, пауза hidden/вне viewport, restore, reduced motion,
+fallback) не менялась. Отличается только палитра `--hero-gl-*`: light
+`top #d9d1fb`, `c3 #efebff`, `alpha .46 .40 .48`, `light .45`; dark
+`c3 #cfc6ff`, `alpha .34 .24 .16`, `light .22`. `sw.js` `finance-v189` →
+`finance-v190`. Тесты: **2788 passed, 0 failed**. Preview 320/390/430/
+desktop, light/dark, lifecycle/context loss/reduced motion — пройдены.
+Реализация — коммит `8ad605b`. См.
+[`docs/tasks/TASK_058_HOME_HERO_LEXCAR_FINAL_SURFACE.md`](tasks/TASK_058_HOME_HERO_LEXCAR_FINAL_SURFACE.md).
 
 ## TASK_057 — Нижняя навигация: компактная капсула 64px по финальной системе LexCar (DONE)
 

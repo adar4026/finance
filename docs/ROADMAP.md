@@ -866,6 +866,14 @@
     `finance-v189`. Тесты: **2803 passed, 0 failed**. Опубликовано коммитом
     `ad572fb`. См.
     [`docs/tasks/TASK_057_BOTTOM_NAV_LEXCAR_COMPACT_CAPSULE.md`](tasks/TASK_057_BOTTOM_NAV_LEXCAR_COMPACT_CAPSULE.md).
+53. **TASK_058_HOME_HERO_LEXCAR_FINAL_SURFACE** — `DONE`. Главная: WebGL-hero возвращён к финальной реализации LexCar
+    (`HeroCanvas.js` `8a6b74d`): `FRAG` `fold`/`layer` побайтно — одна
+    непрерывная шёлковая поверхность с мягкими складками и переливами
+    света, без отдельных волн TASK_055; обвязка TASK_054 без изменений;
+    только палитра `--hero-gl-*` Finance (violet/lavender, `light .45/.22`).
+    `sw.js` `finance-v189` → `finance-v190`. Тесты: **2788 passed,
+    0 failed**. Реализация — коммит `8ad605b`. См.
+    [`docs/tasks/TASK_058_HOME_HERO_LEXCAR_FINAL_SURFACE.md`](tasks/TASK_058_HOME_HERO_LEXCAR_FINAL_SURFACE.md).
 
 ## Пояснения
 
