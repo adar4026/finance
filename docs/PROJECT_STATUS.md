@@ -25,7 +25,7 @@
 
 ## Активная задача
 
-- Нет. Последняя закрытая задача — `TASK_058` (см. ниже).
+- Нет. Последняя закрытая задача — `TASK_058` (см. ниже; опубликовано).
 
 ## TASK_058 — Главная: WebGL-hero — единая шёлковая поверхность по финальной реализации LexCar (DONE)
 
@@ -41,7 +41,9 @@ fallback) не менялась. Отличается только палитр�
 `c3 #cfc6ff`, `alpha .34 .24 .16`, `light .22`. `sw.js` `finance-v189` →
 `finance-v190`. Тесты: **2788 passed, 0 failed**. Preview 320/390/430/
 desktop, light/dark, lifecycle/context loss/reduced motion — пройдены.
-Реализация — коммит `8ad605b`. См.
+Опубликовано коммитом `8ad605b` (`713f9a9..c3bf787`); деплой GitHub Pages
+подтверждён 2026-09-20 — production отдаёт `finance-v190`, старый кэш
+вычищен, консоль без ошибок. См.
 [`docs/tasks/TASK_058_HOME_HERO_LEXCAR_FINAL_SURFACE.md`](tasks/TASK_058_HOME_HERO_LEXCAR_FINAL_SURFACE.md).
 
 ## TASK_057 — Нижняя навигация: компактная капсула 64px по финальной системе LexCar (DONE)

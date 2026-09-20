@@ -872,7 +872,8 @@
     света, без отдельных волн TASK_055; обвязка TASK_054 без изменений;
     только палитра `--hero-gl-*` Finance (violet/lavender, `light .45/.22`).
     `sw.js` `finance-v189` → `finance-v190`. Тесты: **2788 passed,
-    0 failed**. Реализация — коммит `8ad605b`. См.
+    0 failed**. Опубликовано коммитом `8ad605b`; production отдаёт
+    `finance-v190`. См.
     [`docs/tasks/TASK_058_HOME_HERO_LEXCAR_FINAL_SURFACE.md`](tasks/TASK_058_HOME_HERO_LEXCAR_FINAL_SURFACE.md).
 
 ## Пояснения

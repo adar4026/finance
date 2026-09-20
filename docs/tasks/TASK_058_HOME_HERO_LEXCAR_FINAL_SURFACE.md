@@ -1,6 +1,6 @@
 # TASK_058 — Главная: WebGL-hero — единая шёлковая поверхность по финальной реализации LexCar
 
-**Статус:** DONE (закоммичено; публикация — см. раздел Git)
+**Статус:** DONE (опубликовано)
 
 ## Контекст
 
@@ -188,5 +188,15 @@ violet/lavender гамме Finance под этот шейдер.
 ### Git
 
 - Реализация: `8ad605b` (`feat(TASK_058): restore LexCar final liquid-silk hero shader with Finance palette`).
-- Документация: `docs(TASK_058): …`.
-- Публикация: не выполнялась.
+- Документация: `c3bf787` (`docs(TASK_058): task file, status, roadmap,
+  changelog`); push `713f9a9..c3bf787` → `origin/main`.
+- Публикация: GitHub Pages, workflow `pages-build-deployment` (run
+  `35493261827`) — `completed / success`, build `built` на `c3bf787`;
+  деплой подтверждён 2026-09-20: production `sw.js` отдаёт `finance-v190`,
+  `js/ui/hero_canvas.js` на production содержит `fold()`, в `FRAG` нет
+  `waveShape`; на https://adar4026.github.io/finance/ (390 px, light)
+  `AF.HeroCanvas.isActive() === true`, класс `hero-canvas--on`, canvas
+  390×460 (585×690), палитра `light .45`, единственный кэш `finance-v190`
+  (старый вычищен), без overflow, консоль без ошибок.
+- Итоговый docs-коммит с хешами: следующий (`docs(TASK_058): record commit
+  hashes and production verification`).
