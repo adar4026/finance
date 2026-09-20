@@ -206,7 +206,7 @@ const navJs = html.slice(jsStart, jsEnd);
   assertTrue(!/reduce\(|amount/.test(rj), 'renderJournal не добавляет финансовых расчётов');
   assertTrue(/updateHome\(list\);\n  renderJournal\(\); \/\/ TASK_056\n  renderFinanceCard\(\);/.test(html), 'render(): renderJournal() рядом с updateHome(); Главная не изменена');
   assertTrue(/function renderRecent\(list\)\{[\s\S]*?el\.innerHTML=homeGroupedTxHtml\(items\);\n  \$\$\('#recentList \.home-tx'\)/.test(html), 'renderRecent() Главной — без изменений');
-  assertTrue(/const CACHE = 'finance-v189';/.test(sw), 'sw.js: cache version поднят до finance-v189 (TASK_057)');
+  assertTrue(/const CACHE = 'finance-v(\d+)';/.test(sw) && parseInt(sw.match(/finance-v(\d+)/)[1], 10) >= 189, 'sw.js: cache version ≥ finance-v189 (TASK_057)');
   assertTrue(!/<script src="[^"]*(react|vue|framer|gsap|hammer)/i.test(html), 'без сторонних библиотек');
 }
 

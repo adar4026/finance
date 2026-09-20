@@ -98,7 +98,7 @@ const darkBlock = css.slice(css.indexOf('[data-theme="dark"]{'), css.indexOf('[d
   assertTrue(/const CACHE = 'finance-v(\d+)';/.test(sw) && parseInt(sw.match(/finance-v(\d+)/)[1], 10) >= 186, 'sw.js: cache version ≥ finance-v186');
 }
 
-// ============ §5 — модуль: шейдер (TASK_054 инфраструктура Lexcar + TASK_055 look «шёлковые волны») ============
+// ============ §5 — модуль: шейдер LexCar 1-в-1 (TASK_054; TASK_058 — возврат fold/layer после TASK_055) ============
 {
   assertTrue(/const DPR_CAP = 1\.5;/.test(src), 'DPR cap 1.5');
   assertTrue(/const TARGET_FPS = 30;/.test(src), '~30 fps throttle');
@@ -106,52 +106,36 @@ const darkBlock = css.slice(css.indexOf('[data-theme="dark"]{'), css.indexOf('[d
   assertTrue(/new Float32Array\(\[-1, -1, 3, -1, -1, 3\]\)/.test(src), 'один fullscreen triangle');
   assertTrue(/gl\.drawArrays\(gl\.TRIANGLES, 0, 3\)/.test(src), 'один draw на кадр');
   assertTrue(/float snoise\(vec2 v\)/.test(src), '2D simplex noise');
-  // TASK_055: геометрия — каждая волна отдельная крупная форма (гребень + впадина), свет от рельефа
-  assertTrue(/mat2 rot\(float a\)/.test(src), 'поворот в систему координат волны (rot)');
-  assertTrue(/float waveShape\(vec2 p, float t, float ang, float speed, float per, float w0, float seed\)/.test(src), 'waveShape(ang, speed, per, w0, seed) — у каждой волны своё направление/скорость/интервал/ширина/фаза');
-  const wb = (src.match(/float waveShape\([^{]*\{([\s\S]*?)\n\}/) || [])[1] || '';
-  assertTrue(/float y = q\.y - t \* speed;/.test(wb), 'волна ползёт поперёк (y − t·speed): входит с края, проходит, уходит');
-  assertTrue(/float c = 0\.30 \* sin\(q\.x \* 0\.9[^;]*\+ 0\.42 \* snoise\(/s.test(wb.replace(/\n\s*/g, ' ')), 'кривизна центр-линии: дуга sin + шумовое отклонение (эволюционируют по t)');
-  assertTrue(/float w = w0 \* \(1\.0 \+ 0\.40 \* snoise\(/.test(wb), 'ширина меняется вдоль гребня');
-  assertTrue(/sin\(3\.14159 \* \(y - c\) \/ per\) \/ w;/.test(wb), 'поперечное расстояние периодизировано гладко (sin-warp, без шва)');
-  assertTrue(/float crest  = exp\(-pow\(abs\(d\), 1\.5\)\);/.test(wb), 'ГРЕБЕНЬ: заострённый exp(−|d|^1.5)');
-  assertTrue(/float valley = exp\(-\(d - 1\.6\) \* \(d - 1\.6\) \* 0\.9\);/.test(wb) && /return crest - 0\.55 \* valley;/.test(wb), 'ВПАДИНА на одном склоне гребня (асимметричный профиль)');
-  // суммарный рельеф → одно освещение (волны взаимодействуют)
-  assertTrue(/float relief\(vec2 p, float t, out float h1, out float h2, out float h3\)/.test(src), 'relief(): суммарный height field трёх волн');
-  const waves = src.match(/h\d = ([\d.]+) \* waveShape\(p, t, (-?[\d.]+), ([\d.]+), ([\d.]+), ([\d.]+), (\d\.\d)\);/g) || [];
-  assertEqual(waves.length, 3, 'три волны (две доминирующие + вторичная)');
-  const W = waves.map(l => l.match(/h\d = ([\d.]+) \* waveShape\(p, t, (-?[\d.]+), ([\d.]+), ([\d.]+), ([\d.]+), (\d\.\d)\)/).slice(1).map(Number));
-  const amps = W.map(x => x[0]).sort((a, b) => b - a);
-  assertTrue(amps[0] >= 0.85 && amps[1] >= 0.85 && amps[2] <= 0.5, 'амплитуды: две доминирующие (≥0.85) и одна вторичная (≤0.5)');
-  const angs = W.map(x => x[1]);
-  assertTrue(Math.max(...angs) - Math.min(...angs) <= 0.6 && new Set(angs).size === 3, 'базовое направление согласовано (разброс ≤ 0.6 рад), но у каждой свой угол');
-  ['скорость', 'интервал', 'ширина', 'seed'].forEach((n, i) => assertEqual(new Set(W.map(x => x[i + 2])).size, 3, `у каждой волны свой параметр: ${n}`));
-  assertTrue(W.every(x => x[2] <= 0.08), 'все скорости медленные (≤ 0.08 ед/с)');
-  assertTrue(W.every(x => x[4] >= 0.12 && x[4] <= 0.26), 'ширины волн 0.12–0.26 ед. (≈30–55 % ширины hero), не мелкие полоски');
-  // освещение от формы
-  assertTrue(/float H  = relief\(p, t, h1, h2, h3\);/.test(src) && /float Hx = relief\(p \+ vec2\(e, 0\.0\)/.test(src) && /float Hy = relief\(p \+ vec2\(0\.0, e\)/.test(src), 'нормаль — конечные разности суммарного рельефа (один расчёт света на все волны)');
-  assertTrue(/normalize\(vec3\(-\(Hx - H\) \/ e \* 0\.50, -\(Hy - H\) \/ e \* 0\.50, 1\.0\)\)/.test(src), 'сила нормали 0.50 — рельеф читается');
-  assertTrue(/float lit    = clamp\(diff - L\.z/.test(src) && /float shadow = clamp\(L\.z - diff/.test(src), 'освещённый/теневой склон относительно плоскости (плоский фон не тонируется)');
-  assertTrue(/float valley = smoothstep\(0\.0, -0\.40, H\);/.test(src), 'затемнение во впадине');
-  assertTrue(/float rim    = pow\(1\.0 - N\.z, 1\.3\)/.test(src), 'световая кромка вдоль крутых склонов');
-  assertTrue(/float spec   = pow\(clamp\(dot\(N, Hv\), 0\.0, 1\.0\), 8\.0\);/.test(src), 'highlight гребня — широкий (pow 8 < 12 Lexcar)');
-  assertTrue(/mix\(col, u_c3, \(spec \* 0\.9 \+ rim \* 0\.35\) \* u_light\)/.test(src), 'highlight/кромка окрашены в u_c3 (молочная лаванда), не белый');
-  assertTrue(!/vec3\(1\.0\) \* spec/.test(src) && !/streak/.test(src), 'нет белого specular и нет streak-полосок');
-  assertTrue(/mix\(col, u_deep, shadow \* 0\.65 \+ valley \* 0\.25\)/.test(src), 'тень: теневой склон + ложбина → u_deep');
-  // окраска — по гребню каждой волны
-  ['h1, 0.0, 1.0) * u_alpha.x', 'h2, 0.0, 1.0) * u_alpha.y', 'h3, 0.0, 1.0) * u_alpha.z'].forEach((f, i) =>
-    assertTrue(src.includes(`clamp(${f})`), `окраска волны ${i + 1} по её гребню (u_c${i + 1} × alpha)`));
+  // TASK_058: единая непрерывная поверхность LexCar — height-field складки fold() + освещение layer();
+  // «отдельные волны» TASK_055 (waveShape/relief) сняты
+  assertTrue(/float fold\(vec2 p, float t, vec2 dir, float seed\)/.test(src), 'fold(p, t, dir, seed) — height field одной складки');
+  const fb = (src.match(/float fold\([^{]*\{([\s\S]*?)\n\}/) || [])[1] || '';
+  assertTrue(/vec2 q = p - dir \* t \* 0\.05;/.test(fb), 'дрейф складки p − dir·t·0.05 — очень медленный');
+  assertTrue(/float w  = sin\(q\.x \* 1\.5 \+ q\.y \* 1\.1 \+ n1 \* 1\.9 \+ t \* 0\.14 \+ seed \* 2\.0\);/.test(fb), 'крупная синусоида, изогнутая низкочастотным шумом n1');
+  assertTrue(/return w \* 0\.58 \+ n1 \* 0\.45 \+ n2 \* 0\.06;/.test(fb), 'мелкий шум n2 — минимальный вклад (0.06)');
+  assertTrue(/vec3 layer\(vec3 col, vec2 p, float t, vec2 dir, float seed, vec3 tint, float alpha\)/.test(src), 'layer(): один слой ткани с псевдонормалью');
+  const lb = (src.match(/vec3 layer\([^{]*\{([\s\S]*?)\n\}/) || [])[1] || '';
+  assertTrue(/const float e = 0\.035;/.test(lb) && /float hx = fold\(p \+ vec2\(e, 0\.0\)/.test(lb) && /float hy = fold\(p \+ vec2\(0\.0, e\)/.test(lb), 'псевдонормаль — конечные разности fold()');
+  assertTrue(/vec3 L = normalize\(vec3\(-0\.45, 0\.75, 0\.55\)\);/.test(lb), 'свет сверху-слева (LexCar)');
+  assertTrue(/float diff = clamp\(dot\(N, L\), 0\.0, 1\.0\);/.test(lb) && /float spec = pow\(clamp\(dot\(N, H\), 0\.0, 1\.0\), 12\.0\);/.test(lb), 'diffuse + specular pow 12 (LexCar)');
+  assertTrue(/float band = smoothstep\(-0\.35, 0\.45, h\) \* \(1\.0 - smoothstep\(0\.55, 1\.25, h\)\);/.test(lb), 'band — где складка видна, мягкие границы');
+  assertTrue(/shaded = mix\(shaded, u_deep, \(1\.0 - diff\) \* 0\.26\);/.test(lb), 'мягкая тень обратной стороны → u_deep');
+  assertTrue(/shaded \+= vec3\(1\.0\) \* spec \* u_light;/.test(lb), 'светлая кромка складки, сила — u_light (палитра)');
+  const layers = src.match(/col = layer\(col, p, t, vec2\([^)]*\), \d\.0, u_c\d, u_alpha\.[xyz]\);/g) || [];
+  assertEqual(layers.length, 3, 'три слоя (c1 / c2 / c3) со своими dir/seed/alpha');
+  assertTrue(/vec2\( 1\.0, -0\.35\), 0\.0, u_c1, u_alpha\.x/.test(src) && /vec2\(-0\.85, 0\.30\), 1\.0, u_c2, u_alpha\.y/.test(src) && /vec2\( 0\.55, 0\.85\), 2\.0, u_c3, u_alpha\.z/.test(src), 'направления/seed слоёв — как LexCar');
   assertTrue(/mix\(col, u_bot, smoothstep\(0\.58, 1\.0, uv\.y\)\)/.test(src), 'нижний fade к u_bot (читаемость показателей, мягкий переход)');
+  assertTrue(!/waveShape|relief\(|mat2 rot\(|streak/.test((src.match(/const FRAG = `([\s\S]*?)`;/) || [])[1] || 'waveShape'), 'нет «отдельных волн» TASK_055 (waveShape/relief/rot) и streak-полосок в шейдере');
   // uniforms API не изменился — JS-обвязка TASK_054 (applyPalette/readPalette) та же
   ['u_res', 'u_t', 'u_top', 'u_bot', 'u_c1', 'u_c2', 'u_c3', 'u_deep', 'u_alpha', 'u_light']
     .forEach(u => assertTrue(new RegExp('uniform[^;]*\\b' + u + '\\b').test(src), `uniform ${u} на месте`));
-  // инфраструктура (VERT, noise, обвязка) — прежняя Lexcar, если репозиторий доступен рядом
+  // шейдеры — побайтно LexCar (финальная реализация, коммит 8a6b74d), если репозиторий доступен рядом
   if (fs.existsSync(lexcarPath)) {
     const lex = fs.readFileSync(lexcarPath, 'utf8');
-    const vert = s => { const m = s.match(/const VERT = `([\s\S]*?)`;/); return m ? m[1].replace(/\s+/g, ' ').trim() : null; };
-    assertEqual(vert(src), vert(lex), 'VERT-шейдер совпадает с Lexcar');
-    const noise = s => { const m = s.match(/float snoise\(vec2 v\) \{[\s\S]*?\n\}/); return m ? m[0].replace(/\s+/g, ' ') : null; };
-    assertEqual(noise(src), noise(lex), 'simplex noise совпадает с Lexcar');
+    const tpl = (s, name) => { const m = s.match(new RegExp('const ' + name + ' = `([\\s\\S]*?)`;')); return m ? m[1] : null; };
+    assertEqual(tpl(src, 'VERT'), tpl(lex, 'VERT'), 'VERT-шейдер побайтно совпадает с LexCar');
+    assertEqual(tpl(src, 'FRAG'), tpl(lex, 'FRAG'), 'FRAG-шейдер побайтно совпадает с LexCar (fold/layer/main)');
+    assertTrue(tpl(src, 'FRAG') !== null && tpl(src, 'FRAG').length > 3000, 'FRAG найден и не пуст');
   }
 }
 
@@ -219,7 +203,7 @@ const darkBlock = css.slice(css.indexOf('[data-theme="dark"]{'), css.indexOf('[d
   styles['--hero-gl-deep'] = 'oops'; styles['--hero-gl-alpha'] = '';
   const pal2 = HC.readPalette();
   assertEqual(pal2.deep.map(v => Math.round(v * 255)), [74, 58, 191], 'readPalette: невалидный токен → встроенный fallback-цвет');
-  assertEqual(pal2.alpha, [0.44, 0.40, 0.36], 'readPalette: пустой alpha → fallback');
+  assertEqual(pal2.alpha, [0.46, 0.40, 0.48], 'readPalette: пустой alpha → fallback');
 }
 
 console.log(`home_hero_webgl: ${passed} passed, ${failed} failed`);
