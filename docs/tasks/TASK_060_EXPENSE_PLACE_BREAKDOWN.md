@@ -1,6 +1,6 @@
 # TASK_060 — Детализация расходов по местам трат (категория → место → операции)
 
-**Статус:** DONE
+**Статус:** DONE (опубликовано)
 
 ## Контекст
 
@@ -259,4 +259,13 @@ DOM/state/localStorage; сумма в базовой валюте — колбэ
 
 ### Коммиты
 
-- (заполняется после коммита)
+- `22985a0` — `feat(TASK_060): детализация расходов по местам трат — категория → место → операции`
+  (push `75524d1..22985a0` в `origin/main`).
+- Следующий `docs(TASK_060)` — запись hash и проверки production.
+
+### Публикация
+
+GitHub Pages, 2026-09-30: production `https://adar4026.github.io/finance/`
+отдаёт `sw.js` с `finance-v192`, `js/services/place_breakdown_service.js`,
+`#catDetailOverlay` / `#placeBlock` в `index.html`; `AF.Services.PlaceBreakdown`
+и `openCatDetail()` доступны, footer «LexMoney · v1.1.0», консоль без ошибок.

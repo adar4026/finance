@@ -57,7 +57,9 @@ backup, JSON/CSV/XLSX-экспорте и CSV-импорте как «Контр
 Тесты: **3083 passed, 0 failed** (38 файлов; +112
 `tests/place_breakdown_service.test.js`, +80
 `tests/place_breakdown_screen.test.js`). Preview 320/375/390 px,
-light/dark — пройдены. См.
+light/dark — пройдены. Опубликовано коммитом `22985a0`; деплой GitHub
+Pages подтверждён 2026-09-30 — production отдаёт `finance-v192`, консоль
+без ошибок. См.
 [`docs/tasks/TASK_060_EXPENSE_PLACE_BREAKDOWN.md`](tasks/TASK_060_EXPENSE_PLACE_BREAKDOWN.md).
 
 ## TASK_059 — Ребрендинг PWA в LexMoney, новая иконка, подготовка к переименованию папки (DONE)

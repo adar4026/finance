@@ -903,7 +903,8 @@
     магазин — необязательно» сразу после категории, чипы мест этой
     категории, очистка; автодополнение ограничено типом и категорией. Новый
     сервис `js/services/place_breakdown_service.js`. `sw.js` `finance-v191`
-    → `finance-v192`. Тесты: **3083 passed, 0 failed** (38 файлов). См.
+    → `finance-v192`. Тесты: **3083 passed, 0 failed** (38 файлов). Опубликовано
+    коммитом `22985a0`; production отдаёт `finance-v192`. См.
     [`docs/tasks/TASK_060_EXPENSE_PLACE_BREAKDOWN.md`](tasks/TASK_060_EXPENSE_PLACE_BREAKDOWN.md).
 
 ## Пояснения
