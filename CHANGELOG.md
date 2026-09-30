@@ -11,6 +11,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Expense breakdown by place: category → place → transactions**
+  (`TASK_060`). Tapping an expense category in Analytics opens a category
+  detail screen with its own donut chart of places/stores (Mercadona, Lidl,
+  cafés…), the category total and transaction count in the centre, a
+  previous-period comparison without `∞%`, and an exact list sorted by
+  amount (colour marker = chart segment, share %, transaction count;
+  "Без подкатегории" for transactions without a place; >8 places — 7
+  largest + neutral "Остальные" segment, the list keeps every place).
+  Tapping a place opens the existing category transactions screen filtered
+  to that place for the same period, with a "Расходы › Продукты ›
+  Mercadona" breadcrumb; Back returns to the detail and then to Analytics
+  with the period kept. The period is the shared Analytics period (arrows
+  = `shiftPeriod()`). The place is the existing optional `payee` field
+  (already in backup/JSON/CSV/XLSX export and CSV import as «Контрагент»)
+  — no new field, no migration; the legacy subcategory name is used as a
+  fallback so old subcategories stay visible. The transaction form shows
+  «Место / магазин — необязательно» right after the category with chips of
+  places previously used in *that* category (plus free text and a clear
+  button); payee autocomplete is scoped to the same type and category. New
+  pure service `js/services/place_breakdown_service.js`. `sw.js` cache
+  bumped `finance-v191` → `finance-v192`.
 - **Home hero: single liquid-silk WebGL surface per the final LexCar
   implementation** (`TASK_058`). The fragment shader is byte-identical to
   LexCar's final `HeroCanvas.js` (`fold`/`layer`: one continuous

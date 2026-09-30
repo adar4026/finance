@@ -98,7 +98,9 @@ function assertTrue(cond, msg) {
 {
   assertTrue(/function catxGroupedTxHtml\(list\)\{/.test(html),
     'index.html: новая функция catxGroupedTxHtml() — рендер списка операций только для #catTxList');
-  assertTrue(/catxGroupedTxHtml\(list\)[^;]*;[\s\S]{0,40}home-tx/.test(html) || /\$\('#catTxList'\)\.innerHTML=catxGroupedTxHtml\(list\);/.test(html),
+  // TASK_060: в режиме «по месту» рендерится отфильтрованный по месту список shown
+  // (в обычном режиме shown === list), функция рендера та же.
+  assertTrue(/catxGroupedTxHtml\(list\)[^;]*;[\s\S]{0,40}home-tx/.test(html) || /\$\('#catTxList'\)\.innerHTML=catxGroupedTxHtml\((list|shown)\);/.test(html),
     'renderCatTx(): #catTxList рендерится через catxGroupedTxHtml (Home-стиль), не через старый groupedTxHtml');
   assertTrue(/\$\$\('#catTxList \.home-tx'\)\.forEach\(x=>x\.onclick=\(\)=>openSheet\(x\.dataset\.id\)\);/.test(html),
     'renderCatTx(): обработчик клика по строке операции навешивается на .home-tx (Home-компонент), клик по-прежнему открывает openSheet()');
@@ -127,7 +129,10 @@ function assertTrue(cond, msg) {
   assertTrue(/function monthsInRange\(from,to\)\{/.test(html), 'monthsInRange() присутствует без изменений сигнатуры');
   assertTrue(/const list=state\.tx\.filter\(t=>t\.type===ty&&catTxIds\.includes\(t\.cat\)&&inAnaRange\(t,r\)\);/.test(html),
     'renderCatTx(): фильтрация операций по категории/периоду не изменена');
-  assertTrue(/const sum=list\.reduce\(\(s,t\)=>s\+txBase\(t\),0\);/.test(html), 'renderCatTx(): расчёт суммы не изменён');
+  // TASK_060: сумма считается по shown — в обычном режиме это тот же list (фильтр места не применяется)
+  assertTrue(/const sum=(list|shown)\.reduce\(\(s,t\)=>s\+txBase\(t\),0\);/.test(html), 'renderCatTx(): расчёт суммы не изменён');
+  assertTrue(/const shown=\(drill&&placeSvc\(\)\)\?placeSvc\(\)\.filter\(list,[^;]*\):list;/.test(html),
+    'renderCatTx(): вне режима «по месту» shown === list (TASK_060)');
   assertTrue(/const avgM=sum\/months, avgY=avgM\*12;/.test(html), 'renderCatTx(): расчёт средних /мес и /год не изменён');
   assertTrue(/function openCatTx\(catIds,label,range,rangeLabel,type\)\{/.test(html), 'openCatTx() — сигнатура и точки входа (Аналитика/Бюджеты) не изменены');
 }
