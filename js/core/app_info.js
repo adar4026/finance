@@ -12,8 +12,8 @@
 window.AF = window.AF || {};
 AF.AppInfo = {
   name: 'LexMoney',
-  version: '1.1.0',        // semantic version — MAJOR.MINOR.PATCH
-  releasedAt: '2026-09-17', // фиксированная дата релиза, ISO YYYY-MM-DD (не дата устройства)
+  version: '2.1.2',        // semantic version — MAJOR.MINOR.PATCH
+  releasedAt: '2026-09-30', // фиксированная дата релиза, ISO YYYY-MM-DD (не дата устройства)
   // Зарезервировано под будущий экран «Что нового». Когда появится —
   // ReleaseInfo станет тапабельным без правок вёрстки (см. renderReleaseInfo).
   releaseNotes: null, // напр.: { '1.1.0': ['Компактная шторка'] }
@@ -22,7 +22,7 @@ AF.AppInfo = {
   MONTHS_RU: ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
     'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'],
 
-  // «v1.1.0» — версия для отображения.
+  // «v2.1.2» — версия для отображения.
   displayVersion() { return 'v' + this.version; },
 
   // «сентябрь 2026» — месяц и год релиза по-русски. Разбор строки YYYY-MM-DD

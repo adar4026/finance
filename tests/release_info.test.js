@@ -1,5 +1,5 @@
 // tests/release_info.test.js — TASK_051: единый источник версии и даты релиза
-// (js/core/app_info.js) и footer боковой шторки «LexMoney · v1.1.0» /
+// (js/core/app_info.js) и footer боковой шторки «LexMoney · v2.1.2» /
 // «Обновлено: сентябрь 2026». Проверяет: версия и дата берутся только из
 // AF.AppInfo; дата не зависит от Date/часового пояса/локали устройства;
 // реальный renderReleaseInfo() из index.html выводит две ожидаемые строки;
@@ -40,12 +40,12 @@ function loadAppInfo(extraGlobals) {
 const info = loadAppInfo();
 {
   assertEqual(info.name, 'LexMoney', 'AppInfo.name');
-  assertEqual(info.version, '1.1.0', 'AppInfo.version — semantic version 1.1.0 (редизайн шторки TASK_050 = MINOR)');
-  assertEqual(info.releasedAt, '2026-09-17', 'AppInfo.releasedAt — фиксированная ISO-дата релиза');
+  assertEqual(info.version, '2.1.2', 'AppInfo.version — semantic version 2.1.2 (release v2.1.2, 2026-09-30)');
+  assertEqual(info.releasedAt, '2026-09-30', 'AppInfo.releasedAt — фиксированная ISO-дата релиза');
   assertTrue(/^\d+\.\d+\.\d+$/.test(info.version), 'version — строго MAJOR.MINOR.PATCH');
   assertTrue(/^\d{4}-\d{2}-\d{2}$/.test(info.releasedAt), 'releasedAt — строго YYYY-MM-DD');
   assertTrue(!('releaseDate' in info), 'старое неиспользуемое поле releaseDate убрано (нет второго источника даты)');
-  assertEqual(info.displayVersion(), 'v1.1.0', 'displayVersion() → v1.1.0');
+  assertEqual(info.displayVersion(), 'v2.1.2', 'displayVersion() → v2.1.2');
   assertEqual(info.displayReleaseDate(), 'сентябрь 2026', 'displayReleaseDate() → сентябрь 2026');
   assertEqual(info.releaseNotes, null, 'releaseNotes — резерв под «Что нового», как было');
   // единственное определение AF.AppInfo во всём проекте
@@ -61,7 +61,7 @@ const info = loadAppInfo();
   // Date «сломан» намеренно: любое обращение к нему бросит — результат не меняется
   const noDate = loadAppInfo({ Date: function () { throw new Error('Date must not be used'); }, Intl: undefined });
   assertEqual(noDate.displayReleaseDate(), 'сентябрь 2026', 'displayReleaseDate() не использует Date/Intl');
-  assertEqual(noDate.displayVersion(), 'v1.1.0', 'displayVersion() не использует Date');
+  assertEqual(noDate.displayVersion(), 'v2.1.2', 'displayVersion() не использует Date');
   // источник не парсится через Date — иначе 31-е/переход месяца в TZ<0 дали бы другой месяц
   assertTrue(!/new Date|Date\.|toLocale|Intl\./.test(appInfoSrc), 'app_info.js: нет new Date / Date.* / toLocale* / Intl.*');
   // другие даты — верный русский месяц в именительном падеже, включая граничные дни
@@ -96,8 +96,8 @@ const info = loadAppInfo();
   vm.createContext(ctx);
   vm.runInContext(fnSrc + '\nrenderReleaseInfo();', ctx);
   const lines = [...el.innerHTML.matchAll(/<div class="([\w-]+)">([^<]*)<\/div>/g)].map(m => [m[1], m[2]]);
-  assertEqual(lines, [['rel-name', 'LexMoney · v1.1.0'], ['rel-date', 'Обновлено: сентябрь 2026']],
-    'Footer: ровно две строки — «LexMoney · v1.1.0» и «Обновлено: сентябрь 2026»');
+  assertEqual(lines, [['rel-name', 'LexMoney · v2.1.2'], ['rel-date', 'Обновлено: сентябрь 2026']],
+    'Footer: ровно две строки — «LexMoney · v2.1.2» и «Обновлено: сентябрь 2026»');
   // при другой версии/дате в AppInfo footer меняется сам — без правок index.html
   const el2 = { innerHTML: '', classList: { add() {} } };
   const other = loadAppInfo(); other.version = '1.2.3'; other.releasedAt = '2027-02-10';

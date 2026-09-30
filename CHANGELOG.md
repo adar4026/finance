@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.1.2] — 2026-09-30
+
+**LexMoney 2.1.2.** Everything listed below (`TASK_052` … `TASK_060`) is
+published on https://adar4026.github.io/finance/. Headline feature:
+**expense breakdown by place** — a category in Analytics now opens its own
+donut chart of the places/stores inside it (Mercadona, Lidl, cafés…), with
+a tap-through to the exact transactions at any one place, plus place chips
+and autocomplete in the expense form.
+
 ### Added
 
 - **Expense breakdown by place: category → place → transactions**
@@ -1279,6 +1288,7 @@ This version represents the first stable public release of A-Lex Finance.
 - **Release date:** June 2026
 - **Status:** Production Release
 
-[Unreleased]: https://github.com/adar4026/finance/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/adar4026/finance/compare/v2.1.2...HEAD
+[2.1.2]: https://github.com/adar4026/finance/compare/v1.1.0...v2.1.2
 [1.1.0]: https://github.com/adar4026/finance/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/adar4026/finance/releases/tag/v1.0.0
