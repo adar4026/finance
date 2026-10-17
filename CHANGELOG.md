@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.4.0] — 2026-10-17
+
+### Added
+
+- **Adaptive bottom navigation** (`TASK_063`). Scrolling down turns the
+  floating capsule into a compact one — narrower (266px) and lower (54px),
+  icons only; scrolling up brings the full capsule with labels back. All five
+  tabs, the drag gesture and routes are unchanged; the first scroll after
+  loading or switching tabs is handled correctly; reduced motion respected.
+
+### Changed
+
+- **`+` button moved next to the «Записи» heading** (`TASK_063`). The add
+  button now sits on the Home screen to the right of the «Записи» heading as a
+  translucent blue glass circle (Revolut-style), instead of floating above the
+  navigation; it opens the same new-operation form.
+
+### Fixed
+
+- Pressing `+` again while the form is already open no longer adds an extra
+  browser-history entry (one Back now always closes the form).
+
 ## [2.3.1] — 2026-10-17
 
 ### Fixed

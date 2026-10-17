@@ -933,6 +933,7 @@
     См. [`docs/tasks/TASK_061_RECURRING_PAYMENTS_REDESIGN.md`](tasks/TASK_061_RECURRING_PAYMENTS_REDESIGN.md).
 57. **TASK_062_BOTTOM_NAV_LIQUID_GLASS_REFINE** — `DONE` (опубликовано), релиз **v2.3.0**. Материал нижней капсулы в духе iOS Liquid Glass: заметный blur, тёмный тонкий контур, нейтральная подложка активной вкладки, иконки 24px / подписи 12px; вкладки, маршруты и drag не менялись. См. [`docs/tasks/TASK_062_BOTTOM_NAV_LIQUID_GLASS_REFINE.md`](tasks/TASK_062_BOTTOM_NAV_LIQUID_GLASS_REFINE.md).
 58. **TASK_062A_BOTTOM_NAV_LOWER_POSITION** — `DONE`, релиз **v2.3.1**. Корректирующая к `TASK_062`: капсула и «＋» заходят в safe area (iPhone — 20px от края вместо 34px). См. [`docs/tasks/TASK_062A_BOTTOM_NAV_LOWER_POSITION.md`](tasks/TASK_062A_BOTTOM_NAV_LOWER_POSITION.md).
+59. **TASK_063_ADAPTIVE_COMPACT_BOTTOM_NAV** — `DONE`, релиз **v2.4.0**. Адаптивная нижняя навигация (Instagram / Revolut): при прокрутке вниз капсула сужается и становится ниже (266×54, только иконки), вверх — снова полная; один scroll-обработчик `#scrollArea`, точка отсчёта пересчитывается после layout (`ResizeObserver`). Кнопка «＋» — только на Главной справа от заголовка «Записи», полупрозрачное голубое стекло; повторное нажатие при открытой форме не добавляет запись истории. Включает требования, поступавшие как «TASK_064». См. [`docs/tasks/TASK_063_ADAPTIVE_COMPACT_BOTTOM_NAV.md`](tasks/TASK_063_ADAPTIVE_COMPACT_BOTTOM_NAV.md).
 
 ## Пояснения
 
