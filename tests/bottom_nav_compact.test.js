@@ -22,156 +22,213 @@ function assertEqual(actual, expected, msg) {
 const css = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
 const script = html.slice(html.indexOf('</style>'));
 
-// ---------- §1. Логика направления прокрутки (vm) ----------
+// ---------- §1. Прогресс сжатия (vm) ----------
 const start = html.indexOf('const NAV_COMPACT_TOP=');
 const end = html.indexOf('})();', html.indexOf('const navCompact=')) + 5;
 assertTrue(start > 0 && end > start, 'блок navCompact найден в index.html');
 const code = html.slice(start, end);
+const RANGE = +(code.match(/const NAV_COMPACT_RANGE=(\d+)/) || [])[1];
+const MAXSTEP = +(code.match(/const NAV_COMPACT_MAXSTEP=([\d.]+)/) || [])[1];
+assertEqual(RANGE, 90, 'NAV_COMPACT_RANGE — 90px прокрутки на полный ход прогресса');
+assertTrue(MAXSTEP > 0 && MAXSTEP < 1, 'NAV_COMPACT_MAXSTEP — доля прогресса за кадр');
 
-function makeEnv() {
-  const classes = new Set();
+// Заглушка DOM: капсула хранит записанные значения --nav-p, rAF-кадры прокручиваются вручную
+// (тот же приём, что tests/bottom_nav_glass_drag.test.js §6).
+function makeEnv(opts) {
+  const o = opts || {};
   const listeners = {};
-  let toggles = 0;
+  const writes = [];
   const nav = {
-    classList: {
-      contains: c => classes.has(c),
-      toggle: (c, on) => { toggles++; if (on) classes.add(c); else classes.delete(c); },
-    },
+    style: { setProperty: (k, v) => { if (k === '--nav-p') writes.push(v); } },
     addEventListener: (t, fn) => { (listeners[t] = listeners[t] || []).push(fn); },
   };
   const drag = { active: false };
-  const ctx = { $: sel => (sel === '.nav' ? nav : null), navDrag: { active: () => drag.active }, Math };
+  const frames = [];
+  const ctx = {
+    $: sel => (sel === '.nav' ? nav : null),
+    navDrag: { active: () => drag.active },
+    Math,
+    requestAnimationFrame: o.noRaf ? undefined : fn => { frames.push(fn); return frames.length; },
+    matchMedia: q => ({ matches: !!o.reduce && /reduced-motion/.test(q) }),
+  };
   vm.createContext(ctx);
   vm.runInContext(code + '\nthis.navCompact=navCompact;', ctx);
   const nc = ctx.navCompact;
   const sa = { scrollTop: 0, scrollHeight: 3000, clientHeight: 700 };
   const to = y => { sa.scrollTop = y; nc.onScroll(sa); };
-  const scrollTo = (from, target, stepPx) => { // покадровая прокрутка (как инерция)
-    const dir = target > from ? 1 : -1;
-    for (let y = from; dir > 0 ? y <= target : y >= target; y += dir * stepPx) to(y);
-    to(target);
+  const scrollBy = (dy, times) => { for (let i = 0; i < times; i++) to(sa.scrollTop + dy); };
+  // прокрутить запланированные кадры догонки (каждый может запланировать следующий)
+  const runFrames = (limit) => {
+    let n = 0;
+    while (frames.length && n < (limit || 200)) { const f = frames.shift(); f(); n++; }
+    return n;
   };
-  return { nc, nav, sa, ctx, to, scrollTo, drag, listeners, compact: () => classes.has('compact'), toggles: () => toggles };
+  const shown = () => (writes.length ? +writes[writes.length - 1] : 0);
+  return { nc, nav, sa, ctx, to, scrollBy, runFrames, frames, writes, drag, listeners,
+    shown, target: () => nc._state.p };
 }
 
-{ // 1. Начальное состояние — Expanded
+{ // 1. Старт: капсула полная, прогресс 0
   const e = makeEnv();
-  assertEqual(e.compact(), false, '1. старт: Expanded (класса compact нет)');
-  assertEqual(e.nc._state.compact, false, '1. старт: состояние Expanded');
-  assertTrue(!/<div class="nav[^"]*compact/.test(html), '1. разметка .nav без compact');
+  assertEqual(e.target(), 0, '1. старт: прогресс 0 (полная капсула)');
+  assertTrue(!/--nav-p\s*:\s*[^0]/.test(html.slice(html.indexOf('<div class="nav" role'), html.indexOf('<!-- Add / edit page'))),
+    '1. разметка .nav без инлайнового прогресса');
+  assertTrue(!/\.nav\.compact|classList\.toggle\('compact'/.test(html), '1. отдельного состояния .compact больше нет');
 }
-{ // 2. Прокрутка вниз — Compact; 3. вверх — Expanded
+{ // 2. Прокрутка вниз — непрерывное сжатие ровно по пройденным пикселям
   const e = makeEnv();
-  e.scrollTo(0, 400, 6);
-  assertEqual(e.compact(), true, '2. устойчивая прокрутка вниз → Compact');
-  e.scrollTo(400, 370, 6);
-  assertEqual(e.compact(), false, '3. устойчивая прокрутка вверх (≥12px) → Expanded');
-  e.scrollTo(370, 600, 4);
-  assertEqual(e.compact(), true, '2. снова вниз → Compact');
+  e.to(60); e.runFrames();
+  assertEqual(+e.target().toFixed(3), +(4 / RANGE).toFixed(3), '2. первые 56px (под шапкой) не сжимают, далее 1:1');
+  e.to(60 + RANGE / 2); e.runFrames();
+  assertTrue(Math.abs(e.target() - (4 / RANGE + 0.5)) < 1e-9, '2. половина диапазона — половина прогресса');
+  e.to(60 + RANGE * 2); e.runFrames();
+  assertEqual(e.target(), 1, '2. дальше прогресс упирается в 1 (компактная капсула)');
+  const w = e.writes.length;
+  e.to(60 + RANGE * 3); e.runFrames();
+  assertEqual(e.target(), 1, '2. прокрутка вниз в компактном состоянии ничего не меняет');
+  assertTrue(e.writes.length - w <= 1, '2. лишних записей в DOM нет');
+}
+{ // 3. Прокрутка вверх — такое же непрерывное раскрытие
+  const e = makeEnv();
+  e.to(400); e.runFrames();
+  assertEqual(e.target(), 1, '3. подготовка: капсула сжата');
+  e.to(400 - RANGE / 4); e.runFrames();
+  assertTrue(Math.abs(e.target() - 0.75) < 1e-9, '3. четверть диапазона вверх — прогресс .75');
+  e.to(400 - RANGE); e.runFrames();
+  assertEqual(e.target(), 0, '3. полный диапазон вверх — капсула снова полная');
+  e.to(400 - RANGE * 2); e.runFrames();
+  assertEqual(e.target(), 0, '3. дальше вверх — прогресс не уходит ниже 0');
+}
+{ // 4. Жест ведёт сжатие: короткое движение — частичное, без доводки до края
+  const e = makeEnv();
+  e.to(100); e.runFrames();                       // 44px сверх NAV_COMPACT_MIN
+  const p = e.target();
+  assertTrue(p > 0.4 && p < 0.6, `4. короткий жест даёт частичное сжатие (${p.toFixed(2)})`);
+  assertEqual(e.frames.length, 0, '4. после жеста нечего доводить — кадры не запланированы');
+  const shown = e.shown();
+  e.runFrames();
+  assertEqual(e.shown(), shown, '4. в покое капсула сама не доезжает ни к полной, ни к компактной');
+}
+{ // 5. Смена направления разворачивает сжатие сразу, без доигрывания старого перехода
+  const e = makeEnv();
+  e.to(60); e.scrollBy(9, 5); e.runFrames();      // вниз до ~.5
+  const mid = e.target();
+  assertTrue(mid > 0.4 && mid < 0.6, '5. подготовка: середина хода');
+  e.to(e.sa.scrollTop - 9); e.runFrames();
+  assertTrue(Math.abs(e.target() - (mid - 9 / RANGE)) < 1e-9, '5. первый же кадр вверх уменьшает прогресс ровно на пройденное');
+  assertEqual(e.shown(), Math.round(e.target() * 1000) / 1000, '5. нарисованное значение совпадает с целью — задержки нет');
+}
+{ // 6. Микродвижения: микроизменение прогресса, переключаться нечему
+  const e = makeEnv();
+  e.to(200); e.runFrames();
+  const base = e.target();
+  for (let i = 0; i < 40; i++) { e.to(200 + (i % 2 ? 4 : 0)); e.runFrames(); }
+  assertTrue(Math.abs(e.target() - base) <= 4 / RANGE + 1e-9, '6. дребезг ±4px меняет прогресс не больше чем на 4px хода');
+  assertTrue(4 / RANGE < 0.05, '6. это <5% хода (≈1px ширины) — мерцания состояний нет');
+}
+{ // 7. Крупный скачок (wheel/PageDown) — догоняется за кадры, без телепортации
+  const e = makeEnv();
   e.to(600);
-  assertEqual(e.compact(), true, 'нет движения (dy=0) → состояние не меняется');
+  assertEqual(e.target(), 1, '7. цель — полностью сжатая капсула');
+  assertTrue(e.shown() <= MAXSTEP + 1e-9, '7. за первый кадр нарисован только шаг');
+  assertTrue(e.frames.length > 0, '7. запланирована догонка');
+  const n = e.runFrames();
+  assertEqual(e.shown(), 1, '7. догонка доходит до цели');
+  assertTrue(n >= 1 / MAXSTEP - 2 && n <= 1 / MAXSTEP + 2, `7. полный ход ≈ ${Math.round(1 / MAXSTEP)} кадров (${n})`);
+  const seq = e.writes.map(Number);
+  for (let i = 1; i < seq.length; i++)
+    assertTrue(seq[i] - seq[i - 1] <= MAXSTEP + 1e-9, '7. ни один кадр не прыгает больше шага');
 }
-{ // 4. Возврат к верхней границе — Expanded
+{ // 8. Обычный жест пальцем идёт один в один, без догонки и задержки
   const e = makeEnv();
-  e.scrollTo(0, 500, 10);
-  assertEqual(e.compact(), true, '4. подготовка: Compact');
-  e.to(20); // резкий скачок к верху (напр. тап по статус-бару)
-  assertEqual(e.compact(), false, '4. у верхней границы (≤24px) → Expanded');
+  e.to(60);
+  for (let i = 0; i < 8; i++) {
+    e.to(e.sa.scrollTop + 10);
+    assertEqual(e.shown(), +e.target().toFixed(3), '8. 10px за кадр — нарисовано сразу, без промежуточных кадров');
+    assertEqual(e.frames.length, 0, '8. догонка не планируется');
+  }
+}
+{ // 9. Верхняя граница и пустой экран — всегда полная капсула
+  const e = makeEnv();
+  e.to(400); e.runFrames();
+  e.to(20); e.runFrames();
+  assertEqual(e.target(), 0, '9. у верхней границы (≤24px) — полная капсула');
   const f = makeEnv();
-  f.scrollTo(0, 50, 10);
-  assertEqual(f.compact(), false, 'Compact не включается, пока контент не ушёл под шапку (≤56px)');
-}
-{ // 5. Незначительные колебания не переключают
-  const e = makeEnv();
-  e.scrollTo(0, 300, 10);
-  assertEqual(e.compact(), true, '5. подготовка: Compact');
-  const before = e.toggles();
-  for (let i = 0; i < 40; i++) e.to(300 + (i % 2 ? -5 : 5)); // дрожание ±5px
-  assertEqual(e.compact(), true, '5. дрожание ±5px в Compact — без переключений');
-  assertEqual(e.toggles(), before, '5. дрожание — класс не трогается');
+  f.sa.scrollHeight = 700;                        // прокручивать нечего
+  f.to(0); f.to(40); f.runFrames();
+  assertEqual(f.target(), 0, '9. нет прокручиваемого содержимого — полная капсула');
   const g = makeEnv();
-  g.to(200); g.to(100); // в Expanded на глубине: сначала устанавливаем позицию
-  for (let i = 0; i < 40; i++) g.to(100 + (i % 2 ? 7 : 0)); // 0/7/0/7 — смена направления сбрасывает накопление
-  assertEqual(g.compact(), false, '5. колебания 7px в Expanded — гистерезис не даёт Compact');
-  const h = makeEnv();
-  h.to(200); h.to(100); h.to(106); h.to(111);
-  assertEqual(h.compact(), false, '5. 11px вниз — ниже порога 12px');
-  h.to(112);
-  assertEqual(h.compact(), true, '5. 12px вниз — порог достигнут');
+  g.to(400); g.runFrames();
+  g.sa.scrollHeight = 600; g.to(0); g.runFrames(); // контент стал короче экрана
+  assertEqual(g.target(), 0, '9. контент короче экрана — капсула раскрывается');
 }
-{ // rubber-band iOS и пустой экран
-  const e = makeEnv(); // max = 2300
-  e.scrollTo(0, 2300, 20);
-  assertEqual(e.compact(), true, 'конец списка: Compact');
-  e.to(2360); e.to(2330); e.to(2300); // отскок за нижнюю границу
-  assertEqual(e.compact(), true, 'rubber-band у нижнего края не раскрывает панель');
-  const f = makeEnv();
-  f.sa.scrollHeight = 700; // прокручивать нечего
-  f.to(0); f.to(40);
-  assertEqual(f.compact(), false, 'нет прокручиваемого содержимого → всегда Expanded');
-  const g = makeEnv();
-  g.scrollTo(0, 400, 10);
-  g.sa.scrollHeight = 600; g.to(0); // контент сжался (другой период) — max ≤ 0
-  assertEqual(g.compact(), false, 'контент стал короче экрана → Expanded');
+{ // 10. Rubber-band iOS у краёв не трогает прогресс
+  const e = makeEnv();                            // max = 2300
+  e.to(2300); e.runFrames();
+  assertEqual(e.target(), 1, '10. конец списка: капсула сжата');
+  const p = e.target();
+  e.to(2360); e.to(2330); e.to(2300); e.runFrames();
+  assertEqual(e.target(), p, '10. отскок за нижнюю границу ничего не меняет (позиция зажата в [0,max])');
 }
-{ // 6. Переключение вкладок, drag, клавиатура
+{ // 11. Смена вкладки, drag, клавиатура
   const e = makeEnv();
-  e.scrollTo(0, 400, 10);
+  e.ctx.$ = sel => (sel === '.nav' ? e.nav : sel === '#scrollArea' ? e.sa : null);
+  e.to(400); e.runFrames();
   e.nc.expand();
-  assertEqual(e.compact(), false, '6. expand() (смена вкладки) → Expanded');
-  e.scrollTo(400, 600, 10);
-  assertEqual(e.compact(), true, '6. после смены вкладки прокрутка вниз снова даёт Compact');
+  assertEqual(e.target(), 0, '11. expand() (смена вкладки) — цель «полная капсула»');
+  const n = e.runFrames();
+  assertEqual(e.shown(), 0, '11. раскрытие доезжает до конца');
+  assertTrue(n > 1, `11. раскрытие анимируется кадрами, а не телепортируется (${n})`);
+  e.to(600); e.runFrames();
+  assertEqual(e.target(), 1, '11. после смены вкладки прокрутка вниз снова сжимает');
   e.drag.active = true;
-  e.scrollTo(600, 500, 10);
-  assertEqual(e.compact(), true, '6. во время drag pill состояние не меняется');
+  const during = e.target();
+  e.to(500); e.runFrames();
+  assertEqual(e.target(), during, '11. во время drag pill прогресс не меняется');
   e.drag.active = false;
   e.nc.init();
-  assertEqual((e.listeners.focusin || []).length, 1, 'фокус в капсуле — один обработчик focusin');
-  e.listeners.focusin[0]();
-  assertEqual(e.compact(), false, 'фокус клавиатуры в капсуле → Expanded (подписи видны)');
-  const t = e.toggles();
-  e.nc.expand();
-  assertEqual(e.toggles(), t, 'повторный expand() не трогает класс');
-  assertTrue(/moveNavIndicator\(\);\n\s*navCompact\.expand\(\);/.test(html), '6. showScreen() вызывает navCompact.expand()');
-  // 11. смена вкладки сбрасывает точку отсчёта: позиция другого экрана не даёт ложного направления
-  const k = makeEnv();
-  k.scrollTo(0, 400, 10);
-  k.ctx.$ = sel => (sel === '.nav' ? k.nav : sel === '#scrollArea' ? k.sa : null);
-  k.sa.scrollTop = 900; k.nc.expand();           // переключились на экран, где позиция другая
-  assertEqual(k.nc._state.lastY, 900, '11. expand() берёт текущую позицию #scrollArea как точку отсчёта');
-  k.to(905);
-  assertEqual(k.compact(), false, '11. после смены вкладки 5px вниз — без ложного Compact (скачок позиции не засчитан)');
+  assertEqual((e.listeners.focusin || []).length, 1, '11. фокус в капсуле — один обработчик focusin');
+  e.listeners.focusin[0](); e.runFrames();
+  assertEqual(e.target(), 0, '11. фокус клавиатуры в капсуле — капсула полная (подписи видны)');
+  const w = e.writes.length;
+  e.nc.expand(); e.runFrames();
+  assertEqual(e.writes.length, w, '11. повторный expand() ничего не пишет');
+  assertTrue(/moveNavIndicator\(\);\n\s*navCompact\.expand\(\);/.test(html), '11. showScreen() вызывает navCompact.expand()');
   assertTrue(/navCompact\.init\(\);/.test(script), 'navCompact.init() вызывается при запуске');
+  // позиция другого экрана не даёт ложного движения
+  const k = makeEnv();
+  k.ctx.$ = sel => (sel === '.nav' ? k.nav : sel === '#scrollArea' ? k.sa : null);
+  k.to(400); k.runFrames();
+  k.sa.scrollTop = 900; k.nc.expand(); k.runFrames();
+  assertEqual(k.nc._state.lastY, 900, '11. expand() берёт текущую позицию #scrollArea как точку отсчёта');
+  k.to(905); k.runFrames();
+  assertTrue(Math.abs(k.target() - 5 / RANGE) < 1e-9, '11. после смены вкладки считается только реальное движение (5px), а не скачок позиции');
 }
-
-{ // 13. Сдвиг scrollTop из-за перерисовки (scroll anchoring) — не жест пользователя
-  // Воспроизведено в Dev Preview: смена вкладки в Compact → showScreen → expand() (lastY=330) →
-  // render() нового экрана: scrollHeight 1611→1945, браузер сдвинул scrollTop 330→382 → прежде +52px
-  // засчитывались как прокрутка вниз и панель снова сворачивалась через 23ms.
+{ // 12. Сдвиг scrollTop из-за перерисовки (scroll anchoring) — не жест пользователя
+  // Воспроизведено в Dev Preview: смена вкладки в сжатом состоянии → showScreen → expand() →
+  // render() нового экрана: scrollHeight 1611→1945, браузер сдвинул scrollTop 330→382 → прежде
+  // +52px засчитывались как прокрутка вниз и капсула снова сжималась через 23ms.
   const e = makeEnv();
-  e.scrollTo(0, 330, 10);
-  assertEqual(e.compact(), true, '13. подготовка: Compact');
   e.ctx.$ = sel => (sel === '.nav' ? e.nav : sel === '#scrollArea' ? e.sa : null);
-  e.nc.expand();                                  // showScreen()
+  e.to(330); e.runFrames();
+  assertEqual(e.target(), 1, '12. подготовка: капсула сжата');
+  e.nc.expand(); e.runFrames();                   // showScreen()
   e.sa.scrollHeight = 2645;                       // новый экран длиннее
-  e.to(382);                                      // anchoring: +52px без участия пользователя
-  assertEqual(e.compact(), false, '13. смена вкладки + scroll anchoring (+52px, другая высота) — панель остаётся Expanded');
-  e.scrollTo(382, 420, 6);
-  assertEqual(e.compact(), true, '13. дальше обычная прокрутка вниз на новом экране → Compact');
+  e.to(382); e.runFrames();                       // anchoring: +52px без участия пользователя
+  assertEqual(e.target(), 0, '12. смена вкладки + scroll anchoring — капсула остаётся полной');
+  e.to(382 + 30); e.runFrames();
+  assertTrue(Math.abs(e.target() - 30 / RANGE) < 1e-9, '12. дальше обычная прокрутка считается с нуля');
   const f = makeEnv();
-  f.scrollTo(0, 600, 10);
-  f.sa.scrollHeight = 3200; f.to(560);            // контент над позицией изменился, -40px
-  assertEqual(f.compact(), true, '13. сдвиг вверх при изменении высоты контента не раскрывает панель');
-  f.to(550);
-  assertEqual(f.compact(), true, '13. после перерисовки отсчёт от новой точки: 10px вверх — ниже порога');
-  f.to(545);
-  assertEqual(f.compact(), false, '13. ещё 5px вверх (итого 15px от новой точки) → Expanded');
+  f.to(600); f.runFrames();
+  f.sa.scrollHeight = 3200; f.to(560); f.runFrames();  // высота изменилась, −40px
+  assertEqual(f.target(), 1, '12. сдвиг вверх при изменении высоты контента не раскрывает капсулу');
+  f.to(560 - RANGE / 2); f.runFrames();
+  assertTrue(Math.abs(f.target() - 0.5) < 1e-9, '12. после перерисовки отсчёт идёт от новой точки');
 }
-
-{ // 14. Высота изменилась БЕЗ scroll-события — первое реальное движение не теряется (resync)
-  // Воспроизведено в Dev Preview (390): «Все записи» у верха (последнее событие: max 3236) → «Главная»
-  // (scrollTop 0 → 0, события нет, реальный max 902) → прокрутка вниз одним событием на 450px
-  // принималась за relayout (902 ≠ 3236) и не сворачивала панель; свернулось лишь на втором событии.
+{ // 13. Высота изменилась БЕЗ scroll-события — первое реальное движение не теряется (resync)
+  // Воспроизведено в Dev Preview (390): «Все записи» у верха (последнее событие: max 3236) →
+  // «Главная» (scrollTop 0 → 0, события нет, реальный max 902) → прокрутка вниз одним событием
+  // принималась за relayout и не сжимала капсулу.
   const mk = () => {
     const e = makeEnv();
     const ro = { cb: null, observed: [] };
@@ -183,63 +240,66 @@ function makeEnv() {
   };
   { // без resync — демонстрация причины: устаревший lastMax глотает первый жест
     const { e } = mk();
-    e.sa.scrollHeight = 3936; e.to(300); e.to(0);   // «Все записи»: max 3236
-    e.sa.scrollHeight = 1602; e.nc.expand();         // «Главная»: max 902, scroll-события нет
-    e.to(450);
-    assertEqual(e.compact(), false, '14. причина: без resync первое движение на новой высоте засчитано как relayout');
+    e.sa.scrollHeight = 3936; e.to(300); e.to(0); e.runFrames();   // «Все записи»: max 3236
+    e.sa.scrollHeight = 1602; e.nc.expand(); e.runFrames();        // «Главная»: max 902, события нет
+    e.to(450); e.runFrames();
+    assertEqual(e.target(), 0, '13. причина: без resync первое движение на новой высоте не считается');
   }
   { // с ResizeObserver
     const { e, ro } = mk();
     e.nc.init();
-    assertTrue(typeof ro.cb === 'function', '14. init() создаёт ResizeObserver');
-    assertEqual(ro.observed.length, 1 + e.sa.children.length, '14. наблюдаются #scrollArea и его блоки (.subhead, экраны)');
-    assertEqual(ro.observed[0], e.sa, '14. наблюдается сама #scrollArea (высота viewport)');
-    e.sa.scrollHeight = 3936; e.to(300); e.to(0);
-    e.sa.scrollHeight = 1602; e.nc.expand(); ro.cb();  // layout нового экрана → resync
-    assertEqual(e.nc._state.lastMax, 902, '14. resync: точка отсчёта по новой прокручиваемой высоте');
-    e.to(450);
-    assertEqual(e.compact(), true, '14. первая прокрутка вниз после смены экрана (одним событием) → Compact');
-  }
-  { // anchoring после resync: layout уже сдвинул scrollTop — scroll-событие приходит с dy = 0
-    const { e, ro } = mk();
-    e.nc.init();
-    e.scrollTo(0, 330, 10);
-    assertEqual(e.compact(), true, '14. подготовка: Compact');
-    e.nc.expand();
-    e.sa.scrollHeight = 2645; e.sa.scrollTop = 382; ro.cb(); // render + anchoring + ResizeObserver
-    e.to(382);
-    assertEqual(e.compact(), false, '14. сдвиг scroll anchoring после resync — панель остаётся Expanded');
-    e.scrollTo(382, 420, 6);
-    assertEqual(e.compact(), true, '14. дальше обычная прокрутка вниз → Compact');
+    assertTrue(typeof ro.cb === 'function', '13. init() создаёт ResizeObserver');
+    assertEqual(ro.observed.length, 1 + e.sa.children.length, '13. наблюдаются #scrollArea и его блоки (.subhead, экраны)');
+    assertEqual(ro.observed[0], e.sa, '13. наблюдается сама #scrollArea (высота viewport)');
+    e.sa.scrollHeight = 3936; e.to(300); e.to(0); e.runFrames();
+    e.sa.scrollHeight = 1602; e.nc.expand(); ro.cb(); e.runFrames();  // layout нового экрана → resync
+    assertEqual(e.nc._state.lastMax, 902, '13. resync: точка отсчёта по новой прокручиваемой высоте');
+    e.to(450); e.runFrames();
+    assertEqual(e.target(), 1, '13. первая прокрутка вниз после смены экрана считается полностью');
   }
   { // свежая загрузка: высота выросла после init (рендер/шрифты) без scroll-события
     const { e, ro } = mk();
-    e.sa.scrollHeight = 700; e.nc.init(); e.to(0);    // при запуске прокручивать нечего
-    e.sa.scrollHeight = 1602; ro.cb();                // контент дорисовался
-    e.to(300);
-    assertEqual(e.compact(), true, '14. свежая загрузка: первая прокрутка вниз одним событием → Compact');
-    e.to(280);
-    assertEqual(e.compact(), false, '14. первая прокрутка вверх (20px) → Expanded');
+    e.sa.scrollHeight = 700; e.nc.init(); e.to(0); e.runFrames();    // при запуске прокручивать нечего
+    e.sa.scrollHeight = 1602; ro.cb();                               // контент дорисовался
+    e.to(60 + RANGE); e.runFrames();
+    assertEqual(e.target(), 1, '13. свежая загрузка: первая прокрутка вниз считается полностью');
+    e.to(60 + RANGE - 30); e.runFrames();
+    assertTrue(Math.abs(e.target() - (1 - 30 / RANGE)) < 1e-9, '13. первая прокрутка вверх — тоже');
   }
-  { // resync не сбрасывает накопление жеста и не трогает класс
+  { // resync не трогает прогресс и ничего не рисует
     const { e, ro } = mk();
     e.nc.init();
-    e.to(200); e.to(100); e.to(106);
-    const t = e.toggles();
+    e.to(200); e.runFrames();
+    const p = e.target(), w = e.writes.length;
     ro.cb();
-    assertEqual(e.nc._state.acc, 6, '14. resync сохраняет накопленное движение');
-    assertEqual(e.toggles(), t, '14. resync не переключает состояние');
-    e.to(112);
-    assertEqual(e.compact(), true, '14. жест продолжается после resync (6 + 6 = 12px) → Compact');
+    assertEqual(e.target(), p, '13. resync не меняет прогресс');
+    assertEqual(e.writes.length, w, '13. resync не пишет в DOM');
   }
   { // без ResizeObserver (старые браузеры) — init() не падает
     const e = makeEnv();
     e.ctx.$ = sel => (sel === '.nav' ? e.nav : sel === '#scrollArea' ? e.sa : null);
     let ok = true; try { e.nc.init(); } catch (_) { ok = false; }
-    assertTrue(ok, '14. без ResizeObserver init() работает (только focusin)');
+    assertTrue(ok, '13. без ResizeObserver init() работает (только focusin)');
   }
   assertTrue(!/addEventListener\('scroll'/.test(code) && /new ResizeObserver\(resync\)/.test(code),
-    '14. resync — ResizeObserver, не дополнительный scroll-слушатель');
+    '13. resync — ResizeObserver, не дополнительный scroll-слушатель');
+}
+{ // 14. prefers-reduced-motion — без догонки, сразу конечное значение
+  const e = makeEnv({ reduce: true });
+  e.nc.init();
+  e.to(600);
+  assertEqual(e.shown(), 1, '14. reduced-motion: крупный скачок применяется сразу');
+  assertEqual(e.frames.length, 0, '14. reduced-motion: кадры догонки не планируются');
+  e.ctx.$ = sel => (sel === '.nav' ? e.nav : sel === '#scrollArea' ? e.sa : null);
+  e.nc.expand();
+  assertEqual(e.shown(), 0, '14. reduced-motion: раскрытие при смене вкладки тоже без анимации');
+  const n = makeEnv(); n.nc.init(); n.to(600);
+  assertTrue(n.shown() < 1, '14. без reduced-motion тот же скачок анимируется');
+}
+{ // 15. Без requestAnimationFrame (старый браузер) — прогресс всё равно доходит до цели
+  const e = makeEnv({ noRaf: true });
+  e.to(600);
+  assertEqual(e.shown(), 1, '15. без rAF крупный скачок применяется сразу, без зависания на полпути');
 }
 
 // ---------- §2. Единственный scroll-обработчик ----------
@@ -252,57 +312,72 @@ function makeEnv() {
   assertTrue(/sa\.addEventListener\('scroll',sync,\{passive:true\}\)/.test(script), '8. обработчик passive');
 }
 
-// ---------- §3. CSS компактного состояния ----------
+// ---------- §3. CSS: размеры считаются из прогресса --nav-p ----------
 const block = (() => {
-  const s = css.indexOf('/* ===== TASK_063:');
-  const e = css.indexOf('.drawer{', s);
-  return s > 0 && e > s ? css.slice(s, e) : '';
+  const i = css.indexOf('/* ===== TASK_063:');
+  const j = css.indexOf('.drawer{', i);
+  return i > 0 && j > i ? css.slice(i, j) : '';
 })();
+const navRule = (css.match(/\.nav\{position:fixed;[\s\S]*?touch-action:pan-y\}/) || [''])[0];
 {
-  assertTrue(!!block, 'CSS-блок TASK_063 найден');
-  assertTrue(/--navh-compact:54px;/.test(css), 'токен --navh-compact 54px');
-  assertTrue(/\.nav\.compact\{height:var\(--navh-compact\);padding-top:4px;padding-bottom:4px;/.test(block),
-    'Compact: высота 54px, вертикальный padding 4px');
-  assertTrue(!/\.nav\.compact\{[^}]*padding-(left|right)/.test(block) && !/\.nav\.compact\{[^}]*padding:/.test(block),
-    'горизонтальный padding 7px не меняется (геометрия navDrag)');
-  // 7. Все пять вкладок доступны: ничего не скрывается и не отключается
-  assertTrue(!/\.nav\.compact[^{]*button[^{]*\{[^}]*(display:none|visibility:hidden|pointer-events:none)/.test(block),
-    '7. в Compact вкладки не скрываются и не отключаются');
-  assertTrue(/\.nav\.compact button \.lb\{opacity:0;max-height:0\}/.test(block), '7. подписи уходят плавно (opacity + max-height)');
-  assertEqual(54 - 4 * 2 - 2, 44, '7. область нажатия в Compact — 44px по высоте (54 − padding 2×4 − контур 2×1), ширина ≥56px на 320px');
-  assertTrue(/\.nav\.compact \.nav-indicator\{top:4px;bottom:4px\}/.test(block), 'pill следует за высотой капсулы');
-  assertTrue(/\.nav\.compact button \.ic svg\{transform:scale\(\.92\)\}/.test(block), 'иконка уменьшается через transform');
-  assertTrue(/height \.22s/.test(block) && /\.lb\{max-height:16px;transition:opacity \.16s/.test(block), 'анимация ≈220ms');
-  // 9. Обе темы: compact не трогает материал/цвета — их задают токены TASK_062
-  assertTrue(!/\.compact[^{]*\{[^}]*(background|border-color|color:|box-shadow|backdrop-filter)/.test(block),
-    '9. Compact не меняет стекло/цвета — светлая и тёмная темы из токенов TASK_062');
-  // Сужение внешней капсулы: left/right симметрично уходят к центру
-  assertTrue(/--nav-compact-tab:50px;/.test(css), 'ширина вкладки в Compact — токен --nav-compact-tab 50px');
-  assertTrue(/--nav-compact-w:calc\(var\(--nav-count,5\) \* var\(--nav-compact-tab\) \+ 16px\);/.test(css),
-    'ширина Compact считается по содержимому: число вкладок × вкладка + padding/контур (не жёсткая константа)');
+  assertTrue(!!block, 'комментарий блока TASK_063 найден');
+  assertTrue(!!navRule, 'основное правило .nav найдено');
+  assertTrue(/--nav-p:0;/.test(navRule), 'прогресс --nav-p по умолчанию 0 (полная капсула)');
+  assertTrue(/--navh-compact:54px;/.test(css) && /--nav-compact-tab:50px;/.test(css), 'токены компактного размера');
+  // высота, padding, ширина — линейная интерполяция по прогрессу, а не два фиксированных состояния
+  assertTrue(/height:calc\(var\(--navh\) - \(var\(--navh\) - var\(--navh-compact\)\) \* var\(--nav-p\)\)/.test(navRule),
+    'высота 64 → 54 считается из прогресса');
+  assertTrue(/padding:calc\(7px - 3px \* var\(--nav-p\)\) 7px;/.test(navRule),
+    'вертикальный padding 7 → 4 из прогресса, горизонтальный 7px постоянный (геометрия navDrag)');
+  assertTrue(/left:calc\(var\(--nav-inset\) \+ \(var\(--nav-compact-inset\) - var\(--nav-inset\)\) \* var\(--nav-p\)\)/.test(navRule)
+    && /right:calc\(var\(--nav-inset\) \+ \(var\(--nav-compact-inset\) - var\(--nav-inset\)\) \* var\(--nav-p\)\)/.test(navRule),
+    'боковые отступы симметрично уходят к центру — капсула реально сужается и остаётся по центру');
+  assertTrue(/max-width:calc\(500px - \(500px - var\(--nav-compact-w\)\) \* var\(--nav-p\)\)/.test(navRule),
+    'предел ширины сужается вместе с капсулой — на десктопе ход тоже линейный, без рывка');
+  assertTrue(/@media \(max-width:340px\)\{\.nav\{--nav-inset:12px\}/.test(css), 'на узком экране исходный отступ 12px');
   assertTrue(/--nav-compact-inset:max\(12px,calc\(50% - var\(--nav-compact-w\) \/ 2\)\);/.test(css),
-    'боковой отступ Compact — центрирование, минимум 12px от края');
-  assertTrue(/\.nav\.compact\{[^}]*left:var\(--nav-compact-inset\);right:var\(--nav-compact-inset\)\}/.test(block),
-    'Compact: внешняя граница капсулы движется внутрь с обеих сторон (left/right)');
-  assertTrue(/left \.24s/.test(block) && /right \.24s/.test(block), 'сужение анимируется (left/right .24s)');
-  // 10. 320px: капсула 264px помещается с отступами ≥12px; вкладки ≥44px шириной
+    'компактный отступ — центрирование, минимум 12px от края');
+  assertTrue(/--nav-compact-w:calc\(var\(--nav-count,5\) \* var\(--nav-compact-tab\) \+ 16px\);/.test(css),
+    'компактная ширина считается по содержимому (вкладки × ширина + padding/контур), а не константой');
+  // сжатие — настоящая ширина, не масштабирование
+  assertTrue(!/transform:scale/.test(navRule), 'капсула не масштабируется трансформацией — меняется настоящая геометрия');
+  // подписи и иконки
+  assertTrue(/\.nav button \.lb\{[^}]*max-height:calc\(16px \* \(1 - var\(--nav-p\)\)\);opacity:calc\(1 - var\(--nav-p\) \* 2\.6\)\}/.test(css),
+    'подписи гаснут и схлопываются по прогрессу (гаснут быстрее сжатия)');
+  assertTrue(/\.nav button \.lb\{[^}]*text-overflow:clip/.test(css), 'вместо многоточия — обрезка: текст уходит под край, пока гаснет');
+  assertTrue(/\.nav button\{[^}]*gap:calc\(2px \* \(1 - var\(--nav-p\)\)\)/.test(css), 'зазор иконка/подпись тоже по прогрессу');
+  assertTrue(/\.nav button \.ic svg\{[^}]*transform:scale\(calc\(1 - \.08 \* var\(--nav-p\)\)\)/.test(css),
+    'иконка плавно уменьшается до .92');
+  assertTrue(/\.nav-indicator\{position:absolute;top:calc\(7px - 3px \* var\(--nav-p\)\);bottom:calc\(7px - 3px \* var\(--nav-p\)\);/.test(css),
+    'подложка активной вкладки следует за высотой капсулы');
+  assertTrue(/\.nav-indicator\{[^}]*width:calc\(\(100% - 14px\) \/ var\(--nav-count,5\)\)/.test(css),
+    'ширина подложки — доля ширины капсулы (подстраивается на любом прогрессе)');
+  assertTrue(/grid-template-columns:repeat\(var\(--nav-count,5\),minmax\(0,1fr\)\)/.test(navRule),
+    'пять равных колонок — сужаются вместе с капсулой, все вкладки остаются');
+  // ничего не скрывается и не отключается: пять вкладок доступны на любом прогрессе
+  assertTrue(!/display:none|visibility:hidden|pointer-events:none/.test(block + navRule),
+    'вкладки не скрываются и не отключаются при сжатии');
+  assertEqual(54 - 4 * 2 - 2, 44, 'область нажатия в компактном состоянии — 44px по высоте (54 − padding 2×4 − контур 2×1)');
   const W = 5 * 50 + 16, inner = W - 7 * 2 - 2;
-  assertTrue(W <= 320 - 2 * 12, '10. на 320px компактная капсула помещается в экран с отступами ≥12px');
-  assertTrue(inner / 5 >= 44, `10. вкладка в Compact ≥44px шириной (${(inner / 5).toFixed(1)}px)`);
-  // pill и колонки — в % от капсулы, без пиксельных констант (подстраиваются под ширину)
-  assertTrue(/\.nav-indicator\{position:absolute;top:7px;bottom:7px;left:7px;z-index:0;\s*width:calc\(\(100% - 14px\) \/ var\(--nav-count,5\)\)/.test(css),
-    'ширина pill — доля ширины капсулы (адаптируется к Compact)');
-  assertTrue(/grid-template-columns:repeat\(var\(--nav-count,5\),minmax\(0,1fr\)\)/.test(css), 'пять равных колонок grid — сужаются вместе с капсулой');
-  // drag: геометрия читается на каждом pointerdown — сужение не ломает жест
-  const drag = html.slice(html.indexOf('const navDrag=(()=>{'), html.indexOf('const NAV_COMPACT_TOP='));
-  assertTrue(/getBoundingClientRect\(\)/.test(drag), 'navDrag читает геометрию капсулы при жесте (не кэширует при загрузке)');
-  // «＋» не участвует в анимации капсулы (TASK_063: перенесена к заголовку «Записи», §4)
-  assertTrue(!/nav-add|list-add|addBtn/.test(block.replace(/\/\*[\s\S]*?\*\//g, '')),
-    'CSS компактной навигации не затрагивает кнопку «＋»');
-  assertTrue(/@media \(prefers-reduced-motion: reduce\)\{\s*\.nav,\.nav button \.lb,\.nav button \.ic svg\{transition:none\}/.test(block),
-    'prefers-reduced-motion — без анимации');
+  assertTrue(W <= 320 - 2 * 12, 'на 320px компактная капсула помещается с отступами ≥12px');
+  assertTrue(inner / 5 >= 44, `вкладка в компактном состоянии ≥44px шириной (${(inner / 5).toFixed(1)}px)`);
+  // переходов на этих свойствах нет — иначе значение «догоняло» бы прокрутку с задержкой
+  const navTransition = (css.match(/\.app,\.nav\{transition:([^}]*)\}/) || [])[1] || '';
+  assertTrue(/filter|transform/.test(navTransition), 'переход остаётся только на эффектах шторки (filter/transform)');
+  assertTrue(!/transition:[^}]*(height|padding|left|right|max-width)/.test(navRule + block),
+    'на размерах капсулы CSS-переходов нет — они следуют за прокруткой без задержки');
+  assertTrue(!/\.nav button \.lb\{[^}]*transition/.test(css) && !/\.nav button \.ic svg\{[^}]*transition/.test(css),
+    'подписи и иконки тоже без переходов — ими управляет прогресс');
+  // стекло/цвета/темы не затронуты
+  assertTrue(!/background|border-color|box-shadow|backdrop-filter|color:/.test(block.replace(/\/\*[\s\S]*?\*\//g, '')),
+    'сжатие не меняет стекло и цвета — светлая и тёмная темы из токенов TASK_062');
   assertTrue(/\.scroll-area\{[^}]*padding-bottom:calc\(var\(--navh\) \+ env\(safe-area-inset-bottom\) \+ 26px\)/.test(css),
-    'резерв контента рассчитан на полную высоту — последняя строка не перекрывается');
+    'резерв контента рассчитан на полную высоту — последняя строка не перекрывается ни на каком прогрессе');
+  assertTrue(/bottom:var\(--nav-bottom\)/.test(navRule) && /--nav-bottom:max\(6px,calc\(env\(safe-area-inset-bottom\) - 14px\)\)/.test(css),
+    'safe area iOS не изменилась (TASK_062A)');
+  // navDrag: высота pill берётся фактическая, т.к. вертикальный padding зависит от прогресса
+  assertTrue(/s\.pillW=\(r\.width-NAV_PAD\*2\)\/count;s\.pillH=pill\.getBoundingClientRect\(\)\.height;/.test(script),
+    'navDrag берёт фактическую высоту подложки (вертикальный padding зависит от прогресса)');
 }
 
 // ---------- §4. Кнопка «＋» у заголовка «Записи» (TASK_063) ----------

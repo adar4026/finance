@@ -99,7 +99,9 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
   assertTrue(/position:fixed/.test(nav) && /z-index:30/.test(nav), '.nav — fixed, z-index:30 (над шапкой, под overlay)');
   assertTrue(/bottom:var\(--nav-bottom\)/.test(nav), 'капсула стоит на --nav-bottom');
   assertTrue(/--nav-bottom:max\(6px,calc\(env\(safe-area-inset-bottom\) - 14px\)\)/.test(light), 'TASK_062A: капсула заходит в safe area на 14px, минимум 6px');
-  assertTrue(/left:16px;right:16px;margin:0 auto/.test(nav) && !/translateX\(-50%\)/.test(nav), 'центрирование left/right+margin (без дробного translateX под backdrop-filter)');
+  // TASK_063: отступы считаются из прогресса сжатия, исходное значение — токен --nav-inset
+  assertTrue(/--nav-inset:16px/.test(nav) && /margin:0 auto/.test(nav) && !/translateX\(-50%\)/.test(nav),
+    'центрирование left/right+margin (без дробного translateX под backdrop-filter)');
   assertTrue(/display:grid;grid-template-columns:repeat\(var\(--nav-count,5\),minmax\(0,1fr\)\)/.test(nav), 'пять равных колонок (grid)');
   assertTrue(/background:var\(--nav-bg\)/.test(nav), 'фон капсулы — прозрачный токен --nav-bg');
   assertTrue(/-webkit-backdrop-filter:blur\(var\(--nav-blur\)\) saturate\(var\(--nav-saturate\)\)/.test(nav), '-webkit-backdrop-filter (Safari/iPhone)');
@@ -116,11 +118,11 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
   // TASK_057: компактная капсула и вкладки по LexCar b2e5423/e387441
   assertTrue(/border-radius:32px/.test(nav), 'капсула 64px с radius 32px — полностью скруглённые торцы');
   const btn = ruleBody('.nav button', css);
-  assertTrue(/color:var\(--nav-muted\)/.test(btn) && /gap:2px/.test(btn) && /font-size:12px;font-weight:600;letter-spacing:0/.test(btn) && /border-radius:999px/.test(btn),
+  assertTrue(/color:var\(--nav-muted\)/.test(btn) && /gap:calc\(2px \* \(1 - var\(--nav-p\)\)\)/.test(btn) && /font-size:12px;font-weight:600;letter-spacing:0/.test(btn) && /border-radius:999px/.test(btn),
     'вкладка: --nav-muted, gap 2px, подпись 12px/600, скругление 999px');
   assertTrue(/\.nav button \.ic svg\{width:24px;height:24px/.test(css), 'иконка 24px');
   assertTrue(/\.nav button\.on \.lb\{font-weight:700\}/.test(css) && /\.nav button\.on \.ic svg\{stroke-width:2\.4\}/.test(css), 'активная: подпись 700, штрих иконки 2.4');
-  assertTrue(/@media \(max-width:340px\)\{\.nav\{left:12px;right:12px\}\.nav button\{font-size:9\.5px;padding:0 1px\}\}/.test(css), '≤340px: подпись 9.5px, отступы 12px');
+  assertTrue(/@media \(max-width:340px\)\{\.nav\{--nav-inset:12px\}\.nav button\{font-size:9\.5px;padding:0 1px\}\}/.test(css), '≤340px: подпись 9.5px, отступы 12px');
   assertTrue(/\.nav\.dragging button\[data-s\]\{transform:none\}/.test(css), 'во время drag :active-scale кнопок отключён');
   assertTrue(/\.scroll-area\{[^}]*padding-bottom:calc\(var\(--navh\) \+ env\(safe-area-inset-bottom\) \+ 26px\)/.test(css), 'нижний отступ scroll-контента не изменён');
   assertTrue(/--navh:64px/.test(light), 'высота капсулы --navh 64px (TASK_057, LexCar b2e5423)');
@@ -130,7 +132,9 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
 {
   const pill = ruleBody('.nav-indicator', css);
   assertTrue(!!pill, '.nav-indicator найдена');
-  assertTrue(/top:7px;bottom:7px;left:7px/.test(pill) && /width:calc\(\(100% - 14px\) \/ var\(--nav-count,5\)\)/.test(pill), 'pill = одна колонка внутри padding 7px');
+  assertTrue(/top:calc\(7px - 3px \* var\(--nav-p\)\);bottom:calc\(7px - 3px \* var\(--nav-p\)\);left:7px/.test(pill)
+    && /width:calc\(\(100% - 14px\) \/ var\(--nav-count,5\)\)/.test(pill),
+    'pill = одна колонка внутри padding 7px (вертикальный — за прогрессом сжатия, TASK_063)');
   assertTrue(/transform:translate3d\(calc\(var\(--nav-index,0\) \* 100%\),0,0\)/.test(pill), 'положение pill — CSS по --nav-index (без измерения DOM)');
   assertTrue(/border-radius:999px/.test(pill), 'pill полностью скруглена (999px)');
   assertTrue(/background:var\(--nav-pill-bg\);border:1px solid var\(--nav-pill-border\);box-shadow:var\(--nav-pill-shadow\)/.test(pill),
@@ -234,7 +238,9 @@ const navJs = html.slice(jsStart, jsEnd);
   }
   const NAVW = 358, NAVH = 76, NAVL = 16, NAVT = 700;
   const nav = makeEl({ getBoundingClientRect: () => ({ left: NAVL, top: NAVT, width: NAVW, height: NAVH, right: NAVL + NAVW, bottom: NAVT + NAVH }) });
-  const pill = makeEl();
+  // TASK_063: вертикальный padding капсулы зависит от прогресса сжатия, поэтому navDrag
+  // берёт высоту подложки из её собственного rect, а не выводит из NAV_PAD
+  const pill = makeEl({ getBoundingClientRect: () => ({ left: NAVL + 7, top: NAVT + 7, width: (NAVW - 14) / 5, height: NAVH - 16, right: 0, bottom: 0 }) });
   const ids = ['scrRecords', 'scrCharts', 'scrJournal', 'scrAccounts', 'scrBudgets'];
   const tabs = ids.map(id => { const b = makeEl(); b.dataset.s = id; return b; });
   tabs[0].classList.add('on');

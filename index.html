@@ -22,48 +22,48 @@
 <!-- TASK_061: ?v= у локальных скриптов = номер кэша в sw.js (finance-vNNN). HTML всегда
      получает «свой» JS: HTTP-кэш GitHub Pages (max-age=600) не смешает новый HTML со старым JS.
      Поднимается вместе с cache version при каждом релизе (tests/pwa_cache.test.js). -->
-<script src="js/core/result.js?v=196"></script>
-<script src="js/core/ids.js?v=196"></script>
-<script src="js/core/app_info.js?v=196"></script>
+<script src="js/core/result.js?v=197"></script>
+<script src="js/core/ids.js?v=197"></script>
+<script src="js/core/app_info.js?v=197"></script>
 <!-- TASK_015: подключается ДО store.js — migrate() при первом load() должен
      видеть сервис. Если файл почему-то не приехал (CDN-рассинхронизация),
      приложение стартует без нормализации метаданных, но не падает. -->
-<script src="js/services/tx_meta_service.js?v=196"></script>
+<script src="js/services/tx_meta_service.js?v=197"></script>
 <!-- TASK_023: тоже ДО store.js — migrate() нормализует settings.security при
      первом load(). Если файл не приехал, приложение стартует с прежним
      поведением блокировки (код на входе) и не падает. -->
-<script src="js/services/security_service.js?v=196"></script>
+<script src="js/services/security_service.js?v=197"></script>
 <!-- TASK_044: тоже ДО store.js — migrate() нормализует time операций при
      первом load(); тот же сервис задаёт порядок операций внутри дня. -->
-<script src="js/services/tx_time_service.js?v=196"></script>
-<script src="js/database/store.js?v=196"></script>
-<script src="js/services/currency_service.js?v=196"></script>
-<script src="js/services/account_service.js?v=196"></script>
-<script src="js/services/tx_form_service.js?v=196"></script>
-<script src="js/services/period_service.js?v=196"></script>
-<script src="js/services/place_breakdown_service.js?v=196"></script>
-<script src="js/services/finance_card_service.js?v=196"></script>
-<script src="js/services/analytics_service.js?v=196"></script>
-<script src="js/services/budget_service.js?v=196"></script>
-<script src="js/services/goal_service.js?v=196"></script>
-<script src="js/services/forecast_service.js?v=196"></script>
+<script src="js/services/tx_time_service.js?v=197"></script>
+<script src="js/database/store.js?v=197"></script>
+<script src="js/services/currency_service.js?v=197"></script>
+<script src="js/services/account_service.js?v=197"></script>
+<script src="js/services/tx_form_service.js?v=197"></script>
+<script src="js/services/period_service.js?v=197"></script>
+<script src="js/services/place_breakdown_service.js?v=197"></script>
+<script src="js/services/finance_card_service.js?v=197"></script>
+<script src="js/services/analytics_service.js?v=197"></script>
+<script src="js/services/budget_service.js?v=197"></script>
+<script src="js/services/goal_service.js?v=197"></script>
+<script src="js/services/forecast_service.js?v=197"></script>
 <!-- TASK_061: регулярные платежи — после forecast_service (использует его даты) -->
-<script src="js/services/recurring_service.js?v=196"></script>
-<script src="js/services/health_score_service.js?v=196"></script>
-<script src="js/services/xlsx_writer_service.js?v=196"></script>
-<script src="js/services/export_service.js?v=196"></script>
-<script src="js/services/backup_service.js?v=196"></script>
-<script src="js/services/csv_parser_service.js?v=196"></script>
-<script src="js/services/import_source_service.js?v=196"></script>
-<script src="js/services/import_mapping_service.js?v=196"></script>
-<script src="js/services/import_service.js?v=196"></script>
+<script src="js/services/recurring_service.js?v=197"></script>
+<script src="js/services/health_score_service.js?v=197"></script>
+<script src="js/services/xlsx_writer_service.js?v=197"></script>
+<script src="js/services/export_service.js?v=197"></script>
+<script src="js/services/backup_service.js?v=197"></script>
+<script src="js/services/csv_parser_service.js?v=197"></script>
+<script src="js/services/import_source_service.js?v=197"></script>
+<script src="js/services/import_mapping_service.js?v=197"></script>
+<script src="js/services/import_service.js?v=197"></script>
 <!-- TASK_016 -->
-<script src="js/services/category_taxonomy_service.js?v=196"></script>
-<script src="js/services/demo_data_service.js?v=196"></script>
-<script src="js/services/search_service.js?v=196"></script>
-<script src="js/services/haptics_service.js?v=196"></script>
-<script src="js/services/amount_input_service.js?v=196"></script>
-<script src="js/ui/hero_canvas.js?v=196"></script>
+<script src="js/services/category_taxonomy_service.js?v=197"></script>
+<script src="js/services/demo_data_service.js?v=197"></script>
+<script src="js/services/search_service.js?v=197"></script>
+<script src="js/services/haptics_service.js?v=197"></script>
+<script src="js/services/amount_input_service.js?v=197"></script>
+<script src="js/ui/hero_canvas.js?v=197"></script>
 <style>
   /* Alex Finance Design Tokens (Product Book Part 2/4) */
   :root, [data-theme="light"]{
@@ -574,12 +574,22 @@
      на всей панели). Пять равных колонок (grid) — pill активной вкладки переезжает по ним через
      transform без измерения DOM. Центрирование через left/right + margin:auto (а не
      translateX(-50%)): дробный сдвиг transform + backdrop-filter размывал текст в Safari. */
-  .nav{position:fixed;left:16px;right:16px;margin:0 auto;
+  .nav{position:fixed;margin:0 auto;
+    /* TASK_063: --nav-p — прогресс сжатия 0..1 (пишет navCompact на каждый scroll-кадр),
+       из него считаются все размеры капсулы. Отдельного «компактного» класса нет. */
+    --nav-p:0;--nav-inset:16px;
+    left:calc(var(--nav-inset) + (var(--nav-compact-inset) - var(--nav-inset)) * var(--nav-p));
+    right:calc(var(--nav-inset) + (var(--nav-compact-inset) - var(--nav-inset)) * var(--nav-p));
     /* на iPhone с home-indicator (safe-area ~34pt) капсула садится вплотную к safe area, без «двойного» отступа;
        на устройствах без safe-area — минимум 6px от края, чтобы не липнуть к самому краю экрана */
     bottom:var(--nav-bottom);z-index:30;
-    max-width:500px;height:var(--navh);
-    display:grid;grid-template-columns:repeat(var(--nav-count,5),minmax(0,1fr));padding:7px;
+    /* предел ширины сужается вместе с капсулой: иначе на широком экране (где ширину задаёт он,
+       а не боковые отступы) первые ~60% жеста не меняли бы ничего, а потом шёл бы рывок */
+    max-width:calc(500px - (500px - var(--nav-compact-w)) * var(--nav-p));
+    height:calc(var(--navh) - (var(--navh) - var(--navh-compact)) * var(--nav-p));
+    display:grid;grid-template-columns:repeat(var(--nav-count,5),minmax(0,1fr));
+    /* вертикальный padding 7 → 4px; горизонтальный 7px постоянный — на нём геометрия navDrag */
+    padding:calc(7px - 3px * var(--nav-p)) 7px;
     /* TASK_057: 64px + radius 32px — полностью скруглённые торцы капсулы (LexCar) */
     background:var(--nav-bg);border:1px solid var(--nav-border);border-radius:32px;
     box-shadow:var(--nav-shadow),inset 0 1px 0 var(--nav-highlight);
@@ -595,17 +605,24 @@
   /* TASK_057: вкладки по LexCar b2e5423/e387441 — подпись 11px/600 (активная 700), иконка 22px
      (активная — штрих 2.4), gap 3px, неактивный --nav-muted, активный --nav-active */
   .nav button{position:relative;z-index:1;background:none;border:none;color:var(--nav-muted);display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:2px;
+    align-items:center;justify-content:center;gap:calc(2px * (1 - var(--nav-p)));
     cursor:pointer;font-size:12px;font-weight:600;letter-spacing:0;line-height:1.1;min-width:0;padding:0 2px;
     border-radius:999px;transition:color .2s ease,transform .15s}
-  .nav button .lb{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Подпись гаснет в 2.6 раза быстрее, чем идёт сжатие (прозрачна уже к p≈.39). Колонка сужается
+     вместе с капсулой, и длинная подпись («Аналитика») перестаёт помещаться примерно с p≈.15:
+     text-overflow:clip вместо ellipsis — текст уходит под край колонки, пока гаснет, вместо
+     мигающего многоточия (при p=0 подписи помещаются целиком, на 320px — за счёт меньшего кегля).
+     Высота схлопывается линейно до p=1, поэтому иконка доезжает к центру плавно, без скачка. */
+  .nav button .lb{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:clip;
+    max-height:calc(16px * (1 - var(--nav-p)));opacity:calc(1 - var(--nav-p) * 2.6)}
   .nav button .ic{display:flex;align-items:center;justify-content:center;height:24px;line-height:0}
   .nav button .ic svg{width:24px;height:24px;stroke:currentColor;fill:none;
-    stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+    stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;
+    transform:scale(calc(1 - .08 * var(--nav-p)))}
   .nav button.on .lb{font-weight:700}
   .nav button.on .ic svg{stroke-width:2.4}
   @media (max-width:389px){.nav button{font-size:11px}}
-  @media (max-width:340px){.nav{left:12px;right:12px}.nav button{font-size:9.5px;padding:0 1px}} /* «Аналитика» на 320px без обрезки */
+  @media (max-width:340px){.nav{--nav-inset:12px}.nav button{font-size:9.5px;padding:0 1px}} /* «Аналитика» на 320px без обрезки */
   .nav button[data-s]:active{transform:scale(.94)}
   .nav.dragging button[data-s]{transform:none} /* во время drag кнопка под пальцем не «проседает» */
   .nav button:focus-visible{outline:2px solid var(--nav-active);outline-offset:-3px}
@@ -617,7 +634,7 @@
      transform; во время drag положение задаётся inline translate3d (см. navDrag). Полупрозрачная
      линза на акценте (TASK_057: --nav-pill-bg/-border/-shadow по LexCar e387441): светлый контур,
      inset-блик, мягкое синее свечение; без своего backdrop-filter — стекло уже даёт капсула. */
-  .nav-indicator{position:absolute;top:7px;bottom:7px;left:7px;z-index:0;
+  .nav-indicator{position:absolute;top:calc(7px - 3px * var(--nav-p));bottom:calc(7px - 3px * var(--nav-p));left:7px;z-index:0;
     width:calc((100% - 14px) / var(--nav-count,5));
     border-radius:999px;pointer-events:none;opacity:0;overflow:hidden;
     background:var(--nav-pill-bg);border:1px solid var(--nav-pill-border);box-shadow:var(--nav-pill-shadow);
@@ -662,31 +679,15 @@
   /* Главный экран позади drawer — лёгкое затемнение/blur/уменьшение масштаба, включается через body.drawer-open (см. openDrawer/closeDrawer) */
   .app,.nav{transition:filter .28s cubic-bezier(.22,.61,.36,1),transform .28s cubic-bezier(.22,.61,.36,1)}
   body.drawer-open .app,body.drawer-open .nav{filter:blur(6px) brightness(.92);transform:scale(.98)}
-  /* ===== TASK_063: компактная навигация при прокрутке вниз (класс .compact ставит navCompact) =====
-     Капсула уже (--nav-compact-w) и ниже (--navh → --navh-compact), вертикальный padding 7 → 4px (вкладка 44px; горизонтальный 7px —
-     геометрия navDrag не меняется), подписи плавно уходят (opacity + max-height), иконка чуть
-     меньше (transform). Pill (top/bottom) следует за высотой. Стекло, контур, тень, радиус — те же.
-     «＋» в анимации не участвует — она у заголовка «Записи» (.list-add). Резерв .scroll-area
-     рассчитан на полную высоту — контент не перекрывается. */
-  .nav{transition:filter .28s cubic-bezier(.22,.61,.36,1),transform .28s cubic-bezier(.22,.61,.36,1),
-    height .24s cubic-bezier(.32,.72,0,1),padding .24s cubic-bezier(.32,.72,0,1),
-    left .24s cubic-bezier(.32,.72,0,1),right .24s cubic-bezier(.32,.72,0,1)}
-  /* сужение: боковые отступы симметрично уходят к центру (--nav-compact-inset) — внешняя граница
-     капсулы движется внутрь с обеих сторон; колонки grid и ширина pill — в % от капсулы, поэтому
-     пересчитываются сами, navDrag читает геометрию на каждом pointerdown */
-  .nav.compact{height:var(--navh-compact);padding-top:4px;padding-bottom:4px;
-    left:var(--nav-compact-inset);right:var(--nav-compact-inset)}
-  .nav button .lb{max-height:16px;transition:opacity .16s ease,max-height .22s cubic-bezier(.32,.72,0,1)}
-  .nav.compact button{gap:0}
-  .nav.compact button .lb{opacity:0;max-height:0}
-  .nav button .ic svg{transition:transform .22s cubic-bezier(.32,.72,0,1)}
-  .nav.compact button .ic svg{transform:scale(.92)}
-  .nav-indicator{transition:opacity .18s ease,transform .24s cubic-bezier(.32,.72,0,1),top .22s cubic-bezier(.32,.72,0,1),bottom .22s cubic-bezier(.32,.72,0,1)}
-  .nav.compact .nav-indicator{top:4px;bottom:4px}
-  @media (prefers-reduced-motion: reduce){
-    .nav,.nav button .lb,.nav button .ic svg{transition:none}
-    .nav-indicator{transition:opacity .18s ease,transform .01s}
-  }
+  /* ===== TASK_063: плавное сжатие капсулы при прокрутке (прогресс --nav-p, пишет navCompact) =====
+     Капсула не переключается между двумя состояниями, а непрерывно следует за жестом: из одного
+     числа 0..1 выше считаются ширина (left/right → --nav-compact-inset), высота (64 → 54),
+     вертикальный padding (7 → 4), gap, подписи (opacity + max-height) и масштаб иконок (1 → .92).
+     CSS-переходов на этих свойствах нет — иначе значение «догоняло» бы прокрутку с задержкой;
+     сглаживание крупных скачков (wheel/PageDown) и анимация при смене вкладки — в navCompact
+     (ограничение прогресса на кадр). Стекло, контур, тень, радиус, пять колонок и ширина pill
+     (% от капсулы) не трогаются. «＋» в анимации не участвует — она у заголовка «Записи»
+     (.list-add). Резерв .scroll-area рассчитан на полную высоту — контент не перекрывается. */
   .drawer{position:relative;width:86%;max-width:360px;height:100%;display:flex;flex-direction:column;
     border-radius:0 28px 28px 0;overflow:hidden;box-shadow:var(--nav-shadow);
     animation:drawerSlide .3s cubic-bezier(.22,.61,.36,1);
@@ -6287,7 +6288,9 @@ const navDrag=(()=>{
     const r=nav.getBoundingClientRect();
     const count=items.length;
     s.index=index;s.left=r.left;s.top=r.top;
-    s.pillW=(r.width-NAV_PAD*2)/count;s.pillH=r.height-NAV_PAD*2;
+    // ширина — по постоянному горизонтальному padding; высота — фактическая (TASK_063: вертикальный
+    // padding зависит от прогресса сжатия, вывести её из NAV_PAD нельзя), оба чтения подряд
+    s.pillW=(r.width-NAV_PAD*2)/count;s.pillH=pill.getBoundingClientRect().height;
     s.maxX=s.pillW*(count-1);
     s.baseX=index*s.pillW;s.x=s.baseX;
     s.startX=s.lastX=e.clientX;s.startY=s.lastY=e.clientY;
@@ -6348,54 +6351,68 @@ const navDrag=(()=>{
   }
   return {init,active:()=>s.dragging||s.snapping,_state:s};
 })();
-/* ============ Компактная навигация при прокрутке (TASK_063; Instagram / Revolut) ============
-   Вниз — .nav.compact (ниже капсула, без подписей), вверх — снова полная. Решение принимает
-   чистая step(): позиция зажата в [0,max] (rubber-band iOS у краёв не переключает), dy
-   копится в одну сторону, смена направления сбрасывает накопление (гистерезис), переключение —
-   только после NAV_COMPACT_DELTA px устойчивого движения; у верхней границы и когда прокручивать
-   нечего — всегда Expanded; dy=0 — без изменений; если изменилась прокручиваемая высота (перерисовка
-   экрана, scroll anchoring, зажим) — сдвиг не считается жестом, только новая точка отсчёта; та же точка
-   переустанавливается ResizeObserver'ом (resync) при смене высоты без scroll-события. onScroll() вызывается из единственного
-   scroll-обработчика #scrollArea (см. «Collapsing sticky header») — свой слушатель не вешаем.
-   Класс трогаем только при смене состояния; во время drag pill состояние не меняется. */
-const NAV_COMPACT_TOP=24;    // px от верха — всегда Expanded
-const NAV_COMPACT_MIN=56;    // Compact не раньше, чем контент ушёл под шапку
-const NAV_COMPACT_DELTA=12;  // px устойчивого движения в одну сторону до переключения
+/* ============ Плавная адаптивная навигация (TASK_063; Instagram / Revolut) ============
+   Капсула сжимается непрерывно вслед за прокруткой, а не переключается по порогу. Чистая step()
+   переводит движение в прогресс 0..1 (0 — полная, 1 — компактная): dy делится на
+   NAV_COMPACT_RANGE, результат зажат в [0,1]. Поэтому короткий жест даёт частичное сжатие,
+   смена направления разворачивает его на том же кадре, а микродвижение — микроизменение
+   (мерцать нечему: состояний нет). Позиция зажата в [0,max] — rubber-band iOS у краёв не влияет;
+   у верхней границы (≤24px) и когда прокручивать нечего — всегда полная; пока контент не ушёл
+   под шапку (≤56px) — не сжимаем; если изменилась прокручиваемая высота (перерисовка экрана,
+   scroll anchoring, зажим) — сдвиг не считается жестом, только новая точка отсчёта; та же точка
+   переустанавливается ResizeObserver'ом (resync) при смене высоты без scroll-события.
+   Рисование: прогресс пишется в CSS-переменную --nav-p одной строкой (все размеры считает CSS),
+   шаг за кадр ограничен NAV_COMPACT_MAXSTEP — палец (≈10px за кадр) идёт один в один без
+   задержки, а скачок wheel/PageDown и раскрытие при смене вкладки доезжают за ~8 кадров
+   вместо телепортации. prefers-reduced-motion — без догонки, сразу конечное значение.
+   onScroll() вызывается из единственного scroll-обработчика #scrollArea (см. «Collapsing sticky
+   header») — свой слушатель не вешаем; во время drag pill прогресс не меняется. */
+const NAV_COMPACT_TOP=24;      // px от верха — всегда полная капсула
+const NAV_COMPACT_MIN=56;      // сжимать начинаем, только когда контент ушёл под шапку
+const NAV_COMPACT_RANGE=90;    // px прокрутки от полной капсулы до компактной (прогресс 0 → 1)
+const NAV_COMPACT_MAXSTEP=.12; // максимум прогресса за кадр (≈8 кадров на полный ход)
 const navCompact=(()=>{
-  const s={compact:false,lastY:0,acc:0,lastMax:null};
+  const s={p:0,shown:0,lastY:0,lastMax:null,raf:0,reduce:false};
+  // чистая: решение по направлению и величине движения, без DOM
   function step(st,y,max){
     y=Math.min(Math.max(0,y),Math.max(0,max));
-    const dy=y-st.lastY;st.lastY=y;
-    // изменилась прокручиваемая высота — сдвиг scrollTop сделал браузер (scroll anchoring при
-    // перерисовке экрана, зажим при укорочении контента, смена высоты viewport), а не пользователь:
-    // только новая точка отсчёта, без смены состояния
+    const prev=st.lastY;st.lastY=y;
+    const dy=y-prev;
     const relayout=st.lastMax!==null&&max!==st.lastMax;st.lastMax=max;
-    if(max<=0||y<=NAV_COMPACT_TOP){st.acc=0;st.compact=false;return st.compact;}
-    if(relayout){st.acc=0;return st.compact;}
-    if(dy===0)return st.compact;
-    if((dy>0)!==(st.acc>0))st.acc=0;
-    st.acc+=dy;
-    if(!st.compact&&st.acc>=NAV_COMPACT_DELTA&&y>NAV_COMPACT_MIN){st.compact=true;st.acc=0;}
-    else if(st.compact&&st.acc<=-NAV_COMPACT_DELTA){st.compact=false;st.acc=0;}
-    return st.compact;
+    if(max<=0){st.p=0;return st.p;}
+    // вниз считаем только путь ниже NAV_COMPACT_MIN (пока контент не ушёл под шапку, не сжимаем —
+    // в том числе когда один кадр переносит через порог); вверх — весь путь, разжимаем всегда
+    const d=dy>0?y-Math.max(prev,NAV_COMPACT_MIN):dy;
+    if(!relayout&&(d<0||d>0))st.p=Math.min(1,Math.max(0,st.p+d/NAV_COMPACT_RANGE));
+    if(y<=NAV_COMPACT_TOP)st.p=0;
+    return st.p;
   }
-  function apply(){const nav=$('.nav');if(nav&&nav.classList.contains('compact')!==s.compact)nav.classList.toggle('compact',s.compact);}
+  function write(){const nav=$('.nav');if(nav)nav.style.setProperty('--nav-p',Math.round(s.shown*1000)/1000);}
+  // один кадр догонки: близко к цели (обычная прокрутка пальцем) — сразу, иначе шаг и ещё кадр
+  function frame(){
+    const d=s.p-s.shown;
+    if(s.reduce||Math.abs(d)<=NAV_COMPACT_MAXSTEP){s.shown=s.p;s.raf=0;}
+    else{s.shown+=(d>0?1:-1)*NAV_COMPACT_MAXSTEP;s.raf=typeof requestAnimationFrame==='function'?requestAnimationFrame(frame):0;if(!s.raf)s.shown=s.p;}
+    write();
+  }
+  function render(){if(!s.raf)frame();} // догонка уже идёт — она сама придёт к новой цели
   function onScroll(sa){
     if(navDrag.active())return;
-    const was=s.compact;
     step(s,sa.scrollTop||0,sa.scrollHeight-sa.clientHeight);
-    if(s.compact!==was)apply();
+    render();
   }
-  // смена вкладки/фокус: накопление сбрасывается, точка отсчёта — текущая позиция (#scrollArea общий
-  // для всех экранов, поэтому состояние прошлой вкладки не переносится)
-  function expand(){s.acc=0;const sa=$('#scrollArea');if(sa)s.lastY=sa.scrollTop||0;if(!s.compact)return;s.compact=false;apply();}
-  // точка отсчёта (lastY/lastMax) — по текущему layout. Прокручиваемая высота меняется и без scroll-события
-  // (смена экрана при той же позиции, рендер, шрифты, высота viewport): иначе первое реальное движение на
-  // новой высоте step() приняла бы за relayout и потеряла. Вызывается ResizeObserver'ом сразу после layout —
-  // раньше scroll-события от scroll anchoring, поэтому то приходит с dy = 0. Накопление жеста не сбрасывается.
+  // смена вкладки/фокус: капсула раскрывается (через ту же догонку), точка отсчёта — текущая
+  // позиция (#scrollArea общий для всех экранов, состояние прошлой вкладки не переносится)
+  function expand(){const sa=$('#scrollArea');if(sa)s.lastY=sa.scrollTop||0;if(s.p===0&&s.shown===0)return;s.p=0;render();}
+  // точка отсчёта (lastY/lastMax) — по текущему layout. Прокручиваемая высота меняется и без
+  // scroll-события (смена экрана при той же позиции, рендер, шрифты, высота viewport): иначе
+  // первое реальное движение на новой высоте step() приняла бы за relayout и потеряла. Вызывается
+  // ResizeObserver'ом сразу после layout — раньше scroll-события от scroll anchoring, поэтому то
+  // приходит с dy = 0. Прогресс не трогаем.
   function resync(){const sa=$('#scrollArea');if(!sa)return;const max=sa.scrollHeight-sa.clientHeight;
     s.lastY=Math.min(Math.max(0,sa.scrollTop||0),Math.max(0,max));s.lastMax=max;}
   function init(){
+    s.reduce=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
     const nav=$('.nav');if(nav)nav.addEventListener('focusin',expand); // клавиатура — подписи видны
     // размеры области прокрутки и её блоков (.subhead, экраны) — не scroll-слушатель
     const sa=$('#scrollArea');
