@@ -6,8 +6,14 @@
 <title>LexMoney</title>
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
+<!-- TASK_065: цвет системной области (статус-бар standalone-PWA, адресная строка Safari).
+     Был почти белый #f4f6fb при голубом фоне Главной — отсюда белая полоса сверху. Теперь
+     значение берётся из токена --status-bar текущей темы (syncStatusBarColor() в applyTheme()),
+     поэтому следует ТЕМЕ ПРИЛОЖЕНИЯ, а не системной prefers-color-scheme: прежние два тега
+     переключались по системной схеме и могли противоречить выбранной теме (расхождение
+     зафиксировано в TASK_011). content здесь — значение светлой темы (тема по умолчанию)
+     на время до запуска скрипта. -->
+<meta name="theme-color" id="themeColorMeta" content="#9dc1f3">
 <link rel="icon" href="favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,48 +28,48 @@
 <!-- TASK_061: ?v= у локальных скриптов = номер кэша в sw.js (finance-vNNN). HTML всегда
      получает «свой» JS: HTTP-кэш GitHub Pages (max-age=600) не смешает новый HTML со старым JS.
      Поднимается вместе с cache version при каждом релизе (tests/pwa_cache.test.js). -->
-<script src="js/core/result.js?v=198"></script>
-<script src="js/core/ids.js?v=198"></script>
-<script src="js/core/app_info.js?v=198"></script>
+<script src="js/core/result.js?v=199"></script>
+<script src="js/core/ids.js?v=199"></script>
+<script src="js/core/app_info.js?v=199"></script>
 <!-- TASK_015: подключается ДО store.js — migrate() при первом load() должен
      видеть сервис. Если файл почему-то не приехал (CDN-рассинхронизация),
      приложение стартует без нормализации метаданных, но не падает. -->
-<script src="js/services/tx_meta_service.js?v=198"></script>
+<script src="js/services/tx_meta_service.js?v=199"></script>
 <!-- TASK_023: тоже ДО store.js — migrate() нормализует settings.security при
      первом load(). Если файл не приехал, приложение стартует с прежним
      поведением блокировки (код на входе) и не падает. -->
-<script src="js/services/security_service.js?v=198"></script>
+<script src="js/services/security_service.js?v=199"></script>
 <!-- TASK_044: тоже ДО store.js — migrate() нормализует time операций при
      первом load(); тот же сервис задаёт порядок операций внутри дня. -->
-<script src="js/services/tx_time_service.js?v=198"></script>
-<script src="js/database/store.js?v=198"></script>
-<script src="js/services/currency_service.js?v=198"></script>
-<script src="js/services/account_service.js?v=198"></script>
-<script src="js/services/tx_form_service.js?v=198"></script>
-<script src="js/services/period_service.js?v=198"></script>
-<script src="js/services/place_breakdown_service.js?v=198"></script>
-<script src="js/services/finance_card_service.js?v=198"></script>
-<script src="js/services/analytics_service.js?v=198"></script>
-<script src="js/services/budget_service.js?v=198"></script>
-<script src="js/services/goal_service.js?v=198"></script>
-<script src="js/services/forecast_service.js?v=198"></script>
+<script src="js/services/tx_time_service.js?v=199"></script>
+<script src="js/database/store.js?v=199"></script>
+<script src="js/services/currency_service.js?v=199"></script>
+<script src="js/services/account_service.js?v=199"></script>
+<script src="js/services/tx_form_service.js?v=199"></script>
+<script src="js/services/period_service.js?v=199"></script>
+<script src="js/services/place_breakdown_service.js?v=199"></script>
+<script src="js/services/finance_card_service.js?v=199"></script>
+<script src="js/services/analytics_service.js?v=199"></script>
+<script src="js/services/budget_service.js?v=199"></script>
+<script src="js/services/goal_service.js?v=199"></script>
+<script src="js/services/forecast_service.js?v=199"></script>
 <!-- TASK_061: регулярные платежи — после forecast_service (использует его даты) -->
-<script src="js/services/recurring_service.js?v=198"></script>
-<script src="js/services/health_score_service.js?v=198"></script>
-<script src="js/services/xlsx_writer_service.js?v=198"></script>
-<script src="js/services/export_service.js?v=198"></script>
-<script src="js/services/backup_service.js?v=198"></script>
-<script src="js/services/csv_parser_service.js?v=198"></script>
-<script src="js/services/import_source_service.js?v=198"></script>
-<script src="js/services/import_mapping_service.js?v=198"></script>
-<script src="js/services/import_service.js?v=198"></script>
+<script src="js/services/recurring_service.js?v=199"></script>
+<script src="js/services/health_score_service.js?v=199"></script>
+<script src="js/services/xlsx_writer_service.js?v=199"></script>
+<script src="js/services/export_service.js?v=199"></script>
+<script src="js/services/backup_service.js?v=199"></script>
+<script src="js/services/csv_parser_service.js?v=199"></script>
+<script src="js/services/import_source_service.js?v=199"></script>
+<script src="js/services/import_mapping_service.js?v=199"></script>
+<script src="js/services/import_service.js?v=199"></script>
 <!-- TASK_016 -->
-<script src="js/services/category_taxonomy_service.js?v=198"></script>
-<script src="js/services/demo_data_service.js?v=198"></script>
-<script src="js/services/search_service.js?v=198"></script>
-<script src="js/services/haptics_service.js?v=198"></script>
-<script src="js/services/amount_input_service.js?v=198"></script>
-<script src="js/ui/hero_canvas.js?v=198"></script>
+<script src="js/services/category_taxonomy_service.js?v=199"></script>
+<script src="js/services/demo_data_service.js?v=199"></script>
+<script src="js/services/search_service.js?v=199"></script>
+<script src="js/services/haptics_service.js?v=199"></script>
+<script src="js/services/amount_input_service.js?v=199"></script>
+<script src="js/ui/hero_canvas.js?v=199"></script>
 <style>
   /* Alex Finance Design Tokens (Product Book Part 2/4) */
   :root, [data-theme="light"]{
@@ -169,6 +175,11 @@
     --hero-gl-deep:#1b43a0;                           /* глубокий насыщенный синий — тень/глубина складки */
     --hero-gl-alpha:.56 .46 .38;                      /* непрозрачность складок c1 c2 c3 — бирюза самая деликатная */
     --hero-gl-light:.22;                              /* сила specular-кромки — мягкий перелив, без белых пятен */
+    /* TASK_065: цвет системной области (meta theme-color). Подобран замером фактической
+       верхней строки сцены hero за 40 моментов анимации: среднее #9dc1f3 (диапазон
+       #7395d8…#bde5ff) — системная полоса сверху сливается с фоном Главной вместо
+       прежнего почти белого #f4f6fb. Геометрия вьюпорта не меняется. */
+    --status-bar:#9dc1f3;
     /* ===== Страница операции (TASK_014) — локальные семантические токены экрана.
        Глобальные --expense/--income намеренно НЕ переопределяются: они управляют
        цветом сумм в списках, на Главной и в аналитике и остаются как были. ===== */
@@ -259,6 +270,8 @@
     --hero-gl-deep:#091026;
     --hero-gl-alpha:.30 .22 .13;
     --hero-gl-light:.13;
+    /* TASK_065: тем же замером для тёмной темы — среднее #1e325b (было #0f1115) */
+    --status-bar:#1e325b;
     /* Страница операции (TASK_014) — тёмная тема не инверсия светлой, а
        отдельный набор: глубокий графитовый фон, карточки отделены по тону. */
     --tx-page-bg:#121317;
@@ -3763,6 +3776,18 @@ function applyTheme(){
   const sys=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
   const resolved=state.theme==='system'?sys:(state.theme||'light');
   document.documentElement.setAttribute('data-theme',resolved);
+  syncStatusBarColor();
+}
+// TASK_065: meta theme-color — из токена --status-bar уже применённой темы (единственный
+// источник правды — палитра, как у --hero-gl-* в AF.HeroCanvas.readPalette). Вызывается
+// только из applyTheme(), после установки data-theme. Геометрию и разметку не трогает:
+// это цвет системной области, которую страница не рисует.
+function syncStatusBarColor(){
+  const m=document.getElementById('themeColorMeta');
+  if(!m)return;
+  let c='';
+  try{c=getComputedStyle(document.documentElement).getPropertyValue('--status-bar').trim();}catch(e){c='';}
+  if(c)m.setAttribute('content',c);
 }
 
 /* ============ Шапка: аватар, уведомления, профиль ============ */
