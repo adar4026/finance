@@ -94,7 +94,9 @@ Semantic version приложения и cache version Service Worker
 1. Обновить `version` и `releasedAt` в `js/core/app_info.js`
    (после каждого пользовательского обновления интерфейса, новой функции
    или исправления).
-2. Поднять cache version в `sw.js`.
+2. Поднять cache version в `sw.js` и **тот же номер** в `?v=` у всех
+   локальных `<script src="js/…?v=N">` в `index.html` (TASK_061: HTML
+   всегда получает «свой» JS; проверяется `tests/pwa_cache.test.js`).
 3. Записать релиз в `CHANGELOG.md` (закрыть `[Unreleased]` разделом
    `[X.Y.Z] — YYYY-MM-DD`).
 4. Прогнать все `tests/*.test.js` (0 failed).

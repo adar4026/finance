@@ -9,6 +9,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.2.0] — 2026-10-17
+
+**LexMoney 2.2.0** (`TASK_061`), published on
+https://adar4026.github.io/finance/. Headline: a redesigned **Recurring
+payments** screen with a monthly-obligations card, pause/resume and
+correct recurring dates.
+
+### Changed
+
+- **Recurring payments screen redesign** (`TASK_061`). Native iOS-style
+  header: a light back arrow + title on the left, a round `+` on the right
+  (the `×` is gone); back follows browser history (system back/swipe
+  closes the screen, an open payment form is never lost) and supports an
+  edge swipe. New "Ежемесячные расходы" card with the monthly and yearly
+  equivalent of active recurring expenses (exact integer-cent math:
+  daily ×365, weekly ×52, monthly ×12, yearly ×1; monthly = yearly / 12;
+  foreign-currency accounts converted to the base currency). Clean
+  "Предстоящие списания" list sorted by the next charge date (or by
+  amount), separate groups for recurring income and paused payments,
+  a proper empty state and a dashed "Добавить платёж" button.
+- **Pause / resume a recurring payment** using the existing `isActive`
+  flag: paused payments stay stored and visible but are excluded from the
+  total, forecast, calendar and auto-posting; resuming never back-posts
+  skipped occurrences. Deleting a reminder now asks for confirmation.
+
+### Fixed
+
+- Recurring dates are now local calendar days and are computed from the
+  original date: payments on the 29th–31st no longer drift to the 1st–3rd
+  of the next month, Feb 29 yearly payments fall on Feb 28 in common years,
+  and dates are no longer shifted by a day west of UTC. Applies to the
+  Calendar, balance forecast and auto-posting too.
+- **Auto-posting duplicates on upgrade.** `lastPosted` written by the old
+  code (one day early in summer for payments created in winter, drifted
+  dates for the 29th–31st) is converted once to the new format
+  (`lastPostedV: 2`) by occurrence index, so daily, weekly, monthly and
+  yearly auto-posting continues with the next occurrence — no duplicate of
+  the last posted one and no gaps; a date edited after posting never
+  creates a second transaction in the same month/year.
+- **PWA update consistency.** Local scripts are loaded as `js/…?v=N`
+  (`N` = Service Worker cache number), the new cache is filled bypassing
+  the browser HTTP cache (`cache: 'reload'`), page navigations are
+  revalidated and only successful responses are cached — a fresh
+  `index.html` can no longer run with stale JavaScript (GitHub Pages
+  `max-age=600`) or vice versa, online or offline. Service Worker cache
+  `finance-v193`.
+
 ## [2.1.2] — 2026-09-30
 
 **LexMoney 2.1.2.** Everything listed below (`TASK_052` … `TASK_060`) is
@@ -1288,7 +1335,8 @@ This version represents the first stable public release of A-Lex Finance.
 - **Release date:** June 2026
 - **Status:** Production Release
 
-[Unreleased]: https://github.com/adar4026/finance/compare/v2.1.2...HEAD
+[Unreleased]: https://github.com/adar4026/finance/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/adar4026/finance/compare/v2.1.2...v2.2.0
 [2.1.2]: https://github.com/adar4026/finance/compare/v1.1.0...v2.1.2
 [1.1.0]: https://github.com/adar4026/finance/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/adar4026/finance/releases/tag/v1.0.0
