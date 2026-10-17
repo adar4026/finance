@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Hero waves reworked into the LexMoney blue palette** (`TASK_064`). The
+  shimmering fabric behind the five immersive screens keeps its geometry and
+  its single WebGL layer, but moves from the inherited violet/lavender gamma
+  to the brand blues — deep saturated blue for the shadowed side of a fold,
+  clean bright blue (`--nav-blue`) for the primary fold, soft light blue for
+  the second and a delicate turquoise for the third, most transparent one.
+  Folds are larger and slower, the band ramps are longer so colour areas no
+  longer read as contours, the specular is wider, weaker and carries a
+  turquoise undertone. Measured over 60 time samples of the hero area: blown
+  highlights 3.16% → 0% of pixels, frame-to-frame luminance step −42%, body
+  text contrast 5.73 → 5.91 (light) and 4.08 → 5.82 (dark). Layout, screens,
+  handlers, lifecycle, reduced-motion fallback and the CSS blob fallback are
+  unchanged. _Not released yet — awaiting acceptance in Dev Preview._
+
 ## [2.4.1] — 2026-10-17
 
 ### Changed
