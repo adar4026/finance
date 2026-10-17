@@ -22,48 +22,48 @@
 <!-- TASK_061: ?v= у локальных скриптов = номер кэша в sw.js (finance-vNNN). HTML всегда
      получает «свой» JS: HTTP-кэш GitHub Pages (max-age=600) не смешает новый HTML со старым JS.
      Поднимается вместе с cache version при каждом релизе (tests/pwa_cache.test.js). -->
-<script src="js/core/result.js?v=197"></script>
-<script src="js/core/ids.js?v=197"></script>
-<script src="js/core/app_info.js?v=197"></script>
+<script src="js/core/result.js?v=198"></script>
+<script src="js/core/ids.js?v=198"></script>
+<script src="js/core/app_info.js?v=198"></script>
 <!-- TASK_015: подключается ДО store.js — migrate() при первом load() должен
      видеть сервис. Если файл почему-то не приехал (CDN-рассинхронизация),
      приложение стартует без нормализации метаданных, но не падает. -->
-<script src="js/services/tx_meta_service.js?v=197"></script>
+<script src="js/services/tx_meta_service.js?v=198"></script>
 <!-- TASK_023: тоже ДО store.js — migrate() нормализует settings.security при
      первом load(). Если файл не приехал, приложение стартует с прежним
      поведением блокировки (код на входе) и не падает. -->
-<script src="js/services/security_service.js?v=197"></script>
+<script src="js/services/security_service.js?v=198"></script>
 <!-- TASK_044: тоже ДО store.js — migrate() нормализует time операций при
      первом load(); тот же сервис задаёт порядок операций внутри дня. -->
-<script src="js/services/tx_time_service.js?v=197"></script>
-<script src="js/database/store.js?v=197"></script>
-<script src="js/services/currency_service.js?v=197"></script>
-<script src="js/services/account_service.js?v=197"></script>
-<script src="js/services/tx_form_service.js?v=197"></script>
-<script src="js/services/period_service.js?v=197"></script>
-<script src="js/services/place_breakdown_service.js?v=197"></script>
-<script src="js/services/finance_card_service.js?v=197"></script>
-<script src="js/services/analytics_service.js?v=197"></script>
-<script src="js/services/budget_service.js?v=197"></script>
-<script src="js/services/goal_service.js?v=197"></script>
-<script src="js/services/forecast_service.js?v=197"></script>
+<script src="js/services/tx_time_service.js?v=198"></script>
+<script src="js/database/store.js?v=198"></script>
+<script src="js/services/currency_service.js?v=198"></script>
+<script src="js/services/account_service.js?v=198"></script>
+<script src="js/services/tx_form_service.js?v=198"></script>
+<script src="js/services/period_service.js?v=198"></script>
+<script src="js/services/place_breakdown_service.js?v=198"></script>
+<script src="js/services/finance_card_service.js?v=198"></script>
+<script src="js/services/analytics_service.js?v=198"></script>
+<script src="js/services/budget_service.js?v=198"></script>
+<script src="js/services/goal_service.js?v=198"></script>
+<script src="js/services/forecast_service.js?v=198"></script>
 <!-- TASK_061: регулярные платежи — после forecast_service (использует его даты) -->
-<script src="js/services/recurring_service.js?v=197"></script>
-<script src="js/services/health_score_service.js?v=197"></script>
-<script src="js/services/xlsx_writer_service.js?v=197"></script>
-<script src="js/services/export_service.js?v=197"></script>
-<script src="js/services/backup_service.js?v=197"></script>
-<script src="js/services/csv_parser_service.js?v=197"></script>
-<script src="js/services/import_source_service.js?v=197"></script>
-<script src="js/services/import_mapping_service.js?v=197"></script>
-<script src="js/services/import_service.js?v=197"></script>
+<script src="js/services/recurring_service.js?v=198"></script>
+<script src="js/services/health_score_service.js?v=198"></script>
+<script src="js/services/xlsx_writer_service.js?v=198"></script>
+<script src="js/services/export_service.js?v=198"></script>
+<script src="js/services/backup_service.js?v=198"></script>
+<script src="js/services/csv_parser_service.js?v=198"></script>
+<script src="js/services/import_source_service.js?v=198"></script>
+<script src="js/services/import_mapping_service.js?v=198"></script>
+<script src="js/services/import_service.js?v=198"></script>
 <!-- TASK_016 -->
-<script src="js/services/category_taxonomy_service.js?v=197"></script>
-<script src="js/services/demo_data_service.js?v=197"></script>
-<script src="js/services/search_service.js?v=197"></script>
-<script src="js/services/haptics_service.js?v=197"></script>
-<script src="js/services/amount_input_service.js?v=197"></script>
-<script src="js/ui/hero_canvas.js?v=197"></script>
+<script src="js/services/category_taxonomy_service.js?v=198"></script>
+<script src="js/services/demo_data_service.js?v=198"></script>
+<script src="js/services/search_service.js?v=198"></script>
+<script src="js/services/haptics_service.js?v=198"></script>
+<script src="js/services/amount_input_service.js?v=198"></script>
+<script src="js/ui/hero_canvas.js?v=198"></script>
 <style>
   /* Alex Finance Design Tokens (Product Book Part 2/4) */
   :root, [data-theme="light"]{

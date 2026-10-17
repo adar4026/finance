@@ -12,7 +12,7 @@
 window.AF = window.AF || {};
 AF.AppInfo = {
   name: 'LexMoney',
-  version: '2.4.1',        // semantic version — MAJOR.MINOR.PATCH
+  version: '2.5.0',        // semantic version — MAJOR.MINOR.PATCH
   releasedAt: '2026-10-17', // фиксированная дата релиза, ISO YYYY-MM-DD (не дата устройства)
   // Зарезервировано под будущий экран «Что нового». Когда появится —
   // ReleaseInfo станет тапабельным без правок вёрстки (см. renderReleaseInfo).
