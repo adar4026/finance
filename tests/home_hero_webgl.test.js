@@ -1,5 +1,7 @@
 // tests/home_hero_webgl.test.js — TASK_054: WebGL-фон hero «жидкая ткань» (перенос
-// реализации Lexcar с палитрой Finance). Статические проверки по исходникам
+// реализации Lexcar с палитрой Finance). TASK_064: гамма волн переведена в фирменную
+// сине-голубую LexMoney с бирюзовым акцентом, настройка шейдера (частоты, band, свет)
+// осознанно расходится с LexCar — §3 и часть §5 фиксируют новые значения. Статические проверки по исходникам
 // index.html / js/ui/hero_canvas.js / sw.js (тот же приём, что
 // tests/home_hero_screen.test.js) + юнит-тесты чистых частей модуля в
 // эмулированном окружении без WebGL (fallback-путь).
@@ -75,10 +77,28 @@ const darkBlock = css.slice(css.indexOf('[data-theme="dark"]{'), css.indexOf('[d
     assertTrue(new RegExp('--hero-gl-' + k + ':').test(lightBlock), `light: токен --hero-gl-${k} задан`);
     assertTrue(new RegExp('--hero-gl-' + k + ':').test(darkBlock), `dark: токен --hero-gl-${k} задан`);
   });
-  assertTrue(/--hero-gl-c1:var\(--accent\)/.test(lightBlock) && /--hero-gl-c1:var\(--accent\)/.test(darkBlock), 'primary fold = фирменный --accent (violet), не хардкод');
+  // TASK_064: гамма волн — сине-голубая LexMoney с бирюзовым акцентом (была violet/lavender LexCar)
+  assertTrue(/--hero-gl-c1:var\(--nav-blue\)/.test(lightBlock) && /--hero-gl-c1:var\(--nav-blue\)/.test(darkBlock), 'primary fold = фирменный синий --nav-blue, не хардкод');
+  assertTrue(!/--hero-gl-c1:var\(--accent\)/.test(lightBlock) && !/--hero-gl-c1:var\(--accent\)/.test(darkBlock), 'primary fold больше не violet --accent (TASK_054/058 снят)');
   assertTrue(/--hero-gl-bot:var\(--hero-bottom\)/.test(lightBlock) && /--hero-gl-bot:var\(--hero-bottom\)/.test(darkBlock), 'низ сцены = --hero-bottom (шов с фоном списка невозможен)');
-  assertTrue(/--hero-gl-c2:var\(--accent2\)/.test(darkBlock), 'dark: secondary fold = --accent2');
-  assertTrue(/--hero-gl-c2:#b5abf9/.test(lightBlock), 'light: secondary fold = lavender #b5abf9 (конец --cap-grad)');
+  assertTrue(/--hero-gl-c2:#8fbdf3/.test(lightBlock), 'light: secondary fold = мягкий голубой #8fbdf3');
+  assertTrue(/--hero-gl-c2:#3f6bc9/.test(darkBlock), 'dark: secondary fold = приглушённый голубой #3f6bc9');
+  assertTrue(/--hero-gl-c3:#9ddcd6/.test(lightBlock) && /--hero-gl-c3:#58b3ad/.test(darkBlock), 'третий слой — деликатная бирюза (дополнительный акцент палитры)');
+  assertTrue(/--hero-gl-deep:#1b43a0/.test(lightBlock) && /--hero-gl-deep:#091026/.test(darkBlock), 'u_deep — глубокий насыщенный синий, а не пурпур');
+  // ни один из цветов складок не лежит в фиолетовом секторе (R > B — признак прежней violet-гаммы)
+  [lightBlock, darkBlock].forEach((blk, i) => {
+    (blk.match(/--hero-gl-(?:top|c2|c3|deep):#([0-9a-f]{6})/g) || []).forEach(m => {
+      const hex = m.slice(-6);
+      const r = parseInt(hex.slice(0, 2), 16), b = parseInt(hex.slice(4, 6), 16);
+      assertTrue(b > r, `${i ? 'dark' : 'light'}: #${hex} — холодный сине-голубой (B > R), без фиолетового сдвига`);
+    });
+  });
+  // сдержанность: складки и specular не ярче прежних значений TASK_054
+  const alphaOf = (blk) => (blk.match(/--hero-gl-alpha:([\d. ]+);/) || [])[1].trim().split(/\s+/).map(Number);
+  const lightOf = (blk) => Number((blk.match(/--hero-gl-light:([\d.]+);/) || [])[1]);
+  assertTrue(alphaOf(lightBlock)[2] < alphaOf(lightBlock)[0], 'light: бирюзовый слой самый прозрачный — акцент, а не равноправный цвет');
+  assertTrue(alphaOf(darkBlock)[2] < alphaOf(darkBlock)[0], 'dark: бирюзовый слой самый прозрачный');
+  assertTrue(lightOf(lightBlock) < 0.45 && lightOf(darkBlock) < 0.22, 'specular слабее прежнего (light < .45, dark < .22) — мягкий перелив без белых пятен');
   // брендовые токены и CSS-fallback TASK_047 не изменены
   assertTrue(/--accent:#6d5df6; --accent2:#8b7cf8;/.test(lightBlock), '--accent/--accent2 не тронуты');
   assertTrue(/--hero-b1:rgba\(96,165,250,\.72\)/.test(lightBlock) && /--hero-top:#dbeafe/.test(lightBlock), 'токены CSS-fallback --hero-* (TASK_047) не тронуты');
@@ -110,32 +130,43 @@ const darkBlock = css.slice(css.indexOf('[data-theme="dark"]{'), css.indexOf('[d
   // «отдельные волны» TASK_055 (waveShape/relief) сняты
   assertTrue(/float fold\(vec2 p, float t, vec2 dir, float seed\)/.test(src), 'fold(p, t, dir, seed) — height field одной складки');
   const fb = (src.match(/float fold\([^{]*\{([\s\S]*?)\n\}/) || [])[1] || '';
-  assertTrue(/vec2 q = p - dir \* t \* 0\.05;/.test(fb), 'дрейф складки p − dir·t·0.05 — очень медленный');
-  assertTrue(/float w  = sin\(q\.x \* 1\.5 \+ q\.y \* 1\.1 \+ n1 \* 1\.9 \+ t \* 0\.14 \+ seed \* 2\.0\);/.test(fb), 'крупная синусоида, изогнутая низкочастотным шумом n1');
-  assertTrue(/return w \* 0\.58 \+ n1 \* 0\.45 \+ n2 \* 0\.06;/.test(fb), 'мелкий шум n2 — минимальный вклад (0.06)');
+  assertTrue(/vec2 q = p - dir \* t \* 0\.034;/.test(fb), 'TASK_064: дрейф складки p − dir·t·0.034 — медленнее прежнего (0.05)');
+  assertTrue(/float w  = sin\(q\.x \* 1\.28 \+ q\.y \* 0\.94 \+ n1 \* 1\.62 \+ t \* 0\.100 \+ seed \* 2\.0\);/.test(fb), 'TASK_064: та же синусоида, частоты и фаза ниже прежних (1.5/1.1/1.9/0.14) — форма крупнее, движение спокойнее');
+  assertTrue(/return w \* 0\.60 \+ n1 \* 0\.44 \+ n2 \* 0\.035;/.test(fb), 'TASK_064: вклад мелкого шума n2 снижен 0.06 → 0.035 (меньше ряби)');
   assertTrue(/vec3 layer\(vec3 col, vec2 p, float t, vec2 dir, float seed, vec3 tint, float alpha\)/.test(src), 'layer(): один слой ткани с псевдонормалью');
   const lb = (src.match(/vec3 layer\([^{]*\{([\s\S]*?)\n\}/) || [])[1] || '';
   assertTrue(/const float e = 0\.035;/.test(lb) && /float hx = fold\(p \+ vec2\(e, 0\.0\)/.test(lb) && /float hy = fold\(p \+ vec2\(0\.0, e\)/.test(lb), 'псевдонормаль — конечные разности fold()');
-  assertTrue(/vec3 L = normalize\(vec3\(-0\.45, 0\.75, 0\.55\)\);/.test(lb), 'свет сверху-слева (LexCar)');
-  assertTrue(/float diff = clamp\(dot\(N, L\), 0\.0, 1\.0\);/.test(lb) && /float spec = pow\(clamp\(dot\(N, H\), 0\.0, 1\.0\), 12\.0\);/.test(lb), 'diffuse + specular pow 12 (LexCar)');
-  assertTrue(/float band = smoothstep\(-0\.35, 0\.45, h\) \* \(1\.0 - smoothstep\(0\.55, 1\.25, h\)\);/.test(lb), 'band — где складка видна, мягкие границы');
-  assertTrue(/shaded = mix\(shaded, u_deep, \(1\.0 - diff\) \* 0\.26\);/.test(lb), 'мягкая тень обратной стороны → u_deep');
-  assertTrue(/shaded \+= vec3\(1\.0\) \* spec \* u_light;/.test(lb), 'светлая кромка складки, сила — u_light (палитра)');
+  assertTrue(/vec3 L = normalize\(vec3\(-0\.45, 0\.75, 0\.55\)\);/.test(lb), 'свет сверху-слева (LexCar) — направление не менялось');
+  assertTrue(/\/ e \* 0\.24, -\(hy - h\) \/ e \* 0\.24/.test(lb), 'TASK_064: амплитуда псевдонормали 0.30 → 0.24 — рельеф мельче, без резких изгибов');
+  assertTrue(/float diff = clamp\(dot\(N, L\), 0\.0, 1\.0\);/.test(lb) && /float spec = pow\(clamp\(dot\(N, H\), 0\.0, 1\.0\), 8\.0\);/.test(lb), 'TASK_064: diffuse + specular pow 12 → 8 — блик шире и мягче');
+  assertTrue(/float band = smoothstep\(-0\.55, 0\.55, h\) \* \(1\.0 - smoothstep\(0\.45, 1\.45, h\)\);/.test(lb), 'TASK_064: обе рампы band удлинены (−0.35→−0.55, 1.25→1.45) — границы цветовых областей не читаются как контур');
+  assertTrue(!/smoothstep\(-0\.70, /.test(lb), 'band не растянут до полного покрытия кадра — иначе слои усредняются в ровную заливку (проверено в превью)');
+  assertTrue(/vec3 shaded = tint \* \(0\.84 \+ 0\.26 \* diff\);/.test(lb), 'TASK_064: контраст diffuse 0.28 → 0.26');
+  assertTrue(/shaded = mix\(shaded, u_deep, \(1\.0 - diff\) \* 0\.30\);/.test(lb), 'TASK_064: тень обратной стороны к глубокому синему усилена 0.26 → 0.30 — глубина вместо яркости');
+  assertTrue(/shaded \+= mix\(vec3\(1\.0\), u_c3, 0\.30\) \* spec \* u_light;/.test(lb), 'TASK_064: перелив несёт бирюзовый подтон (mix с u_c3), сила — u_light (палитра)');
   const layers = src.match(/col = layer\(col, p, t, vec2\([^)]*\), \d\.0, u_c\d, u_alpha\.[xyz]\);/g) || [];
   assertEqual(layers.length, 3, 'три слоя (c1 / c2 / c3) со своими dir/seed/alpha');
   assertTrue(/vec2\( 1\.0, -0\.35\), 0\.0, u_c1, u_alpha\.x/.test(src) && /vec2\(-0\.85, 0\.30\), 1\.0, u_c2, u_alpha\.y/.test(src) && /vec2\( 0\.55, 0\.85\), 2\.0, u_c3, u_alpha\.z/.test(src), 'направления/seed слоёв — как LexCar');
-  assertTrue(/mix\(col, u_bot, smoothstep\(0\.58, 1\.0, uv\.y\)\)/.test(src), 'нижний fade к u_bot (читаемость показателей, мягкий переход)');
+  assertTrue(/vec3 col = mix\(u_top, u_bot, smoothstep\(0\.0, 1\.0, uv\.y\)\);/.test(src), 'TASK_064: база — смягчённый по краям переход, а не линейная заливка');
+  assertTrue(/mix\(col, u_bot, smoothstep\(0\.56, 1\.0, uv\.y\)\)/.test(src), 'нижний fade к u_bot начинается выше (0.58 → 0.56), переход длиннее');
   assertTrue(!/waveShape|relief\(|mat2 rot\(|streak/.test((src.match(/const FRAG = `([\s\S]*?)`;/) || [])[1] || 'waveShape'), 'нет «отдельных волн» TASK_055 (waveShape/relief/rot) и streak-полосок в шейдере');
   // uniforms API не изменился — JS-обвязка TASK_054 (applyPalette/readPalette) та же
   ['u_res', 'u_t', 'u_top', 'u_bot', 'u_c1', 'u_c2', 'u_c3', 'u_deep', 'u_alpha', 'u_light']
     .forEach(u => assertTrue(new RegExp('uniform[^;]*\\b' + u + '\\b').test(src), `uniform ${u} на месте`));
-  // шейдеры — побайтно LexCar (финальная реализация, коммит 8a6b74d), если репозиторий доступен рядом
+  // Сверка с LexCar, если репозиторий доступен рядом. TASK_064: FRAG больше НЕ побайтная копия —
+  // настройка волн под LexMoney осознанно расходится с LexCar. Фиксируем то, что обязано совпадать:
+  // VERT целиком и блок simplex noise (Ashima Arts) — общий фундамент обеих реализаций.
   if (fs.existsSync(lexcarPath)) {
     const lex = fs.readFileSync(lexcarPath, 'utf8');
     const tpl = (s, name) => { const m = s.match(new RegExp('const ' + name + ' = `([\\s\\S]*?)`;')); return m ? m[1] : null; };
+    const noise = (s) => { const m = s.match(/vec3 mod289[\s\S]*?return 130\.0 \* dot\(m, g\);\n\}/); return m ? m[0] : null; };
     assertEqual(tpl(src, 'VERT'), tpl(lex, 'VERT'), 'VERT-шейдер побайтно совпадает с LexCar');
-    assertEqual(tpl(src, 'FRAG'), tpl(lex, 'FRAG'), 'FRAG-шейдер побайтно совпадает с LexCar (fold/layer/main)');
     assertTrue(tpl(src, 'FRAG') !== null && tpl(src, 'FRAG').length > 3000, 'FRAG найден и не пуст');
+    assertTrue(noise(src) !== null && noise(src) === noise(lex), 'блок simplex noise побайтно совпадает с LexCar');
+    assertTrue(tpl(src, 'FRAG') !== tpl(lex, 'FRAG'), 'TASK_064: FRAG намеренно расходится с LexCar (своя настройка волн LexMoney)');
+    // расхождение — только в настройке: набор функций и сигнатур тот же, что в LexCar
+    const sigs = (s) => (s.match(/^(?:float|vec3|vec2|void) \w+\([^)]*\) \{$/gm) || []).join('\n');
+    assertEqual(sigs(tpl(src, 'FRAG')), sigs(tpl(lex, 'FRAG')), 'набор функций и их сигнатуры в FRAG — как в LexCar (изменены только параметры)');
   }
 }
 
