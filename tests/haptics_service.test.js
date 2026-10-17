@@ -161,7 +161,7 @@ function fakeDocument(opts) {
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 
-assertTrue(/<script src="js\/services\/haptics_service\.js"><\/script>/.test(html), 'index.html подключает haptics_service.js');
+assertTrue(/<script src="js\/services\/haptics_service\.js(\?v=\d+)?"><\/script>/.test(html), 'index.html подключает haptics_service.js');
 assertTrue(html.indexOf('js/services/haptics_service.js') < html.indexOf('<script>\n'), 'сервис подключён до inline-скрипта приложения');
 assertTrue(/'\.\/js\/services\/haptics_service\.js'/.test(sw), 'sw.js кэширует haptics_service.js');
 {

@@ -19,46 +19,51 @@
 <meta name="mobile-web-app-capable" content="yes">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <!-- Архитектура (feature-ready для Flutter): core → database → services. UI ниже использует только AF.Store / AF.Services -->
-<script src="js/core/result.js"></script>
-<script src="js/core/ids.js"></script>
-<script src="js/core/app_info.js"></script>
+<!-- TASK_061: ?v= у локальных скриптов = номер кэша в sw.js (finance-vNNN). HTML всегда
+     получает «свой» JS: HTTP-кэш GitHub Pages (max-age=600) не смешает новый HTML со старым JS.
+     Поднимается вместе с cache version при каждом релизе (tests/pwa_cache.test.js). -->
+<script src="js/core/result.js?v=193"></script>
+<script src="js/core/ids.js?v=193"></script>
+<script src="js/core/app_info.js?v=193"></script>
 <!-- TASK_015: подключается ДО store.js — migrate() при первом load() должен
      видеть сервис. Если файл почему-то не приехал (CDN-рассинхронизация),
      приложение стартует без нормализации метаданных, но не падает. -->
-<script src="js/services/tx_meta_service.js"></script>
+<script src="js/services/tx_meta_service.js?v=193"></script>
 <!-- TASK_023: тоже ДО store.js — migrate() нормализует settings.security при
      первом load(). Если файл не приехал, приложение стартует с прежним
      поведением блокировки (код на входе) и не падает. -->
-<script src="js/services/security_service.js"></script>
+<script src="js/services/security_service.js?v=193"></script>
 <!-- TASK_044: тоже ДО store.js — migrate() нормализует time операций при
      первом load(); тот же сервис задаёт порядок операций внутри дня. -->
-<script src="js/services/tx_time_service.js"></script>
-<script src="js/database/store.js"></script>
-<script src="js/services/currency_service.js"></script>
-<script src="js/services/account_service.js"></script>
-<script src="js/services/tx_form_service.js"></script>
-<script src="js/services/period_service.js"></script>
-<script src="js/services/place_breakdown_service.js"></script>
-<script src="js/services/finance_card_service.js"></script>
-<script src="js/services/analytics_service.js"></script>
-<script src="js/services/budget_service.js"></script>
-<script src="js/services/goal_service.js"></script>
-<script src="js/services/forecast_service.js"></script>
-<script src="js/services/health_score_service.js"></script>
-<script src="js/services/xlsx_writer_service.js"></script>
-<script src="js/services/export_service.js"></script>
-<script src="js/services/backup_service.js"></script>
-<script src="js/services/csv_parser_service.js"></script>
-<script src="js/services/import_source_service.js"></script>
-<script src="js/services/import_mapping_service.js"></script>
-<script src="js/services/import_service.js"></script>
+<script src="js/services/tx_time_service.js?v=193"></script>
+<script src="js/database/store.js?v=193"></script>
+<script src="js/services/currency_service.js?v=193"></script>
+<script src="js/services/account_service.js?v=193"></script>
+<script src="js/services/tx_form_service.js?v=193"></script>
+<script src="js/services/period_service.js?v=193"></script>
+<script src="js/services/place_breakdown_service.js?v=193"></script>
+<script src="js/services/finance_card_service.js?v=193"></script>
+<script src="js/services/analytics_service.js?v=193"></script>
+<script src="js/services/budget_service.js?v=193"></script>
+<script src="js/services/goal_service.js?v=193"></script>
+<script src="js/services/forecast_service.js?v=193"></script>
+<!-- TASK_061: регулярные платежи — после forecast_service (использует его даты) -->
+<script src="js/services/recurring_service.js?v=193"></script>
+<script src="js/services/health_score_service.js?v=193"></script>
+<script src="js/services/xlsx_writer_service.js?v=193"></script>
+<script src="js/services/export_service.js?v=193"></script>
+<script src="js/services/backup_service.js?v=193"></script>
+<script src="js/services/csv_parser_service.js?v=193"></script>
+<script src="js/services/import_source_service.js?v=193"></script>
+<script src="js/services/import_mapping_service.js?v=193"></script>
+<script src="js/services/import_service.js?v=193"></script>
 <!-- TASK_016 -->
-<script src="js/services/category_taxonomy_service.js"></script>
-<script src="js/services/demo_data_service.js"></script>
-<script src="js/services/search_service.js"></script>
-<script src="js/services/haptics_service.js"></script>
-<script src="js/services/amount_input_service.js"></script>
-<script src="js/ui/hero_canvas.js"></script>
+<script src="js/services/category_taxonomy_service.js?v=193"></script>
+<script src="js/services/demo_data_service.js?v=193"></script>
+<script src="js/services/search_service.js?v=193"></script>
+<script src="js/services/haptics_service.js?v=193"></script>
+<script src="js/services/amount_input_service.js?v=193"></script>
+<script src="js/ui/hero_canvas.js?v=193"></script>
 <style>
   /* Alex Finance Design Tokens (Product Book Part 2/4) */
   :root, [data-theme="light"]{
@@ -1248,6 +1253,93 @@
     font-size:15.5px;font-weight:700;cursor:pointer;margin-top:6px}
   .btn-del{width:100%;padding:13px;border:1px solid var(--expense);border-radius:13px;background:none;color:var(--expense);
     font-size:14px;font-weight:600;cursor:pointer;margin-top:9px}
+  /* TASK_061: «Приостановить / Возобновить платёж» в форме напоминания — нейтральный вариант .btn-del */
+  .btn-pause{width:100%;padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--card);color:var(--text);
+    font-size:14px;font-weight:600;cursor:pointer;margin-top:9px;font-family:inherit}
+  .btn-pause:active{background:var(--card2)}
+
+  /* ===== TASK_061: «Регулярные платежи» (#recurOverlay) =====
+     Каркас — .catx-page (TASK_041): фон var(--main-bg-grad), собственный
+     скролл, safe-area. Навигация iOS: лёгкая «←» без подложки + заголовок,
+     «+» справа; итог — .fincard; список — одна карточка-группа со строками
+     и отступающими разделителями (как .cd-list TASK_060), без отдельной
+     карточки на каждый платёж. Только токены темы; скоуп .rp-*. */
+  .rp-page>*{flex-shrink:0}
+  .rp-page{animation:rpIn .26s cubic-bezier(.22,.61,.36,1);touch-action:pan-y}
+  @keyframes rpIn{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}
+  #recurOverlay{transition:background .2s ease}
+  #recurOverlay.rp-leaving{background:transparent}
+  #recurOverlay.rp-leaving .rp-page{transition:transform .2s ease,opacity .2s ease;transform:translateX(30%);opacity:0}
+  .rp-nav{display:flex;align-items:center;gap:6px;min-height:48px;margin:2px -4px 12px -10px}
+  .rp-back,.rp-plus{width:44px;height:44px;flex:0 0 44px;border-radius:50%;padding:0;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:transform .15s,background .15s}
+  .rp-back{border:none;background:none;color:var(--text)}
+  .rp-back svg{width:12px;height:20px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round;margin-left:-2px}
+  .rp-back:active{background:var(--accent-soft);transform:scale(.92)}
+  .rp-title{flex:1;min-width:0;margin:0;font-size:21px;font-weight:800;letter-spacing:-.4px;line-height:1.22;color:var(--text);overflow-wrap:anywhere}
+  .rp-plus{border:1px solid var(--line);background:var(--card);color:var(--accent)}
+  .rp-plus svg{width:20px;height:20px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round}
+  .rp-plus:active{transform:scale(.92);background:var(--card2)}
+  [data-theme="dark"] .rp-plus{color:var(--accent2)}
+  .rp-back:focus-visible,.rp-plus:focus-visible,.rp-sort:focus-visible,.rp-add:focus-visible{outline:2px solid var(--nav-blue);outline-offset:2px}
+  .rp-sum{padding:18px 18px 17px;margin-bottom:4px}
+  .rp-sum-l{font-size:14px;font-weight:600;color:var(--muted)}
+  .rp-sum-v{font-size:34px;font-weight:800;letter-spacing:-.8px;line-height:1.15;margin-top:4px;color:var(--text);
+    font-variant-numeric:tabular-nums;overflow-wrap:anywhere;transition:opacity .18s ease,transform .18s ease}
+  .rp-sum-v.upd{opacity:.3;transform:translateY(3px)}
+  .rp-sum-s{font-size:13.5px;font-weight:600;color:var(--muted);margin-top:6px;line-height:1.35;font-variant-numeric:tabular-nums}
+  .rp-sum-s .nw{white-space:nowrap}
+  .rp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:20px 2px 9px}
+  .rp-head[hidden]{display:none}
+  .rp-head h2{margin:0;font-size:17px;font-weight:700;letter-spacing:-.2px;color:var(--text)}
+  .rp-sort{position:relative;display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:0 11px;border:none;border-radius:999px;
+    background:var(--accent-soft);color:var(--accent);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;
+    -webkit-tap-highlight-color:transparent}
+  .rp-sort::after{content:'';position:absolute;inset:-6px -2px}
+  .rp-sort svg{width:13px;height:13px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .rp-sort:active{opacity:.65}
+  [data-theme="dark"] .rp-sort{color:var(--accent2)}
+  .rp-list{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--fincard-shadow);overflow:hidden;margin-bottom:12px}
+  .rp-list:empty{display:none}
+  .rp-row{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:12px 16px;border:none;
+    background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .12s}
+  .rp-row+.rp-row::before{content:'';position:absolute;top:0;left:68px;right:0;height:1px;background:var(--line)}
+  .rp-row:active{background:var(--accent-soft)}
+  .rp-row:focus-visible{outline:2px solid var(--nav-blue);outline-offset:-3px;border-radius:14px}
+  .rp-ic{width:40px;height:40px;flex:0 0 40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1}
+  .rp-txt{flex:1;min-width:0}
+  .rp-nm{display:block;font-size:16px;font-weight:600;line-height:1.28;color:var(--text);overflow-wrap:anywhere}
+  .rp-meta{display:block;font-size:13px;font-weight:500;line-height:1.3;color:var(--muted);margin-top:2px}
+  .rp-amt{flex:0 0 auto;text-align:right;font-size:16px;font-weight:700;letter-spacing:-.2px;color:var(--expense);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .rp-amt.inc{color:var(--income)}
+  .rp-row.paused .rp-ic{filter:grayscale(1);opacity:.55}
+  .rp-row.paused .rp-nm{color:var(--muted)}
+  .rp-row.paused .rp-amt{color:var(--muted)}
+  .rp-empty{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:26px 20px 18px}
+  .rp-empty[hidden]{display:none}
+  .rp-empty-ic{width:52px;height:52px;border-radius:16px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center}
+  [data-theme="dark"] .rp-empty-ic{color:var(--accent2)}
+  .rp-empty-ic svg{width:26px;height:26px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .rp-empty-t{max-width:290px;font-size:14.5px;line-height:1.45;color:var(--muted)}
+  .rp-add{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:54px;margin:4px 0 8px;padding:12px 16px;
+    border:1.5px dashed var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent);border-radius:18px;background:transparent;
+    color:var(--accent);font:inherit;font-size:15.5px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s,transform .15s}
+  [data-theme="dark"] .rp-add{color:var(--accent2);border-color:color-mix(in srgb,var(--accent2) 45%,transparent)}
+  .rp-add svg{width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round}
+  .rp-add:active{background:var(--accent-soft);transform:scale(.985)}
+  /* 320–360 px: заголовки в одну строку, крупная сумма без переноса */
+  @media (max-width:360px){
+    .rp-title{font-size:19px;letter-spacing:-.3px}
+    .rp-head h2{font-size:16px}
+    .rp-sum-v{font-size:30px}
+    .rp-row{gap:11px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .rp-page{animation:none}
+    #recurOverlay,.rp-sum-v,.rp-row,.rp-add,.rp-back,.rp-plus{transition:none}
+    #recurOverlay.rp-leaving .rp-page{transition:none}
+  }
 
   /* ===== Accounts (TASK_020 Apple redesign) ===== */
   /* Категория счетов — карточка (стиль Apple Wallet / Настройки iOS) */
@@ -3214,17 +3306,42 @@
     <div class="field"><label>Счёт списания</label><select id="remAccount"></select></div>
     <div class="sec-toggle" style="margin-bottom:14px"><span>Создавать операцию автоматически</span><button class="sw" id="remAutoPost"></button></div>
     <button class="btn-primary" id="remSave">Сохранить</button>
+    <button type="button" class="btn-pause" id="remPause" style="display:none">Приостановить платёж</button>
     <button class="btn-del" id="remDelete" style="display:none">Удалить напоминание</button>
   </div>
 </div>
 
-<!-- Регулярные платежи (повторяющиеся напоминания) -->
-<div class="overlay" id="recurOverlay" style="align-items:flex-start">
-  <div class="detail-sheet">
-    <div class="detail-top"><div class="nm">🔁 Регулярные платежи</div><button class="iconbtn" id="recurClose">×</button></div>
-    <div id="recurList" style="margin-top:8px"></div>
-    <button class="set-btn" id="addRecurBtn" style="border-style:dashed;color:var(--accent);justify-content:center"><span>＋ Добавить платёж</span></button>
-    <div style="height:24px"></div>
+<!-- Регулярные платежи (повторяющиеся напоминания). TASK_061: отдельный экран
+     в каркасе .catx-page (TASK_041): «←» + заголовок слева, «+» справа,
+     карточка ежемесячных обязательств, список ближайших списаний. Назад —
+     история браузера (closeRecurring/popstate) и жест от левого края. -->
+<div class="overlay catx-ov" id="recurOverlay">
+  <div class="catx-page rp-page" id="recurPage">
+    <div class="rp-nav">
+      <button type="button" class="rp-back" id="recurBack" aria-label="Назад">
+        <svg viewBox="0 0 12 20" aria-hidden="true"><path d="M10 1.5 2 10l8 8.5"/></svg>
+      </button>
+      <h1 class="rp-title">Регулярные платежи</h1>
+      <button type="button" class="rp-plus" id="recurAddTop" aria-label="Добавить платёж">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+    <section class="fincard rp-sum" aria-label="Ежемесячные расходы">
+      <div class="rp-sum-l">Ежемесячные расходы</div>
+      <div class="rp-sum-v" id="recurMonthly" aria-live="polite">€0</div>
+      <div class="rp-sum-s" id="recurSumSub">0 активных платежей</div>
+    </section>
+    <div class="rp-head" id="recurHead">
+      <h2>Предстоящие списания</h2>
+      <button type="button" class="rp-sort" id="recurSort" aria-label="Сортировка: по дате"><span id="recurSortLbl">По дате</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 2.5v11M2.5 11 5 13.5 7.5 11M11 13.5v-11M8.5 5 11 2.5 13.5 5"/></svg></button>
+    </div>
+    <div class="rp-list" id="recurList"></div>
+    <div id="recurGroups"></div>
+    <div class="rp-empty" id="recurEmpty" hidden>
+      <div class="rp-empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 2.5l3.5 3.5-3.5 3.5"/><path d="M3.5 11V10a4 4 0 0 1 4-4h13"/><path d="M7 21.5L3.5 18 7 14.5"/><path d="M20.5 13v1a4 4 0 0 1-4 4h-13"/></svg></div>
+      <div class="rp-empty-t">Добавьте регулярные расходы, чтобы видеть свои ежемесячные обязательства</div>
+    </div>
+    <button type="button" class="rp-add" id="addRecurBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Добавить платёж</span></button>
   </div>
 </div>
 
@@ -4693,58 +4810,161 @@ function eventRow(r,d){
     <span class="ev-amt ${r.type==='income'?'inc':'exp'}">${r.type==='income'?'+':'−'}${num(r.amount)}</span>
   </div>`;
 }
+/* ============ Регулярные платежи (TASK_061) ============
+   Отдельный экран: «←» — назад по истории (pushState при открытии, как шторка
+   операции TASK_013), системный back/свайп → popstate, жест от левого края;
+   без записи в истории — просто закрытие (fallback). Расчёты — чистый
+   AF.Services.Recurring; экран ничего не пишет в операции и баланс. */
+let recurSort='date', recurHistoryPushed=false, recurHideTimer=0, recurInstantHide=false;
 function recurringReminders(){return activeReminders().filter(r=>(r.repeatType||'none')!=='none');}
-function openRecurring(){renderRecurring();$('#recurOverlay').classList.add('show');}
+// счёт списания — как у авто-проводки: свой, иначе первый
+function recurAccId(r){return (r.accountId&&state.accounts.find(a=>a.id===r.accountId))?r.accountId:(state.accounts[0]&&state.accounts[0].id);}
+// сумма платежа (в валюте счёта) → целые центы базовой валюты
+function recurBaseCents(r){
+  const R=AF.Services.Recurring,cur=curOfAcc(recurAccId(r));
+  return curKey(cur)===curKey(state.currency)?R.toCents(r.amount):R.toCents(AF.Services.Currency.toBase(state,r.amount,cur));
+}
+function recurMoney(n,cur){cur=cur||state.currency;return state.hideAmounts?maskAmt(cur):AF.Services.Currency.format(n,cur,{cents:true});}
+function openRecurring(){
+  clearTimeout(recurHideTimer);
+  const ov=$('#recurOverlay'),pg=$('#recurPage');
+  ov.classList.remove('rp-leaving');pg.style.transform='';pg.style.transition='';
+  renderRecurring();
+  ov.classList.add('show');pg.scrollTop=0;
+  if(!recurHistoryPushed){history.pushState({recur:true},'');recurHistoryPushed=true;}
+}
+// «←», Escape, тап по фону, жест: через историю, чтобы не оставлять «висящую» запись
+function closeRecurring(instant){
+  if(!$('#recurOverlay').classList.contains('show'))return;
+  recurInstantHide=!!instant;
+  if(recurHistoryPushed){recurHistoryPushed=false;history.back();}   // → popstate → hideRecurring()
+  else hideRecurring();
+}
+function hideRecurring(){
+  const ov=$('#recurOverlay'),pg=$('#recurPage');
+  if(!ov.classList.contains('show'))return;
+  const done=()=>{ov.classList.remove('show','rp-leaving');pg.style.transform='';pg.style.transition='';};
+  const instant=recurInstantHide||matchMedia('(prefers-reduced-motion: reduce)').matches;
+  recurInstantHide=false;
+  if(instant){done();return;}
+  ov.classList.add('rp-leaving');recurHideTimer=setTimeout(done,200);
+}
+window.addEventListener('popstate',()=>{
+  if(!$('#recurOverlay').classList.contains('show'))return;
+  // открыта форма платежа: back не закрывает экран под ней и не теряет ввод
+  if($('#reminderEditOverlay').classList.contains('show')){history.pushState({recur:true},'');recurHistoryPushed=true;return;}
+  recurHistoryPushed=false;hideRecurring();
+});
+// Жест «назад» от левого края (iOS): только горизонтальный свайп вправо,
+// начатый в 24px от края страницы; вертикальный скролл не перехватывается.
+function initRecurEdgeSwipe(){
+  const pg=$('#recurPage');let sx=0,sy=0,dx=0,track=false,lock=null;
+  const reset=()=>{pg.style.transition='transform .22s cubic-bezier(.22,.61,.36,1)';pg.style.transform='';};
+  pg.addEventListener('touchstart',e=>{
+    const t=e.touches[0];track=false;
+    if(e.touches.length!==1||t.clientX-pg.getBoundingClientRect().left>24)return;
+    track=true;lock=null;sx=t.clientX;sy=t.clientY;dx=0;
+  },{passive:true});
+  pg.addEventListener('touchmove',e=>{
+    if(!track)return;
+    const t=e.touches[0],x=t.clientX-sx,y=t.clientY-sy;
+    if(lock===null){if(Math.abs(x)<8&&Math.abs(y)<8)return;lock=(x>0&&Math.abs(x)>Math.abs(y))?'x':'y';}
+    if(lock!=='x'){track=false;return;}
+    dx=Math.max(0,x);pg.style.transition='none';pg.style.transform=`translateX(${dx}px)`;
+    if(e.cancelable)e.preventDefault();
+  },{passive:false});
+  pg.addEventListener('touchend',()=>{
+    if(!track)return;track=false;if(lock!=='x')return;
+    const w=pg.offsetWidth||window.innerWidth;
+    if(dx>Math.min(110,w*.3)){
+      pg.style.transition='transform .18s ease-out';pg.style.transform=`translateX(${w}px)`;
+      setTimeout(()=>closeRecurring(true),170);
+    }else reset();
+  });
+  pg.addEventListener('touchcancel',()=>{if(track&&lock==='x')reset();track=false;});
+}
+function setRecurMonthly(txt){
+  const el=$('#recurMonthly');if(el.textContent===txt)return;
+  if(!$('#recurOverlay').classList.contains('show')||matchMedia('(prefers-reduced-motion: reduce)').matches){el.textContent=txt;return;}
+  el.classList.add('upd');
+  setTimeout(()=>{el.textContent=txt;el.classList.remove('upd');},140);
+}
+function recurRow(x,today){
+  const R=AF.Services.Recurring,r=x.r,paused=R.isPaused(r),inc=!R.isExpense(r);
+  const meta=(paused?'Приостановлен':R.dateLabel(x.date,today))+' · '+R.LABEL[r.repeatType];
+  return `<button type="button" class="rp-row${paused?' paused':''}" data-rem="${esc(r.id)}">
+    <span class="rp-ic" style="background:${reminderColor(r)}22" aria-hidden="true">${reminderIcon(r)}</span>
+    <span class="rp-txt"><span class="rp-nm">${esc(r.title||'')}</span><span class="rp-meta">${meta}</span></span>
+    <span class="rp-amt${inc?' inc':''}">${inc?'+':'−'}${recurMoney(r.amount,curOfAcc(recurAccId(r)))}</span>
+  </button>`;
+}
 function renderRecurring(){
   const el=$('#recurList');if(!el)return;
-  const t=todayStart();
-  const items=recurringReminders().map(r=>({r,d:AF.Services.Forecast.nextOccurrence(r,t)||new Date(r.dueDate)})).sort((a,b)=>a.d-b.d);
-  el.innerHTML=items.length?items.map(({r,d})=>eventRow(r,d)).join(''):`<div class="cal-empty">Пока нет регулярных платежей.<br>Добавьте подписку, аренду или зарплату — они будут повторяться автоматически.</div>`;
-  $$('#recurList .ev-row').forEach(x=>x.onclick=()=>openReminderEdit(x.dataset.rem));
+  const R=AF.Services.Recurring,t=todayStart(),list=state.reminders||[];
+  const sum=R.summary(list,recurBaseCents);
+  setRecurMonthly(recurMoney(sum.monthly));
+  $('#recurSumSub').innerHTML=esc(R.countLabel(sum.count))+' · <span class="nw">'+esc(recurMoney(sum.yearly))+' / год</span>';
+  const items=R.sort(R.items(list,t,recurBaseCents),recurSort);
+  const exp=items.filter(x=>!R.isPaused(x.r)&&R.isExpense(x.r)),
+        inc=items.filter(x=>!R.isPaused(x.r)&&!R.isExpense(x.r)),
+        paused=items.filter(x=>R.isPaused(x.r));
+  $('#recurHead').hidden=!exp.length;
+  $('#recurSortLbl').textContent=recurSort==='amount'?'По сумме':'По дате';
+  $('#recurSort').setAttribute('aria-label','Сортировка: '+(recurSort==='amount'?'по сумме':'по дате'));
+  el.innerHTML=exp.map(x=>recurRow(x,t)).join('');
+  const group=(title,arr)=>arr.length?`<div class="rp-head"><h2>${title}</h2></div><div class="rp-list">${arr.map(x=>recurRow(x,t)).join('')}</div>`:'';
+  $('#recurGroups').innerHTML=group('Регулярные поступления',inc)+group('Приостановлены',paused);
+  $('#recurEmpty').hidden=items.length>0;
+  $$('#recurOverlay .rp-row').forEach(x=>x.onclick=()=>openReminderEdit(x.dataset.rem,{recur:true}));
 }
-// Авто-проводка: регулярные напоминания с autoPost сами создают операции в дни срабатывания
+// Авто-проводка: регулярные напоминания с autoPost сами создают операции в дни срабатывания.
+// TASK_061: даты — AF.Services.Recurring.autoPostDates (локальные календарные
+// дни; не более одной авто-операции за месяц/год после lastPosted).
 function processAutoPost(){
-  const today=new Date();today.setHours(23,59,59,999);
-  let created=0;
+  const now=new Date();
+  let created=0,normalized=0;
   (state.reminders||[]).forEach(r=>{
-    if(r.isActive===false||!r.autoPost)return;
-    const rt=r.repeatType||'none';if(rt==='none')return;
-    let from;
-    if(r.lastPosted){from=new Date(r.lastPosted);from.setDate(from.getDate()+1);}
-    else from=new Date(r.dueDate);
-    from.setHours(0,0,0,0);
-    const occ=AF.Services.Forecast.occurrencesBetween(r,from,today);
+    const occ=AF.Services.Recurring.autoPostDates(r,now);
+    // однократно: lastPosted старого формата → новый (lastPostedV:2), без новых операций
+    const norm=AF.Services.Recurring.normalizePatch(r);
+    if(norm){Object.assign(r,norm);normalized++;}
     if(!occ.length)return;
     const acc=(r.accountId&&state.accounts.find(a=>a.id===r.accountId))?r.accountId:(state.accounts[0]&&state.accounts[0].id);
     if(!acc)return;
-    occ.forEach(d=>{
+    occ.forEach(iso=>{
       // TASK_026 (M-8): раньше nid=Date.now()+инкремент — мог пересечься с id
       // операции, сохранённой вручную в ту же миллисекунду.
-      state.tx.push({id:AF.Ids.forTx(state),type:r.type,amount:r.amount,cat:r.categoryId||catsFor(r.type)[0].id,subcategoryId:null,account:acc,date:d.toISOString().slice(0,10),note:(r.title||'')+' · авто 🔁',receiptPath:null,autoFrom:r.id});
+      state.tx.push({id:AF.Ids.forTx(state),type:r.type,amount:r.amount,cat:r.categoryId||catsFor(r.type)[0].id,subcategoryId:null,account:acc,date:iso,note:(r.title||'')+' · авто 🔁',receiptPath:null,autoFrom:r.id});
       created++;
     });
-    r.lastPosted=occ[occ.length-1].toISOString().slice(0,10);
+    r.lastPosted=occ[occ.length-1];r.lastPostedV=AF.Services.Recurring.LAST_POSTED_V;
   });
   // TASK_026: авто-операции считаются созданными только после физической
   // записи; при отказе откат в save() убирает их и возвращает r.lastPosted.
-  if(created){
+  if(created||normalized){
     if(!save().ok)return 0;
+    if(!created)return 0;
     if(typeof toast==='function')toast(`Авто-операций добавлено: ${created} 🔁`);
   }
   return created;
 }
 function markReminderDone(id){const r=(state.reminders||[]).find(x=>x.id===id);if(!r)return;r.done=true;if(!save().ok)return;renderCalendar();toast('Отмечено выполненным ✓');}
-function openReminderEdit(id){
+function openReminderEdit(id,ctx){
   remEdit=id||null;
+  const fromRecur=!!(ctx&&ctx.recur);   // TASK_061: открыта с экрана «Регулярные платежи»
   $('#remAccount').innerHTML=state.accounts.map(a=>`<option value="${a.id}">${a.emoji} ${esc(a.name)}</option>`).join('');
   if(id){const r=state.reminders.find(x=>x.id===id);remType=r.type;remCat=r.categoryId||null;
     $('#remTitle').value=r.title;$('#remAmount').value=r.amount;$('#remDate').value=r.dueDate;$('#remRepeat').value=r.repeatType||'none';
     if(r.accountId)$('#remAccount').value=r.accountId;
     $('#remAutoPost').classList.toggle('on',!!r.autoPost);
-    $('#remEditTitle').textContent='Напоминание';$('#remDelete').style.display='block';}
-  else{remType='expense';remCat=null;$('#remTitle').value='';$('#remAmount').value='';$('#remDate').value=new Date().toISOString().slice(0,10);$('#remRepeat').value='monthly';
+    $('#remEditTitle').textContent=fromRecur?'Регулярный платёж':'Напоминание';$('#remDelete').style.display='block';
+    const rec=AF.Services.Recurring.isRecurring(r);
+    $('#remPause').style.display=rec?'block':'none';
+    $('#remPause').textContent=AF.Services.Recurring.isPaused(r)?'Возобновить платёж':'Приостановить платёж';}
+  else{remType='expense';remCat=null;$('#remTitle').value='';$('#remAmount').value='';$('#remDate').value=AF.Services.Forecast.toIso(new Date());$('#remRepeat').value='monthly';
     $('#remAutoPost').classList.remove('on');
-    $('#remEditTitle').textContent='Новое напоминание';$('#remDelete').style.display='none';}
+    $('#remEditTitle').textContent=fromRecur?'Новый платёж':'Новое напоминание';$('#remDelete').style.display='none';
+    $('#remPause').style.display='none';}
   $('#remTitleErr').classList.remove('show');$('#remAmountErr').classList.remove('show');
   setRemType(remType);
   $('#reminderEditOverlay').classList.add('show');
@@ -4762,14 +4982,30 @@ function saveReminder(){
   if(!title){$('#remTitleErr').classList.add('show');$('#remTitle').focus();return;}
   if(!amount||amount<=0){$('#remAmountErr').classList.add('show');$('#remAmount').focus();return;}
   const autoPost=$('#remAutoPost').classList.contains('on');
-  const data={title,amount:Math.round(amount*100)/100,type:remType,dueDate:$('#remDate').value||new Date().toISOString().slice(0,10),repeatType:$('#remRepeat').value,categoryId:remCat||null,accountId:$('#remAccount').value||null,autoPost,isActive:true};
-  if(remEdit){const r=state.reminders.find(x=>x.id===remEdit);Object.assign(r,data);if(r.repeatType!=='none')r.done=false;}
-  else state.reminders.push(Object.assign({id:AF.Ids.forReminder(state),done:false,createdAt:Date.now()},data));
+  // TASK_061: isActive при правке не трогаем — правка приостановленного платежа
+  // не должна молча возобновлять его (и проводить пропущенные повторы)
+  const data={title,amount:Math.round(amount*100)/100,type:remType,dueDate:$('#remDate').value||AF.Services.Forecast.toIso(new Date()),repeatType:$('#remRepeat').value,categoryId:remCat||null,accountId:$('#remAccount').value||null,autoPost};
+  // (пауза — только у повторяющихся: разовое напоминание без повтора снова активно, иначе оно пропало бы отовсюду)
+  if(remEdit){const r=state.reminders.find(x=>x.id===remEdit);Object.assign(r,data);if(r.repeatType!=='none')r.done=false;else r.isActive=true;}
+  else state.reminders.push(Object.assign({id:AF.Ids.forReminder(state),done:false,createdAt:Date.now(),isActive:true},data));
   if(!save().ok)return;                       // TASK_026
   processAutoPost();$('#reminderEditOverlay').classList.remove('show');render();renderCalendar();renderRecurring();renderHeader();toast('Напоминание сохранено ✓');
 }
+// TASK_061: приостановка / возобновление — существующее поле isActive.
+// Сохраняются только эти поля; несохранённые правки формы не применяются.
+function toggleReminderPause(){
+  if(!remEdit)return;
+  const R=AF.Services.Recurring,r=state.reminders.find(x=>x.id===remEdit);if(!r)return;
+  const paused=R.isPaused(r);
+  Object.assign(r,paused?R.resumePatch(r,new Date()):R.pausePatch());
+  if(!save().ok)return;                       // TASK_026: откат при ошибке записи
+  if(paused)processAutoPost();
+  $('#reminderEditOverlay').classList.remove('show');render();renderCalendar();renderRecurring();renderHeader();
+  toast(paused?'Платёж возобновлён ✓':'Платёж приостановлен');
+}
 function deleteReminder(){
   if(!remEdit)return;
+  if(!confirm('Удалить напоминание? Уже созданные операции останутся.'))return;   // TASK_061
   state.reminders=state.reminders.filter(r=>r.id!==remEdit);
   if(!save().ok)return;                       // TASK_026: напоминание восстановлено откатом
   $('#reminderEditOverlay').classList.remove('show');renderCalendar();renderRecurring();toast('Напоминание удалено');
@@ -6867,7 +7103,7 @@ function saveTx(){
     state.reminders=state.reminders||[];
     const title=note||catById(aCat).name;
     // autoPost: будущие срабатывания создадут операции сами; lastPosted=date — сегодняшняя уже создана вручную
-    state.reminders.push({id:AF.Ids.forReminder(state),title,amount:val,type:aType,dueDate:date,repeatType:rep,categoryId:aCat,accountId:$('#fAccount').value,autoPost:true,lastPosted:date,isActive:true,done:false,createdAt:Date.now()});
+    state.reminders.push({id:AF.Ids.forReminder(state),title,amount:val,type:aType,dueDate:date,repeatType:rep,categoryId:aCat,accountId:$('#fAccount').value,autoPost:true,lastPosted:date,lastPostedV:AF.Services.Recurring.LAST_POSTED_V,isActive:true,done:false,createdAt:Date.now()});
   }
   // TASK_026 (C-1): операция считается добавленной только после физической
   // записи. При отказе save() откатывает state к последнему сохранённому
@@ -7614,9 +7850,16 @@ $('#drCats').onclick=drGo(openCatMgr);
 $('#drGoals').onclick=drGo(openGoals);
 $('#drCalendar').onclick=drGo(openCalendar);
 $('#drRecur').onclick=drGo(openRecurring);
-$('#recurClose').onclick=()=>$('#recurOverlay').classList.remove('show');
-$('#recurOverlay').onclick=e=>{if(e.target.id==='recurOverlay')$('#recurOverlay').classList.remove('show');};
-$('#addRecurBtn').onclick=()=>openReminderEdit(null);
+// TASK_061: «←» / фон — назад; «+» в заголовке и нижняя кнопка — одна и та же форма
+$('#recurBack').onclick=()=>closeRecurring();
+$('#recurOverlay').onclick=e=>{if(e.target.id==='recurOverlay')closeRecurring();};
+const openRecurAdd=()=>openReminderEdit(null,{recur:true});
+$('#recurAddTop').onclick=openRecurAdd;
+$('#addRecurBtn').onclick=openRecurAdd;
+$('#recurSort').onclick=()=>{recurSort=recurSort==='date'?'amount':'date';renderRecurring();};
+initRecurEdgeSwipe();
+// перезагрузка при открытом экране: запись {recur} осталась, а экран закрыт — не оставляем «пустой» шаг назад
+if(history.state&&history.state.recur)history.replaceState(null,'');
 $('#drHealth').onclick=drGo(openHealth);
 $('#drStats').onclick=drGo(openStats);
 $('#drExport').onclick=drGo(openExport);
@@ -7653,6 +7896,7 @@ $('#remExp').onclick=()=>setRemType('expense');
 $('#remInc').onclick=()=>setRemType('income');
 $('#remSave').onclick=saveReminder;
 $('#remDelete').onclick=deleteReminder;
+$('#remPause').onclick=toggleReminderPause;   // TASK_061
 $('#remAutoPost').onclick=()=>$('#remAutoPost').classList.toggle('on');
 // Цели (Goals)
 $('#goalsClose').onclick=()=>$('#goalsOverlay').classList.remove('show');
@@ -7681,7 +7925,10 @@ $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();})
   sa.addEventListener('scroll',sync,{passive:true});
   sync();
 })();
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay','#recurOverlay','#ratesOverlay','#goalContribOverlay','#securityOverlay','#secLockOverlay'].forEach(s=>$(s).classList.remove('show'));document.body.classList.remove('drawer-open');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();
+  // TASK_061: открыта форма платежа — Escape закрывает только её; иначе экран — через историю
+  if(!$('#reminderEditOverlay').classList.contains('show'))closeRecurring();
+  ['#accOverlay','#groupEditOverlay','#detailOverlay','#allTxOverlay','#catTxOverlay','#searchOverlay','#rangeOverlay','#notifOverlay','#profOverlay','#receiptViewer','#catMgrOverlay','#catEditOverlay','#budgetEditOverlay','#goalsOverlay','#goalEditOverlay','#calOverlay','#reminderEditOverlay','#healthOverlay','#healthDetailOverlay','#exportOverlay','#statsOverlay','#drawerOverlay','#ratesOverlay','#goalContribOverlay','#securityOverlay','#secLockOverlay'].forEach(s=>$(s).classList.remove('show'));document.body.classList.remove('drawer-open');}});
 
 /* ============ Statistics (Screen 14) ============ */
 let statsPeriod='year'; // 'month'|'year'|'all'

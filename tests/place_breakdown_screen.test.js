@@ -33,7 +33,7 @@ function fnSrc(name) {
 
 // ============ §1 — подключение сервиса и service worker ============
 {
-  assertTrue(/<script src="js\/services\/place_breakdown_service\.js"><\/script>/.test(html),
+  assertTrue(/<script src="js\/services\/place_breakdown_service\.js(\?v=\d+)?"><\/script>/.test(html),
     'index.html: подключён js/services/place_breakdown_service.js');
   const iSvc = html.indexOf('place_breakdown_service.js'), iStore = html.indexOf('js/database/store.js');
   assertTrue(iSvc > iStore, 'Сервис подключён после store.js (как остальные сервисы аналитики)');

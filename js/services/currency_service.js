@@ -22,9 +22,12 @@ AF.Services.Currency = {
   },
 
   // Number -> "€1 234,56" (символ валюты по коду)
-  format(n, cur) {
+  // opts.cents (TASK_061): дробная часть — всегда 2 знака («€7,90», не «€7,9»),
+  // целые — без копеек («€20»), как amount_input_service.
+  format(n, cur, opts) {
     cur = cur || '€';
-    const v = Number(n).toLocaleString('ru-RU', { maximumFractionDigits: 2 });
+    const num = Number(n), frac = !!(opts && opts.cents) && Math.round(Math.abs(num) * 100) % 100 !== 0;
+    const v = num.toLocaleString('ru-RU', { minimumFractionDigits: frac ? 2 : 0, maximumFractionDigits: 2 });
     const sym = this.SYM[cur];
     return sym ? sym + v : (cur.length <= 2 ? cur + v : v + ' ' + cur);
   },

@@ -88,7 +88,7 @@ const darkBlock = css.slice(css.indexOf('[data-theme="dark"]{'), css.indexOf('[d
 
 // ============ §4 — подключение и запуск ============
 {
-  assertTrue(/<script src="js\/ui\/hero_canvas\.js"><\/script>/.test(html), 'js/ui/hero_canvas.js подключён');
+  assertTrue(/<script src="js\/ui\/hero_canvas\.js(\?v=\d+)?"><\/script>/.test(html), 'js/ui/hero_canvas.js подключён');
   assertTrue(html.indexOf('js/ui/hero_canvas.js') < html.indexOf('<script>\n'), 'модуль подключён до основного inline-скрипта');
   assertEqual((html.match(/AF\.HeroCanvas\.mount\(\$\('#heroCanvas'\)\)/g) || []).length, 1, 'ровно один вызов AF.HeroCanvas.mount(#heroCanvas) в блоке «Старт»');
   const startIdx = html.indexOf('/* ============ Старт ============ */');

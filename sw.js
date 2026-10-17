@@ -1,5 +1,10 @@
 // Service worker — офлайн-кэш приложения
-const CACHE = 'finance-v192';
+const CACHE = 'finance-v193';
+// TASK_061: версия скриптов = номер кэша. index.html подключает локальные
+// скрипты как js/…?v=193, precache кладёт их под теми же URL — HTML всегда
+// получает «свой» JS (и онлайн, и офлайн), HTTP-кэш GitHub Pages (max-age=600)
+// не может смешать новый HTML со старым JS или наоборот.
+const V = CACHE.replace('finance-v', '');
 const ASSETS = [
   './',
   './index.html',
@@ -23,6 +28,7 @@ const ASSETS = [
   './js/services/budget_service.js',
   './js/services/goal_service.js',
   './js/services/forecast_service.js',
+  './js/services/recurring_service.js',
   './js/services/health_score_service.js',
   './js/services/xlsx_writer_service.js',
   './js/services/export_service.js',
@@ -42,8 +48,14 @@ const ASSETS = [
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'
 ];
 
+const precacheUrl = a => (/^\.\/js\/.+\.js$/.test(a) ? a + '?v=' + V : a);
+
+// cache:'reload' — мимо HTTP-кэша браузера: в новый кэш попадают файлы именно
+// этой версии, а не копии, закэшированные до деплоя (иначе офлайн-набор мог быть смешанным)
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE)
+    .then(c => c.addAll(ASSETS.map(a => new Request(precacheUrl(a), { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -53,14 +65,21 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Network-first: онлайн — всегда свежая версия (обновляем кэш), офлайн — из кэша
+// Network-first: онлайн — всегда свежая версия (обновляем кэш), офлайн — из кэша.
+// Страница (навигация) — с перепроверкой (no-cache), чтобы после деплоя не
+// открывался HTML из HTTP-кэша; в кэш кладутся только успешные ответы.
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  let netReq = req;
+  if (req.mode === 'navigate') { try { netReq = new Request(req, { cache: 'no-cache' }); } catch (_) { netReq = req; } }
   e.respondWith(
-    fetch(e.request).then(resp => {
-      const copy = resp.clone();
-      caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
+    fetch(netReq).then(resp => {
+      if (resp && resp.ok && (resp.type === 'basic' || resp.type === 'cors')) {
+        const copy = resp.clone();
+        caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+      }
       return resp;
-    }).catch(() => caches.match(e.request))
+    }).catch(() => caches.match(req).then(r => r || (req.mode === 'navigate' ? caches.match('./index.html') : r)))
   );
 });

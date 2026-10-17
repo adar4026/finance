@@ -114,7 +114,7 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 const code = html.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
 
-assertTrue(/<script src="js\/services\/amount_input_service\.js"><\/script>/.test(html), 'index.html подключает amount_input_service.js');
+assertTrue(/<script src="js\/services\/amount_input_service\.js(\?v=\d+)?"><\/script>/.test(html), 'index.html подключает amount_input_service.js');
 assertTrue(/'\.\/js\/services\/amount_input_service\.js'/.test(sw), 'sw.js кэширует amount_input_service.js');
 { const m = sw.match(/CACHE = 'finance-v(\d+)'/); assertTrue(m && +m[1] >= 175, `версия кэша поднята (finance-v${m && m[1]})`); }
 

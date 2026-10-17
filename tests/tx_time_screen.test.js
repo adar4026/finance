@@ -23,8 +23,8 @@ function assertEqual(actual, expected, msg) {
 
 // ============ §1 — подключение сервиса ДО store.js ============
 {
-  const iSvc = html.indexOf('<script src="js/services/tx_time_service.js"></script>');
-  const iStore = html.indexOf('<script src="js/database/store.js"></script>');
+  const iSvc = html.search(/<script src="js\/services\/tx_time_service\.js(\?v=\d+)?"><\/script>/);
+  const iStore = html.search(/<script src="js\/database\/store\.js(\?v=\d+)?"><\/script>/);
   assertTrue(iSvc !== -1, 'index.html: tx_time_service.js подключён');
   assertTrue(iSvc !== -1 && iStore !== -1 && iSvc < iStore, 'index.html: tx_time_service.js подключён ДО store.js (migrate при первом load)');
   assertTrue(/'\.\/js\/services\/tx_time_service\.js'/.test(sw), 'sw.js: tx_time_service.js в precache');

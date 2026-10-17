@@ -171,7 +171,7 @@ function assertTrue(cond, msg) {
   assertTrue(!/id:'[a-z]+'\+Date\.now\(\)/.test(html), 'Не осталось id вида «префикс + Date.now()»');
   assertTrue(!/Date\.now\(\)\+Math\.random\(\)/.test(code), 'Не осталось id вида Date.now()+Math.random()');
   assertTrue(!/id:'s'\+Date\.now\(\)\.toString\(36\)/.test(html), 'Подкатегории больше не используют timestamp как id');
-  assertTrue(/<script src="js\/core\/ids\.js"><\/script>/.test(html), 'Генератор id подключён в index.html');
+  assertTrue(/<script src="js\/core\/ids\.js(\?v=\d+)?"><\/script>/.test(html), 'Генератор id подключён в index.html');
   ['forTx', 'forAccount', 'forAccountGroup', 'forCategory', 'forSubcategory', 'forGoal', 'forReminder']
     .forEach(fn => assertTrue(new RegExp('AF\\.Ids\\.' + fn + '\\(state\\)').test(html), `Используется AF.Ids.${fn}()`));
   // TASK_038: тот же инвариант, но проверяется по новому месту жительства —
