@@ -22,48 +22,48 @@
 <!-- TASK_061: ?v= у локальных скриптов = номер кэша в sw.js (finance-vNNN). HTML всегда
      получает «свой» JS: HTTP-кэш GitHub Pages (max-age=600) не смешает новый HTML со старым JS.
      Поднимается вместе с cache version при каждом релизе (tests/pwa_cache.test.js). -->
-<script src="js/core/result.js?v=195"></script>
-<script src="js/core/ids.js?v=195"></script>
-<script src="js/core/app_info.js?v=195"></script>
+<script src="js/core/result.js?v=196"></script>
+<script src="js/core/ids.js?v=196"></script>
+<script src="js/core/app_info.js?v=196"></script>
 <!-- TASK_015: подключается ДО store.js — migrate() при первом load() должен
      видеть сервис. Если файл почему-то не приехал (CDN-рассинхронизация),
      приложение стартует без нормализации метаданных, но не падает. -->
-<script src="js/services/tx_meta_service.js?v=195"></script>
+<script src="js/services/tx_meta_service.js?v=196"></script>
 <!-- TASK_023: тоже ДО store.js — migrate() нормализует settings.security при
      первом load(). Если файл не приехал, приложение стартует с прежним
      поведением блокировки (код на входе) и не падает. -->
-<script src="js/services/security_service.js?v=195"></script>
+<script src="js/services/security_service.js?v=196"></script>
 <!-- TASK_044: тоже ДО store.js — migrate() нормализует time операций при
      первом load(); тот же сервис задаёт порядок операций внутри дня. -->
-<script src="js/services/tx_time_service.js?v=195"></script>
-<script src="js/database/store.js?v=195"></script>
-<script src="js/services/currency_service.js?v=195"></script>
-<script src="js/services/account_service.js?v=195"></script>
-<script src="js/services/tx_form_service.js?v=195"></script>
-<script src="js/services/period_service.js?v=195"></script>
-<script src="js/services/place_breakdown_service.js?v=195"></script>
-<script src="js/services/finance_card_service.js?v=195"></script>
-<script src="js/services/analytics_service.js?v=195"></script>
-<script src="js/services/budget_service.js?v=195"></script>
-<script src="js/services/goal_service.js?v=195"></script>
-<script src="js/services/forecast_service.js?v=195"></script>
+<script src="js/services/tx_time_service.js?v=196"></script>
+<script src="js/database/store.js?v=196"></script>
+<script src="js/services/currency_service.js?v=196"></script>
+<script src="js/services/account_service.js?v=196"></script>
+<script src="js/services/tx_form_service.js?v=196"></script>
+<script src="js/services/period_service.js?v=196"></script>
+<script src="js/services/place_breakdown_service.js?v=196"></script>
+<script src="js/services/finance_card_service.js?v=196"></script>
+<script src="js/services/analytics_service.js?v=196"></script>
+<script src="js/services/budget_service.js?v=196"></script>
+<script src="js/services/goal_service.js?v=196"></script>
+<script src="js/services/forecast_service.js?v=196"></script>
 <!-- TASK_061: регулярные платежи — после forecast_service (использует его даты) -->
-<script src="js/services/recurring_service.js?v=195"></script>
-<script src="js/services/health_score_service.js?v=195"></script>
-<script src="js/services/xlsx_writer_service.js?v=195"></script>
-<script src="js/services/export_service.js?v=195"></script>
-<script src="js/services/backup_service.js?v=195"></script>
-<script src="js/services/csv_parser_service.js?v=195"></script>
-<script src="js/services/import_source_service.js?v=195"></script>
-<script src="js/services/import_mapping_service.js?v=195"></script>
-<script src="js/services/import_service.js?v=195"></script>
+<script src="js/services/recurring_service.js?v=196"></script>
+<script src="js/services/health_score_service.js?v=196"></script>
+<script src="js/services/xlsx_writer_service.js?v=196"></script>
+<script src="js/services/export_service.js?v=196"></script>
+<script src="js/services/backup_service.js?v=196"></script>
+<script src="js/services/csv_parser_service.js?v=196"></script>
+<script src="js/services/import_source_service.js?v=196"></script>
+<script src="js/services/import_mapping_service.js?v=196"></script>
+<script src="js/services/import_service.js?v=196"></script>
 <!-- TASK_016 -->
-<script src="js/services/category_taxonomy_service.js?v=195"></script>
-<script src="js/services/demo_data_service.js?v=195"></script>
-<script src="js/services/search_service.js?v=195"></script>
-<script src="js/services/haptics_service.js?v=195"></script>
-<script src="js/services/amount_input_service.js?v=195"></script>
-<script src="js/ui/hero_canvas.js?v=195"></script>
+<script src="js/services/category_taxonomy_service.js?v=196"></script>
+<script src="js/services/demo_data_service.js?v=196"></script>
+<script src="js/services/search_service.js?v=196"></script>
+<script src="js/services/haptics_service.js?v=196"></script>
+<script src="js/services/amount_input_service.js?v=196"></script>
+<script src="js/ui/hero_canvas.js?v=196"></script>
 <style>
   /* Alex Finance Design Tokens (Product Book Part 2/4) */
   :root, [data-theme="light"]{
@@ -77,6 +77,12 @@
     --info:#4dabf7; --info-soft:#4dabf71f;
     --shadow:0 8px 30px rgba(40,50,120,.08);
     --radius:20px; --navh:64px; /* TASK_057: компактная капсула (LexCar b2e5423) */
+    --navh-compact:54px; /* TASK_063: капсула при прокрутке вниз (54 − padding 2×4 − контур 2×1 = вкладка 44px) */
+    /* TASK_063: ширина компактной капсулы — по содержимому: число вкладок × ширина вкладки + padding 2×7 +
+       контур 2×1 (5 × 50 + 16 = 266px); на узком экране ограничена отступом ≥12px (--nav-compact-inset) */
+    --nav-compact-tab:50px;
+    --nav-compact-w:calc(var(--nav-count,5) * var(--nav-compact-tab) + 16px);
+    --nav-compact-inset:max(12px,calc(50% - var(--nav-compact-w) / 2)); /* боковой отступ компактной капсулы (центр) */
     /* TASK_062A: капсула заходит в safe area (как tab bar iOS 26): 34pt → 20px от края, без safe area — 6px */
     --nav-bottom:max(6px,calc(env(safe-area-inset-bottom) - 14px));
     /* полупрозрачный фон закреплённой шапки (material-эффект при прокрутке) */
@@ -110,11 +116,15 @@
     --nav-glint:rgba(255,255,255,.44);
     --nav-pill-edge-light:rgba(255,255,255,.34);
     --nav-pill-edge-dark:rgba(22,24,31,.06);
-    /* отдельная floating glass-кнопка «＋» (нейтральная, не primary) */
-    --nav-add-bg:rgba(255,255,255,.58);
-    --nav-add-bg-solid:rgba(255,255,255,.96);
-    --nav-add-border:rgba(22,24,31,.72);
-    --nav-add-shadow:0 6px 18px rgba(28,32,60,.12),inset 0 1px 0 rgba(255,255,255,.70);
+    /* TASK_063: кнопка «＋» у заголовка «Записи» — полупрозрачное голубое стекло (референс Revolut):
+       фон Главной просвечивает и размывается; плотность подобрана так, чтобы белый плюс читался на
+       светлом фоне (≥3:1); -solid — без backdrop-filter; -hover — только для устройств с указателем */
+    --list-add-bg:rgba(58,120,240,.74);
+    --list-add-bg-hover:rgba(58,120,240,.82);
+    --list-add-bg-solid:rgba(62,118,236,.94);
+    --list-add-border:rgba(255,255,255,.55);
+    --list-add-shadow:0 2px 8px rgba(40,70,160,.12),inset 0 1px 0 rgba(255,255,255,.30);
+    --list-add-blur:14px;
     /* Главная финансовая карточка (TASK_003) — системный светлый grouped-фон экрана и белая карточка */
     --home-bg:#f2f2f7;
     --fincard-shadow:0 10px 26px rgba(30,41,80,.08);
@@ -206,10 +216,13 @@
     --nav-glint:rgba(255,255,255,.20);
     --nav-pill-edge-light:rgba(255,255,255,.18);
     --nav-pill-edge-dark:rgba(0,0,0,.18);
-    --nav-add-bg:rgba(30,30,36,.55);
-    --nav-add-bg-solid:rgba(36,40,52,.97);
-    --nav-add-border:rgba(255,255,255,.16);
-    --nav-add-shadow:0 6px 18px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.12);
+    /* тёмная тема: то же стекло, светлее и прозрачнее — без «неона» (нет свечения, только тонкий контур) */
+    --list-add-bg:rgba(110,160,255,.28);
+    --list-add-bg-hover:rgba(110,160,255,.36);
+    --list-add-bg-solid:rgba(58,84,150,.96);
+    --list-add-border:rgba(170,200,255,.32);
+    --list-add-shadow:0 2px 10px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.16);
+    --list-add-blur:14px;
     /* Главная финансовая карточка (TASK_003) — тёмная тема переиспользует существующий --bg2, не инверсия светлой */
     --home-bg:var(--bg2);
     --fincard-shadow:0 10px 26px rgba(0,0,0,.32);
@@ -578,7 +591,6 @@
   /* без backdrop-filter стекло не работает — плотная лёгкая капсула с достаточным контрастом */
   @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
     .nav{background:var(--nav-bg-solid)}
-    .nav-add{background:var(--nav-add-bg-solid)}
   }
   /* TASK_057: вкладки по LexCar b2e5423/e387441 — подпись 11px/600 (активная 700), иконка 22px
      (активная — штрих 2.4), gap 3px, неактивный --nav-muted, активный --nav-active */
@@ -635,21 +647,6 @@
     .nav-indicator::before,.nav-indicator::after{display:none}
     .nav-indicator.live{filter:none}
   }
-  /* ===== Отдельная floating glass-кнопка «＋ Добавить» (вне капсулы, справа над ней) =====
-     Нейтральное полупрозрачное стекло (не синяя primary), тот же blur, что капсула; выше капсулы по
-     z-index, правый край совпадает с краем капсулы (16px / safe-area / центрирование при max-width). */
-  .nav-add{position:fixed;z-index:31;
-    right:max(16px,env(safe-area-inset-right),calc((100% - 500px) / 2));
-    bottom:calc(var(--nav-bottom) + var(--navh) + 12px);
-    width:48px;height:48px;border-radius:50%;padding:0;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;color:var(--text);
-    background:var(--nav-add-bg);border:1px solid var(--nav-add-border);box-shadow:var(--nav-add-shadow);
-    -webkit-backdrop-filter:blur(var(--nav-blur)) saturate(var(--nav-saturate));
-    backdrop-filter:blur(var(--nav-blur)) saturate(var(--nav-saturate));
-    touch-action:manipulation}
-  .nav-add svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
-  .nav-add:active{transform:scale(.92)}
-  .nav-add:focus-visible{outline:2px solid var(--nav-active);outline-offset:3px}
 
   /* ===== Add sheet ===== */
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);display:none;
@@ -665,9 +662,31 @@
   /* Главный экран позади drawer — лёгкое затемнение/blur/уменьшение масштаба, включается через body.drawer-open (см. openDrawer/closeDrawer) */
   .app,.nav{transition:filter .28s cubic-bezier(.22,.61,.36,1),transform .28s cubic-bezier(.22,.61,.36,1)}
   body.drawer-open .app,body.drawer-open .nav{filter:blur(6px) brightness(.92);transform:scale(.98)}
-  /* TASK_056: отдельная кнопка «＋» вне капсулы — тот же blur/scale при открытой шторке */
-  .nav-add{transition:filter .28s cubic-bezier(.22,.61,.36,1),transform .28s cubic-bezier(.22,.61,.36,1),background .15s}
-  body.drawer-open .nav-add{filter:blur(6px) brightness(.92);transform:scale(.98)}
+  /* ===== TASK_063: компактная навигация при прокрутке вниз (класс .compact ставит navCompact) =====
+     Капсула уже (--nav-compact-w) и ниже (--navh → --navh-compact), вертикальный padding 7 → 4px (вкладка 44px; горизонтальный 7px —
+     геометрия navDrag не меняется), подписи плавно уходят (opacity + max-height), иконка чуть
+     меньше (transform). Pill (top/bottom) следует за высотой. Стекло, контур, тень, радиус — те же.
+     «＋» в анимации не участвует — она у заголовка «Записи» (.list-add). Резерв .scroll-area
+     рассчитан на полную высоту — контент не перекрывается. */
+  .nav{transition:filter .28s cubic-bezier(.22,.61,.36,1),transform .28s cubic-bezier(.22,.61,.36,1),
+    height .24s cubic-bezier(.32,.72,0,1),padding .24s cubic-bezier(.32,.72,0,1),
+    left .24s cubic-bezier(.32,.72,0,1),right .24s cubic-bezier(.32,.72,0,1)}
+  /* сужение: боковые отступы симметрично уходят к центру (--nav-compact-inset) — внешняя граница
+     капсулы движется внутрь с обеих сторон; колонки grid и ширина pill — в % от капсулы, поэтому
+     пересчитываются сами, navDrag читает геометрию на каждом pointerdown */
+  .nav.compact{height:var(--navh-compact);padding-top:4px;padding-bottom:4px;
+    left:var(--nav-compact-inset);right:var(--nav-compact-inset)}
+  .nav button .lb{max-height:16px;transition:opacity .16s ease,max-height .22s cubic-bezier(.32,.72,0,1)}
+  .nav.compact button{gap:0}
+  .nav.compact button .lb{opacity:0;max-height:0}
+  .nav button .ic svg{transition:transform .22s cubic-bezier(.32,.72,0,1)}
+  .nav.compact button .ic svg{transform:scale(.92)}
+  .nav-indicator{transition:opacity .18s ease,transform .24s cubic-bezier(.32,.72,0,1),top .22s cubic-bezier(.32,.72,0,1),bottom .22s cubic-bezier(.32,.72,0,1)}
+  .nav.compact .nav-indicator{top:4px;bottom:4px}
+  @media (prefers-reduced-motion: reduce){
+    .nav,.nav button .lb,.nav button .ic svg{transition:none}
+    .nav-indicator{transition:opacity .18s ease,transform .01s}
+  }
   .drawer{position:relative;width:86%;max-width:360px;height:100%;display:flex;flex-direction:column;
     border-radius:0 28px 28px 0;overflow:hidden;box-shadow:var(--nav-shadow);
     animation:drawerSlide .3s cubic-bezier(.22,.61,.36,1);
@@ -2199,6 +2218,26 @@
   .drawer-balance .fc-chg{font-size:12.5px;font-weight:500;margin-top:3px;min-height:auto}
   /* Заголовок секции списка */
   .home-list-head{font-size:17px;font-weight:800;letter-spacing:-.2px;color:var(--text);margin:26px 2px 8px}
+  /* TASK_063: «Записи» + кнопка «＋» справа на одной линии (по центру). Строка выше на высоту кнопки —
+     вертикальные отступы уменьшены так, что центр текста остаётся на прежнем месте (26 + 22/2 = 15 + 44/2);
+     заголовок сжимается многоточием, кнопка — никогда (flex:none), переполнения нет даже на 320px. */
+  .home-list-head.list-head-add{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:15px 2px 4px}
+  .list-head-add>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .list-add{flex:none;width:44px;height:44px;border-radius:50%;padding:0;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    background:var(--list-add-bg);border:1px solid var(--list-add-border);box-shadow:var(--list-add-shadow);
+    -webkit-backdrop-filter:blur(var(--list-add-blur)) saturate(160%);
+    backdrop-filter:blur(var(--list-add-blur)) saturate(160%);
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+    transition:transform .18s cubic-bezier(.22,.61,.36,1),background-color .18s}
+  .list-add svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round}
+  .list-add:active{transform:scale(.96)}
+  @media (hover:hover) and (pointer:fine){.list-add:hover{background:var(--list-add-bg-hover)}}
+  .list-add:focus-visible{outline:2px solid var(--nav-active);outline-offset:3px}
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .list-add{background:var(--list-add-bg-solid)}
+  }
+  @media (prefers-reduced-motion: reduce){.list-add{transition:none}.list-add:active{transform:none}}
   #scrRecords .daygroup:first-child .dayhead{padding-top:6px}
 
   .ranges{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap}
@@ -2398,7 +2437,7 @@
       </div>
     </div>
 
-    <div class="home-list-head">Записи</div>
+    <div class="home-list-head list-head-add"><span>Записи</span><button class="list-add" id="addBtn" type="button" aria-label="Добавить операцию"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
     <div id="recentList"></div>
   </div>
 
@@ -2517,8 +2556,8 @@
 </div>
 
 <!-- Bottom nav — TASK_056: floating glass capsule, пять вкладок (Записи — по центру), одна glass pill
-     (#navIndicator) переезжает между колонками; drag-жест — navDrag. Кнопка «＋» вынесена из капсулы
-     (отдельная floating glass-кнопка ниже), действие то же — openSheet(null). -->
+     (#navIndicator) переезжает между колонками; drag-жест — navDrag. Кнопки «＋» у капсулы нет —
+     TASK_063: она у заголовка «Записи» на Главной (#addBtn), действие то же — openSheet(null). -->
 <div class="nav" role="navigation" aria-label="Разделы" style="--nav-count:5">
   <div class="nav-indicator" id="navIndicator" aria-hidden="true"></div>
   <button class="on" data-s="scrRecords" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 10v9h12v-9"/></svg></span><span class="lb">Главная</span></button>
@@ -2527,7 +2566,6 @@
   <button data-s="scrAccounts"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10.5h18"/></svg></span><span class="lb">Счета</span></button>
   <button data-s="scrBudgets"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/></svg></span><span class="lb">Бюджеты</span></button>
 </div>
-<button class="nav-add" id="addBtn" type="button" aria-label="Добавить операцию"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
 
 <!-- Add / edit page (fullscreen, TASK_013) -->
 <div class="overlay" id="overlay" style="z-index:90;align-items:flex-start">
@@ -6158,10 +6196,9 @@ function moveNavIndicator(instant){
    ближайшая вкладка получает .preview, на отпускании pill пружиной прилипает к
    ближайшей вкладке и только тогда вызывается существующий showScreen(). Геометрия
    читается один раз на pointerdown (не на каждом pointermove). Вертикальное движение —
-   не drag (touch-action:pan-y, |dy|>|dx| до порога игнорируется). Отдельная кнопка
-   «＋» (#addBtn) — вне .nav, поэтому в жесте не участвует: drag, начатый на ней,
-   не доходит до обработчиков капсулы, а pointer capture на .nav во время drag не
-   даёт ей получить click. Обычный tap (без порога) идёт по прежним onclick кнопок. */
+   не drag (touch-action:pan-y, |dy|>|dx| до порога игнорируется). Кнопка «＋»
+   (#addBtn) — вне .nav (TASK_063: у заголовка «Записи»), в жесте не участвует.
+   Обычный tap (без порога) идёт по прежним onclick кнопок. */
 const NAV_PAD=7;             // внутренний отступ капсулы (см. .nav padding / .nav-indicator top/left)
 const NAV_DRAG_THRESHOLD=8;  // px по X, после которых жест — drag, а не tap
 const NAV_SNAP_MS=380;       // = .nav-indicator.snap transition
@@ -6311,6 +6348,61 @@ const navDrag=(()=>{
   }
   return {init,active:()=>s.dragging||s.snapping,_state:s};
 })();
+/* ============ Компактная навигация при прокрутке (TASK_063; Instagram / Revolut) ============
+   Вниз — .nav.compact (ниже капсула, без подписей), вверх — снова полная. Решение принимает
+   чистая step(): позиция зажата в [0,max] (rubber-band iOS у краёв не переключает), dy
+   копится в одну сторону, смена направления сбрасывает накопление (гистерезис), переключение —
+   только после NAV_COMPACT_DELTA px устойчивого движения; у верхней границы и когда прокручивать
+   нечего — всегда Expanded; dy=0 — без изменений; если изменилась прокручиваемая высота (перерисовка
+   экрана, scroll anchoring, зажим) — сдвиг не считается жестом, только новая точка отсчёта; та же точка
+   переустанавливается ResizeObserver'ом (resync) при смене высоты без scroll-события. onScroll() вызывается из единственного
+   scroll-обработчика #scrollArea (см. «Collapsing sticky header») — свой слушатель не вешаем.
+   Класс трогаем только при смене состояния; во время drag pill состояние не меняется. */
+const NAV_COMPACT_TOP=24;    // px от верха — всегда Expanded
+const NAV_COMPACT_MIN=56;    // Compact не раньше, чем контент ушёл под шапку
+const NAV_COMPACT_DELTA=12;  // px устойчивого движения в одну сторону до переключения
+const navCompact=(()=>{
+  const s={compact:false,lastY:0,acc:0,lastMax:null};
+  function step(st,y,max){
+    y=Math.min(Math.max(0,y),Math.max(0,max));
+    const dy=y-st.lastY;st.lastY=y;
+    // изменилась прокручиваемая высота — сдвиг scrollTop сделал браузер (scroll anchoring при
+    // перерисовке экрана, зажим при укорочении контента, смена высоты viewport), а не пользователь:
+    // только новая точка отсчёта, без смены состояния
+    const relayout=st.lastMax!==null&&max!==st.lastMax;st.lastMax=max;
+    if(max<=0||y<=NAV_COMPACT_TOP){st.acc=0;st.compact=false;return st.compact;}
+    if(relayout){st.acc=0;return st.compact;}
+    if(dy===0)return st.compact;
+    if((dy>0)!==(st.acc>0))st.acc=0;
+    st.acc+=dy;
+    if(!st.compact&&st.acc>=NAV_COMPACT_DELTA&&y>NAV_COMPACT_MIN){st.compact=true;st.acc=0;}
+    else if(st.compact&&st.acc<=-NAV_COMPACT_DELTA){st.compact=false;st.acc=0;}
+    return st.compact;
+  }
+  function apply(){const nav=$('.nav');if(nav&&nav.classList.contains('compact')!==s.compact)nav.classList.toggle('compact',s.compact);}
+  function onScroll(sa){
+    if(navDrag.active())return;
+    const was=s.compact;
+    step(s,sa.scrollTop||0,sa.scrollHeight-sa.clientHeight);
+    if(s.compact!==was)apply();
+  }
+  // смена вкладки/фокус: накопление сбрасывается, точка отсчёта — текущая позиция (#scrollArea общий
+  // для всех экранов, поэтому состояние прошлой вкладки не переносится)
+  function expand(){s.acc=0;const sa=$('#scrollArea');if(sa)s.lastY=sa.scrollTop||0;if(!s.compact)return;s.compact=false;apply();}
+  // точка отсчёта (lastY/lastMax) — по текущему layout. Прокручиваемая высота меняется и без scroll-события
+  // (смена экрана при той же позиции, рендер, шрифты, высота viewport): иначе первое реальное движение на
+  // новой высоте step() приняла бы за relayout и потеряла. Вызывается ResizeObserver'ом сразу после layout —
+  // раньше scroll-события от scroll anchoring, поэтому то приходит с dy = 0. Накопление жеста не сбрасывается.
+  function resync(){const sa=$('#scrollArea');if(!sa)return;const max=sa.scrollHeight-sa.clientHeight;
+    s.lastY=Math.min(Math.max(0,sa.scrollTop||0),Math.max(0,max));s.lastMax=max;}
+  function init(){
+    const nav=$('.nav');if(nav)nav.addEventListener('focusin',expand); // клавиатура — подписи видны
+    // размеры области прокрутки и её блоков (.subhead, экраны) — не scroll-слушатель
+    const sa=$('#scrollArea');
+    if(sa&&typeof ResizeObserver==='function'){const ro=new ResizeObserver(resync);ro.observe(sa);Array.from(sa.children).forEach(c=>ro.observe(c));}
+  }
+  return {init,onScroll,expand,step,resync,_state:s};
+})();
 let navIndicatorResizeTimer=null;
 window.addEventListener('resize',()=>{
   clearTimeout(navIndicatorResizeTimer);
@@ -6364,6 +6456,7 @@ function showScreen(id){
   $$('.screen').forEach(s=>s.classList.toggle('active',s.id===id));
   $$('.nav button[data-s]').forEach(b=>{const on=b.dataset.s===id;b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   moveNavIndicator();
+  navCompact.expand(); // TASK_063: новый раздел — панель снова полная
   // глобальный период не нужен на «Счета»/«Настройки»; на «Бюджетах» — только навигация по месяцам
   const noPeriod=(id==='scrMore'||id==='scrAccounts'||id==='scrJournal'); // TASK_056: «Записи» — журнал целиком, без периода
   if(id==='scrBudgets')period='month'; // бюджеты всегда месячные → навигация по месяцам
@@ -7432,6 +7525,7 @@ function dstr(b,d){return new Date(b.getFullYear(),b.getMonth(),d).toISOString()
 /* ============ События ============ */
 $$('.nav button[data-s]').forEach(b=>b.onclick=()=>showScreen(b.dataset.s));
 navDrag.init(); // TASK_056: drag-жест pill по капсуле (tap по кнопкам — прежние onclick выше)
+navCompact.init(); // TASK_063: фокус клавиатуры в капсуле — Expanded
 // Аналитика: селектор периода
 // Вкладки Расходы/Доходы в блоке «Категории» — перерисовывают только кольцо+список
 $$('#anaCatSeg button').forEach(b=>b.onclick=()=>{anaCatType=b.dataset.t;
@@ -7466,7 +7560,9 @@ $('#catTxFrom').onchange=()=>{if($('#catTxFrom').value){catTxFrom=new Date($('#c
 $('#catTxTo').onchange=()=>{if($('#catTxTo').value){catTxTo=new Date($('#catTxTo').value);renderCatTx();}};
 // Кнопка + открывает полноэкранную страницу добавления сразу с типом «Расход» (TASK_013,
 // промежуточная шторка выбора типа убрана — переключение типа теперь происходит внутри страницы)
-$('#addBtn').onclick=()=>openSheet(null);
+// TASK_063: повторное нажатие при уже открытой форме (автоповтор Enter/Space, двойной click) — no-op:
+// иначе openSheet() второй раз сбросит ввод и добавит лишнюю запись history.pushState
+$('#addBtn').onclick=()=>{if(!$('#overlay').classList.contains('show'))openSheet(null);};
 // Фото чека: камера/галерея + сжатие (хранение локально, dataURL)
 $('#receiptInput').onchange=e=>{const f=e.target.files[0];if(!f){return;}
   const r=new FileReader();
@@ -7921,10 +8017,11 @@ $('#budDelete').onclick=deleteBudget;
 $('#budLimit').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();});
 /* Collapsing sticky header: тонкий разделитель + material-фон появляются после начала прокрутки.
    Сама «сворачиваемость» — чисто CSS (subhead в потоке уходит под закреплённый topbar).
-   TASK_006: прокручивается #scrollArea (не document/window), поэтому слушаем её scrollTop. */
+   TASK_006: прокручивается #scrollArea (не document/window), поэтому слушаем её scrollTop.
+   TASK_063: тот же единственный обработчик ведёт и компактную навигацию (navCompact). */
 (function(){
   const tb=$('#topbar'),sa=$('#scrollArea');if(!tb||!sa)return;
-  const sync=()=>tb.classList.toggle('scrolled',(sa.scrollTop||0)>4); // idempotent, без layout-запросов
+  const sync=()=>{tb.classList.toggle('scrolled',(sa.scrollTop||0)>4);navCompact.onScroll(sa);}
   sa.addEventListener('scroll',sync,{passive:true});
   sync();
 })();

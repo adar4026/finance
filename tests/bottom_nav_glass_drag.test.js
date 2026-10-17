@@ -42,7 +42,7 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
 
 // ---------- §1. Разметка: пять вкладок в капсуле, «Записи» по центру, «＋» вне капсулы ----------
 {
-  const nav = block(/<div class="nav" role="navigation"/, '</div>\n<button class="nav-add"', 'разметка .nav');
+  const nav = block(/<div class="nav" role="navigation"/, '</div>\n\n<!-- Add / edit page', 'разметка .nav');
   const tabs = [...nav.matchAll(/data-s="(scr\w+)"/g)].map(m => m[1]);
   assertEqual(tabs, ['scrRecords', 'scrCharts', 'scrJournal', 'scrAccounts', 'scrBudgets'],
     'пять вкладок в порядке Главная · Аналитика · Записи · Счета · Бюджеты');
@@ -55,18 +55,21 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
   assertTrue(/<button class="on" data-s="scrRecords" aria-current="page">/.test(nav), 'стартовая вкладка — Главная с aria-current');
   assertTrue(/data-s="scrJournal"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3\.5" width="14" height="17" rx="2\.5"\/><path d="M8\.5 8\.5h7M8\.5 12h7M8\.5 15\.5h4\.5"\/><\/svg>/.test(nav),
     'иконка «Записи» — line-icon журнала/списка в стиле остальных (24-viewBox, stroke)');
-  assertTrue(/<\/div>\n<button class="nav-add" id="addBtn" type="button" aria-label="Добавить операцию"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"\/><\/svg><\/button>/.test(html),
-    '«＋» — отдельная кнопка .nav-add#addBtn сразу ПОСЛЕ закрытия .nav (не внутри капсулы), тот же id и aria-label');
+  // TASK_063: «＋» больше не floating-кнопка у капсулы — она у заголовка «Записи» на Главной
+  // (подробные проверки — tests/bottom_nav_compact.test.js §4)
+  assertTrue(!/nav-add/.test(html), 'TASK_063: floating-кнопки .nav-add у капсулы больше нет');
+  assertTrue(/<button class="list-add" id="addBtn" type="button" aria-label="Добавить операцию"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"\/><\/svg><\/button>/.test(html),
+    '«＋» — тот же #addBtn, aria-label и иконка (TASK_063: .list-add у заголовка «Записи»)');
   assertEqual((html.match(/id="addBtn"/g) || []).length, 1, 'id="addBtn" один');
-  assertTrue(/\$\('#addBtn'\)\.onclick=\(\)=>openSheet\(null\);/.test(html), 'действие «＋» не изменилось: openSheet(null)');
+  assertTrue(/\$\('#addBtn'\)\.onclick=\(\)=>\{if\(!\$\('#overlay'\)\.classList\.contains\('show'\)\)openSheet\(null\);\};/.test(html),
+    'действие «＋» — прежнее openSheet(null) (TASK_063: без повторного вызова при открытой форме)');
 }
 
 // ---------- §2. Токены: отдельные light/dark значения стекла, палитра Finance ----------
 {
   const need = ['--nav-bg', '--nav-bg-solid', '--nav-border', '--nav-highlight', '--nav-blur', '--nav-saturate',
     '--nav-muted', '--nav-active', '--nav-pill-bg', '--nav-pill-border', '--nav-pill-shadow',
-    '--nav-glint', '--nav-pill-edge-light', '--nav-pill-edge-dark',
-    '--nav-add-bg', '--nav-add-bg-solid', '--nav-add-border', '--nav-add-shadow'];
+    '--nav-glint', '--nav-pill-edge-light', '--nav-pill-edge-dark'];
   need.forEach(t => {
     assertTrue(new RegExp(`(^|[\\s;])${t}:`, 'm').test(light), `light: токен ${t}`);
     assertTrue(new RegExp(`(^|[\\s;])${t}:`, 'm').test(dark), `dark: токен ${t}`);
@@ -106,8 +109,8 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
   assertTrue(!/(^|;)opacity:/.test(nav), 'без opacity на всей панели (иконки/текст непрозрачны)');
   assertTrue(/touch-action:pan-y/.test(nav), 'touch-action:pan-y — вертикальный pan остаётся браузеру');
   assertTrue(/overflow:hidden/.test(nav), 'pill не выходит за скругление капсулы');
-  assertTrue(/@supports not \(\(backdrop-filter:blur\(1px\)\) or \(-webkit-backdrop-filter:blur\(1px\)\)\)\{\s*\.nav\{background:var\(--nav-bg-solid\)\}\s*\.nav-add\{background:var\(--nav-add-bg-solid\)\}/.test(css),
-    '@supports fallback без backdrop-filter — плотные --nav-bg-solid / --nav-add-bg-solid');
+  assertTrue(/@supports not \(\(backdrop-filter:blur\(1px\)\) or \(-webkit-backdrop-filter:blur\(1px\)\)\)\{\s*\.nav\{background:var\(--nav-bg-solid\)\}\s*\}/.test(css),
+    '@supports fallback без backdrop-filter — плотный --nav-bg-solid');
   assertTrue(/\.nav button\.on,\.nav button\.preview\{color:var\(--nav-active\)\}/.test(css), 'активная и preview-вкладка — синий акцент --nav-active');
   assertTrue(/\.nav button:focus-visible\{outline:2px solid var\(--nav-active\)/.test(css), 'focus state для keyboard-навигации');
   // TASK_057: компактная капсула и вкладки по LexCar b2e5423/e387441
@@ -147,18 +150,10 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
   const rm = css.match(/@media \(prefers-reduced-motion: reduce\)\{\s*\.nav-indicator\{transition:opacity \.18s ease,transform \.01s\}\s*\.nav-indicator\.snap\{transition:opacity \.18s ease,transform \.2s ease\}\s*\.nav-indicator::before,\.nav-indicator::after\{display:none\}\s*\.nav-indicator\.live\{filter:none\}\s*\}/);
   assertTrue(!!rm, 'reduced motion: без пружины/блика/фильтра, tap-переходы остаются');
   // не Canvas/WebGL/SVG-фильтры
-  assertTrue(!/<div class="nav"[^>]*>[\s\S]*?<canvas/.test(html.slice(html.indexOf('<div class="nav" role'), html.indexOf('<button class="nav-add"'))), 'в навигации нет canvas');
+  assertTrue(!/<div class="nav"[^>]*>[\s\S]*?<canvas/.test(html.slice(html.indexOf('<div class="nav" role'), html.indexOf('<!-- Add / edit page'))), 'в навигации нет canvas');
   assertTrue(!/\.nav-indicator[^{]*\{[^}]*filter:url\(/.test(css), 'нет SVG displacement/filter:url() на pill');
-  const add = (css.match(/\.nav-add\{(position:fixed[^}]*)\}/) || [])[1];
-  assertTrue(!!add, '.nav-add (основное правило) найдена');
-  assertTrue(/position:fixed;z-index:31/.test(add), '«＋» выше капсулы по z-index (31 > 30)');
-  assertTrue(/right:max\(16px,env\(safe-area-inset-right\),calc\(\(100% - 500px\) \/ 2\)\)/.test(add), 'правый край «＋» совпадает с краем капсулы, учитывает safe area');
-  assertTrue(/bottom:calc\(var\(--nav-bottom\) \+ var\(--navh\) \+ 12px\)/.test(add), '«＋» немного выше капсулы, safe area снизу');
-  assertTrue(/width:48px;height:48px;border-radius:50%/.test(add), 'небольшая круглая кнопка');
-  assertTrue(/background:var\(--nav-add-bg\);border:1px solid var\(--nav-add-border\);box-shadow:var\(--nav-add-shadow\)/.test(add), 'нейтральное стекло: тонкий контур, блик/тень через токены');
-  assertTrue(/-webkit-backdrop-filter:blur\(var\(--nav-blur\)\)/.test(add) && /[^-]backdrop-filter:blur\(var\(--nav-blur\)\)/.test(add), '«＋»: оба префикса backdrop-filter');
-  assertTrue(!/--nav-blue|--accent[^-]/.test(add) && !/linear-gradient/.test(add), '«＋» не синяя/фиолетовая primary-кнопка');
-  assertTrue(/body\.drawer-open \.nav-add\{filter:blur\(6px\) brightness\(\.92\);transform:scale\(\.98\)\}/.test(css), '«＋» блюрится вместе с интерфейсом при открытой шторке');
+  // TASK_063: «＋» внутри .app (у заголовка «Записи») — размывается при открытой шторке вместе с .app
+  assertTrue(!/body\.drawer-open \.nav-add/.test(css), 'отдельного правила шторки для «＋» больше нет');
   assertTrue(/body\.drawer-open \.app,body\.drawer-open \.nav\{filter:blur\(6px\) brightness\(\.92\);transform:scale\(\.98\)\}/.test(css), 'существующее правило шторки не изменено');
 }
 

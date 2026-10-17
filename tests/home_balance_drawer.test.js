@@ -53,7 +53,7 @@ const drawerBlock = block(/<div class="overlay drawer-ov" id="drawerOverlay">/, 
 {
   const monthIdx = homeBlock.indexOf('id="fcMonthSwitch"');
   const statsIdx = homeBlock.indexOf('class="hb-stats"');
-  const listHeadIdx = homeBlock.indexOf('class="home-list-head"');
+  const listHeadIdx = homeBlock.indexOf('class="home-list-head');
   const recentIdx = homeBlock.indexOf('id="recentList"');
   assertTrue(monthIdx > -1 && statsIdx > monthIdx, '#fcMonthSwitch идёт раньше .hb-stats');
   assertTrue(statsIdx > -1 && listHeadIdx > statsIdx, '.hb-stats идёт раньше .home-list-head («Записи»)');
@@ -62,7 +62,7 @@ const drawerBlock = block(/<div class="overlay drawer-ov" id="drawerOverlay">/, 
   // .hb-ratio, и сразу закрывается — сразу после него «Записи». Без .hb-head/.hb-val/.fc-chg —
   // они остаются перенесёнными в шторку (TASK_049), .hb-ratio не их возврат.
   assertTrue(
-    /<div class="hero-balance" id="finCard">\s*<div class="hb-stats">\s*<div class="hb-stat">.*?<\/div>\s*<div class="hb-stat">.*?<\/div>\s*<div class="hb-stat">.*?<\/div>\s*<\/div>\s*(?:<!--[\s\S]*?-->\s*)?<div class="hb-ratio" id="fcRatio"[\s\S]*?<\/div>\s*<\/div>\s*<div class="home-list-head">Записи<\/div>\s*<div id="recentList"><\/div>/.test(homeBlock),
+    /<div class="hero-balance" id="finCard">\s*<div class="hb-stats">\s*<div class="hb-stat">.*?<\/div>\s*<div class="hb-stat">.*?<\/div>\s*<div class="hb-stat">.*?<\/div>\s*<\/div>\s*(?:<!--[\s\S]*?-->\s*)?<div class="hb-ratio" id="fcRatio"[\s\S]*?<\/div>\s*<\/div>\s*<div class="home-list-head list-head-add"><span>Записи<\/span><button class="list-add" id="addBtn"[^>]*>[\s\S]*?<\/button><\/div>\s*<div id="recentList"><\/div>/.test(homeBlock),
     '.hero-balance#finCard — .hb-stats (ровно 3 показателя, без .hb-head/.hb-val/.fc-chg) + шкала .hb-ratio (TASK_053), сразу за ним «Записи» и #recentList — без прочих промежуточных блоков');
 }
 

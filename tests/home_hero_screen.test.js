@@ -103,7 +103,7 @@ const css = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
   assertTrue(/\.app:has\(\.immersive\.active\) \.periods-indicator\{top:0;height:100%/.test(css), 'активный пункт — capsule на том же #periodsIndicator (логика не дублируется)');
   assertTrue(/\.month-switch \.m-arrow\{width:44px;height:44px/.test(css), 'стрелки периода: touch target 44×44 (TASK_048: базовое правило .month-switch, общее с #navrow)');
   assertTrue(/\.month-switch \.m-arrow svg\{width:30px;height:30px/.test(css), 'шеврон стрелок ~30px');
-  assertTrue(/<div class="home-list-head">Записи<\/div>\s*<div id="recentList"><\/div>/.test(html), 'заголовок «Записи» перед списком, список не изменён');
+  assertTrue(/<div class="home-list-head list-head-add"><span>Записи<\/span><button class="list-add" id="addBtn"[^>]*>[\s\S]*?<\/button><\/div>\s*<div id="recentList"><\/div>/.test(html), 'заголовок «Записи» (TASK_063: с кнопкой «＋» справа) перед списком, список не изменён');
   // .periods вне Главной (Аналитика) — базовое правило не тронуто
   assertTrue(/^\s*\.periods\{position:relative;display:flex;background:var\(--card\);border:1px solid var\(--line\);border-radius:12px;padding:3px;gap:2px\}/m.test(css),
     'базовое правило .periods (Аналитика) не изменено');

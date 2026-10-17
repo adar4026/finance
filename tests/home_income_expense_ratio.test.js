@@ -41,7 +41,7 @@ const homeBlock = block(/<div class="screen immersive active" id="scrRecords">/,
 // ============ §1 — разметка: место, состав, без дублирования ============
 {
   // ровно между .hb-stats и «Записи», внутри #finCard (не отдельным блоком экрана)
-  const finCardM = homeBlock.match(/<div class="hero-balance" id="finCard">([\s\S]*?)<\/div>\s*<div class="home-list-head">Записи<\/div>/);
+  const finCardM = homeBlock.match(/<div class="hero-balance" id="finCard">([\s\S]*?)<\/div>\s*<div class="home-list-head list-head-add"><span>Записи<\/span><button class="list-add" id="addBtn"[^>]*>[\s\S]*?<\/button><\/div>/);
   assertTrue(!!finCardM, '#finCard содержит .hb-stats + шкалу и сразу за ним «Записи» (без промежуточных блоков)');
   const finCardInner = finCardM ? finCardM[1] : '';
   const statsIdx = finCardInner.indexOf('class="hb-stats"');
