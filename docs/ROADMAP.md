@@ -928,7 +928,8 @@
     Тесты: **3584 passed, 0 failed** (41 файл; +290
     `tests/recurring_service.test.js`, +89 `tests/recurring_screen.test.js`,
     +117 `tests/pwa_cache.test.js`). Preview 320/375/390/430/768 px,
-    light/dark — пройдены.
+    light/dark — пройдены. Опубликовано коммитами `8a38742` + `c23e183`;
+    production отдаёт `finance-v193`.
     См. [`docs/tasks/TASK_061_RECURRING_PAYMENTS_REDESIGN.md`](tasks/TASK_061_RECURRING_PAYMENTS_REDESIGN.md).
 
 ## Пояснения
