@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.3.1] — 2026-10-17
+
+### Fixed
+
+- **Bottom navigation sits lower** (`TASK_062A`). The floating capsule and
+  the `+` button now dip into the iPhone safe area like the iOS 26 tab bar:
+  20px from the bottom edge instead of 34px (6px on devices without a safe
+  area).
+
 ## [2.3.0] — 2026-10-17
 
 ### Changed
