@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.5.1] — 2026-10-17
+
+### Fixed
+
+- **White strip above the home screen header** (`TASK_065`). The strip was never part of
+  the page — the home background already covers the whole viewport. It is the iOS system
+  status bar area, whose colour comes from the `theme-color` meta tag, and that tag was
+  near-white (`#f4f6fb`) while the background below it is blue. The app now derives the
+  system-area colour from a new palette token, `--status-bar` (`#9dc1f3` light,
+  `#1e325b` dark), whose values were measured from the actual top row of the hero scene
+  across 40 animation samples. Luminance contrast across the seam drops from 1.71:1 to
+  1.00:1 in light theme and from 1.50:1 to 1.00:1 in dark.
+- The two `theme-color` tags that switched on the **device** colour scheme were replaced by
+  a single tag that `applyTheme()` keeps in sync with the **app's own** theme, so picking a
+  light theme on a dark device no longer leaves a near-black system area. This closes a
+  mismatch recorded in `TASK_011`. `manifest.theme_color` was aligned to the same value.
+
+Viewport geometry, `apple-mobile-web-app-status-bar-style` (`default`), the header, paddings,
+the bottom navigation and the dark-theme scene are unchanged; `black-translucent` was not
+reintroduced. _The actual status bar rendering in an installed iOS PWA is not confirmed —
+there is no device or Simulator available; verified programmatically and in Dev Preview only._
+
 ## [2.5.0] — 2026-10-17
 
 ### Changed
