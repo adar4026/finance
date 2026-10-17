@@ -94,7 +94,8 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
   const nav = ruleBody('.nav', css);
   assertTrue(!!nav, '.nav правило найдено');
   assertTrue(/position:fixed/.test(nav) && /z-index:30/.test(nav), '.nav — fixed, z-index:30 (над шапкой, под overlay)');
-  assertTrue(/bottom:max\(6px,env\(safe-area-inset-bottom\)\)/.test(nav), 'safe area снизу сохранена');
+  assertTrue(/bottom:var\(--nav-bottom\)/.test(nav), 'капсула стоит на --nav-bottom');
+  assertTrue(/--nav-bottom:max\(6px,calc\(env\(safe-area-inset-bottom\) - 14px\)\)/.test(light), 'TASK_062A: капсула заходит в safe area на 14px, минимум 6px');
   assertTrue(/left:16px;right:16px;margin:0 auto/.test(nav) && !/translateX\(-50%\)/.test(nav), 'центрирование left/right+margin (без дробного translateX под backdrop-filter)');
   assertTrue(/display:grid;grid-template-columns:repeat\(var\(--nav-count,5\),minmax\(0,1fr\)\)/.test(nav), 'пять равных колонок (grid)');
   assertTrue(/background:var\(--nav-bg\)/.test(nav), 'фон капсулы — прозрачный токен --nav-bg');
@@ -152,7 +153,7 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
   assertTrue(!!add, '.nav-add (основное правило) найдена');
   assertTrue(/position:fixed;z-index:31/.test(add), '«＋» выше капсулы по z-index (31 > 30)');
   assertTrue(/right:max\(16px,env\(safe-area-inset-right\),calc\(\(100% - 500px\) \/ 2\)\)/.test(add), 'правый край «＋» совпадает с краем капсулы, учитывает safe area');
-  assertTrue(/bottom:calc\(max\(6px,env\(safe-area-inset-bottom\)\) \+ var\(--navh\) \+ 12px\)/.test(add), '«＋» немного выше капсулы, safe area снизу');
+  assertTrue(/bottom:calc\(var\(--nav-bottom\) \+ var\(--navh\) \+ 12px\)/.test(add), '«＋» немного выше капсулы, safe area снизу');
   assertTrue(/width:48px;height:48px;border-radius:50%/.test(add), 'небольшая круглая кнопка');
   assertTrue(/background:var\(--nav-add-bg\);border:1px solid var\(--nav-add-border\);box-shadow:var\(--nav-add-shadow\)/.test(add), 'нейтральное стекло: тонкий контур, блик/тень через токены');
   assertTrue(/-webkit-backdrop-filter:blur\(var\(--nav-blur\)\)/.test(add) && /[^-]backdrop-filter:blur\(var\(--nav-blur\)\)/.test(add), '«＋»: оба префикса backdrop-filter');

@@ -22,48 +22,48 @@
 <!-- TASK_061: ?v= у локальных скриптов = номер кэша в sw.js (finance-vNNN). HTML всегда
      получает «свой» JS: HTTP-кэш GitHub Pages (max-age=600) не смешает новый HTML со старым JS.
      Поднимается вместе с cache version при каждом релизе (tests/pwa_cache.test.js). -->
-<script src="js/core/result.js?v=194"></script>
-<script src="js/core/ids.js?v=194"></script>
-<script src="js/core/app_info.js?v=194"></script>
+<script src="js/core/result.js?v=195"></script>
+<script src="js/core/ids.js?v=195"></script>
+<script src="js/core/app_info.js?v=195"></script>
 <!-- TASK_015: подключается ДО store.js — migrate() при первом load() должен
      видеть сервис. Если файл почему-то не приехал (CDN-рассинхронизация),
      приложение стартует без нормализации метаданных, но не падает. -->
-<script src="js/services/tx_meta_service.js?v=194"></script>
+<script src="js/services/tx_meta_service.js?v=195"></script>
 <!-- TASK_023: тоже ДО store.js — migrate() нормализует settings.security при
      первом load(). Если файл не приехал, приложение стартует с прежним
      поведением блокировки (код на входе) и не падает. -->
-<script src="js/services/security_service.js?v=194"></script>
+<script src="js/services/security_service.js?v=195"></script>
 <!-- TASK_044: тоже ДО store.js — migrate() нормализует time операций при
      первом load(); тот же сервис задаёт порядок операций внутри дня. -->
-<script src="js/services/tx_time_service.js?v=194"></script>
-<script src="js/database/store.js?v=194"></script>
-<script src="js/services/currency_service.js?v=194"></script>
-<script src="js/services/account_service.js?v=194"></script>
-<script src="js/services/tx_form_service.js?v=194"></script>
-<script src="js/services/period_service.js?v=194"></script>
-<script src="js/services/place_breakdown_service.js?v=194"></script>
-<script src="js/services/finance_card_service.js?v=194"></script>
-<script src="js/services/analytics_service.js?v=194"></script>
-<script src="js/services/budget_service.js?v=194"></script>
-<script src="js/services/goal_service.js?v=194"></script>
-<script src="js/services/forecast_service.js?v=194"></script>
+<script src="js/services/tx_time_service.js?v=195"></script>
+<script src="js/database/store.js?v=195"></script>
+<script src="js/services/currency_service.js?v=195"></script>
+<script src="js/services/account_service.js?v=195"></script>
+<script src="js/services/tx_form_service.js?v=195"></script>
+<script src="js/services/period_service.js?v=195"></script>
+<script src="js/services/place_breakdown_service.js?v=195"></script>
+<script src="js/services/finance_card_service.js?v=195"></script>
+<script src="js/services/analytics_service.js?v=195"></script>
+<script src="js/services/budget_service.js?v=195"></script>
+<script src="js/services/goal_service.js?v=195"></script>
+<script src="js/services/forecast_service.js?v=195"></script>
 <!-- TASK_061: регулярные платежи — после forecast_service (использует его даты) -->
-<script src="js/services/recurring_service.js?v=194"></script>
-<script src="js/services/health_score_service.js?v=194"></script>
-<script src="js/services/xlsx_writer_service.js?v=194"></script>
-<script src="js/services/export_service.js?v=194"></script>
-<script src="js/services/backup_service.js?v=194"></script>
-<script src="js/services/csv_parser_service.js?v=194"></script>
-<script src="js/services/import_source_service.js?v=194"></script>
-<script src="js/services/import_mapping_service.js?v=194"></script>
-<script src="js/services/import_service.js?v=194"></script>
+<script src="js/services/recurring_service.js?v=195"></script>
+<script src="js/services/health_score_service.js?v=195"></script>
+<script src="js/services/xlsx_writer_service.js?v=195"></script>
+<script src="js/services/export_service.js?v=195"></script>
+<script src="js/services/backup_service.js?v=195"></script>
+<script src="js/services/csv_parser_service.js?v=195"></script>
+<script src="js/services/import_source_service.js?v=195"></script>
+<script src="js/services/import_mapping_service.js?v=195"></script>
+<script src="js/services/import_service.js?v=195"></script>
 <!-- TASK_016 -->
-<script src="js/services/category_taxonomy_service.js?v=194"></script>
-<script src="js/services/demo_data_service.js?v=194"></script>
-<script src="js/services/search_service.js?v=194"></script>
-<script src="js/services/haptics_service.js?v=194"></script>
-<script src="js/services/amount_input_service.js?v=194"></script>
-<script src="js/ui/hero_canvas.js?v=194"></script>
+<script src="js/services/category_taxonomy_service.js?v=195"></script>
+<script src="js/services/demo_data_service.js?v=195"></script>
+<script src="js/services/search_service.js?v=195"></script>
+<script src="js/services/haptics_service.js?v=195"></script>
+<script src="js/services/amount_input_service.js?v=195"></script>
+<script src="js/ui/hero_canvas.js?v=195"></script>
 <style>
   /* Alex Finance Design Tokens (Product Book Part 2/4) */
   :root, [data-theme="light"]{
@@ -77,6 +77,8 @@
     --info:#4dabf7; --info-soft:#4dabf71f;
     --shadow:0 8px 30px rgba(40,50,120,.08);
     --radius:20px; --navh:64px; /* TASK_057: компактная капсула (LexCar b2e5423) */
+    /* TASK_062A: капсула заходит в safe area (как tab bar iOS 26): 34pt → 20px от края, без safe area — 6px */
+    --nav-bottom:max(6px,calc(env(safe-area-inset-bottom) - 14px));
     /* полупрозрачный фон закреплённой шапки (material-эффект при прокрутке) */
     --bg-blur:rgba(255,255,255,.82);
     --nav-shadow:0 10px 30px rgba(40,50,120,.10);
@@ -562,7 +564,7 @@
   .nav{position:fixed;left:16px;right:16px;margin:0 auto;
     /* на iPhone с home-indicator (safe-area ~34pt) капсула садится вплотную к safe area, без «двойного» отступа;
        на устройствах без safe-area — минимум 6px от края, чтобы не липнуть к самому краю экрана */
-    bottom:max(6px,env(safe-area-inset-bottom));z-index:30;
+    bottom:var(--nav-bottom);z-index:30;
     max-width:500px;height:var(--navh);
     display:grid;grid-template-columns:repeat(var(--nav-count,5),minmax(0,1fr));padding:7px;
     /* TASK_057: 64px + radius 32px — полностью скруглённые торцы капсулы (LexCar) */
@@ -638,7 +640,7 @@
      z-index, правый край совпадает с краем капсулы (16px / safe-area / центрирование при max-width). */
   .nav-add{position:fixed;z-index:31;
     right:max(16px,env(safe-area-inset-right),calc((100% - 500px) / 2));
-    bottom:calc(max(6px,env(safe-area-inset-bottom)) + var(--navh) + 12px);
+    bottom:calc(var(--nav-bottom) + var(--navh) + 12px);
     width:48px;height:48px;border-radius:50%;padding:0;cursor:pointer;
     display:flex;align-items:center;justify-content:center;color:var(--text);
     background:var(--nav-add-bg);border:1px solid var(--nav-add-border);box-shadow:var(--nav-add-shadow);
