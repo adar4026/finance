@@ -9,21 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.5.0] — 2026-10-17
+
 ### Changed
 
 - **Hero waves reworked into the LexMoney blue palette** (`TASK_064`). The
-  shimmering fabric behind the five immersive screens keeps its geometry and
-  its single WebGL layer, but moves from the inherited violet/lavender gamma
-  to the brand blues — deep saturated blue for the shadowed side of a fold,
-  clean bright blue (`--nav-blue`) for the primary fold, soft light blue for
-  the second and a delicate turquoise for the third, most transparent one.
-  Folds are larger and slower, the band ramps are longer so colour areas no
-  longer read as contours, the specular is wider, weaker and carries a
-  turquoise undertone. Measured over 60 time samples of the hero area: blown
-  highlights 3.16% → 0% of pixels, frame-to-frame luminance step −42%, body
-  text contrast 5.73 → 5.91 (light) and 4.08 → 5.82 (dark). Layout, screens,
-  handlers, lifecycle, reduced-motion fallback and the CSS blob fallback are
-  unchanged. _Not released yet — awaiting acceptance in Dev Preview._
+  shimmering fabric behind the five immersive screens (Главная, Аналитика,
+  Записи, Счета, Бюджеты) keeps its single WebGL layer and its animation
+  mechanics, but the colours move from the inherited violet/lavender to the
+  brand blues: a deep saturated blue for the shadowed side of a fold, a clean
+  bright blue for the primary fold, a soft light blue for the second and a
+  delicate turquoise for the third, most transparent fold. Folds are larger
+  and drift more slowly, the band ramps are longer so colour areas no longer
+  read as outlines, and the specular is wider, weaker and carries a turquoise
+  undertone. On the 375 px hero area, over 60 time samples, blown-out pixels
+  dropped from 3.16 % to 0 % in light theme.
+- **Dark theme** of the same layer uses a deeper, dimmer blue set. The waves
+  are much less visible than in light theme; the palette was accepted as is.
+- Layout, screens, search, period switcher, balance and handlers, light and
+  dark themes, the CSS blob fallback and `prefers-reduced-motion` behaviour
+  are unchanged.
 
 ## [2.4.1] — 2026-10-17
 
