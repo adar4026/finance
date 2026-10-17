@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.3.0] — 2026-10-17
+
+### Changed
+
+- **Bottom navigation — iOS Liquid Glass material** (`TASK_062`). The
+  floating capsule now uses a frosted glass fill with a visible background
+  blur, a thin dark outline and a soft shadow; the active tab sits on a
+  neutral inner capsule (blue accent kept for the icon and label); icons
+  24px, labels 12px (11px on narrow screens). Light and dark themes. Tabs,
+  routes, drag gesture and the `+` button are unchanged.
+
 ## [2.2.0] — 2026-10-17
 
 **LexMoney 2.2.0** (`TASK_061`), published on

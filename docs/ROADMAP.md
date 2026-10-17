@@ -931,6 +931,7 @@
     light/dark — пройдены. Опубликовано коммитами `8a38742` + `c23e183`;
     production отдаёт `finance-v193`.
     См. [`docs/tasks/TASK_061_RECURRING_PAYMENTS_REDESIGN.md`](tasks/TASK_061_RECURRING_PAYMENTS_REDESIGN.md).
+57. **TASK_062_BOTTOM_NAV_LIQUID_GLASS_REFINE** — `DONE` (локально), релиз **v2.3.0**. Материал нижней капсулы в духе iOS Liquid Glass: заметный blur, тёмный тонкий контур, нейтральная подложка активной вкладки, иконки 24px / подписи 12px; вкладки, маршруты и drag не менялись. См. [`docs/tasks/TASK_062_BOTTOM_NAV_LIQUID_GLASS_REFINE.md`](tasks/TASK_062_BOTTOM_NAV_LIQUID_GLASS_REFINE.md).
 
 ## Пояснения
 
