@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.4.1] — 2026-10-17
+
+### Changed
+
+- **Bottom navigation follows the scroll gesture** (`TASK_063`). The capsule
+  no longer switches between two states with a 240ms transition: its width,
+  height, labels and icons are now driven continuously by a scroll progress
+  value, so a short gesture gives a partial collapse, reversing direction
+  reverses the collapse on the same frame and tiny scroll jitter no longer
+  toggles anything. Coarse wheel / PageDown jumps and the expand on tab
+  switch are eased over ~8 frames; reduced motion applies the end state at
+  once. Tabs, routes, drag gesture, glass and safe-area insets unchanged.
+
 ## [2.4.0] — 2026-10-17
 
 ### Added
