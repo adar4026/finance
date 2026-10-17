@@ -22,48 +22,48 @@
 <!-- TASK_061: ?v= у локальных скриптов = номер кэша в sw.js (finance-vNNN). HTML всегда
      получает «свой» JS: HTTP-кэш GitHub Pages (max-age=600) не смешает новый HTML со старым JS.
      Поднимается вместе с cache version при каждом релизе (tests/pwa_cache.test.js). -->
-<script src="js/core/result.js?v=193"></script>
-<script src="js/core/ids.js?v=193"></script>
-<script src="js/core/app_info.js?v=193"></script>
+<script src="js/core/result.js?v=194"></script>
+<script src="js/core/ids.js?v=194"></script>
+<script src="js/core/app_info.js?v=194"></script>
 <!-- TASK_015: подключается ДО store.js — migrate() при первом load() должен
      видеть сервис. Если файл почему-то не приехал (CDN-рассинхронизация),
      приложение стартует без нормализации метаданных, но не падает. -->
-<script src="js/services/tx_meta_service.js?v=193"></script>
+<script src="js/services/tx_meta_service.js?v=194"></script>
 <!-- TASK_023: тоже ДО store.js — migrate() нормализует settings.security при
      первом load(). Если файл не приехал, приложение стартует с прежним
      поведением блокировки (код на входе) и не падает. -->
-<script src="js/services/security_service.js?v=193"></script>
+<script src="js/services/security_service.js?v=194"></script>
 <!-- TASK_044: тоже ДО store.js — migrate() нормализует time операций при
      первом load(); тот же сервис задаёт порядок операций внутри дня. -->
-<script src="js/services/tx_time_service.js?v=193"></script>
-<script src="js/database/store.js?v=193"></script>
-<script src="js/services/currency_service.js?v=193"></script>
-<script src="js/services/account_service.js?v=193"></script>
-<script src="js/services/tx_form_service.js?v=193"></script>
-<script src="js/services/period_service.js?v=193"></script>
-<script src="js/services/place_breakdown_service.js?v=193"></script>
-<script src="js/services/finance_card_service.js?v=193"></script>
-<script src="js/services/analytics_service.js?v=193"></script>
-<script src="js/services/budget_service.js?v=193"></script>
-<script src="js/services/goal_service.js?v=193"></script>
-<script src="js/services/forecast_service.js?v=193"></script>
+<script src="js/services/tx_time_service.js?v=194"></script>
+<script src="js/database/store.js?v=194"></script>
+<script src="js/services/currency_service.js?v=194"></script>
+<script src="js/services/account_service.js?v=194"></script>
+<script src="js/services/tx_form_service.js?v=194"></script>
+<script src="js/services/period_service.js?v=194"></script>
+<script src="js/services/place_breakdown_service.js?v=194"></script>
+<script src="js/services/finance_card_service.js?v=194"></script>
+<script src="js/services/analytics_service.js?v=194"></script>
+<script src="js/services/budget_service.js?v=194"></script>
+<script src="js/services/goal_service.js?v=194"></script>
+<script src="js/services/forecast_service.js?v=194"></script>
 <!-- TASK_061: регулярные платежи — после forecast_service (использует его даты) -->
-<script src="js/services/recurring_service.js?v=193"></script>
-<script src="js/services/health_score_service.js?v=193"></script>
-<script src="js/services/xlsx_writer_service.js?v=193"></script>
-<script src="js/services/export_service.js?v=193"></script>
-<script src="js/services/backup_service.js?v=193"></script>
-<script src="js/services/csv_parser_service.js?v=193"></script>
-<script src="js/services/import_source_service.js?v=193"></script>
-<script src="js/services/import_mapping_service.js?v=193"></script>
-<script src="js/services/import_service.js?v=193"></script>
+<script src="js/services/recurring_service.js?v=194"></script>
+<script src="js/services/health_score_service.js?v=194"></script>
+<script src="js/services/xlsx_writer_service.js?v=194"></script>
+<script src="js/services/export_service.js?v=194"></script>
+<script src="js/services/backup_service.js?v=194"></script>
+<script src="js/services/csv_parser_service.js?v=194"></script>
+<script src="js/services/import_source_service.js?v=194"></script>
+<script src="js/services/import_mapping_service.js?v=194"></script>
+<script src="js/services/import_service.js?v=194"></script>
 <!-- TASK_016 -->
-<script src="js/services/category_taxonomy_service.js?v=193"></script>
-<script src="js/services/demo_data_service.js?v=193"></script>
-<script src="js/services/search_service.js?v=193"></script>
-<script src="js/services/haptics_service.js?v=193"></script>
-<script src="js/services/amount_input_service.js?v=193"></script>
-<script src="js/ui/hero_canvas.js?v=193"></script>
+<script src="js/services/category_taxonomy_service.js?v=194"></script>
+<script src="js/services/demo_data_service.js?v=194"></script>
+<script src="js/services/search_service.js?v=194"></script>
+<script src="js/services/haptics_service.js?v=194"></script>
+<script src="js/services/amount_input_service.js?v=194"></script>
+<script src="js/ui/hero_canvas.js?v=194"></script>
 <style>
   /* Alex Finance Design Tokens (Product Book Part 2/4) */
   :root, [data-theme="light"]{
@@ -90,29 +90,29 @@
     /* TASK_056: floating glass capsule нижней навигации — прозрачное светлое стекло (фон/карточки
        просвечивают), тонкий контур, верхний блик; --nav-bg-solid — плотный fallback без backdrop-filter.
        Прозрачность только в background (rgba) — иконки/подписи/badge остаются непрозрачными. */
-    --nav-bg:rgba(255,255,255,.03);        /* TASK_057: почти прозрачное стекло (LexCar 4cff324) */
+    --nav-bg:rgba(255,255,255,.58);        /* TASK_062: матовое Liquid Glass — фон под панелью читается, но размыт */
     --nav-bg-solid:rgba(255,255,255,.94);
-    --nav-border:rgba(22,24,31,.42);       /* заметный тонкий контур — капсулу держит контур, не заливка */
-    --nav-highlight:rgba(255,255,255,.10);
-    --nav-blur:2px; --nav-saturate:130%;
+    --nav-border:rgba(22,24,31,.72);       /* тонкий тёмный контур как на референсе */
+    --nav-highlight:rgba(255,255,255,.70);
+    --nav-blur:18px; --nav-saturate:160%;
     /* цвета вкладок: неактивная — чуть темнее --muted (читаемость на прозрачном стекле),
        активная — более глубокий синий --nav-blue2 (LexCar e387441: deeper accent) */
     --nav-muted:#4f5a68;
-    --nav-active:var(--nav-blue2);
+    --nav-active:#2f5bd8;
     /* pill активной вкладки — полупрозрачная линза на акценте (.18), светлый контур, inset-блик,
        мягкое синее свечение (LexCar e387441 на палитре Finance) */
-    --nav-pill-bg:rgba(79,125,240,.18);
-    --nav-pill-border:rgba(255,255,255,.36);
-    --nav-pill-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 3px 12px rgba(79,125,240,.14);
+    --nav-pill-bg:rgba(60,72,92,.14);
+    --nav-pill-border:rgba(255,255,255,.55);
+    --nav-pill-shadow:inset 0 1px 0 rgba(255,255,255,.45);
     /* «живое стекло» pill при удержании/drag: блик под пальцем, передний/задний край по движению */
     --nav-glint:rgba(255,255,255,.44);
     --nav-pill-edge-light:rgba(255,255,255,.34);
     --nav-pill-edge-dark:rgba(22,24,31,.06);
     /* отдельная floating glass-кнопка «＋» (нейтральная, не primary) */
-    --nav-add-bg:rgba(255,255,255,.10);
+    --nav-add-bg:rgba(255,255,255,.58);
     --nav-add-bg-solid:rgba(255,255,255,.96);
-    --nav-add-border:rgba(22,24,31,.42);
-    --nav-add-shadow:0 6px 18px rgba(28,32,60,.10),inset 0 1px 0 rgba(255,255,255,.35);
+    --nav-add-border:rgba(22,24,31,.72);
+    --nav-add-shadow:0 6px 18px rgba(28,32,60,.12),inset 0 1px 0 rgba(255,255,255,.70);
     /* Главная финансовая карточка (TASK_003) — системный светлый grouped-фон экрана и белая карточка */
     --home-bg:#f2f2f7;
     --fincard-shadow:0 10px 26px rgba(30,41,80,.08);
@@ -191,20 +191,20 @@
     --nav-glass-border:rgba(255,255,255,.20);
     --nav-glass-shadow:0 6px 18px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -8px 10px -8px rgba(91,139,255,.16);
     /* TASK_056: тёмное стекло капсулы — отдельный набор, не тот же белый rgba */
-    --nav-bg:rgba(30,30,36,.42);
+    --nav-bg:rgba(30,30,36,.55);
     --nav-bg-solid:rgba(28,32,41,.96);
     --nav-border:rgba(255,255,255,.16);
     --nav-highlight:rgba(255,255,255,.10);
-    --nav-blur:16px; --nav-saturate:150%;
+    --nav-blur:20px; --nav-saturate:160%;
     --nav-muted:var(--muted);
-    --nav-active:var(--nav-blue);
-    --nav-pill-bg:rgba(91,139,255,.30);
-    --nav-pill-border:rgba(255,255,255,.18);
-    --nav-pill-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 3px 12px rgba(91,139,255,.20);
+    --nav-active:#7fa3ff;
+    --nav-pill-bg:rgba(255,255,255,.14);
+    --nav-pill-border:rgba(255,255,255,.14);
+    --nav-pill-shadow:inset 0 1px 0 rgba(255,255,255,.14);
     --nav-glint:rgba(255,255,255,.20);
     --nav-pill-edge-light:rgba(255,255,255,.18);
     --nav-pill-edge-dark:rgba(0,0,0,.18);
-    --nav-add-bg:rgba(30,30,36,.42);
+    --nav-add-bg:rgba(30,30,36,.55);
     --nav-add-bg-solid:rgba(36,40,52,.97);
     --nav-add-border:rgba(255,255,255,.16);
     --nav-add-shadow:0 6px 18px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.12);
@@ -581,15 +581,16 @@
   /* TASK_057: вкладки по LexCar b2e5423/e387441 — подпись 11px/600 (активная 700), иконка 22px
      (активная — штрих 2.4), gap 3px, неактивный --nav-muted, активный --nav-active */
   .nav button{position:relative;z-index:1;background:none;border:none;color:var(--nav-muted);display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:3px;
-    cursor:pointer;font-size:11px;font-weight:600;letter-spacing:0;line-height:1.1;min-width:0;padding:0 2px;
+    align-items:center;justify-content:center;gap:2px;
+    cursor:pointer;font-size:12px;font-weight:600;letter-spacing:0;line-height:1.1;min-width:0;padding:0 2px;
     border-radius:999px;transition:color .2s ease,transform .15s}
   .nav button .lb{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .nav button .ic{display:flex;align-items:center;justify-content:center;height:22px;line-height:0}
-  .nav button .ic svg{width:22px;height:22px;stroke:currentColor;fill:none;
+  .nav button .ic{display:flex;align-items:center;justify-content:center;height:24px;line-height:0}
+  .nav button .ic svg{width:24px;height:24px;stroke:currentColor;fill:none;
     stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
   .nav button.on .lb{font-weight:700}
   .nav button.on .ic svg{stroke-width:2.4}
+  @media (max-width:389px){.nav button{font-size:11px}}
   @media (max-width:340px){.nav{left:12px;right:12px}.nav button{font-size:9.5px;padding:0 1px}} /* «Аналитика» на 320px без обрезки */
   .nav button[data-s]:active{transform:scale(.94)}
   .nav.dragging button[data-s]{transform:none} /* во время drag кнопка под пальцем не «проседает» */

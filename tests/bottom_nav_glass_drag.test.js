@@ -71,17 +71,17 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
     assertTrue(new RegExp(`(^|[\\s;])${t}:`, 'm').test(light), `light: токен ${t}`);
     assertTrue(new RegExp(`(^|[\\s;])${t}:`, 'm').test(dark), `dark: токен ${t}`);
   });
-  // TASK_057: почти прозрачное стекло по финальному LexCar (light .03 / blur 2px; dark .42 / blur 16px)
-  assertEqual(val(light, '--nav-bg'), 'rgba(255,255,255,.03)', 'light --nav-bg — почти прозрачное светлое стекло');
-  assertEqual(val(light, '--nav-blur'), '2px', 'light blur 2px');
-  assertEqual(val(light, '--nav-border'), 'rgba(22,24,31,.42)', 'light — заметный тонкий контур держит капсулу');
-  assertEqual(val(dark, '--nav-bg'), 'rgba(30,30,36,.42)', 'dark --nav-bg — отдельное тёмное стекло, не белый rgba');
-  assertEqual(val(dark, '--nav-blur'), '16px', 'dark blur 16px');
+  // TASK_062: матовое Liquid Glass (light .58 / blur 18px; dark .55 / blur 20px)
+  assertEqual(val(light, '--nav-bg'), 'rgba(255,255,255,.58)', 'light --nav-bg — матовое светлое стекло');
+  assertEqual(val(light, '--nav-blur'), '18px', 'light blur 18px');
+  assertEqual(val(light, '--nav-border'), 'rgba(22,24,31,.72)', 'light — заметный тонкий контур держит капсулу');
+  assertEqual(val(dark, '--nav-bg'), 'rgba(30,30,36,.55)', 'dark --nav-bg — отдельное тёмное стекло, не белый rgba');
+  assertEqual(val(dark, '--nav-blur'), '20px', 'dark blur 20px');
   assertTrue(val(light, '--nav-bg') !== val(dark, '--nav-bg'), 'light/dark стекло различаются');
-  assertEqual(val(light, '--nav-pill-bg'), 'rgba(79,125,240,.18)', 'light pill — синий акцент навигации (#4f7df0) .18, не цвета LexCar');
-  assertEqual(val(dark, '--nav-pill-bg'), 'rgba(91,139,255,.30)', 'dark pill — синий акцент (#5b8bff) .30');
-  assertEqual(val(light, '--nav-active'), 'var(--nav-blue2)', 'light: активная вкладка — более глубокий синий --nav-blue2');
-  assertEqual(val(dark, '--nav-active'), 'var(--nav-blue)', 'dark: активная вкладка — --nav-blue');
+  assertEqual(val(light, '--nav-pill-bg'), 'rgba(60,72,92,.14)', 'light pill — нейтральная тёмная подложка');
+  assertEqual(val(dark, '--nav-pill-bg'), 'rgba(255,255,255,.14)', 'dark pill — нейтральная светлая подложка');
+  assertEqual(val(light, '--nav-active'), '#2f5bd8', 'light: активная вкладка — глубокий синий (контраст ≥4.5 на серой подложке)');
+  assertEqual(val(dark, '--nav-active'), '#7fa3ff', 'dark: активная вкладка — светлый синий (контраст ≥4.5)');
   assertTrue(/--nav-blue:#4f7df0;/.test(light) && /--nav-blue:#5b8bff;/.test(dark), 'акцент --nav-blue не подменён');
   assertTrue(/--accent:#6d5df6;/.test(light), 'фирменный --accent не тронут');
   assertTrue(/--nav-glass-bg:linear-gradient\(180deg,rgba\(255,255,255,\.68\),rgba\(255,255,255,\.30\)\),var\(--nav-active-bg\);/.test(light),
@@ -112,9 +112,9 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
   // TASK_057: компактная капсула и вкладки по LexCar b2e5423/e387441
   assertTrue(/border-radius:32px/.test(nav), 'капсула 64px с radius 32px — полностью скруглённые торцы');
   const btn = ruleBody('.nav button', css);
-  assertTrue(/color:var\(--nav-muted\)/.test(btn) && /gap:3px/.test(btn) && /font-size:11px;font-weight:600;letter-spacing:0/.test(btn) && /border-radius:999px/.test(btn),
-    'вкладка: --nav-muted, gap 3px, подпись 11px/600, скругление 999px');
-  assertTrue(/\.nav button \.ic svg\{width:22px;height:22px/.test(css), 'иконка 22px');
+  assertTrue(/color:var\(--nav-muted\)/.test(btn) && /gap:2px/.test(btn) && /font-size:12px;font-weight:600;letter-spacing:0/.test(btn) && /border-radius:999px/.test(btn),
+    'вкладка: --nav-muted, gap 2px, подпись 12px/600, скругление 999px');
+  assertTrue(/\.nav button \.ic svg\{width:24px;height:24px/.test(css), 'иконка 24px');
   assertTrue(/\.nav button\.on \.lb\{font-weight:700\}/.test(css) && /\.nav button\.on \.ic svg\{stroke-width:2\.4\}/.test(css), 'активная: подпись 700, штрих иконки 2.4');
   assertTrue(/@media \(max-width:340px\)\{\.nav\{left:12px;right:12px\}\.nav button\{font-size:9\.5px;padding:0 1px\}\}/.test(css), '≤340px: подпись 9.5px, отступы 12px');
   assertTrue(/\.nav\.dragging button\[data-s\]\{transform:none\}/.test(css), 'во время drag :active-scale кнопок отключён');
@@ -131,7 +131,7 @@ const dark = block(/\[data-theme="dark"\]\{/, '*{box-sizing', 'тёмные то
   assertTrue(/border-radius:999px/.test(pill), 'pill полностью скруглена (999px)');
   assertTrue(/background:var\(--nav-pill-bg\);border:1px solid var\(--nav-pill-border\);box-shadow:var\(--nav-pill-shadow\)/.test(pill),
     'pill: полупрозрачная заливка на акценте + светлый контур + inset-блик/свечение (--nav-pill-*)');
-  assertTrue(/inset 0 1px 0 rgba\(255,255,255,\.30\),0 3px 12px rgba\(79,125,240,\.14\)/.test(val(light, '--nav-pill-shadow')), 'light pill shadow: inset блик + синее свечение');
+  assertTrue(/inset 0 1px 0 rgba\(255,255,255,\.45\)/.test(val(light, '--nav-pill-shadow')), 'light pill shadow: inset блик');
   assertTrue(!/backdrop-filter/.test(pill), 'у pill нет своего backdrop-filter (второй blur в Safari лишний)');
   assertTrue(/pointer-events:none/.test(pill) && /overflow:hidden/.test(pill), 'pill декоративна, слои блика обрезаются по радиусу');
   assertTrue(!/will-change/.test(pill), 'will-change не задан постоянно');

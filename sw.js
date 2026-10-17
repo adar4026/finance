@@ -1,7 +1,7 @@
 // Service worker — офлайн-кэш приложения
-const CACHE = 'finance-v193';
+const CACHE = 'finance-v194';
 // TASK_061: версия скриптов = номер кэша. index.html подключает локальные
-// скрипты как js/…?v=193, precache кладёт их под теми же URL — HTML всегда
+// скрипты как js/…?v=194, precache кладёт их под теми же URL — HTML всегда
 // получает «свой» JS (и онлайн, и офлайн), HTTP-кэш GitHub Pages (max-age=600)
 // не может смешать новый HTML со старым JS или наоборот.
 const V = CACHE.replace('finance-v', '');
