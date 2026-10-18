@@ -961,6 +961,16 @@
     1.50 : 1 → 1.00 : 1 (тёмная). Поведение системного статус-бара iOS не подтверждено —
     нет устройства и Simulator. См.
     [`docs/tasks/TASK_065_HOME_TOP_STATUS_BAR_STRIP.md`](tasks/TASK_065_HOME_TOP_STATUS_BAR_STRIP.md).
+62. **TASK_066_ROOT_CANVAS_STATUS_BAR_COLOR** — `IN PROGRESS`, релиз **v2.5.2** /
+    `finance-v200`. Корректирующая к `TASK_065`:
+    на устройстве `theme-color` верхнюю полосу не перекрасил, а смена темы приложения —
+    перекрасила ⇒ её красит фон документа (корневой `html`). Правка — чистый CSS: `html`
+    получает `--status-bar` (`#9dc1f3` / `#1e325b`) только при активном immersive-экране,
+    без открытого оверлея и без матовой шапки `.scrolled`; иначе — прежний `--bg`. `body`
+    (непрозрачный, `fixed;inset:0`), геометрия (`.topbar [0, 64]`, `.scroll-area [64, 812]`,
+    `.nav [742, 806, 64]`), градиент, тёмные волны, `theme-color`, `manifest.json` не тронуты.
+    Тесты `3750 passed, 0 failed`. Требует проверки на физическом iPhone. См.
+    [`docs/tasks/TASK_066_ROOT_CANVAS_STATUS_BAR_COLOR.md`](tasks/TASK_066_ROOT_CANVAS_STATUS_BAR_COLOR.md).
 
 ## Пояснения
 

@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.5.2] — 2026-10-18
+
+### Fixed
+
+- **White strip above the home screen header, second attempt** (`TASK_066`). Testing
+  v2.5.1 on a physical iPhone showed that `theme-color` does not colour the system area in
+  the installed (standalone) PWA. Switching the app theme did recolour the strip, which
+  proves its colour comes from the **document background**: iOS fills everything outside
+  the web view's viewport — here the status bar area above it — with the root element's
+  background, which was `--bg` (`#ffffff`). The root `html` element now uses the existing
+  `--status-bar` token (`#9dc1f3` light, `#1e325b` dark) whenever the blue scene is
+  actually under the strip: an immersive main screen is active, no overlay is open and the
+  header has not switched to its frosted scrolled state. In every other state (Profile,
+  the transaction page, the drawer, scrolled header, the «More» screen) it stays `--bg`, as
+  before. Pure CSS (`:has()`, already required by the immersive screens); no JavaScript.
+
+`body` keeps its opaque `--bg` background and still covers the whole viewport, so nothing
+inside the web view changes. Viewport geometry, `apple-mobile-web-app-status-bar-style`
+(`default`), `theme-color`, `manifest.json`, the header, the scroll area, the bottom
+navigation, the home gradient and the dark-theme waves are unchanged. The fix still has to
+be confirmed on a physical iPhone.
+
 ## [2.5.1] — 2026-10-17
 
 ### Fixed
