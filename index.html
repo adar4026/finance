@@ -28,48 +28,48 @@
 <!-- TASK_061: ?v= у локальных скриптов = номер кэша в sw.js (finance-vNNN). HTML всегда
      получает «свой» JS: HTTP-кэш GitHub Pages (max-age=600) не смешает новый HTML со старым JS.
      Поднимается вместе с cache version при каждом релизе (tests/pwa_cache.test.js). -->
-<script src="js/core/result.js?v=199"></script>
-<script src="js/core/ids.js?v=199"></script>
-<script src="js/core/app_info.js?v=199"></script>
+<script src="js/core/result.js?v=200"></script>
+<script src="js/core/ids.js?v=200"></script>
+<script src="js/core/app_info.js?v=200"></script>
 <!-- TASK_015: подключается ДО store.js — migrate() при первом load() должен
      видеть сервис. Если файл почему-то не приехал (CDN-рассинхронизация),
      приложение стартует без нормализации метаданных, но не падает. -->
-<script src="js/services/tx_meta_service.js?v=199"></script>
+<script src="js/services/tx_meta_service.js?v=200"></script>
 <!-- TASK_023: тоже ДО store.js — migrate() нормализует settings.security при
      первом load(). Если файл не приехал, приложение стартует с прежним
      поведением блокировки (код на входе) и не падает. -->
-<script src="js/services/security_service.js?v=199"></script>
+<script src="js/services/security_service.js?v=200"></script>
 <!-- TASK_044: тоже ДО store.js — migrate() нормализует time операций при
      первом load(); тот же сервис задаёт порядок операций внутри дня. -->
-<script src="js/services/tx_time_service.js?v=199"></script>
-<script src="js/database/store.js?v=199"></script>
-<script src="js/services/currency_service.js?v=199"></script>
-<script src="js/services/account_service.js?v=199"></script>
-<script src="js/services/tx_form_service.js?v=199"></script>
-<script src="js/services/period_service.js?v=199"></script>
-<script src="js/services/place_breakdown_service.js?v=199"></script>
-<script src="js/services/finance_card_service.js?v=199"></script>
-<script src="js/services/analytics_service.js?v=199"></script>
-<script src="js/services/budget_service.js?v=199"></script>
-<script src="js/services/goal_service.js?v=199"></script>
-<script src="js/services/forecast_service.js?v=199"></script>
+<script src="js/services/tx_time_service.js?v=200"></script>
+<script src="js/database/store.js?v=200"></script>
+<script src="js/services/currency_service.js?v=200"></script>
+<script src="js/services/account_service.js?v=200"></script>
+<script src="js/services/tx_form_service.js?v=200"></script>
+<script src="js/services/period_service.js?v=200"></script>
+<script src="js/services/place_breakdown_service.js?v=200"></script>
+<script src="js/services/finance_card_service.js?v=200"></script>
+<script src="js/services/analytics_service.js?v=200"></script>
+<script src="js/services/budget_service.js?v=200"></script>
+<script src="js/services/goal_service.js?v=200"></script>
+<script src="js/services/forecast_service.js?v=200"></script>
 <!-- TASK_061: регулярные платежи — после forecast_service (использует его даты) -->
-<script src="js/services/recurring_service.js?v=199"></script>
-<script src="js/services/health_score_service.js?v=199"></script>
-<script src="js/services/xlsx_writer_service.js?v=199"></script>
-<script src="js/services/export_service.js?v=199"></script>
-<script src="js/services/backup_service.js?v=199"></script>
-<script src="js/services/csv_parser_service.js?v=199"></script>
-<script src="js/services/import_source_service.js?v=199"></script>
-<script src="js/services/import_mapping_service.js?v=199"></script>
-<script src="js/services/import_service.js?v=199"></script>
+<script src="js/services/recurring_service.js?v=200"></script>
+<script src="js/services/health_score_service.js?v=200"></script>
+<script src="js/services/xlsx_writer_service.js?v=200"></script>
+<script src="js/services/export_service.js?v=200"></script>
+<script src="js/services/backup_service.js?v=200"></script>
+<script src="js/services/csv_parser_service.js?v=200"></script>
+<script src="js/services/import_source_service.js?v=200"></script>
+<script src="js/services/import_mapping_service.js?v=200"></script>
+<script src="js/services/import_service.js?v=200"></script>
 <!-- TASK_016 -->
-<script src="js/services/category_taxonomy_service.js?v=199"></script>
-<script src="js/services/demo_data_service.js?v=199"></script>
-<script src="js/services/search_service.js?v=199"></script>
-<script src="js/services/haptics_service.js?v=199"></script>
-<script src="js/services/amount_input_service.js?v=199"></script>
-<script src="js/ui/hero_canvas.js?v=199"></script>
+<script src="js/services/category_taxonomy_service.js?v=200"></script>
+<script src="js/services/demo_data_service.js?v=200"></script>
+<script src="js/services/search_service.js?v=200"></script>
+<script src="js/services/haptics_service.js?v=200"></script>
+<script src="js/services/amount_input_service.js?v=200"></script>
+<script src="js/ui/hero_canvas.js?v=200"></script>
 <style>
   /* Alex Finance Design Tokens (Product Book Part 2/4) */
   :root, [data-theme="light"]{
@@ -304,7 +304,22 @@
      высота/ширина box'а вычисляются из привязки ко всем 4 истинным краям вьюпорта (спецификация
      CSS для position:fixed с заданными top/bottom и auto height), что при viewport-fit=cover
      гарантированно включает safe-area. .app{height:100%} наследует эту корректную высоту. */
+  /* TASK_066: фон КОРНЕВОГО элемента — это цвет «canvas» документа, которым iOS в
+     standalone-PWA заливает области ФИЗИЧЕСКИ ВНЕ вьюпорта; при status-bar-style=default
+     это полоса системных индикаторов сверху. Механизм доказан на устройстве: в TASK_011
+     такая же внешняя область (снизу) и в TASK_066 верхняя полоса перекрашивались вместе
+     с темой приложения. meta theme-color (TASK_065) на неё в standalone не влияет.
+     Голубой --status-bar — только когда под полосой действительно голубая сцена: активен
+     immersive-экран (общий слой .finance-ambient, см. TASK_047/048), нет открытого
+     оверлея (Профиль, страница операции, шторка…) и шапка не перешла в матовое состояние
+     .scrolled (там верх экрана — почти белое стекло --bg-blur). Во всех прочих случаях
+     остаётся --bg, как до TASK_066. Чистый CSS, без JS: :has() уже обязателен для
+     immersive-системы; без его поддержки правило отбрасывается и остаётся --bg.
+     Внутри вьюпорта не меняется ничего: body ниже — position:fixed;inset:0 с непрозрачным
+     background:var(--bg). */
   html{height:100%;overflow:hidden;background:var(--bg)}
+  html:has(.screen.immersive.active):not(:has(.overlay.show)):not(:has(.topbar.scrolled)){
+    background:var(--status-bar)}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
     background:var(--bg);color:var(--text);
